@@ -1,6 +1,6 @@
 #!/bin/env bash
 
-binary="sdl2_poc"
+binary="pikselite"
 buildDirectory="build"
 
 function clean {
