@@ -1,10 +1,3 @@
-/*
-** EPITECH PROJECT, 2025
-** SDL2_POC
-** File description:
-** Graphic
-*/
-
 #include <graphic/Graphic.hpp>
 
 namespace graphic

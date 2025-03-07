@@ -18,6 +18,7 @@ find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
 add_executable(pikselite
   src/main.cpp
   src/graphic/Graphic.cpp
+  src/editor/Editor.cpp
 )
 
 add_subdirectory(interface)
