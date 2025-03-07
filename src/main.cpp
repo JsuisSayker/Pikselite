@@ -59,8 +59,8 @@ int main()
         if (event == graphic::EventType::KEY_O)
         {
             graphic->camera.zoom -= 1;
-            if (graphic->camera.zoom < 1)
-                graphic->camera.zoom = 1;
+            if (graphic->camera.zoom < 4)
+                graphic->camera.zoom = 4;
         }
         graphic->clearWindow();
         graphic->updateWindow();

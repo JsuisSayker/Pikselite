@@ -40,7 +40,7 @@ namespace graphic
 
         bool _windowOpen = true;
         std::vector<Pixel> _pixels;
-        Camera camera = Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 1};
+        Camera camera = Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
     protected:
     private:
         SDL_Window *_window;
