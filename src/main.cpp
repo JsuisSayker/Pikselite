@@ -17,6 +17,5 @@ int main()
     std::shared_ptr<graphic::Graphic> graphic = std::make_shared<graphic::Graphic>();
     std::unique_ptr<Editor> editor = std::make_unique<Editor>(graphic);
 
-    editor->run();
-    return 0;
+    return editor->run();
 }

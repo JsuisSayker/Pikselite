@@ -8,7 +8,10 @@ class Editor {
         Editor(std::shared_ptr<graphic::Graphic> graphic);
         ~Editor();
 
-        void run();
+        int run();
+        void moveCamera(graphic::EventType event);
+        void zoomCamera(graphic::EventType event);
+        void checkMouseEvents(graphic::EventType event);
 
     protected:
     private:
