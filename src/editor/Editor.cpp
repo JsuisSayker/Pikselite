@@ -61,6 +61,13 @@ void Editor::checkMouseEvents(graphic::EventType event)
     }
 }
 
+void Editor::checkInterfaceEvents(graphic::EventType event)
+{
+    if (event == graphic::EventType::KEY_C) {
+        _graphic->showColorSelector = !_graphic->showColorSelector;
+    }
+}
+
 int Editor::run()
 {
     graphic::EventType event;
@@ -73,12 +80,16 @@ int Editor::run()
             return 0;
 
         checkMouseEvents(event);
+        checkInterfaceEvents(event);
         moveCamera(event);
         zoomCamera(event);
 
         _graphic->clearWindow();
+
         _graphic->drawPixels();
         _graphic->drawGrid();
+        _graphic->drawInterface();
+        
         _graphic->updateWindow();
     }
     return 0;

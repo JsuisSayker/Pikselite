@@ -22,12 +22,14 @@ add_executable(pikselite
 )
 
 add_subdirectory(interface)
+add_subdirectory(extern/imgui)
 
 target_link_libraries(
   pikselite
   pikselite_interface
   SDL2::SDL2
   SDL2::SDL2main
+  imgui
 )
 
 add_custom_command(

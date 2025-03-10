@@ -12,6 +12,7 @@ class Editor {
         void moveCamera(graphic::EventType event);
         void zoomCamera(graphic::EventType event);
         void checkMouseEvents(graphic::EventType event);
+        void checkInterfaceEvents(graphic::EventType event);
 
     protected:
     private:

@@ -14,6 +14,16 @@ namespace graphic
         SDL_SetRenderDrawColor(this->_renderer, 255, 255, 255, 255);
         SDL_RenderClear(this->_renderer);
         SDL_RenderPresent(this->_renderer);
+
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGui::StyleColorsDark();
+        ImGuiIO &io = ImGui::GetIO();
+        if (_renderer && _window)
+        {
+            ImGui_ImplSDL2_InitForSDLRenderer(_window, _renderer);
+            ImGui_ImplSDLRenderer2_Init(_renderer);
+        }
     }
 
     Graphic::~Graphic()
@@ -21,6 +31,40 @@ namespace graphic
         SDL_DestroyRenderer(this->_renderer);
         SDL_DestroyWindow(this->_window);
         SDL_Quit();
+
+        ImGui_ImplSDLRenderer2_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+    }
+
+    void Graphic::colorSelector()
+    {
+        if (!colorSelectorInitialized)
+        {
+            ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiCond_FirstUseEver);
+            colorSelectorInitialized = true;
+        }
+
+        // Begin a window that is resizable and movable by the user
+        ImGui::Begin("Color Selector");
+
+        static ImVec4 color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+        ImGui::ColorEdit4("Color", (float *)&color);
+
+        ImGui::End();
+    }
+
+    void Graphic::drawInterface()
+    {
+        ImGui_ImplSDLRenderer2_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+
+        if (showColorSelector)
+            colorSelector();
+
+        ImGui::Render();
+        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->_renderer);
     }
 
     void Graphic::updateWindow()
@@ -46,6 +90,11 @@ namespace graphic
                 this->_windowOpen = false;
                 return EventType::WINDOW_CLOSE;
             }
+            ImGui_ImplSDL2_ProcessEvent(&event);
+
+            ImGuiIO& io = ImGui::GetIO();
+            if (io.WantCaptureMouse)
+                return EventType::NONE;
 
             // if the user clicks mouse button
             if (event.type == SDL_MOUSEBUTTONDOWN)
@@ -176,10 +225,6 @@ namespace graphic
 
         SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 
-        // Grid lines should be drawn at boundaries of each cell.
-        // Since pixel cells are centered at integer values,
-        // their boundaries are at (integer - 0.5) and (integer + 0.5).
-
         // Calculate first vertical grid line (smallest line position >= leftEdge)
         float firstVertical = std::ceil(leftEdge - 0.5f) + 0.5f;
         for (float x = firstVertical; x < rightEdge; x += 1.0f)
@@ -217,4 +262,16 @@ namespace graphic
         }
     }
 
+    void Graphic::drawRectangle(Rectangle rectangle)
+    {
+        // dont use camera
+        SDL_Rect rect = {
+            static_cast<int>(rectangle.position.x),
+            static_cast<int>(rectangle.position.y),
+            rectangle.width,
+            rectangle.height};
+
+        SDL_SetRenderDrawColor(_renderer, rectangle.color.r, rectangle.color.g, rectangle.color.b, rectangle.color.a);
+        SDL_RenderFillRect(_renderer, &rect);
+    }
 }

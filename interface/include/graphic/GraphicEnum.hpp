@@ -71,6 +71,22 @@ namespace graphic
         float y;
     };
 
+    struct Border
+    {
+        int radius;
+        int thickness;
+        Color color;
+    };
+
+    struct Rectangle
+    {
+        int width;
+        int height;
+        Color color;
+        Border border;
+        Position position;
+    };
+
     struct Pixel
     {
         Position position;

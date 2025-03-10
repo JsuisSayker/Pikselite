@@ -1,11 +1,3 @@
-/*
-** EPITECH PROJECT, 2025
-** SDL2_POC
-** File description:
-** main
-*/
-
-#include <graphic/Graphic.hpp>
 #include <editor/Editor.hpp>
 #include <memory>
 #include <stdio.h>

@@ -5,6 +5,11 @@
 
 #include <graphic/GraphicEnum.hpp>
 
+
+#include <imgui.h>
+#include "../../extern/imgui/backends/imgui_impl_sdl2.h"
+#include "../../extern/imgui/backends/imgui_impl_sdlrenderer2.h"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -32,14 +37,22 @@ namespace graphic
         void drawPixel(Pixel pixel);
         void drawPixels();
         void drawGrid();
+        void drawRectangle(Rectangle rectangle);
+
+        SDL_Renderer *getRenderer() { return _renderer; }
+        SDL_Window *getWindow() { return _window; }
+
+        void colorSelector();
+        void drawInterface();
 
         bool _windowOpen = true;
         std::vector<Pixel> _pixels;
         Camera camera = Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
-    protected:
+        bool showColorSelector = false;
+
     private:
         SDL_Window *_window;
         SDL_Renderer *_renderer;
-
+        bool colorSelectorInitialized = false;
     };
 } // namespace sdl2
