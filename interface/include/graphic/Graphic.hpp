@@ -29,7 +29,9 @@ namespace graphic
 
         Position getPosition();
 
-        void drawPixel(Pixel pixel, Camera camera);
+        void drawPixel(Pixel pixel);
+        void drawPixels();
+        void drawGrid();
 
         bool _windowOpen = true;
         std::vector<Pixel> _pixels;

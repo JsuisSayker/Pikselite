@@ -77,6 +77,8 @@ int Editor::run()
         zoomCamera(event);
 
         _graphic->clearWindow();
+        _graphic->drawPixels();
+        _graphic->drawGrid();
         _graphic->updateWindow();
     }
     return 0;

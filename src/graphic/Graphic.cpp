@@ -25,20 +25,6 @@ namespace graphic
 
     void Graphic::updateWindow()
     {
-        float zoomFactor = static_cast<float>(camera.zoom);
-        float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoomFactor));
-        float rightEdge = camera.position.x + (WINDOW_WIDTH / (2.0f * zoomFactor));
-        float topEdge = camera.position.y - (WINDOW_HEIGHT / (2.0f * zoomFactor));
-        float bottomEdge = camera.position.y + (WINDOW_HEIGHT / (2.0f * zoomFactor));
-
-        for (const Pixel &pixel : _pixels)
-        {
-            if (pixel.position.x >= leftEdge && pixel.position.x < rightEdge &&
-                pixel.position.y >= topEdge && pixel.position.y < bottomEdge)
-            {
-                drawPixel(pixel, camera);
-            }
-        }
         SDL_RenderPresent(_renderer);
     }
 
@@ -158,7 +144,7 @@ namespace graphic
         return Position{static_cast<float>(x), static_cast<float>(y)};
     }
 
-    void Graphic::drawPixel(Pixel pixel, Camera camera)
+    void Graphic::drawPixel(Pixel pixel)
     {
         float zoom = static_cast<float>(camera.zoom);
         float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoom));
@@ -178,6 +164,57 @@ namespace graphic
 
         SDL_SetRenderDrawColor(_renderer, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a);
         SDL_RenderFillRect(_renderer, &rect);
+    }
+
+    void Graphic::drawGrid()
+    {
+        float zoom = static_cast<float>(camera.zoom);
+        float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoom));
+        float rightEdge = camera.position.x + (WINDOW_WIDTH / (2.0f * zoom));
+        float topEdge = camera.position.y - (WINDOW_HEIGHT / (2.0f * zoom));
+        float bottomEdge = camera.position.y + (WINDOW_HEIGHT / (2.0f * zoom));
+
+        SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
+
+        // Grid lines should be drawn at boundaries of each cell.
+        // Since pixel cells are centered at integer values,
+        // their boundaries are at (integer - 0.5) and (integer + 0.5).
+
+        // Calculate first vertical grid line (smallest line position >= leftEdge)
+        float firstVertical = std::ceil(leftEdge - 0.5f) + 0.5f;
+        for (float x = firstVertical; x < rightEdge; x += 1.0f)
+        {
+            float screenX = (x - leftEdge) * zoom;
+            SDL_RenderDrawLine(_renderer, static_cast<int>(std::round(screenX)), 0,
+                               static_cast<int>(std::round(screenX)), WINDOW_HEIGHT);
+        }
+
+        // Calculate first horizontal grid line (smallest line position >= topEdge)
+        float firstHorizontal = std::ceil(topEdge - 0.5f) + 0.5f;
+        for (float y = firstHorizontal; y < bottomEdge; y += 1.0f)
+        {
+            float screenY = (y - topEdge) * zoom;
+            SDL_RenderDrawLine(_renderer, 0, static_cast<int>(std::round(screenY)),
+                               WINDOW_WIDTH, static_cast<int>(std::round(screenY)));
+        }
+    }
+
+    void Graphic::drawPixels()
+    {
+        float zoomFactor = static_cast<float>(camera.zoom);
+        float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoomFactor));
+        float rightEdge = camera.position.x + (WINDOW_WIDTH / (2.0f * zoomFactor));
+        float topEdge = camera.position.y - (WINDOW_HEIGHT / (2.0f * zoomFactor));
+        float bottomEdge = camera.position.y + (WINDOW_HEIGHT / (2.0f * zoomFactor));
+
+        for (const Pixel &pixel : _pixels)
+        {
+            if (pixel.position.x >= leftEdge && pixel.position.x < rightEdge &&
+                pixel.position.y >= topEdge && pixel.position.y < bottomEdge)
+            {
+                drawPixel(pixel);
+            }
+        }
     }
 
 }
