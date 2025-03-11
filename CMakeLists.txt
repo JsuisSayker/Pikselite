@@ -17,20 +17,19 @@ find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
 
 add_executable(pikselite
   src/main.cpp
-  src/graphic/Graphic.cpp
-  src/editor/Editor.cpp
-  src/home/Home.cpp
 )
 
 add_subdirectory(interface)
+add_subdirectory(src/graphic)
+add_subdirectory(src/editor)
+add_subdirectory(src/home)
 add_subdirectory(extern/imgui)
 
-target_link_libraries(
-  pikselite
+target_link_libraries(pikselite
   pikselite_interface
-  SDL2::SDL2
-  SDL2::SDL2main
-  imgui
+  graphic
+  editor
+  home
 )
 
 add_custom_command(

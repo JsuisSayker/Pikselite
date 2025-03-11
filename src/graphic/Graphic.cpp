@@ -56,21 +56,23 @@ namespace graphic
 
     void Graphic::navBar()
     {
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 10.0f));
+
         ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
 
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::MenuItem("New"))
-                {
-                }
-                if (ImGui::MenuItem("Open"))
-                {
-                }
-                if (ImGui::MenuItem("Exit"))
-                {
-                }
+            if (ImGui::MenuItem("New"))
+            {
+            }
+            if (ImGui::MenuItem("Open"))
+            {
+            }
+            if (ImGui::MenuItem("Exit"))
+            {
+            }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Edit"))
@@ -102,11 +104,14 @@ namespace graphic
             ImGui::EndMainMenuBar();
         }
         ImGui::PopStyleColor();
+
+        ImGui::PopStyleVar();
+
     }
 
     void Graphic::homeInterface()
     {
-        float menuBarHeight = 20.0f;
+        float menuBarHeight = 33.0f;
 
         ImGui::SetNextWindowPos(ImVec2(0, menuBarHeight));
         ImGui::SetNextWindowSize(ImVec2((float)WINDOW_WIDTH, (float)WINDOW_HEIGHT - menuBarHeight));
