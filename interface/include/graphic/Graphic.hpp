@@ -43,6 +43,8 @@ namespace graphic
         SDL_Window *getWindow() { return _window; }
 
         void colorSelector();
+        void navBar();
+
         void drawInterface();
 
         bool _windowOpen = true;

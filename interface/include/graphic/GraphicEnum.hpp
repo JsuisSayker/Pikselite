@@ -53,7 +53,7 @@ namespace graphic
         uint8_t a;
     };
 
-    struct CameraPosition
+    struct Position
     {
         float x;
         float y;
@@ -61,14 +61,8 @@ namespace graphic
 
     struct Camera
     {
-        CameraPosition position;
+        Position position;
         int zoom;
-    };
-
-    struct Position
-    {
-        float x;
-        float y;
     };
 
     struct Border

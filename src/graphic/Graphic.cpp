@@ -4,7 +4,7 @@ namespace graphic
 {
     Graphic::Graphic()
     {
-        this->_window = SDL_CreateWindow("Pikselite", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
+        this->_window = SDL_CreateWindow("Pikselite", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
         this->_renderer = SDL_CreateRenderer(this->_window, -1, SDL_RENDERER_ACCELERATED);
 
         if (!this->_window || !this->_renderer)
@@ -54,6 +54,53 @@ namespace graphic
         ImGui::End();
     }
 
+    void Graphic::navBar()
+    {
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("New"))
+                {
+                }
+                if (ImGui::MenuItem("Open"))
+                {
+                }
+                if (ImGui::MenuItem("Exit"))
+                {
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Edit"))
+            {
+                if (ImGui::MenuItem("Undo"))
+                {
+                }
+                if (ImGui::MenuItem("Redo"))
+                {
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Help"))
+            {
+                if (ImGui::MenuItem("About"))
+                {
+                }
+                ImGui::EndMenu();
+            }
+
+            float spacing = ImGui::GetContentRegionAvail().x - 5.0f;
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spacing);
+
+            if (ImGui::SmallButton("X"))
+            {
+                _windowOpen = false;
+            }
+            ImGui::EndMainMenuBar();
+        }
+    }
+
     void Graphic::drawInterface()
     {
         ImGui_ImplSDLRenderer2_NewFrame();
@@ -62,6 +109,8 @@ namespace graphic
 
         if (showColorSelector)
             colorSelector();
+
+        navBar();
 
         ImGui::Render();
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->_renderer);
@@ -92,7 +141,7 @@ namespace graphic
             }
             ImGui_ImplSDL2_ProcessEvent(&event);
 
-            ImGuiIO& io = ImGui::GetIO();
+            ImGuiIO &io = ImGui::GetIO();
             if (io.WantCaptureMouse)
                 return EventType::NONE;
 
