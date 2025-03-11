@@ -14,6 +14,8 @@ class Editor {
         void checkMouseEvents(graphic::EventType event);
         void checkInterfaceEvents(graphic::EventType event);
 
+        void addPixel(graphic::Pixel pixel);
+
     protected:
     private:
         std::shared_ptr<graphic::Graphic> _graphic;

@@ -16,6 +16,11 @@ namespace graphic
         static ImVec4 color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
         ImGui::ColorEdit4("Color", (float *)&color);
 
+        editorData.defaultColor = {static_cast<uint8_t>(color.x * 255),
+                                   static_cast<uint8_t>(color.y * 255),
+                                   static_cast<uint8_t>(color.z * 255),
+                                   static_cast<uint8_t>(color.w * 255)};
+
         ImGui::End();
     }
 
@@ -125,7 +130,7 @@ namespace graphic
         if (showHome)
             homeInterface();
 
-        if (showColorSelector)
+        if (editorData.showColorSelector)
             colorSelector();
 
         navBar();

@@ -86,4 +86,11 @@ namespace graphic
         Position position;
         Color color;
     };
+
+    struct EditorData
+    {
+        bool showColorSelector;
+        Color selectedColor;    
+        Color defaultColor;
+    };
 }

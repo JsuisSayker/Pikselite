@@ -1,5 +1,18 @@
 #include <editor/Editor.hpp>
 
+void Editor::addPixel(graphic::Pixel pixel)
+{
+    for (graphic::Pixel &p : _graphic->_pixels)
+    {
+        if (p.position.x == pixel.position.x && p.position.y == pixel.position.y)
+        {
+            p.color = pixel.color;
+            return;
+        }
+    }
+    _graphic->_pixels.push_back(pixel);
+}
+
 void Editor::checkMouseEvents(graphic::EventType event)
 {
     graphic::Position position;
@@ -15,13 +28,13 @@ void Editor::checkMouseEvents(graphic::EventType event)
         position.x = std::round(position.x);
         position.y = std::round(position.y);
 
-        _graphic->_pixels.push_back(graphic::Pixel{position, {255, 0, 0, 255}});
+        addPixel(graphic::Pixel{position, _graphic->editorData.defaultColor});
     }
 }
 
 void Editor::checkInterfaceEvents(graphic::EventType event)
 {
     if (event == graphic::EventType::KEY_C) {
-        _graphic->showColorSelector = !_graphic->showColorSelector;
+        _graphic->editorData.showColorSelector = !_graphic->editorData.showColorSelector;
     }
 }

@@ -53,8 +53,8 @@ namespace graphic
         std::vector<Pixel> _pixels;
         Camera camera = Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
         
-        bool showColorSelector = false;
         bool showHome = true;
+        EditorData editorData = EditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
 
     private:
         SDL_Window *_window;
