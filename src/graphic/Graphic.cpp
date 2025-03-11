@@ -56,6 +56,8 @@ namespace graphic
 
     void Graphic::navBar()
     {
+        ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+
         if (ImGui::BeginMainMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -99,6 +101,50 @@ namespace graphic
             }
             ImGui::EndMainMenuBar();
         }
+        ImGui::PopStyleColor();
+    }
+
+    void Graphic::homeInterface()
+    {
+        float menuBarHeight = 20.0f;
+
+        ImGui::SetNextWindowPos(ImVec2(0, menuBarHeight));
+        ImGui::SetNextWindowSize(ImVec2((float)WINDOW_WIDTH, (float)WINDOW_HEIGHT - menuBarHeight));
+
+        ImGui::Begin("Home",
+                     nullptr,
+                     ImGuiWindowFlags_NoTitleBar |
+                         ImGuiWindowFlags_NoResize |
+                         ImGuiWindowFlags_NoMove);
+
+        ImGui::Text("Get started");
+
+        if (ImGui::Button("New"))
+        {
+            showHome = false;
+        }
+        ImGui::SameLine();
+
+        if (ImGui::Button("Import"))
+        {
+        }
+        ImGui::SameLine();
+
+        if (ImGui::Button("Tutorial"))
+        {
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::Text("Recent Projects");
+
+        ImGui::BeginChild("RecentProjects", ImVec2(0, 200), true);
+        ImGui::Text("All recent and past projects will appear here");
+        ImGui::EndChild();
+
+        ImGui::End();
     }
 
     void Graphic::drawInterface()
@@ -106,6 +152,9 @@ namespace graphic
         ImGui_ImplSDLRenderer2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
+
+        if (showHome)
+            homeInterface();
 
         if (showColorSelector)
             colorSelector();

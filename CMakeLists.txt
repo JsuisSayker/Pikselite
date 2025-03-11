@@ -19,6 +19,7 @@ add_executable(pikselite
   src/main.cpp
   src/graphic/Graphic.cpp
   src/editor/Editor.cpp
+  src/home/Home.cpp
 )
 
 add_subdirectory(interface)

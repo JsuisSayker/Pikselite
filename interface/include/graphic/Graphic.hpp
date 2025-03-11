@@ -44,13 +44,17 @@ namespace graphic
 
         void colorSelector();
         void navBar();
+        void homeInterface();
 
         void drawInterface();
 
         bool _windowOpen = true;
+        
         std::vector<Pixel> _pixels;
         Camera camera = Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
+        
         bool showColorSelector = false;
+        bool showHome = true;
 
     private:
         SDL_Window *_window;
