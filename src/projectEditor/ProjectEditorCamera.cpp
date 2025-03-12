@@ -1,6 +1,6 @@
-#include <editor/Editor.hpp>
+#include <projectEditor/ProjectEditor.hpp>
 
-void Editor::moveCamera(graphic::EventType event)
+void ProjectEditor::moveCamera(graphic::EventType event)
 {
     if (event == graphic::EventType::KEY_ARROW_UP)
     {
@@ -20,7 +20,7 @@ void Editor::moveCamera(graphic::EventType event)
     }
 }
 
-void Editor::zoomCamera(graphic::EventType event)
+void ProjectEditor::zoomCamera(graphic::EventType event)
 {
     if (event == graphic::EventType::KEY_I)
     {

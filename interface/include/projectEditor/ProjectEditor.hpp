@@ -3,18 +3,14 @@
 #include <memory>
 #include <graphic/Graphic.hpp>
 
-class Editor {
+class ProjectEditor {
     public:
-        Editor(std::shared_ptr<graphic::Graphic> graphic);
-        ~Editor();
+        ProjectEditor(std::shared_ptr<graphic::Graphic> graphic);
+        ~ProjectEditor();
 
         int run();
         void moveCamera(graphic::EventType event);
         void zoomCamera(graphic::EventType event);
-        void checkMouseEvents(graphic::EventType event);
-        void checkInterfaceEvents(graphic::EventType event);
-
-        void addPixel(graphic::Pixel pixel);
 
     protected:
     private:

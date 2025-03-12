@@ -1,6 +1,6 @@
-#include <editor/Editor.hpp>
+#include <spriteEditor/SpriteEditor.hpp>
 
-void Editor::addPixel(graphic::Pixel pixel)
+void SpriteEditor::addPixel(graphic::Pixel pixel)
 {
     for (graphic::Pixel &p : _graphic->_pixels)
     {
@@ -13,7 +13,7 @@ void Editor::addPixel(graphic::Pixel pixel)
     _graphic->_pixels.push_back(pixel);
 }
 
-void Editor::checkMouseEvents(graphic::EventType event)
+void SpriteEditor::checkMouseEvents(graphic::EventType event)
 {
     graphic::Position position;
 
@@ -32,7 +32,7 @@ void Editor::checkMouseEvents(graphic::EventType event)
     }
 }
 
-void Editor::checkInterfaceEvents(graphic::EventType event)
+void SpriteEditor::checkInterfaceEvents(graphic::EventType event)
 {
     if (event == graphic::EventType::KEY_C) {
         _graphic->editorData.showColorSelector = !_graphic->editorData.showColorSelector;

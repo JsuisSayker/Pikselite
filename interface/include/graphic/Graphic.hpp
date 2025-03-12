@@ -52,7 +52,8 @@ namespace graphic
         Camera camera = Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
         
         bool showHome = true;
-        EditorData editorData = EditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        TabSelectorData tabSelectorData = TabSelectorData{0};
 
     private:
         SDL_Window *_window;
