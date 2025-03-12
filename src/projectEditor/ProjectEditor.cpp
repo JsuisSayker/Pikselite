@@ -33,7 +33,7 @@ int ProjectEditor::run()
         _graphic->clearWindow();
 
         _graphic->drawInterface();
-        
+
         _graphic->updateWindow();
     }
     return 0;

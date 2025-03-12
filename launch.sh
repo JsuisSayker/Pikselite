@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 binary="pikselite"
 buildDirectory="build"
