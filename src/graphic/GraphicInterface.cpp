@@ -93,18 +93,20 @@ namespace graphic
             editorSidebarInitialized = true;
         }
 
+        ImGui::PushFont(this->_iconFont);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
 
         if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse))
         {
-            if (ImGui::Button("Open pixel sidebar", ImVec2(180, 40)))
+            if (ImGui::Button(ICON_FA_BASEBALL_BALL "Open pixel sidebar", ImVec2(180, 40)))
             {
                 editorData.showPixelSidebar = !editorData.showPixelSidebar;
             }
         }
         ImGui::End();
 
+        ImGui::PopFont();
         ImGui::PopStyleColor();
     }
 

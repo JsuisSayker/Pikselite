@@ -10,6 +10,8 @@
 #include "../../extern/imgui/backends/imgui_impl_sdl2.h"
 #include "../../extern/imgui/backends/imgui_impl_sdlrenderer2.h"
 
+#include "../../extern/icons/IconsFontAwesome5.h"
+
 #include <SDL2/SDL.h>
 
 #include <iostream>
@@ -62,6 +64,7 @@ namespace graphic
     private:
         SDL_Window *_window;
         SDL_Renderer *_renderer;
+        ImFont* _iconFont = nullptr;
         bool colorSelectorInitialized = false;
         bool editorSidebarInitialized = false;
         bool pixelSidebarInitialized = false;
