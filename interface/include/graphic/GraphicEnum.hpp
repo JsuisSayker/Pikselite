@@ -93,12 +93,22 @@ namespace graphic
     struct SpriteEditorData
     {
         bool showColorSelector;
-        Color selectedColor;    
+        Color selectedColor;
         Color defaultColor;
         bool showPixelSidebar;
     };
 
-    struct TabSelectorData {
+    struct ProjectEditorData
+    {
+        bool showFileExplorer;
+        bool showLayer;
+        bool showGameAssets;
+        bool showPixelLinker;
+        bool showScenes;
+    };
+
+    struct TabSelectorData
+    {
         int tabIndex = 0;
     };
 }
