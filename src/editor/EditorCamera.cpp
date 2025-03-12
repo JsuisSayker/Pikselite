@@ -22,11 +22,11 @@ void Editor::moveCamera(graphic::EventType event)
 
 void Editor::zoomCamera(graphic::EventType event)
 {
-    if (event == graphic::EventType::KEY_I)
+    if (event == graphic::EventType::MOUSE_WHEEL_UP)
     {
         _graphic->camera.zoom += 1;
     }
-    if (event == graphic::EventType::KEY_O)
+    if (event == graphic::EventType::MOUSE_WHEEL_DOWN)
     {
         _graphic->camera.zoom -= 1;
         if (_graphic->camera.zoom < 4)

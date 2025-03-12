@@ -8,6 +8,14 @@ namespace graphic
 
         while (SDL_PollEvent(&event))
         {
+            // if the user scrolls the mouse wheel
+            if (event.type == SDL_MOUSEWHEEL)
+            {
+                if (event.wheel.y > 0)
+                    return EventType::MOUSE_WHEEL_UP;
+                if (event.wheel.y < 0)
+                    return EventType::MOUSE_WHEEL_DOWN;
+            }
             // if the user closes the window
             if (event.type == SDL_QUIT)
             {
