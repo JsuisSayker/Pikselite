@@ -1,6 +1,7 @@
 #include <projectEditor/ProjectEditor.hpp>
 
-ProjectEditor::ProjectEditor(std::shared_ptr<graphic::Graphic> graphic) : _graphic(graphic)
+ProjectEditor::ProjectEditor(std::shared_ptr<graphic::Graphic> graphic,
+                             std::shared_ptr<Core> core) : _graphic(graphic), _core(core)
 {
 }
 
@@ -22,7 +23,8 @@ int ProjectEditor::run()
         if (event == graphic::EventType::WINDOW_CLOSE)
             return 0;
 
-        if (event == graphic::EventType::KEY_TAB) {
+        if (event == graphic::EventType::KEY_TAB)
+        {
             _graphic->tabSelectorData.tabIndex += 1;
             return 0;
         }
@@ -32,6 +34,7 @@ int ProjectEditor::run()
 
         _graphic->clearWindow();
 
+        _graphic->drawSprites(_core->getSprite(), _camera);
         _graphic->drawInterface();
 
         _graphic->updateWindow();

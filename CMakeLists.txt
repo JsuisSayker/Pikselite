@@ -28,6 +28,7 @@ add_subdirectory(src/spriteEditor)
 add_subdirectory(src/projectEditor)
 add_subdirectory(src/home)
 add_subdirectory(src/tabSelector)
+add_subdirectory(src/core)
 add_subdirectory(extern/imgui)
 add_subdirectory(extern/rapidjson)
 
@@ -37,6 +38,7 @@ target_link_libraries(pikselite
   sprite_editor
   project_editor
   tab_selector
+  core
   home
 )
 

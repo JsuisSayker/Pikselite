@@ -41,6 +41,7 @@ namespace graphic
 
         Position getPosition();
 
+        void drawSprites(std::vector<std::pair<std::string, std::vector<Pixel>>> sprites, Camera camera);
         void drawPixel(Pixel pixel, Camera camera);
         void drawPixels(Camera camera);
         void drawGrid(Camera camera);
