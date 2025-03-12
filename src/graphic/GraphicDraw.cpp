@@ -83,4 +83,25 @@ namespace graphic
         SDL_SetRenderDrawColor(_renderer, rectangle.color.r, rectangle.color.g, rectangle.color.b, rectangle.color.a);
         SDL_RenderFillRect(_renderer, &rect);
     }
+
+    void Graphic::drawSprites(std::vector<std::pair<std::string, std::vector<Pixel>>> sprites, Camera camera)
+    {
+        float zoomFactor = static_cast<float>(camera.zoom);
+        float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoomFactor));
+        float rightEdge = camera.position.x + (WINDOW_WIDTH / (2.0f * zoomFactor));
+        float topEdge = camera.position.y - (WINDOW_HEIGHT / (2.0f * zoomFactor));
+        float bottomEdge = camera.position.y + (WINDOW_HEIGHT / (2.0f * zoomFactor));
+
+        for (const std::pair<std::string, std::vector<graphic::Pixel>> sprite : sprites)
+        {
+            for (const Pixel pixel : sprite.second)
+            {
+                if (pixel.position.x >= leftEdge && pixel.position.x < rightEdge &&
+                    pixel.position.y >= topEdge && pixel.position.y < bottomEdge)
+                {
+                    drawPixel(pixel, camera);
+                }
+            }
+        }
+    }
 }

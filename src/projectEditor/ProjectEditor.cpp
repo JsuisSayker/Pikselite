@@ -34,6 +34,7 @@ int ProjectEditor::run()
 
         _graphic->clearWindow();
 
+        _graphic->drawSprites(_core->getSprite(), _camera);
         _graphic->drawInterface();
 
         _graphic->updateWindow();
