@@ -11,6 +11,7 @@
 #include "../../extern/imgui/backends/imgui_impl_sdlrenderer2.h"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #include <iostream>
 #include <stdbool.h>
@@ -36,6 +37,8 @@ namespace graphic
         void drawPixels();
         void drawGrid();
         void drawRectangle(Rectangle rectangle);
+
+        void saveSprite(std::vector<Pixel> pixels, std::string filename);
 
         SDL_Renderer *getRenderer() { return _renderer; }
         SDL_Window *getWindow() { return _window; }

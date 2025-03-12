@@ -43,6 +43,10 @@ namespace graphic
                 if (ImGui::MenuItem("Exit"))
                 {
                 }
+                if (ImGui::MenuItem("Save"))
+                {
+                    saveSprite(_pixels, "sprite.png");
+                }
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Edit"))
@@ -137,5 +141,31 @@ namespace graphic
 
         ImGui::Render();
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->_renderer);
+    }
+
+    void Graphic::saveSprite(std::vector<Pixel> pixels, std::string filename)
+    {
+        // Créez une surface SDL vide avec les dimensions souhaitées
+        SDL_Surface *surface = SDL_CreateRGBSurface(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, 0, 0, 0, 0);
+
+        // put opaque white pixels on the surface
+        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 255, 255, 255, 255));
+
+        // Remplissez la surface avec les pixels fournis
+        for (const auto &pixel : pixels)
+        {
+            SDL_Rect rect = {static_cast<int>(pixel.position.x), static_cast<int>(pixel.position.y), 1, 1};
+            SDL_FillRect(surface, &rect, SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a));
+        }
+
+        // Enregistrez la surface au format PNG
+        if (IMG_SavePNG(surface, filename.c_str()) != 0)
+        {
+            std::cerr << "Erreur lors de l'enregistrement de l'image PNG : " << IMG_GetError() << std::endl;
+        }
+
+        // Libérez la surface
+        SDL_FreeSurface(surface);
+        std::cout << "Sprite saved as " << filename << std::endl;
     }
 }
