@@ -42,6 +42,9 @@ namespace graphic
 
         void colorSelector();
         void navBar();
+        void editorSidebar();
+        void pixelSidebar();
+        
         void homeInterface();
 
         void drawInterface();
@@ -53,10 +56,15 @@ namespace graphic
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
         TabSelectorData tabSelectorData = TabSelectorData{0};
+        bool isSpriteEditor = false;
+        bool isProjectEditor = false;
 
     private:
         SDL_Window *_window;
         SDL_Renderer *_renderer;
         bool colorSelectorInitialized = false;
+        bool editorSidebarInitialized = false;
+        bool pixelSidebarInitialized = false;
+        float navBarHeight = 0.0f;
     };
 } // namespace sdl2
