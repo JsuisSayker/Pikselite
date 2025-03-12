@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  pikselite:
+    build: .
+    environment:
+      - DISPLAY=${DISPLAY}
+      - XDG_RUNTIME_DIR=/tmp/runtime
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+    command: "./pikselite"
+    stdin_open: true
+    tty: true

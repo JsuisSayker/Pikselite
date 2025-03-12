@@ -1,0 +1,5 @@
+build/
+.gitignore
+pikselite
+Dockerfile
+README.md
