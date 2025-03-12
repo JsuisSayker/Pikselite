@@ -46,6 +46,7 @@ namespace graphic
                 if (ImGui::MenuItem("Save"))
                 {
                     saveSprite(_pixels, "sprite.png");
+                    createExternalAttributeFile("sprite.json", _pixels);
                 }
                 ImGui::EndMenu();
             }
@@ -161,6 +162,48 @@ namespace graphic
         }
 
         SDL_FreeSurface(surface);
-        std::cout << "Sprite saved as " << filename << std::endl;
+    }
+
+    void Graphic::createExternalAttributeFile(const std::string &filename, const std::vector<Pixel> &pixels)
+    {
+
+        rapidjson::Document doc;
+        doc.SetObject();
+        rapidjson::Document::AllocatorType &allocator = doc.GetAllocator();
+
+        rapidjson::Value pixelArray(rapidjson::kArrayType);
+
+        for (const auto &pixel : pixels)
+        {
+            rapidjson::Value pixelObj(rapidjson::kObjectType);
+
+            rapidjson::Value posObj(rapidjson::kObjectType);
+            posObj.AddMember("x", pixel.position.x, allocator);
+            posObj.AddMember("y", pixel.position.y, allocator);
+            pixelObj.AddMember("position", posObj, allocator);
+
+            rapidjson::Value colorObj(rapidjson::kObjectType);
+            colorObj.AddMember("r", static_cast<int>(pixel.color.r), allocator);
+            colorObj.AddMember("g", static_cast<int>(pixel.color.g), allocator);
+            colorObj.AddMember("b", static_cast<int>(pixel.color.b), allocator);
+            colorObj.AddMember("a", static_cast<int>(pixel.color.a), allocator);
+            pixelObj.AddMember("color", colorObj, allocator);
+
+            pixelArray.PushBack(pixelObj, allocator);
+        }
+
+        doc.AddMember("pixels", pixelArray, allocator);
+
+        rapidjson::StringBuffer buffer;
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+        doc.Accept(writer);
+
+        std::ofstream ofs(filename);
+        if (!ofs)
+        {
+            throw std::runtime_error("Could not open file: " + filename);
+        }
+        ofs << buffer.GetString();
+        ofs.close();
     }
 }

@@ -16,4 +16,5 @@ target_link_libraries(graphic
   SDL2_image::SDL2_image
   imgui
   pikselite_interface
+  rapidjson_interface
 )
