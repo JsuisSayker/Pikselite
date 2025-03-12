@@ -94,5 +94,6 @@ namespace graphic
         bool showColorSelector;
         Color selectedColor;    
         Color defaultColor;
+        bool showPixelSidebar;
     };
 }

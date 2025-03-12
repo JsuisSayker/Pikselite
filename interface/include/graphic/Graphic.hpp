@@ -42,6 +42,9 @@ namespace graphic
 
         void colorSelector();
         void navBar();
+        void editorSidebar();
+        void pixelSidebar();
+        
         void homeInterface();
 
         void drawInterface();
@@ -58,5 +61,8 @@ namespace graphic
         SDL_Window *_window;
         SDL_Renderer *_renderer;
         bool colorSelectorInitialized = false;
+        bool editorSidebarInitialized = false;
+        bool pixelSidebarInitialized = false;
+        float navBarHeight = 0.0f;
     };
 } // namespace sdl2

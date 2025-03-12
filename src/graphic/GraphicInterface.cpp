@@ -45,6 +45,7 @@ namespace graphic
                 }
                 ImGui::EndMenu();
             }
+
             if (ImGui::BeginMenu("Edit"))
             {
                 if (ImGui::MenuItem("Undo"))
@@ -55,6 +56,7 @@ namespace graphic
                 }
                 ImGui::EndMenu();
             }
+
             if (ImGui::BeginMenu("Help"))
             {
                 if (ImGui::MenuItem("About"))
@@ -71,11 +73,44 @@ namespace graphic
             {
                 _windowOpen = false;
             }
+
+            this->navBarHeight = ImGui::GetWindowHeight();
+
             ImGui::EndMainMenuBar();
         }
+        
         ImGui::PopStyleColor();
 
         ImGui::PopStyleVar();
+    }
+
+    void Graphic::editorSidebar()
+    {
+        float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
+        if (!editorSidebarInitialized)
+        {
+            ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
+            editorSidebarInitialized = true;
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
+
+        if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse))
+        {
+            if (ImGui::Button("Open pixel sidebar", ImVec2(180, 40)))
+            {
+                editorData.showPixelSidebar = !editorData.showPixelSidebar;
+            }
+        }
+        ImGui::End();
+
+        ImGui::PopStyleColor();
+    }
+
+    void Graphic::pixelSidebar()
+    {
+        std::cout << "Pixel Sidebar opened" << std::endl; /////////////////////
     }
 
     void Graphic::homeInterface()
@@ -134,6 +169,7 @@ namespace graphic
             colorSelector();
 
         navBar();
+        editorSidebar();
 
         ImGui::Render();
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->_renderer);
