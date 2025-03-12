@@ -164,12 +164,13 @@ namespace graphic
 
         if (showHome)
             homeInterface();
+        else
+            editorSidebar();
 
         if (editorData.showColorSelector)
             colorSelector();
 
         navBar();
-        editorSidebar();
 
         ImGui::Render();
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->_renderer);
