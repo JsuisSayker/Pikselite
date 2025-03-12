@@ -5,6 +5,8 @@ namespace graphic
 {
     enum class EventType : uint8_t
     {
+        MOUSE_WHEEL_UP,
+        MOUSE_WHEEL_DOWN,
         WINDOW_CLOSE,
         MOUSE_CLICK_LEFT,
         MOUSE_CLICK_RIGHT,
