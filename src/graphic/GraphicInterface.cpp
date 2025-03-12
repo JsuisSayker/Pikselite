@@ -164,7 +164,8 @@ namespace graphic
 
         if (showHome)
             homeInterface();
-        else
+        
+        if (isSpriteEditor)
             editorSidebar();
 
         if (editorData.showColorSelector)

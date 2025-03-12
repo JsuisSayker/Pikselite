@@ -56,6 +56,8 @@ namespace graphic
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
         TabSelectorData tabSelectorData = TabSelectorData{0};
+        bool isSpriteEditor = false;
+        bool isProjectEditor = false;
 
     private:
         SDL_Window *_window;
