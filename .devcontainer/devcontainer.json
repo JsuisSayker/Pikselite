@@ -42,7 +42,8 @@
 				"editor.formatOnSave": true
 			},
 			"extensions": [
-				"ms-vscode.cpptools-extension-pack"
+				"ms-vscode.cpptools-extension-pack",
+				"WakaTime.vscode-wakatime"
 			]
 		}
 	},
