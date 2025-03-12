@@ -95,6 +95,9 @@ namespace graphic
         bool showColorSelector;
         Color selectedColor;    
         Color defaultColor;
+        bool showPixelSidebar;
+        bool showGrid;
+        bool autoLink;
     };
 
     struct TabSelectorData {

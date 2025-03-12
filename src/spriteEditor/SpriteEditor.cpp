@@ -12,6 +12,9 @@ int SpriteEditor::run()
 {
     graphic::EventType event;
 
+    _graphic->isSpriteEditor = true;
+    _graphic->isProjectEditor = false; 
+
     while (_graphic->_windowOpen)
     {
         event = _graphic->checkEvent();
@@ -32,7 +35,8 @@ int SpriteEditor::run()
         _graphic->clearWindow();
 
         _graphic->drawPixels(_camera);
-        _graphic->drawGrid(_camera);
+        if (_graphic->editorData.showGrid)
+            _graphic->drawGrid(_camera);
         _graphic->drawInterface();
         
         _graphic->updateWindow();
