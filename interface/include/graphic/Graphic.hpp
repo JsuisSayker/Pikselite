@@ -33,9 +33,9 @@ namespace graphic
 
         Position getPosition();
 
-        void drawPixel(Pixel pixel);
-        void drawPixels();
-        void drawGrid();
+        void drawPixel(Pixel pixel, Camera camera);
+        void drawPixels(Camera camera);
+        void drawGrid(Camera camera);
         void drawRectangle(Rectangle rectangle);
 
         void saveSprite(std::vector<Pixel> pixels, std::string filename);
@@ -52,10 +52,10 @@ namespace graphic
         bool _windowOpen = true;
         
         std::vector<Pixel> _pixels;
-        Camera camera = Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
         
         bool showHome = true;
-        EditorData editorData = EditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        TabSelectorData tabSelectorData = TabSelectorData{0};
 
     private:
         SDL_Window *_window;

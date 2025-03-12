@@ -3,10 +3,10 @@
 #include <memory>
 #include <graphic/Graphic.hpp>
 
-class Editor {
+class SpriteEditor {
     public:
-        Editor(std::shared_ptr<graphic::Graphic> graphic);
-        ~Editor();
+        SpriteEditor(std::shared_ptr<graphic::Graphic> graphic);
+        ~SpriteEditor();
 
         int run();
         void moveCamera(graphic::EventType event);
@@ -18,5 +18,6 @@ class Editor {
 
     protected:
     private:
+        graphic::Camera _camera = graphic::Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
         std::shared_ptr<graphic::Graphic> _graphic;
 };
