@@ -96,11 +96,21 @@ namespace graphic
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
 
-        if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse))
+        if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
             if (ImGui::Button("Open pixel sidebar", ImVec2(180, 40)))
             {
                 editorData.showPixelSidebar = !editorData.showPixelSidebar;
+            }
+            if (ImGui::Checkbox("Show grid", &editorData.showGrid))
+            {
+            }
+            if (ImGui::Checkbox("Auto link", &editorData.autoLink))
+            {
+            }
+            if (ImGui::Button("Clear", ImVec2(180, 40)))
+            {
+                _pixels.clear();
             }
         }
         ImGui::End();

@@ -54,7 +54,7 @@ namespace graphic
         std::vector<Pixel> _pixels;
         
         bool showHome = true;
-        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}, false, true};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
