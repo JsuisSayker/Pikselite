@@ -12,6 +12,9 @@ int SpriteEditor::run()
 {
     graphic::EventType event;
 
+    _graphic->isSpriteEditor = true;
+    _graphic->isProjectEditor = false; 
+
     while (_graphic->_windowOpen)
     {
         event = _graphic->checkEvent();
