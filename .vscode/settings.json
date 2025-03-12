@@ -1,5 +1,8 @@
 {
     "files.associations": {
+        "*.page-template": "vue",
+        "*.layout-template": "vue",
+        "*.vue": "vue",
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -58,6 +61,10 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "chrono": "cpp",
+        "condition_variable": "cpp",
+        "iomanip": "cpp",
+        "mutex": "cpp"
     }
 }
