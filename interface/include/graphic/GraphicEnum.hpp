@@ -18,6 +18,7 @@ namespace graphic
         KEY_ARROW_DOWN,
         KEY_ARROW_LEFT,
         KEY_ARROW_RIGHT,
+        KEY_TAB,
         KEY_A,
         KEY_B,
         KEY_C,
@@ -89,10 +90,14 @@ namespace graphic
         Color color;
     };
 
-    struct EditorData
+    struct SpriteEditorData
     {
         bool showColorSelector;
         Color selectedColor;    
         Color defaultColor;
+    };
+
+    struct TabSelectorData {
+        int tabIndex = 0;
     };
 }

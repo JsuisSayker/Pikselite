@@ -21,14 +21,18 @@ add_executable(pikselite
 
 add_subdirectory(interface)
 add_subdirectory(src/graphic)
-add_subdirectory(src/editor)
+add_subdirectory(src/spriteEditor)
+add_subdirectory(src/projectEditor)
 add_subdirectory(src/home)
+add_subdirectory(src/tabSelector)
 add_subdirectory(extern/imgui)
 
 target_link_libraries(pikselite
   pikselite_interface
   graphic
-  editor
+  sprite_editor
+  project_editor
+  tab_selector
   home
 )
 

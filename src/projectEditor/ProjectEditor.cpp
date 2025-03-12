@@ -1,14 +1,14 @@
-#include <editor/Editor.hpp>
+#include <projectEditor/ProjectEditor.hpp>
 
-Editor::Editor(std::shared_ptr<graphic::Graphic> graphic) : _graphic(graphic)
+ProjectEditor::ProjectEditor(std::shared_ptr<graphic::Graphic> graphic) : _graphic(graphic)
 {
 }
 
-Editor::~Editor()
+ProjectEditor::~ProjectEditor()
 {
 }
 
-int Editor::run()
+int ProjectEditor::run()
 {
     graphic::EventType event;
 
@@ -19,15 +19,16 @@ int Editor::run()
         if (event == graphic::EventType::WINDOW_CLOSE)
             return 0;
 
-        checkMouseEvents(event);
-        checkInterfaceEvents(event);
+        if (event == graphic::EventType::KEY_TAB) {
+            _graphic->tabSelectorData.tabIndex += 1;
+            return 0;
+        }
+
         moveCamera(event);
         zoomCamera(event);
 
         _graphic->clearWindow();
 
-        _graphic->drawPixels();
-        _graphic->drawGrid();
         _graphic->drawInterface();
 
         _graphic->updateWindow();

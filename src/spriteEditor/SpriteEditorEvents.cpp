@@ -1,6 +1,6 @@
-#include <editor/Editor.hpp>
+#include <spriteEditor/SpriteEditor.hpp>
 
-void Editor::addPixel(graphic::Pixel pixel)
+void SpriteEditor::addPixel(graphic::Pixel pixel)
 {
     for (graphic::Pixel &p : _graphic->_pixels)
     {
@@ -13,16 +13,16 @@ void Editor::addPixel(graphic::Pixel pixel)
     _graphic->_pixels.push_back(pixel);
 }
 
-void Editor::checkMouseEvents(graphic::EventType event)
+void SpriteEditor::checkMouseEvents(graphic::EventType event)
 {
     graphic::Position position;
 
     if (event == graphic::EventType::MOUSE_CLICK_LEFT || event == graphic::EventType::MOUSE_DRAG_LEFT)
     {
         position = _graphic->getPosition();
-        float zoom = static_cast<float>(_graphic->camera.zoom);
-        position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _graphic->camera.position.x;
-        position.y = (position.y - WINDOW_HEIGHT / 2.0f) / zoom + _graphic->camera.position.y;
+        float zoom = static_cast<float>(_camera.zoom);
+        position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
+        position.y = (position.y - WINDOW_HEIGHT / 2.0f) / zoom + _camera.position.y;
 
         // Snap to grid (integer grid)
         position.x = std::round(position.x);
@@ -32,7 +32,7 @@ void Editor::checkMouseEvents(graphic::EventType event)
     }
 }
 
-void Editor::checkInterfaceEvents(graphic::EventType event)
+void SpriteEditor::checkInterfaceEvents(graphic::EventType event)
 {
     if (event == graphic::EventType::KEY_C) {
         _graphic->editorData.showColorSelector = !_graphic->editorData.showColorSelector;
