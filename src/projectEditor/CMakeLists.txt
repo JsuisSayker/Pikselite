@@ -9,4 +9,5 @@ target_link_libraries(project_editor
   pikselite_interface
   imgui
   graphic
+  core
 )
