@@ -1,0 +1,50 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/cpp
+{
+	"name": "C++",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	// X11 forwarding
+	"containerEnv": {
+		"DISPLAY": "${localEnv:DISPLAY}"
+	},
+	// X11 forwarding
+	"remoteEnv": {
+		"DOCKER_BUILDKIT": "0"
+	},
+	// X11 forwarding
+	"runArgs": [
+		"--device=/dev/dri:/dev/dri",
+		"--volume=/tmp/.X11-unix:/tmp/.X11-unix"
+	],
+	"mounts": [
+		"source=.,target=/workspaces/,type=bind",
+		// SSH keys
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/vscode/.ssh,type=bind",
+		// ZSH with Zinit and Powerlevel10k
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.zshrc,target=/home/vscode/.zshrc,type=bind",
+		"source=${localEnv:HOME}${localEnv:USERPROFILE}/.zsh_history,target=/home/vscode/.zsh_history,type=bind",
+		"source=oh-my-zsh,target=/home/vscode/.oh-my-zsh,type=volume"
+	],
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "sudo chown vscode -R /home/vscode/.oh-my-zsh && sudo chown vscode -R /home/vscode/.zsh_history && sudo chown vscode -R /home/vscode/.ssh",
+	// "postCreateCommand": "gcc -v",
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"editor.formatOnSave": true
+			},
+			"extensions": [
+				"ms-vscode.cpptools-extension-pack"
+			]
+		}
+	},
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	"remoteUser": "vscode"
+}

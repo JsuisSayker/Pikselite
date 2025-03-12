@@ -29,7 +29,7 @@ int Editor::run()
         _graphic->drawPixels();
         _graphic->drawGrid();
         _graphic->drawInterface();
-        
+
         _graphic->updateWindow();
     }
     return 0;
