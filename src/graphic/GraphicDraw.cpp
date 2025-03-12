@@ -2,7 +2,7 @@
 
 namespace graphic
 {
-    void Graphic::drawPixel(Pixel pixel)
+    void Graphic::drawPixel(Pixel pixel, Camera camera)
     {
         float zoom = static_cast<float>(camera.zoom);
         float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoom));
@@ -24,7 +24,7 @@ namespace graphic
         SDL_RenderFillRect(_renderer, &rect);
     }
 
-    void Graphic::drawGrid()
+    void Graphic::drawGrid(Camera camera)
     {
         float zoom = static_cast<float>(camera.zoom);
         float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoom));
@@ -53,7 +53,7 @@ namespace graphic
         }
     }
 
-    void Graphic::drawPixels()
+    void Graphic::drawPixels(Camera camera)
     {
         float zoomFactor = static_cast<float>(camera.zoom);
         float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoomFactor));
@@ -66,7 +66,7 @@ namespace graphic
             if (pixel.position.x >= leftEdge && pixel.position.x < rightEdge &&
                 pixel.position.y >= topEdge && pixel.position.y < bottomEdge)
             {
-                drawPixel(pixel);
+                drawPixel(pixel, camera);
             }
         }
     }

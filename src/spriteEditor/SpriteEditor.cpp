@@ -31,8 +31,8 @@ int SpriteEditor::run()
 
         _graphic->clearWindow();
 
-        _graphic->drawPixels();
-        _graphic->drawGrid();
+        _graphic->drawPixels(_camera);
+        _graphic->drawGrid(_camera);
         _graphic->drawInterface();
         
         _graphic->updateWindow();

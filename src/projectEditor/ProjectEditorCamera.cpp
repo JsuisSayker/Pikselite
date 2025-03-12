@@ -4,19 +4,19 @@ void ProjectEditor::moveCamera(graphic::EventType event)
 {
     if (event == graphic::EventType::KEY_ARROW_UP)
     {
-        _graphic->camera.position.y -= 10;
+        _camera.position.y -= 10;
     }
     if (event == graphic::EventType::KEY_ARROW_DOWN)
     {
-        _graphic->camera.position.y += 10;
+        _camera.position.y += 10;
     }
     if (event == graphic::EventType::KEY_ARROW_LEFT)
     {
-        _graphic->camera.position.x -= 10;
+        _camera.position.x -= 10;
     }
     if (event == graphic::EventType::KEY_ARROW_RIGHT)
     {
-        _graphic->camera.position.x += 10;
+        _camera.position.x += 10;
     }
 }
 
@@ -24,12 +24,12 @@ void ProjectEditor::zoomCamera(graphic::EventType event)
 {
     if (event == graphic::EventType::KEY_I)
     {
-        _graphic->camera.zoom += 1;
+        _camera.zoom += 1;
     }
     if (event == graphic::EventType::KEY_O)
     {
-        _graphic->camera.zoom -= 1;
-        if (_graphic->camera.zoom < 4)
-            _graphic->camera.zoom = 4;
+        _camera.zoom -= 1;
+        if (_camera.zoom < 4)
+            _camera.zoom = 4;
     }
 }
