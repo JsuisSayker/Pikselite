@@ -32,7 +32,8 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo chown vscode -R /home/vscode/.oh-my-zsh && sudo chown vscode -R /home/vscode/.zsh_history && sudo chown vscode -R /home/vscode/.ssh",
+	// "postCreateCommand": "sudo chown vscode -R /home/vscode/.oh-my-zsh && sudo chown vscode -R /home/vscode/.zsh_history && sudo chown vscode -R /home/vscode/.ssh",
+	"postCreateCommand": "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/vscode/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting || true && git clone https://github.com/zsh-users/zsh-autosuggestions.git /home/vscode/.oh-my-zsh/custom/plugins/zsh-autosuggestions || true && sudo chown vscode -R /home/vscode/.oh-my-zsh && sudo chown vscode -R /home/vscode/.zsh_history && sudo chown vscode -R /home/vscode/.ssh",
 	// "postCreateCommand": "gcc -v",
 	// Configure tool-specific properties.
 	"customizations": {
