@@ -118,9 +118,10 @@ namespace graphic
         std::variant<light, solid, liquid> defaultAttribute;
 
         bool showColorSelector;
-        bool showPixelSidebar;
+        bool showPixelEditorSidebar;
         bool showGrid;
         bool autoLink;
+        bool showLightOptions;
     };
 
     struct ProjectEditorData

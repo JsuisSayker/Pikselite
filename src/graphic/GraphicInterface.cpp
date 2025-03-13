@@ -99,12 +99,12 @@ namespace graphic
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
 
-        if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
+        if (ImGui::Begin("Sprite Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
             ImGui::PushFont(this->_iconFont);
             if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
             {
-                editorData.showPixelSidebar = !editorData.showPixelSidebar;
+                editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
             }
             ImGui::PopFont();
 
@@ -188,9 +188,77 @@ namespace graphic
         }
     }
 
-    void Graphic::pixelSidebar()
+    void Graphic::pixelEditorSidebar()
     {
-        std::cout << "Pixel Sidebar opened" << std::endl;
+        float sidebarWidth = 200.0f;
+        float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
+        if (!pixelEditorSidebarInitialized)
+        {
+            ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
+            pixelEditorSidebarInitialized = true;
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - sidebarWidth, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
+
+        if (ImGui::Begin("Pixel Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
+        {
+            ImGui::Text("Color Selector");
+            ImGui::BeginChild("Color Selector Child", ImVec2(ImGui::GetContentRegionAvail().x, 200), true, ImGuiWindowFlags_NoScrollbar);
+            static ImVec4 color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+            ImGui::ColorPicker4("##color", (float *)&color, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
+            ImGui::EndChild();
+
+            editorData.defaultColor = {
+                static_cast<uint8_t>(color.x * 255),
+                static_cast<uint8_t>(color.y * 255),
+                static_cast<uint8_t>(color.z * 255),
+                static_cast<uint8_t>(color.w * 255)};
+
+            ImGui::Separator();
+
+            ImGui::Text("Status");
+            if (ImGui::Button("Light", ImVec2(180, 40)))
+            {
+                editorData.showLightOptions = true;
+            }
+            if (ImGui::Button("Solid", ImVec2(180, 40)))
+            {
+                //
+            }
+            if (ImGui::Button("Liquid", ImVec2(180, 40)))
+            {
+                //
+            }
+        }
+        ImGui::End();
+
+        ImGui::PopStyleColor();
+    }
+
+    void Graphic::lightOptions()
+    {
+        ImGui::OpenPopup("Light Options");
+        float popupWidth = 200.0f;
+        float popupHeight = 200.0f;
+        ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_FirstUseEver);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2));
+
+        if (ImGui::BeginPopup("Light Options"))
+        {
+            ImGui::Text("Light Options");
+            ImGui::SliderInt("Radius", &lightData.radius, 0, 100);
+            ImGui::SliderInt("Intensity", &lightData.intensity, 0, 100);
+            if (ImGui::Button("Close"))
+            {
+                ImGui::CloseCurrentPopup();
+                editorData.showLightOptions = false;
+            }
+            ImGui::EndPopup();
+        }
+
+        ImGui::PopStyleColor();
     }
 
     void Graphic::homeInterface()
@@ -260,8 +328,11 @@ namespace graphic
         if (editorData.showColorSelector)
             colorSelector();
 
-        if (editorData.showPixelSidebar)
-            pixelSidebar();
+        if (editorData.showPixelEditorSidebar)
+            pixelEditorSidebar();
+
+        if (editorData.showLightOptions)
+            lightOptions();
 
         navBar();
 
