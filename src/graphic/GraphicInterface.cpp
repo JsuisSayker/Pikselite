@@ -206,6 +206,8 @@ namespace graphic
             if (ImGui::Button("Light", ImVec2(180, 40)))
             {
                 editorData.showLightOptions = true;
+                std::cout << "Light radius: " << lightData.radius << std::endl; /////////////////////////
+                std::cout << "Light intensity: " << lightData.intensity << "\n" << std::endl; ///////////////////
             }
             if (ImGui::Button("Solid", ImVec2(180, 40)))
             {
@@ -226,17 +228,26 @@ namespace graphic
         ImGui::OpenPopup("Light Options");
         float popupWidth = 200.0f;
         float popupHeight = 200.0f;
-        ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2));
 
         if (ImGui::BeginPopup("Light Options"))
         {
+            static int newRadius = 0;
+            static int newIntensity = 0;
             ImGui::Text("Light Options");
-            ImGui::SliderInt("Radius", &lightData.radius, 0, 100);
-            ImGui::SliderInt("Intensity", &lightData.intensity, 0, 100);
-            if (ImGui::Button("Close"))
+            ImGui::SliderInt("Radius", &newRadius, 0, 100);
+            ImGui::SliderInt("Intensity", &newIntensity, 0, 100);
+            if (ImGui::Button("Cancel"))
             {
+                ImGui::CloseCurrentPopup();
+                editorData.showLightOptions = false;
+            }
+            if (ImGui::Button("Save"))
+            {
+                lightData.radius = newRadius;
+                lightData.intensity = newIntensity;
                 ImGui::CloseCurrentPopup();
                 editorData.showLightOptions = false;
             }
