@@ -13,4 +13,5 @@ target_include_directories(pikselite_interface
   INTERFACE "include"
   ../../extern/imgui
   ../../extern/imgui/backends
+  ../../extern/icons
 )

@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <iostream>
+#include <vector>
+#include <variant>
 
 namespace graphic
 {
@@ -85,17 +87,37 @@ namespace graphic
         Position position;
     };
 
+    struct light
+    {
+        int radius;
+        int intensity;
+    };
+
+    struct solid
+    {
+    };
+
+    struct liquid
+    {
+        int viscosity;
+    };
+
     struct Pixel
     {
         Position position;
         Color color;
+        std::vector<std::variant<liquid, solid, light>> attributes;
     };
 
     struct SpriteEditorData
     {
-        bool showColorSelector;
         Color selectedColor;
         Color defaultColor;
+
+        std::variant<light, solid, liquid> selectedAttribute;
+        std::variant<light, solid, liquid> defaultAttribute;
+
+        bool showColorSelector;
         bool showPixelSidebar;
         bool showGrid;
         bool autoLink;

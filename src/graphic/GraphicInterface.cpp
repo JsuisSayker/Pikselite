@@ -90,10 +90,10 @@ namespace graphic
     void Graphic::spriteEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
-        if (!editorSidebarInitialized)
+        if (!spriteEditorSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            editorSidebarInitialized = true;
+            spriteEditorSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -101,10 +101,13 @@ namespace graphic
 
         if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            if (ImGui::Button("Open pixel sidebar", ImVec2(180, 40)))
+            ImGui::PushFont(this->_iconFont);
+            if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
             {
                 editorData.showPixelSidebar = !editorData.showPixelSidebar;
             }
+            ImGui::PopFont();
+
             if (ImGui::Checkbox("Show grid", &editorData.showGrid))
             {
             }
@@ -129,10 +132,10 @@ namespace graphic
     void Graphic::projectEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
-        if (!editorSidebarInitialized)
+        if (!projectEditorSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            editorSidebarInitialized = true;
+            projectEditorSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -152,12 +155,12 @@ namespace graphic
 
     void Graphic::addFileExplorer()
     {
-        if (ImGui::Begin("File Explorer", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
-        {
-            // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
+        // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
 
-            if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
@@ -166,8 +169,8 @@ namespace graphic
                 }
                 ImGuiFileDialog::Instance()->Close();
             }
+            ImGuiFileDialog::Instance()->Close();
         }
-        ImGui::End();
     }
 
     void Graphic::pixelSidebar()
@@ -238,6 +241,9 @@ namespace graphic
 
         if (editorData.showColorSelector)
             colorSelector();
+
+        if (editorData.showPixelSidebar)
+            pixelSidebar();
 
         navBar();
 

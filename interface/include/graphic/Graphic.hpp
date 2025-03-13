@@ -10,6 +10,8 @@
 #include "../../extern/imgui/backends/imgui_impl_sdl2.h"
 #include "../../extern/imgui/backends/imgui_impl_sdlrenderer2.h"
 
+#include "../../extern/icons/IconsFontAwesome5.h"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
@@ -73,7 +75,7 @@ namespace graphic
         std::vector<Pixel> _pixels;
 
         bool showHome = true;
-        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::variant<light, solid, liquid>{light{0, 0}}, std::variant<light, solid, liquid>{light{0, 0}}, false};
         ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, ""};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         bool isSpriteEditor = false;
@@ -82,8 +84,10 @@ namespace graphic
     private:
         SDL_Window *_window;
         SDL_Renderer *_renderer;
+        ImFont* _iconFont = nullptr;
         bool colorSelectorInitialized = false;
-        bool editorSidebarInitialized = false;
+        bool spriteEditorSidebarInitialized = false;
+        bool projectEditorSidebarInitialized = false;
         bool pixelSidebarInitialized = false;
         float navBarHeight = 0.0f;
     };
