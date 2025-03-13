@@ -8,7 +8,7 @@ Core::~Core()
 {
 }
 
-void Core::addSprite(std::pair<std::string, std::vector<graphic::Pixel>> sprite)
+void Core::addSprite(graphic::Sprite sprite)
 {
     this->_Sprites.push_back(sprite);
 }

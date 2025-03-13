@@ -104,8 +104,10 @@ namespace graphic
 
     struct Pixel
     {
-        Position position;
+        bool isSelected;
+
         Color color;
+        Position position;
         std::vector<std::variant<liquid, solid, light>> attributes;
     };
 
@@ -137,5 +139,14 @@ namespace graphic
     struct TabSelectorData
     {
         int tabIndex = 0;
+    };
+
+    struct Sprite
+    {
+        bool isSelected;
+
+        Position position;
+        std::string name;
+        std::vector<Pixel> pixels;
     };
 }

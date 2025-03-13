@@ -126,7 +126,7 @@ namespace graphic
         ofs.close();
     }
 
-    std::pair<std::string, std::vector<Pixel>> Graphic::loadSpriteFromJSON(const std::string &filename)
+    Sprite Graphic::loadSpriteFromJSON(const std::string &filename)
     {
         std::vector<Pixel> pixels;
         FILE *fp = std::fopen(filename.c_str(), "rb");
@@ -183,7 +183,7 @@ namespace graphic
 
             pixels.push_back(p);
         }
-        std::pair<std::string, std::vector<Pixel>> sprite = std::make_pair(filename, pixels);
+        Sprite sprite = Sprite{false, Position{0, 0}, filename, pixels};
         return sprite;
     }
 }
