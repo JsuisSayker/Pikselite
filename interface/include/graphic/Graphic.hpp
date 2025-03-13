@@ -59,7 +59,7 @@ namespace graphic
         void navBar();
         void spriteEditorSidebar();
         void projectEditorSidebar();
-        void pixelSidebar();
+        void pixelEditorSidebar();
         void addFileExplorer();
 
         void homeInterface();
@@ -84,7 +84,7 @@ namespace graphic
         bool colorSelectorInitialized = false;
         bool spriteEditorSidebarInitialized = false;
         bool projectEditorSidebarInitialized = false;
-        bool pixelSidebarInitialized = false;
+        bool pixelEditorSidebarInitialized = false;
         float navBarHeight = 0.0f;
     };
 } // namespace sdl2
