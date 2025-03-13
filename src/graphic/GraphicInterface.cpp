@@ -118,10 +118,9 @@ namespace graphic
             {
                 _pixels.clear();
             }
-            if (ImGui::Button("Save", ImVec2(180, 40)))
+            if (ImGui::Button("Export Sprite", ImVec2(180, 40)))
             {
-                saveSprite(_pixels, "sprite.png");
-                createExternalAttributeFile("sprite.json", _pixels);
+                projectData.showDirectoryChooser = !projectData.showDirectoryChooser;
             }
         }
         ImGui::End();
@@ -151,6 +150,22 @@ namespace graphic
         ImGui::End();
 
         ImGui::PopStyleColor();
+    }
+
+    void Graphic::addDirectoryChooser()
+    {
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose a Directory", nullptr, config);
+        if (ImGuiFileDialog::Instance()->Display("ChooseDirDlgKey"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                projectData.folderPath = filePathName;
+            }
+            ImGuiFileDialog::Instance()->Close();
+        }
     }
 
     void Graphic::addFileExplorer()
@@ -238,6 +253,9 @@ namespace graphic
 
         if (projectData.showFileExplorer)
             addFileExplorer();
+
+        if (projectData.showDirectoryChooser)
+            addDirectoryChooser();
 
         if (editorData.showColorSelector)
             colorSelector();

@@ -65,6 +65,7 @@ namespace graphic
         void projectEditorSidebar();
         void pixelSidebar();
         void addFileExplorer();
+        void addDirectoryChooser();
 
         void homeInterface();
 
@@ -76,7 +77,7 @@ namespace graphic
 
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::variant<light, solid, liquid>{light{0, 0}}, std::variant<light, solid, liquid>{light{0, 0}}, false};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, ""};
+        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, "", ""};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
