@@ -13,12 +13,15 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
+// rapidjson includes
 #include "document.h"
 #include "reader.h"
 #include "writer.h"
 #include "stringbuffer.h"
 #include "prettywriter.h"
+#include "filereadstream.h"
 
+#include <cstdio>
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -49,6 +52,7 @@ namespace graphic
 
         void saveSprite(std::vector<Pixel> pixels, std::string filename);
         void createExternalAttributeFile(const std::string& filename, const std::vector<Pixel>& pixels);
+        std::pair<std::string, std::vector<Pixel>> loadSpriteFromJSON(const std::string& filename);
 
         SDL_Renderer *getRenderer() { return _renderer; }
         SDL_Window *getWindow() { return _window; }
@@ -70,7 +74,7 @@ namespace graphic
 
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false};
+        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, ""};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;

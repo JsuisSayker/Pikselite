@@ -140,7 +140,7 @@ namespace graphic
 
         if (ImGui::Begin("Project Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            if (ImGui::Button("Open file explorer", ImVec2(180, 40)))
+            if (ImGui::Button("Import Sprite", ImVec2(180, 40)))
             {
                 projectData.showFileExplorer = !projectData.showFileExplorer;
             }
@@ -155,14 +155,14 @@ namespace graphic
         if (ImGui::Begin("File Explorer", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
             // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
 
             if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
                     std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                    std::cout << "Selected file: " << filePathName << std::endl;
+                    projectData.spritePath = filePathName;
                 }
                 ImGuiFileDialog::Instance()->Close();
             }
@@ -243,68 +243,5 @@ namespace graphic
 
         ImGui::Render();
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->_renderer);
-    }
-
-    void Graphic::saveSprite(std::vector<Pixel> pixels, std::string filename)
-    {
-        SDL_Surface *surface = SDL_CreateRGBSurface(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, 0, 0, 0, 0);
-
-        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 255, 255, 255, 255));
-
-        for (const auto &pixel : pixels)
-        {
-            SDL_Rect rect = {static_cast<int>(pixel.position.x), static_cast<int>(pixel.position.y), 1, 1};
-            SDL_FillRect(surface, &rect, SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a));
-        }
-
-        if (IMG_SavePNG(surface, filename.c_str()) != 0)
-        {
-            std::cerr << "Erreur lors de l'enregistrement de l'image PNG : " << IMG_GetError() << std::endl;
-        }
-
-        SDL_FreeSurface(surface);
-    }
-
-    void Graphic::createExternalAttributeFile(const std::string &filename, const std::vector<Pixel> &pixels)
-    {
-
-        rapidjson::Document doc;
-        doc.SetObject();
-        rapidjson::Document::AllocatorType &allocator = doc.GetAllocator();
-
-        rapidjson::Value pixelArray(rapidjson::kArrayType);
-
-        for (const auto &pixel : pixels)
-        {
-            rapidjson::Value pixelObj(rapidjson::kObjectType);
-
-            rapidjson::Value posObj(rapidjson::kObjectType);
-            posObj.AddMember("x", pixel.position.x, allocator);
-            posObj.AddMember("y", pixel.position.y, allocator);
-            pixelObj.AddMember("position", posObj, allocator);
-
-            rapidjson::Value colorObj(rapidjson::kObjectType);
-            colorObj.AddMember("r", static_cast<int>(pixel.color.r), allocator);
-            colorObj.AddMember("g", static_cast<int>(pixel.color.g), allocator);
-            colorObj.AddMember("b", static_cast<int>(pixel.color.b), allocator);
-            colorObj.AddMember("a", static_cast<int>(pixel.color.a), allocator);
-            pixelObj.AddMember("color", colorObj, allocator);
-
-            pixelArray.PushBack(pixelObj, allocator);
-        }
-
-        doc.AddMember("pixels", pixelArray, allocator);
-
-        rapidjson::StringBuffer buffer;
-        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-        doc.Accept(writer);
-
-        std::ofstream ofs(filename);
-        if (!ofs)
-        {
-            throw std::runtime_error("Could not open file: " + filename);
-        }
-        ofs << buffer.GetString();
-        ofs.close();
     }
 }
