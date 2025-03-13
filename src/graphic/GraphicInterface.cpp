@@ -43,6 +43,9 @@ namespace graphic
                 if (ImGui::MenuItem("Exit"))
                 {
                 }
+                if (ImGui::MenuItem("Save"))
+                {
+                }
                 ImGui::EndMenu();
             }
 
@@ -96,11 +99,26 @@ namespace graphic
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
 
-        if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse))
+        if (ImGui::Begin("Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
             if (ImGui::Button("Open pixel sidebar", ImVec2(180, 40)))
             {
                 editorData.showPixelSidebar = !editorData.showPixelSidebar;
+            }
+            if (ImGui::Checkbox("Show grid", &editorData.showGrid))
+            {
+            }
+            if (ImGui::Checkbox("Auto link", &editorData.autoLink))
+            {
+            }
+            if (ImGui::Button("Clear", ImVec2(180, 40)))
+            {
+                _pixels.clear();
+            }
+            if (ImGui::Button("Save", ImVec2(180, 40)))
+            {
+                saveSprite(_pixels, "sprite.png");
+                createExternalAttributeFile("sprite.json", _pixels);
             }
         }
         ImGui::End();
@@ -225,5 +243,68 @@ namespace graphic
 
         ImGui::Render();
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->_renderer);
+    }
+
+    void Graphic::saveSprite(std::vector<Pixel> pixels, std::string filename)
+    {
+        SDL_Surface *surface = SDL_CreateRGBSurface(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, 0, 0, 0, 0);
+
+        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 255, 255, 255, 255));
+
+        for (const auto &pixel : pixels)
+        {
+            SDL_Rect rect = {static_cast<int>(pixel.position.x), static_cast<int>(pixel.position.y), 1, 1};
+            SDL_FillRect(surface, &rect, SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a));
+        }
+
+        if (IMG_SavePNG(surface, filename.c_str()) != 0)
+        {
+            std::cerr << "Erreur lors de l'enregistrement de l'image PNG : " << IMG_GetError() << std::endl;
+        }
+
+        SDL_FreeSurface(surface);
+    }
+
+    void Graphic::createExternalAttributeFile(const std::string &filename, const std::vector<Pixel> &pixels)
+    {
+
+        rapidjson::Document doc;
+        doc.SetObject();
+        rapidjson::Document::AllocatorType &allocator = doc.GetAllocator();
+
+        rapidjson::Value pixelArray(rapidjson::kArrayType);
+
+        for (const auto &pixel : pixels)
+        {
+            rapidjson::Value pixelObj(rapidjson::kObjectType);
+
+            rapidjson::Value posObj(rapidjson::kObjectType);
+            posObj.AddMember("x", pixel.position.x, allocator);
+            posObj.AddMember("y", pixel.position.y, allocator);
+            pixelObj.AddMember("position", posObj, allocator);
+
+            rapidjson::Value colorObj(rapidjson::kObjectType);
+            colorObj.AddMember("r", static_cast<int>(pixel.color.r), allocator);
+            colorObj.AddMember("g", static_cast<int>(pixel.color.g), allocator);
+            colorObj.AddMember("b", static_cast<int>(pixel.color.b), allocator);
+            colorObj.AddMember("a", static_cast<int>(pixel.color.a), allocator);
+            pixelObj.AddMember("color", colorObj, allocator);
+
+            pixelArray.PushBack(pixelObj, allocator);
+        }
+
+        doc.AddMember("pixels", pixelArray, allocator);
+
+        rapidjson::StringBuffer buffer;
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+        doc.Accept(writer);
+
+        std::ofstream ofs(filename);
+        if (!ofs)
+        {
+            throw std::runtime_error("Could not open file: " + filename);
+        }
+        ofs << buffer.GetString();
+        ofs.close();
     }
 }

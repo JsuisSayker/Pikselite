@@ -96,6 +96,8 @@ namespace graphic
         Color selectedColor;
         Color defaultColor;
         bool showPixelSidebar;
+        bool showGrid;
+        bool autoLink;
     };
 
     struct ProjectEditorData

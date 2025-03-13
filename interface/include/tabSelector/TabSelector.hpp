@@ -2,6 +2,7 @@
 
 #include <projectEditor/ProjectEditor.hpp>
 #include <spriteEditor/SpriteEditor.hpp>
+#include <core/Core.hpp>
 
 #include <memory>
 #include <variant>

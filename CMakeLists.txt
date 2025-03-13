@@ -15,9 +15,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
 
+
 add_executable(pikselite
   src/main.cpp
 )
+
+include_directories(${CMAKE_SOURCE_DIR}/extern/rapidjson)
 
 add_subdirectory(interface)
 add_subdirectory(src/graphic)
@@ -25,7 +28,9 @@ add_subdirectory(src/spriteEditor)
 add_subdirectory(src/projectEditor)
 add_subdirectory(src/home)
 add_subdirectory(src/tabSelector)
+add_subdirectory(src/core)
 add_subdirectory(extern/imgui)
+add_subdirectory(extern/rapidjson)
 
 target_link_libraries(pikselite
   pikselite_interface
@@ -33,6 +38,7 @@ target_link_libraries(pikselite
   sprite_editor
   project_editor
   tab_selector
+  core
   home
 )
 

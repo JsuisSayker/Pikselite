@@ -8,6 +8,7 @@ target_link_libraries(tab_selector
   pikselite_interface
   imgui
   graphic
+  core
   sprite_editor
   project_editor
 )
