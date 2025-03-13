@@ -27,7 +27,12 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libvorbis-dev \
     libgl1-mesa-dev \
     libegl1-mesa-dev \
-    libsdl2-dev \
+    libsdl2-dev  \
+    libsdl2-image-dev \
+    libsdl2-gfx-dev \
+    libsdl2-ttf-dev \
+    libsdl2-mixer-dev \
+    libsdl2-net-dev \
     coreutils
 
 
