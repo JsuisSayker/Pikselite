@@ -71,6 +71,8 @@ namespace graphic
         void drawInterface();
 
         void lightOptions();
+        void solidOptions();
+        void liquidOptions();
 
         bool _windowOpen = true;
 
@@ -81,6 +83,8 @@ namespace graphic
         ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, ""};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};
+        solid solidData = solid{};
+        liquid liquidData = liquid{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
 
