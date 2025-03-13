@@ -20,7 +20,7 @@ namespace graphic
         ImGuiIO &io = ImGui::GetIO();
 
         const char *defaultFontPath = "extern/imgui/misc/fonts/Roboto-Medium.ttf";
-        ImFont *defaultFont = io.Fonts->AddFontFromFileTTF(defaultFontPath, 16.0f);
+        ImFont *defaultFont = io.Fonts->AddFontFromFileTTF(defaultFontPath, 32.0f);
         IM_ASSERT(defaultFont != nullptr);
         io.FontDefault = defaultFont;
 
