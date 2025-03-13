@@ -45,8 +45,6 @@ namespace graphic
                 }
                 if (ImGui::MenuItem("Save"))
                 {
-                    saveSprite(_pixels, "sprite.png");
-                    createExternalAttributeFile("sprite.json", _pixels);
                 }
                 ImGui::EndMenu();
             }
@@ -116,6 +114,11 @@ namespace graphic
             if (ImGui::Button("Clear", ImVec2(180, 40)))
             {
                 _pixels.clear();
+            }
+            if (ImGui::Button("Save", ImVec2(180, 40)))
+            {
+                saveSprite(_pixels, "sprite.png");
+                createExternalAttributeFile("sprite.json", _pixels);
             }
         }
         ImGui::End();
