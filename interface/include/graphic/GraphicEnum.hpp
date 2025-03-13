@@ -120,6 +120,7 @@ namespace graphic
         bool showPixelEditorSidebar;
         bool showGrid;
         bool autoLink;
+        bool showLightOptions;
     };
 
     struct ProjectEditorData
