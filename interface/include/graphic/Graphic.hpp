@@ -34,6 +34,7 @@ namespace graphic
 
         Position getPosition();
 
+        void drawSprites(std::vector<std::pair<std::string, std::vector<Pixel>>> sprites, Camera camera);
         void drawPixel(Pixel pixel, Camera camera);
         void drawPixels(Camera camera);
         void drawGrid(Camera camera);
@@ -56,7 +57,7 @@ namespace graphic
         std::vector<Pixel> _pixels;
         
         bool showHome = true;
-        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}, false, true};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
