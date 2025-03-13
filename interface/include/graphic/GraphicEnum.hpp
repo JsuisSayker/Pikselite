@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <iostream>
 #include <vector>
 #include <variant>
 
@@ -130,6 +131,7 @@ namespace graphic
         bool showGameAssets;
         bool showPixelLinker;
         bool showScenes;
+        std::string spritePath;
     };
 
     struct TabSelectorData
