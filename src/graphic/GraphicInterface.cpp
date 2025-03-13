@@ -81,13 +81,13 @@ namespace graphic
 
             ImGui::EndMainMenuBar();
         }
-        
+
         ImGui::PopStyleColor();
 
         ImGui::PopStyleVar();
     }
 
-    void Graphic::editorSidebar()
+    void Graphic::spriteEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
         if (!editorSidebarInitialized)
@@ -129,9 +129,53 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
+    void Graphic::projectEditorSidebar()
+    {
+        float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
+        if (!editorSidebarInitialized)
+        {
+            ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
+            editorSidebarInitialized = true;
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
+
+        if (ImGui::Begin("Project Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
+        {
+            if (ImGui::Button("Open file explorer", ImVec2(180, 40)))
+            {
+                projectData.showFileExplorer = !projectData.showFileExplorer;
+            }
+        }
+        ImGui::End();
+
+        ImGui::PopStyleColor();
+    }
+
+    void Graphic::addFileExplorer()
+    {
+        if (ImGui::Begin("File Explorer", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
+        {
+            // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
+
+            if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+            {
+                if (ImGuiFileDialog::Instance()->IsOk())
+                {
+                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                    std::cout << "Selected file: " << filePathName << std::endl;
+                }
+                ImGuiFileDialog::Instance()->Close();
+            }
+        }
+        ImGui::End();
+    }
+
     void Graphic::pixelSidebar()
     {
-        std::cout << "Pixel Sidebar opened" << std::endl; /////////////////////
+        std::cout << "Pixel Sidebar opened" << std::endl;
     }
 
     void Graphic::homeInterface()
@@ -185,9 +229,15 @@ namespace graphic
 
         if (showHome)
             homeInterface();
-        
+
         if (isSpriteEditor)
-            editorSidebar();
+            spriteEditorSidebar();
+
+        if (isProjectEditor)
+            projectEditorSidebar();
+
+        if (projectData.showFileExplorer)
+            addFileExplorer();
 
         if (editorData.showColorSelector)
             colorSelector();

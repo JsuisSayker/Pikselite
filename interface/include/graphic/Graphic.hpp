@@ -5,8 +5,8 @@
 
 #include <graphic/GraphicEnum.hpp>
 
-
 #include <imgui.h>
+#include "../../extern/imgui/backends/ImGuiFileDialog.h"
 #include "../../extern/imgui/backends/imgui_impl_sdl2.h"
 #include "../../extern/imgui/backends/imgui_impl_sdlrenderer2.h"
 
@@ -57,19 +57,22 @@ namespace graphic
 
         void colorSelector();
         void navBar();
-        void editorSidebar();
+        void spriteEditorSidebar();
+        void projectEditorSidebar();
         void pixelSidebar();
-        
+        void addFileExplorer();
+
         void homeInterface();
 
         void drawInterface();
 
         bool _windowOpen = true;
-        
+
         std::vector<Pixel> _pixels;
-        
+
         bool showHome = true;
-        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}, false, true};
+        SpriteEditorData editorData = SpriteEditorData{false, {0, 0, 0, 255}, {0, 0, 0, 255}};
+        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
