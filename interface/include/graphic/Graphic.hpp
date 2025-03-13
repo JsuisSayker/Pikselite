@@ -82,7 +82,8 @@ namespace graphic
         SDL_Renderer *_renderer;
         ImFont* _iconFont = nullptr;
         bool colorSelectorInitialized = false;
-        bool editorSidebarInitialized = false;
+        bool spriteEditorSidebarInitialized = false;
+        bool projectEditorSidebarInitialized = false;
         bool pixelSidebarInitialized = false;
         float navBarHeight = 0.0f;
     };

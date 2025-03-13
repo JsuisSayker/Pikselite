@@ -90,10 +90,10 @@ namespace graphic
     void Graphic::spriteEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
-        if (!editorSidebarInitialized)
+        if (!spriteEditorSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            editorSidebarInitialized = true;
+            spriteEditorSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -132,10 +132,10 @@ namespace graphic
     void Graphic::projectEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
-        if (!editorSidebarInitialized)
+        if (!projectEditorSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            editorSidebarInitialized = true;
+            projectEditorSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -241,6 +241,9 @@ namespace graphic
 
         if (editorData.showColorSelector)
             colorSelector();
+
+        if (editorData.showPixelSidebar)
+            pixelSidebar();
 
         navBar();
 
