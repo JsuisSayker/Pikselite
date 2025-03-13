@@ -75,7 +75,7 @@ namespace graphic
 
         if (IMG_SavePNG(surface, filename.c_str()) != 0)
         {
-            std::cerr << "Erreur lors de l'enregistrement de l'image PNG : " << IMG_GetError() << std::endl;
+            std::cerr << "Error while saving image: " << IMG_GetError() << std::endl;
         }
 
         SDL_FreeSurface(surface);
@@ -83,12 +83,14 @@ namespace graphic
 
     void Graphic::createExternalAttributeFile(const std::string &filename, const std::vector<Pixel> &pixels)
     {
-
         rapidjson::Document doc;
         doc.SetObject();
         rapidjson::Document::AllocatorType &allocator = doc.GetAllocator();
 
         rapidjson::Value pixelArray(rapidjson::kArrayType);
+
+        // remove the file extension
+        std::string attributeFilename = filename.substr(0, filename.find_last_of('.')) + ".json";
 
         for (const auto &pixel : pixels)
         {
@@ -115,23 +117,23 @@ namespace graphic
         rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
         doc.Accept(writer);
 
-        std::ofstream ofs(filename);
+        std::ofstream ofs(attributeFilename);
         if (!ofs)
         {
-            throw std::runtime_error("Could not open file: " + filename);
+            throw std::runtime_error("Could not open file: " + attributeFilename);
         }
         ofs << buffer.GetString();
         ofs.close();
     }
 
-    std::pair<std::string, std::vector<Pixel>> Graphic::loadSpriteFromJSON(const std::string &filename)
+    std::pair<std::string, std::vector<Pixel>> Graphic::loadSpriteFromJSON(const std::string &attributeFilename)
     {
         std::vector<Pixel> pixels;
-        FILE *fp = std::fopen(filename.c_str(), "rb");
+        FILE *fp = std::fopen(attributeFilename.c_str(), "rb");
         if (!fp)
         {
-            std::perror("Erreur lors de l'ouverture du fichier");
-            throw std::runtime_error("Could not open file: " + filename);
+            std::perror("Error while opening file");
+            throw std::runtime_error("Could not open file: " + attributeFilename);
         }
         char readBuffer[65536];
         rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
@@ -142,21 +144,21 @@ namespace graphic
 
         if (!doc.IsObject())
         {
-            std::cerr << "Le document JSON n'est pas un objet." << std::endl;
-            throw std::runtime_error("Invalid JSON file: " + filename);
+            std::cerr << "The JSON document is not an object." << std::endl;
+            throw std::runtime_error("Invalid JSON file: " + attributeFilename);
         }
 
         if (!doc.HasMember("pixels"))
         {
-            std::cerr << "Le document ne contient pas le membre 'pixels'." << std::endl;
-            throw std::runtime_error("Invalid JSON file: " + filename);
+            std::cerr << "The JSON document does not have a 'pixels' member." << std::endl;
+            throw std::runtime_error("Invalid JSON file: " + attributeFilename);
         }
 
         const rapidjson::Value &pixelsArray = doc["pixels"];
         if (!pixelsArray.IsArray())
         {
-            std::cerr << "Le membre 'pixels' n'est pas un tableau." << std::endl;
-            throw std::runtime_error("Invalid JSON file: " + filename);
+            std::cerr << "The 'pixels' member is not an array." << std::endl;
+            throw std::runtime_error("Invalid JSON file: " + attributeFilename);
         }
 
         for (rapidjson::SizeType i = 0; i < pixelsArray.Size(); ++i)
@@ -181,7 +183,7 @@ namespace graphic
 
             pixels.push_back(p);
         }
-        std::pair<std::string, std::vector<Pixel>> sprite = std::make_pair(filename, pixels);
+        std::pair<std::string, std::vector<Pixel>> sprite = std::make_pair(attributeFilename, pixels);
         return sprite;
     }
 }

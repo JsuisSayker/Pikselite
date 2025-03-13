@@ -161,7 +161,7 @@ namespace graphic
         {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
-                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string filePathName = ImGuiFileDialog::Instance()->GetCurrentPath();
                 projectData.folderPath = filePathName;
             }
             ImGuiFileDialog::Instance()->Close();
