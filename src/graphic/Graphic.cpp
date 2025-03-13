@@ -10,7 +10,6 @@ namespace graphic
         if (!this->_window || !this->_renderer)
             throw std::runtime_error("Error: SDL2 failed to initialize.");
 
-        // set the window background color to white
         SDL_SetRenderDrawColor(this->_renderer, 255, 255, 255, 255);
         SDL_RenderClear(this->_renderer);
         SDL_RenderPresent(this->_renderer);
@@ -19,6 +18,20 @@ namespace graphic
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
         ImGuiIO &io = ImGui::GetIO();
+
+        const char *defaultFontPath = "extern/imgui/misc/fonts/Roboto-Medium.ttf";
+        ImFont *defaultFont = io.Fonts->AddFontFromFileTTF(defaultFontPath, 32.0f);
+        IM_ASSERT(defaultFont != nullptr);
+        io.FontDefault = defaultFont;
+
+        ImFontConfig config;
+        config.OversampleH = 3;
+        const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+        const char *fontPath = "extern/icons/fa-solid-900.ttf";
+        this->_iconFont = io.Fonts->AddFontFromFileTTF(fontPath, 32.0f, &config, icon_ranges);
+        IM_ASSERT(this->_iconFont != nullptr);
+        io.Fonts->Build();
+
         if (_renderer && _window)
         {
             ImGui_ImplSDL2_InitForSDLRenderer(_window, _renderer);
