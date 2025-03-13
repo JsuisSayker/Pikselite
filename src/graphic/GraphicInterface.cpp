@@ -155,22 +155,17 @@ namespace graphic
 
     void Graphic::addFileExplorer()
     {
-        if (ImGui::Begin("File Explorer", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
-        {
-            // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
 
-            if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
             {
-                if (ImGuiFileDialog::Instance()->IsOk())
-                {
-                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                    std::cout << "Selected file: " << filePathName << std::endl;
-                }
-                ImGuiFileDialog::Instance()->Close();
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::cout << "Selected file: " << filePathName << std::endl;
             }
+            ImGuiFileDialog::Instance()->Close();
         }
-        ImGui::End();
     }
 
     void Graphic::pixelEditorSidebar()
