@@ -54,8 +54,8 @@ namespace graphic
         }
 
         SDL_SetRenderDrawColor(_renderer, 255, 0, 0, 255);
-        int ox = WINDOW_WIDTH / 2;
-        int oy = WINDOW_HEIGHT / 2;
+        int ox = WINDOW_WIDTH / 2 - camera.position.x * zoom;
+        int oy = WINDOW_HEIGHT / 2 - camera.position.y * zoom;
         int crossHalfSize = 10;
         int thickness = 3;
 
@@ -70,8 +70,8 @@ namespace graphic
             oy - crossHalfSize,
             thickness,
             2 * crossHalfSize + 1};
-        int x = WINDOW_WIDTH / 2;
-        int y = WINDOW_HEIGHT / 2;
+        int x = 0;
+        int y = 0;
         if (x >= leftEdge && x < rightEdge && y >= topEdge && y < bottomEdge)
         {
             SDL_RenderFillRect(_renderer, &horizRect);
