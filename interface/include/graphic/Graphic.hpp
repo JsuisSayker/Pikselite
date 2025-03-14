@@ -65,7 +65,7 @@ namespace graphic
         void projectEditorSidebar();
         void pixelEditorSidebar();
         void addFileExplorer();
-        void addDirectoryChooser();
+        void addExportFileExplorer();
 
         void homeInterface();
 

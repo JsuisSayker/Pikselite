@@ -152,19 +152,24 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
-    void Graphic::addDirectoryChooser()
+    void Graphic::addExportFileExplorer()
     {
         IGFD::FileDialogConfig config;
         config.path = ".";
-        ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose a Directory", nullptr, config);
-        if (ImGuiFileDialog::Instance()->Display("ChooseDirDlgKey"))
+        config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png");
+
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
-                std::string filePathName = ImGuiFileDialog::Instance()->GetCurrentPath();
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
                 projectData.folderPath = filePathName;
+                ImGuiFileDialog::Instance()->Close();
+            } else {
+                ImGuiFileDialog::Instance()->Close();
+                projectData.showDirectoryChooser = false;
             }
-            ImGuiFileDialog::Instance()->Close();
         }
     }
 
@@ -177,14 +182,13 @@ namespace graphic
         {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
-                if (ImGuiFileDialog::Instance()->IsOk())
-                {
-                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                    projectData.spritePath = filePathName;
-                }
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                projectData.spritePath = filePathName;
                 ImGuiFileDialog::Instance()->Close();
+            } else {
+                ImGuiFileDialog::Instance()->Close();
+                projectData.showFileExplorer = false;
             }
-            ImGuiFileDialog::Instance()->Close();
         }
     }
 
@@ -323,7 +327,7 @@ namespace graphic
             addFileExplorer();
 
         if (projectData.showDirectoryChooser)
-            addDirectoryChooser();
+            addExportFileExplorer();
 
         if (editorData.showColorSelector)
             colorSelector();
