@@ -108,6 +108,10 @@ namespace graphic
             }
             ImGui::PopFont();
 
+            if (ImGui::Button("Reset Camera", ImVec2(180, 40)))
+            {
+                editorData.resetCamera = true;
+            }
             if (ImGui::Checkbox("Show grid", &editorData.showGrid))
             {
             }

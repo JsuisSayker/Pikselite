@@ -126,6 +126,7 @@ namespace graphic
         bool showLightOptions = false;
         bool showSolidOptions = false;
         bool showLiquidOptions = false;
+        bool resetCamera = false;
     };
 
     struct ProjectEditorData

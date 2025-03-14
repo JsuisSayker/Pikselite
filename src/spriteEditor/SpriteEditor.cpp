@@ -27,6 +27,12 @@ int SpriteEditor::run()
             return 0;
         }
 
+        if (_graphic->editorData.resetCamera)
+        {
+            _camera = graphic::Camera{0, 0, 4};
+            _graphic->editorData.resetCamera = false;
+        }
+
         checkMouseEvents(event);
         checkInterfaceEvents(event);
         moveCamera(event);

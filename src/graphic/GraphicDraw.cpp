@@ -70,9 +70,7 @@ namespace graphic
             oy - crossHalfSize,
             thickness,
             2 * crossHalfSize + 1};
-        int x = 0;
-        int y = 0;
-        if (x >= leftEdge && x < rightEdge && y >= topEdge && y < bottomEdge)
+        if (0 >= leftEdge && 0 < rightEdge && 0 >= topEdge && 0 < bottomEdge)
         {
             SDL_RenderFillRect(_renderer, &horizRect);
             SDL_RenderFillRect(_renderer, &vertRect);
