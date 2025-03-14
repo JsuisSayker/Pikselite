@@ -32,8 +32,10 @@ int SpriteEditor::run()
         {
             try
             {
-                _graphic->saveSprite(_graphic->_pixels, _graphic->projectData.folderPath);
-                _graphic->createExternalAttributeFile(_graphic->projectData.folderPath, _graphic->_pixels);
+                if (_graphic->projectData.folderPath.find(".json") != std::string::npos)
+                    _graphic->createExternalAttributeFile(_graphic->projectData.folderPath, _graphic->_pixels);
+                else
+                    _graphic->saveSprite(_graphic->_pixels, _graphic->projectData.folderPath);
                 _graphic->projectData.folderPath.clear();
             }
             catch (const std::exception &e)

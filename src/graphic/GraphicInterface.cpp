@@ -161,7 +161,7 @@ namespace graphic
         IGFD::FileDialogConfig config;
         config.path = ".";
         config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
-        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png");
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png, .json");
 
         if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {
@@ -181,7 +181,7 @@ namespace graphic
     void Graphic::addFileExplorer()
     {
         // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
-        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png");
 
         if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {

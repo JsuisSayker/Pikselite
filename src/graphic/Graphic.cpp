@@ -65,19 +65,36 @@ namespace graphic
 
     void Graphic::saveSprite(std::vector<Pixel> pixels, std::string filename)
     {
-        SDL_Surface *surface = SDL_CreateRGBSurface(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, 0, 0, 0, 0);
+        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, SDL_PIXELFORMAT_RGBA32);
+        if (!surface)
+        {
+            std::cerr << "Erreur lors de la création de la surface : " << SDL_GetError() << std::endl;
+            return;
+        }
 
-        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 255, 255, 255, 255));
+        SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+
+        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 0, 0, 0, 0));
+
+        int offsetX = WINDOW_WIDTH / 2;
+        int offsetY = WINDOW_HEIGHT / 2;
 
         for (const auto &pixel : pixels)
         {
-            SDL_Rect rect = {static_cast<int>(pixel.position.x), static_cast<int>(pixel.position.y), 1, 1};
-            SDL_FillRect(surface, &rect, SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a));
+            int sdlX = static_cast<int>(pixel.position.x) + offsetX;
+            int sdlY = offsetY + static_cast<int>(pixel.position.y);
+
+            if (sdlX >= 0 && sdlX < WINDOW_WIDTH && sdlY >= 0 && sdlY < WINDOW_HEIGHT)
+            {
+                SDL_Rect rect = {sdlX, sdlY, 1, 1};
+                Uint32 color = SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a);
+                SDL_FillRect(surface, &rect, color);
+            }
         }
 
         if (IMG_SavePNG(surface, filename.c_str()) != 0)
         {
-            std::cerr << "Error while saving image: " << IMG_GetError() << std::endl;
+            std::cerr << "Erreur lors de l'enregistrement de l'image PNG : " << IMG_GetError() << std::endl;
         }
 
         SDL_FreeSurface(surface);
