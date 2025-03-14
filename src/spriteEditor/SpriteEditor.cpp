@@ -28,17 +28,18 @@ void SpriteEditor::checkAttribute()
         {
             _graphic->editorData.defaultAttributes.push_back(graphic::light{_graphic->lightData.radius, _graphic->lightData.intensity});
         }
-    } else {
+    }
+    else
+    {
         _graphic->editorData.defaultAttributes.erase(
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute) {
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute)
+                {
                     return std::holds_alternative<graphic::light>(attribute);
-                }
-            ),
-            _graphic->editorData.defaultAttributes.end()
-        );
+                }),
+            _graphic->editorData.defaultAttributes.end());
     }
     if (_graphic->editorData.solidEnabled)
     {
@@ -54,17 +55,18 @@ void SpriteEditor::checkAttribute()
         {
             _graphic->editorData.defaultAttributes.push_back(graphic::solid{});
         }
-    } else {
+    }
+    else
+    {
         _graphic->editorData.defaultAttributes.erase(
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute) {
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute)
+                {
                     return std::holds_alternative<graphic::solid>(attribute);
-                }
-            ),
-            _graphic->editorData.defaultAttributes.end()
-        );
+                }),
+            _graphic->editorData.defaultAttributes.end());
     }
     if (_graphic->editorData.liquidEnabled)
     {
@@ -80,17 +82,18 @@ void SpriteEditor::checkAttribute()
         {
             _graphic->editorData.defaultAttributes.push_back(graphic::liquid{_graphic->liquidData.viscosity});
         }
-    } else {
+    }
+    else
+    {
         _graphic->editorData.defaultAttributes.erase(
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute) {
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute)
+                {
                     return std::holds_alternative<graphic::liquid>(attribute);
-                }
-            ),
-            _graphic->editorData.defaultAttributes.end()
-        );
+                }),
+            _graphic->editorData.defaultAttributes.end());
     }
 }
 
@@ -119,10 +122,8 @@ int SpriteEditor::run()
         {
             try
             {
-                if (_graphic->projectData.folderPath.find(".json") != std::string::npos)
-                    _graphic->createExternalAttributeFile(_graphic->projectData.folderPath, _graphic->_pixels);
-                else
-                    _graphic->saveSprite(_graphic->_pixels, _graphic->projectData.folderPath);
+                _graphic->saveSprite(_graphic->_pixels, _graphic->projectData.folderPath);
+                _graphic->createExternalAttributeFile(_graphic->projectData.folderPath, _graphic->_pixels);
                 _graphic->projectData.folderPath.clear();
             }
             catch (const std::exception &e)
