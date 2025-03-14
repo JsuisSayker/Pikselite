@@ -120,6 +120,30 @@ namespace graphic
             posObj.AddMember("y", pixel.position.y, allocator);
             pixelObj.AddMember("position", posObj, allocator);
 
+            rapidjson::Value attributesArray(rapidjson::kArrayType);
+            for (const auto &attribute : pixel.attributes)
+            {
+                rapidjson::Value attributeObj(rapidjson::kObjectType);
+                if (std::holds_alternative<light>(attribute))
+                {
+                    const light &l = std::get<light>(attribute);
+                    attributeObj.AddMember("radius", l.radius, allocator);
+                    attributeObj.AddMember("intensity", l.intensity, allocator);
+                }
+                else if (std::holds_alternative<solid>(attribute))
+                {
+                    // do nothing
+                }
+                else if (std::holds_alternative<liquid>(attribute))
+                {
+                    const liquid &l = std::get<liquid>(attribute);
+                    attributeObj.AddMember("viscosity", l.viscosity, allocator);
+                }
+                attributesArray.PushBack(attributeObj, allocator);
+            }
+
+            pixelObj.AddMember("attributes", attributesArray, allocator);
+
             rapidjson::Value colorObj(rapidjson::kObjectType);
             colorObj.AddMember("r", static_cast<int>(pixel.color.r), allocator);
             colorObj.AddMember("g", static_cast<int>(pixel.color.g), allocator);
