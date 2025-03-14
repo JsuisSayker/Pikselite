@@ -9,9 +9,12 @@ class SpriteEditor {
         ~SpriteEditor();
 
         int run();
+
         void moveCamera(graphic::EventType event);
         void zoomCamera(graphic::EventType event);
+
         void checkMouseEvents(graphic::EventType event);
+        void checkAttribute();
 
         void addPixel(graphic::Pixel pixel);
 

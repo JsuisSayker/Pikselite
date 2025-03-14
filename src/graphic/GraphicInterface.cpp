@@ -246,6 +246,10 @@ namespace graphic
                 newIntensity = lightData.intensity;
                 editorData.showLightOptions = false;
             }
+            ImGui::SameLine();
+            if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+            {
+            }
             ImGui::EndPopup();
         }
 
@@ -275,6 +279,10 @@ namespace graphic
             {
                 ImGui::CloseCurrentPopup();
                 editorData.showSolidOptions = false;
+            }
+            ImGui::SameLine();
+            ImGui::Checkbox("Enabled", &editorData.solidEnabled);
+            {
             }
             ImGui::EndPopup();
         }
@@ -315,6 +323,10 @@ namespace graphic
                 ImGui::CloseCurrentPopup();
                 newViscosity = liquidData.viscosity;
                 editorData.showLiquidOptions = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+            {
             }
             ImGui::EndPopup();
         }
@@ -391,7 +403,7 @@ namespace graphic
 
         if (editorData.showSolidOptions)
             solidOptions();
-        
+
         if (editorData.showLiquidOptions)
             liquidOptions();
 

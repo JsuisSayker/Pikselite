@@ -8,6 +8,92 @@ SpriteEditor::~SpriteEditor()
 {
 }
 
+void SpriteEditor::checkAttribute()
+{
+    bool noLight = true;
+    bool noSolid = true;
+    bool noLiquid = true;
+
+    if (_graphic->editorData.lightEnabled)
+    {
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute : _graphic->editorData.defaultAttributes)
+        {
+            if (std::holds_alternative<graphic::light>(attribute))
+            {
+                attribute = graphic::light{_graphic->lightData.radius, _graphic->lightData.intensity};
+                noLight = false;
+            }
+        }
+        if (noLight)
+        {
+            _graphic->editorData.defaultAttributes.push_back(graphic::light{_graphic->lightData.radius, _graphic->lightData.intensity});
+        }
+    } else {
+        _graphic->editorData.defaultAttributes.erase(
+            std::remove_if(
+                _graphic->editorData.defaultAttributes.begin(),
+                _graphic->editorData.defaultAttributes.end(),
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute) {
+                    return std::holds_alternative<graphic::light>(attribute);
+                }
+            ),
+            _graphic->editorData.defaultAttributes.end()
+        );
+    }
+    if (_graphic->editorData.solidEnabled)
+    {
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute : _graphic->editorData.defaultAttributes)
+        {
+            if (std::holds_alternative<graphic::solid>(attribute))
+            {
+                attribute = graphic::solid{};
+                noSolid = false;
+            }
+        }
+        if (noSolid)
+        {
+            _graphic->editorData.defaultAttributes.push_back(graphic::solid{});
+        }
+    } else {
+        _graphic->editorData.defaultAttributes.erase(
+            std::remove_if(
+                _graphic->editorData.defaultAttributes.begin(),
+                _graphic->editorData.defaultAttributes.end(),
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute) {
+                    return std::holds_alternative<graphic::solid>(attribute);
+                }
+            ),
+            _graphic->editorData.defaultAttributes.end()
+        );
+    }
+    if (_graphic->editorData.liquidEnabled)
+    {
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute : _graphic->editorData.defaultAttributes)
+        {
+            if (std::holds_alternative<graphic::liquid>(attribute))
+            {
+                attribute = graphic::liquid{_graphic->liquidData.viscosity};
+                noLiquid = false;
+            }
+        }
+        if (noLiquid)
+        {
+            _graphic->editorData.defaultAttributes.push_back(graphic::liquid{_graphic->liquidData.viscosity});
+        }
+    } else {
+        _graphic->editorData.defaultAttributes.erase(
+            std::remove_if(
+                _graphic->editorData.defaultAttributes.begin(),
+                _graphic->editorData.defaultAttributes.end(),
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid> &attribute) {
+                    return std::holds_alternative<graphic::liquid>(attribute);
+                }
+            ),
+            _graphic->editorData.defaultAttributes.end()
+        );
+    }
+}
+
 int SpriteEditor::run()
 {
     graphic::EventType event;
@@ -18,6 +104,7 @@ int SpriteEditor::run()
     while (_graphic->_windowOpen)
     {
         event = _graphic->checkEvent();
+        checkAttribute();
 
         if (event == graphic::EventType::WINDOW_CLOSE)
             return 0;
