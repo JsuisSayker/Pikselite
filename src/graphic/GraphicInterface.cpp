@@ -232,7 +232,7 @@ namespace graphic
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2));
+        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
         if (ImGui::BeginPopup("Light Options"))
         {
@@ -281,7 +281,7 @@ namespace graphic
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2));
+        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
         if (ImGui::BeginPopup("Solid Options"))
         {
@@ -311,7 +311,7 @@ namespace graphic
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2, ImGui::GetIO().DisplaySize.y / 2));
+        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
         if (ImGui::BeginPopup("Liquid Options"))
         {
