@@ -51,10 +51,8 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
         position = _graphic->getPosition();
 
         float zoom = static_cast<float>(_camera.zoom);
-
         position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
         position.y = (position.y - WINDOW_HEIGHT / 2.0f) / zoom + _camera.position.y;
-
         position.x = std::round(position.x);
         position.y = std::round(position.y);
 
