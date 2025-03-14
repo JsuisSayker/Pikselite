@@ -104,7 +104,7 @@ namespace graphic
 
     struct Pixel
     {
-        bool isSelected;
+        bool isSelected = false;
 
         Color color;
         Position position;
