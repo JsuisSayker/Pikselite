@@ -170,6 +170,7 @@ namespace graphic
                 std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
                 projectData.folderPath = filePathName;
                 ImGuiFileDialog::Instance()->Close();
+                projectData.showDirectoryChooser = false;
             } else {
                 ImGuiFileDialog::Instance()->Close();
                 projectData.showDirectoryChooser = false;
@@ -189,6 +190,7 @@ namespace graphic
                 std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
                 projectData.spritePath = filePathName;
                 ImGuiFileDialog::Instance()->Close();
+                projectData.showFileExplorer = false;
             } else {
                 ImGuiFileDialog::Instance()->Close();
                 projectData.showFileExplorer = false;
