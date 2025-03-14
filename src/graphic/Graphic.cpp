@@ -128,14 +128,14 @@ namespace graphic
         ofs.close();
     }
 
-    std::pair<std::string, std::vector<Pixel>> Graphic::loadSpriteFromJSON(const std::string &attributeFilename)
+    Sprite Graphic::loadSpriteFromJSON(const std::string &filename)
     {
         std::vector<Pixel> pixels;
-        FILE *fp = std::fopen(attributeFilename.c_str(), "rb");
+        FILE *fp = std::fopen(filename.c_str(), "rb");
         if (!fp)
         {
             std::perror("Error while opening file");
-            throw std::runtime_error("Could not open file: " + attributeFilename);
+            throw std::runtime_error("Could not open file: " + filename);
         }
         char readBuffer[65536];
         rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
@@ -147,20 +147,20 @@ namespace graphic
         if (!doc.IsObject())
         {
             std::cerr << "The JSON document is not an object." << std::endl;
-            throw std::runtime_error("Invalid JSON file: " + attributeFilename);
+            throw std::runtime_error("Invalid JSON file: " + filename);
         }
 
         if (!doc.HasMember("pixels"))
         {
             std::cerr << "The JSON document does not have a 'pixels' member." << std::endl;
-            throw std::runtime_error("Invalid JSON file: " + attributeFilename);
+            throw std::runtime_error("Invalid JSON file: " + filename);
         }
 
         const rapidjson::Value &pixelsArray = doc["pixels"];
         if (!pixelsArray.IsArray())
         {
             std::cerr << "The 'pixels' member is not an array." << std::endl;
-            throw std::runtime_error("Invalid JSON file: " + attributeFilename);
+            throw std::runtime_error("Invalid JSON file: " + filename);
         }
 
         for (rapidjson::SizeType i = 0; i < pixelsArray.Size(); ++i)
@@ -185,7 +185,7 @@ namespace graphic
 
             pixels.push_back(p);
         }
-        std::pair<std::string, std::vector<Pixel>> sprite = std::make_pair(attributeFilename, pixels);
+        Sprite sprite = Sprite{false, Position{0, 0}, filename, pixels};
         return sprite;
     }
 }

@@ -46,7 +46,7 @@ namespace graphic
 
         Position getPosition();
 
-        void drawSprites(std::vector<std::pair<std::string, std::vector<Pixel>>> sprites, Camera camera);
+        void drawSprites(std::vector<Sprite> sprites, Camera camera);
         void drawPixel(Pixel pixel, Camera camera);
         void drawPixels(Camera camera);
         void drawGrid(Camera camera);
@@ -54,7 +54,7 @@ namespace graphic
 
         void saveSprite(std::vector<Pixel> pixels, std::string filename);
         void createExternalAttributeFile(const std::string& filename, const std::vector<Pixel>& pixels);
-        std::pair<std::string, std::vector<Pixel>> loadSpriteFromJSON(const std::string& filename);
+        graphic::Sprite loadSpriteFromJSON(const std::string& filename);
 
         SDL_Renderer *getRenderer() { return _renderer; }
         SDL_Window *getWindow() { return _window; }
@@ -65,7 +65,7 @@ namespace graphic
         void projectEditorSidebar();
         void pixelEditorSidebar();
         void addFileExplorer();
-        void addDirectoryChooser();
+        void addExportFileExplorer();
 
         void homeInterface();
 

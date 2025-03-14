@@ -16,7 +16,7 @@ public:
 
 protected:
 private:
-    graphic::Camera _camera = graphic::Camera{WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2, 4};
+    graphic::Camera _camera = graphic::Camera{0, 0, 4};
     std::shared_ptr<graphic::Graphic> _graphic;
     std::shared_ptr<Core> _core;
 };

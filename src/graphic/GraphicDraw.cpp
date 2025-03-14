@@ -32,9 +32,10 @@ namespace graphic
         float topEdge = camera.position.y - (WINDOW_HEIGHT / (2.0f * zoom));
         float bottomEdge = camera.position.y + (WINDOW_HEIGHT / (2.0f * zoom));
 
+        // Draw grid lines (black)
         SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 
-        // Calculate first vertical grid line (smallest line position >= leftEdge)
+        // Vertical grid lines
         float firstVertical = std::ceil(leftEdge - 0.5f) + 0.5f;
         for (float x = firstVertical; x < rightEdge; x += 1.0f)
         {
@@ -43,13 +44,36 @@ namespace graphic
                                static_cast<int>(std::round(screenX)), WINDOW_HEIGHT);
         }
 
-        // Calculate first horizontal grid line (smallest line position >= topEdge)
+        // Horizontal grid lines
         float firstHorizontal = std::ceil(topEdge - 0.5f) + 0.5f;
         for (float y = firstHorizontal; y < bottomEdge; y += 1.0f)
         {
             float screenY = (y - topEdge) * zoom;
             SDL_RenderDrawLine(_renderer, 0, static_cast<int>(std::round(screenY)),
                                WINDOW_WIDTH, static_cast<int>(std::round(screenY)));
+        }
+
+        SDL_SetRenderDrawColor(_renderer, 255, 0, 0, 255);
+        int ox = WINDOW_WIDTH / 2 - camera.position.x * zoom;
+        int oy = WINDOW_HEIGHT / 2 - camera.position.y * zoom;
+        int crossHalfSize = 10;
+        int thickness = 3;
+
+        SDL_Rect horizRect = {
+            ox - crossHalfSize,
+            oy - thickness / 2,
+            2 * crossHalfSize + 1,
+            thickness};
+
+        SDL_Rect vertRect = {
+            ox - thickness / 2,
+            oy - crossHalfSize,
+            thickness,
+            2 * crossHalfSize + 1};
+        if (0 >= leftEdge && 0 < rightEdge && 0 >= topEdge && 0 < bottomEdge)
+        {
+            SDL_RenderFillRect(_renderer, &horizRect);
+            SDL_RenderFillRect(_renderer, &vertRect);
         }
     }
 
@@ -84,7 +108,7 @@ namespace graphic
         SDL_RenderFillRect(_renderer, &rect);
     }
 
-    void Graphic::drawSprites(std::vector<std::pair<std::string, std::vector<Pixel>>> sprites, Camera camera)
+    void Graphic::drawSprites(std::vector<Sprite> sprites, Camera camera)
     {
         float zoomFactor = static_cast<float>(camera.zoom);
         float leftEdge = camera.position.x - (WINDOW_WIDTH / (2.0f * zoomFactor));
@@ -92,9 +116,9 @@ namespace graphic
         float topEdge = camera.position.y - (WINDOW_HEIGHT / (2.0f * zoomFactor));
         float bottomEdge = camera.position.y + (WINDOW_HEIGHT / (2.0f * zoomFactor));
 
-        for (const std::pair<std::string, std::vector<graphic::Pixel>> sprite : sprites)
+        for (const Sprite sprite : sprites)
         {
-            for (const Pixel pixel : sprite.second)
+            for (const Pixel pixel : sprite.pixels)
             {
                 if (pixel.position.x >= leftEdge && pixel.position.x < rightEdge &&
                     pixel.position.y >= topEdge && pixel.position.y < bottomEdge)
