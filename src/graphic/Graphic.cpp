@@ -68,7 +68,7 @@ namespace graphic
         SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, SDL_PIXELFORMAT_RGBA32);
         if (!surface)
         {
-            std::cerr << "Erreur lors de la création de la surface : " << SDL_GetError() << std::endl;
+            std::cerr << "Error while creating surface: " << SDL_GetError() << std::endl;
             return;
         }
 
@@ -94,7 +94,7 @@ namespace graphic
 
         if (IMG_SavePNG(surface, filename.c_str()) != 0)
         {
-            std::cerr << "Erreur lors de l'enregistrement de l'image PNG : " << IMG_GetError() << std::endl;
+            std::cerr << "Error while saving image: " << SDL_GetError() << std::endl;
         }
 
         SDL_FreeSurface(surface);
