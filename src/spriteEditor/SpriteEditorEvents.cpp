@@ -28,14 +28,6 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
         position.x = std::round(position.x);
         position.y = std::round(position.y);
 
-        addPixel(graphic::Pixel{false, _graphic->editorData.defaultColor, position});
-    }
-}
-
-void SpriteEditor::checkInterfaceEvents(graphic::EventType event)
-{
-    if (event == graphic::EventType::KEY_C)
-    {
-        _graphic->editorData.showColorSelector = !_graphic->editorData.showColorSelector;
+        addPixel(graphic::Pixel{false, _graphic->editorData.defaultColor, position, _graphic->editorData.defaultAttributes});
     }
 }

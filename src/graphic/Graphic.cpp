@@ -65,19 +65,36 @@ namespace graphic
 
     void Graphic::saveSprite(std::vector<Pixel> pixels, std::string filename)
     {
-        SDL_Surface *surface = SDL_CreateRGBSurface(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, 0, 0, 0, 0);
+        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, SDL_PIXELFORMAT_RGBA32);
+        if (!surface)
+        {
+            std::cerr << "Error while creating surface: " << SDL_GetError() << std::endl;
+            return;
+        }
 
-        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 255, 255, 255, 255));
+        SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+
+        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 0, 0, 0, 0));
+
+        int offsetX = WINDOW_WIDTH / 2;
+        int offsetY = WINDOW_HEIGHT / 2;
 
         for (const auto &pixel : pixels)
         {
-            SDL_Rect rect = {static_cast<int>(pixel.position.x), static_cast<int>(pixel.position.y), 1, 1};
-            SDL_FillRect(surface, &rect, SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a));
+            int sdlX = static_cast<int>(pixel.position.x) + offsetX;
+            int sdlY = offsetY + static_cast<int>(pixel.position.y);
+
+            if (sdlX >= 0 && sdlX < WINDOW_WIDTH && sdlY >= 0 && sdlY < WINDOW_HEIGHT)
+            {
+                SDL_Rect rect = {sdlX, sdlY, 1, 1};
+                Uint32 color = SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a);
+                SDL_FillRect(surface, &rect, color);
+            }
         }
 
         if (IMG_SavePNG(surface, filename.c_str()) != 0)
         {
-            std::cerr << "Error while saving image: " << IMG_GetError() << std::endl;
+            std::cerr << "Error while saving image: " << SDL_GetError() << std::endl;
         }
 
         SDL_FreeSurface(surface);
@@ -102,6 +119,30 @@ namespace graphic
             posObj.AddMember("x", pixel.position.x, allocator);
             posObj.AddMember("y", pixel.position.y, allocator);
             pixelObj.AddMember("position", posObj, allocator);
+
+            rapidjson::Value attributesArray(rapidjson::kArrayType);
+            for (const auto &attribute : pixel.attributes)
+            {
+                rapidjson::Value attributeObj(rapidjson::kObjectType);
+                if (std::holds_alternative<light>(attribute))
+                {
+                    const light &l = std::get<light>(attribute);
+                    attributeObj.AddMember("radius", l.radius, allocator);
+                    attributeObj.AddMember("intensity", l.intensity, allocator);
+                }
+                else if (std::holds_alternative<solid>(attribute))
+                {
+                    // do nothing
+                }
+                else if (std::holds_alternative<liquid>(attribute))
+                {
+                    const liquid &l = std::get<liquid>(attribute);
+                    attributeObj.AddMember("viscosity", l.viscosity, allocator);
+                }
+                attributesArray.PushBack(attributeObj, allocator);
+            }
+
+            pixelObj.AddMember("attributes", attributesArray, allocator);
 
             rapidjson::Value colorObj(rapidjson::kObjectType);
             colorObj.AddMember("r", static_cast<int>(pixel.color.r), allocator);
@@ -171,8 +212,9 @@ namespace graphic
 
             const rapidjson::Value &posObj = pixelObj["position"];
             const rapidjson::Value &colorObj = pixelObj["color"];
+            const rapidjson::Value &attributesArray = pixelObj["attributes"];
 
-            if (!posObj.IsObject() || !colorObj.IsObject())
+            if (!posObj.IsObject() || !colorObj.IsObject() || !attributesArray.IsArray())
                 continue;
 
             Pixel p;
@@ -190,6 +232,31 @@ namespace graphic
             p.color.b = colorObj["b"].GetInt();
             p.color.a = colorObj["a"].GetInt();
 
+            for (rapidjson::SizeType j = 0; j < attributesArray.Size(); ++j)
+            {
+                const rapidjson::Value &attributeObj = attributesArray[j];
+                if (!attributeObj.IsObject())
+                    continue;
+
+                if (attributeObj.HasMember("radius") && attributeObj.HasMember("intensity"))
+                {
+                    light l;
+                    l.radius = attributeObj["radius"].GetDouble();
+                    l.intensity = attributeObj["intensity"].GetDouble();
+                    p.attributes.push_back(l);
+                }
+                else if (attributeObj.HasMember("viscosity"))
+                {
+                    liquid l;
+                    l.viscosity = attributeObj["viscosity"].GetDouble();
+                    p.attributes.push_back(l);
+                }
+                else
+                {
+                    solid s;
+                    p.attributes.push_back(s);
+                }
+            }
             pixels.push_back(p);
         }
         Sprite sprite = Sprite{false, Position{0, 0}, filename, pixels};

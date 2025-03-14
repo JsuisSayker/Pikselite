@@ -104,11 +104,11 @@ namespace graphic
 
     struct Pixel
     {
-        bool isSelected;
+        bool isSelected = false;
 
         Color color;
         Position position;
-        std::vector<std::variant<liquid, solid, light>> attributes;
+        std::vector<std::variant<light, solid, liquid>> attributes;
     };
 
     struct SpriteEditorData
@@ -116,16 +116,23 @@ namespace graphic
         Color selectedColor;
         Color defaultColor;
 
-        std::variant<light, solid, liquid> selectedAttribute;
-        std::variant<light, solid, liquid> defaultAttribute;
+        std::vector<std::variant<light, solid, liquid>> selectedAttributes;
+        std::vector<std::variant<light, solid, liquid>> defaultAttributes;
 
-        bool showColorSelector;
-        bool showPixelEditorSidebar;
-        bool showGrid;
-        bool autoLink;
+        bool showColorSelector = false;
+        bool showPixelEditorSidebar = false;
+        bool showGrid = true;
+
+        bool autoLink = false;
+
         bool showLightOptions = false;
         bool showSolidOptions = false;
         bool showLiquidOptions = false;
+
+        bool liquidEnabled = false;
+        bool solidEnabled = false;
+        bool lightEnabled = false;
+
         bool resetCamera = false;
     };
 
