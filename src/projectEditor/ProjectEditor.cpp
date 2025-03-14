@@ -33,9 +33,21 @@ int ProjectEditor::run()
         {
             try
             {
-                graphic::Sprite sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath);
-                _core->addSprite(sprite);
-                _graphic->projectData.spritePath.clear();
+                graphic::Position position;
+                if (event == graphic::EventType::MOUSE_CLICK_LEFT)
+                {
+                    position = _graphic->getPosition();
+                    float zoom = static_cast<float>(_camera.zoom);
+                    position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
+                    position.y = (position.y - WINDOW_HEIGHT / 2.0f) / zoom + _camera.position.y;
+
+                    position.x = std::round(position.x);
+                    position.y = std::round(position.y);
+                    graphic::Sprite sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath, false, position);
+                    _core->addSprite(sprite);
+                    // Need to add this line if we want to clear the sprite path after loading the sprite
+                    // _graphic->projectData.spritePath.clear();
+                }
             }
             catch (const std::exception &e)
             {

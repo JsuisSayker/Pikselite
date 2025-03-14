@@ -25,6 +25,7 @@
 
 #include <cstdio>
 #include <fstream>
+#include <filesystem>
 #include <string>
 #include <iostream>
 #include <stdbool.h>
@@ -36,6 +37,7 @@ namespace graphic
     class Graphic
     {
     public:
+
         Graphic();
         ~Graphic();
 
@@ -53,8 +55,8 @@ namespace graphic
         void drawRectangle(Rectangle rectangle);
 
         void saveSprite(std::vector<Pixel> pixels, std::string filename);
-        void createExternalAttributeFile(const std::string& filename, const std::vector<Pixel>& pixels);
-        graphic::Sprite loadSpriteFromJSON(const std::string& filename);
+        void createExternalAttributeFile(const std::string &filename, const std::vector<Pixel> &pixels);
+        graphic::Sprite loadSpriteFromJSON(const std::string &filename, bool defaultUsage, Position actualPosition);
 
         SDL_Renderer *getRenderer() { return _renderer; }
         SDL_Window *getWindow() { return _window; }
@@ -64,6 +66,8 @@ namespace graphic
         void spriteEditorSidebar();
         void projectEditorSidebar();
         void pixelEditorSidebar();
+        void spriteSelector();
+        const char *getSpriteFileName(const std::string &path);
         void addFileExplorer();
         void addExportFileExplorer();
 
@@ -81,7 +85,7 @@ namespace graphic
 
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::variant<light, solid, liquid>{light{0, 0}}, std::variant<light, solid, liquid>{light{0, 0}}, false};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, "", ""};
+        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, false, "", ""};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};
         solid solidData = solid{};
@@ -92,7 +96,7 @@ namespace graphic
     private:
         SDL_Window *_window;
         SDL_Renderer *_renderer;
-        ImFont* _iconFont = nullptr;
+        ImFont *_iconFont = nullptr;
         bool colorSelectorInitialized = false;
         bool spriteEditorSidebarInitialized = false;
         bool projectEditorSidebarInitialized = false;

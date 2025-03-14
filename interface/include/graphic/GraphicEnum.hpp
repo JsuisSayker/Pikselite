@@ -137,6 +137,7 @@ namespace graphic
         bool showGameAssets;
         bool showPixelLinker;
         bool showScenes;
+        bool showImportSprite;
         std::string spritePath;
         std::string folderPath;
     };
