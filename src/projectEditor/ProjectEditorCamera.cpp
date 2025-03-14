@@ -25,6 +25,8 @@ void ProjectEditor::zoomCamera(graphic::EventType event)
     if (event == graphic::EventType::KEY_I)
     {
         _camera.zoom += 1;
+        if (_camera.zoom > 20)
+            _camera.zoom = 20;
     }
     if (event == graphic::EventType::KEY_O)
     {

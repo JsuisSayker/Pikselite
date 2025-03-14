@@ -33,7 +33,7 @@ int ProjectEditor::run()
         {
             try
             {
-                std::pair<std::string, std::vector<graphic::Pixel>> sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath);
+                graphic::Sprite sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath);
                 _core->addSprite(sprite);
                 _graphic->projectData.spritePath.clear();
             }
