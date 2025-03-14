@@ -31,7 +31,6 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
 
     if (event == graphic::EventType::MOUSE_CLICK_LEFT || event == graphic::EventType::MOUSE_DRAG_LEFT)
     {
-        std::cout << "Mouse Click Left" << std::endl; ////////////////////
         position = _graphic->getPosition();
         float zoom = static_cast<float>(_camera.zoom);
         position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
@@ -46,11 +45,9 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
 
     if (event == graphic::EventType::MOUSE_CLICK_RIGHT || event == graphic::EventType::MOUSE_DRAG_RIGHT)
     {
-        std::cout << "Mouse Click Right" << std::endl; ////////////////////
+        float zoom = static_cast<float>(_camera.zoom);
 
         position = _graphic->getPosition();
-
-        float zoom = static_cast<float>(_camera.zoom);
         position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
         position.y = (position.y - WINDOW_HEIGHT / 2.0f) / zoom + _camera.position.y;
         position.x = std::round(position.x);
@@ -60,9 +57,7 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
 
         if (selectedPixel != nullptr)
         {
-            std::cout << "Selected Pixel at: " << position.x << ", " << position.y << std::endl; ////////////////////
-        } else {
-            std::cout << "No pixel at: " << position.x << ", " << position.y << std::endl; ////////////////////
+            selectedPixel->isSelected = selectedPixel->isSelected = true;
         }
     }
 }
