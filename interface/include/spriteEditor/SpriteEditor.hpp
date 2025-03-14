@@ -12,7 +12,6 @@ class SpriteEditor {
         void moveCamera(graphic::EventType event);
         void zoomCamera(graphic::EventType event);
         void checkMouseEvents(graphic::EventType event);
-        void checkInterfaceEvents(graphic::EventType event);
 
         void addPixel(graphic::Pixel pixel);
 

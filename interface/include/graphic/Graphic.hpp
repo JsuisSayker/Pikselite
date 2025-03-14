@@ -59,7 +59,6 @@ namespace graphic
         SDL_Renderer *getRenderer() { return _renderer; }
         SDL_Window *getWindow() { return _window; }
 
-        void colorSelector();
         void navBar();
         void spriteEditorSidebar();
         void projectEditorSidebar();
@@ -79,7 +78,7 @@ namespace graphic
         std::vector<Pixel> _pixels;
 
         bool showHome = true;
-        SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::variant<light, solid, liquid>{light{0, 0}}, std::variant<light, solid, liquid>{light{0, 0}}, false};
+        SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<graphic::light, graphic::solid, graphic::liquid>>()};
         ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, ""};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};

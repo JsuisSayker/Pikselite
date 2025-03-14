@@ -34,7 +34,6 @@ int SpriteEditor::run()
         }
 
         checkMouseEvents(event);
-        checkInterfaceEvents(event);
         moveCamera(event);
         zoomCamera(event);
 

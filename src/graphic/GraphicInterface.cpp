@@ -2,28 +2,6 @@
 
 namespace graphic
 {
-    void Graphic::colorSelector()
-    {
-        if (!colorSelectorInitialized)
-        {
-            ImGui::SetNextWindowSize(ImVec2(200, 100), ImGuiCond_FirstUseEver);
-            colorSelectorInitialized = true;
-        }
-
-        // Begin a window that is resizable and movable by the user
-        ImGui::Begin("Color Selector");
-
-        static ImVec4 color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        ImGui::ColorEdit4("Color", (float *)&color);
-
-        editorData.defaultColor = {static_cast<uint8_t>(color.x * 255),
-                                   static_cast<uint8_t>(color.y * 255),
-                                   static_cast<uint8_t>(color.z * 255),
-                                   static_cast<uint8_t>(color.w * 255)};
-
-        ImGui::End();
-    }
-
     void Graphic::navBar()
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 10.0f));
@@ -404,9 +382,6 @@ namespace graphic
 
         if (projectData.showFileExplorer)
             addFileExplorer();
-
-        if (editorData.showColorSelector)
-            colorSelector();
 
         if (editorData.showPixelEditorSidebar)
             pixelEditorSidebar();

@@ -116,13 +116,13 @@ namespace graphic
         Color selectedColor;
         Color defaultColor;
 
-        std::variant<light, solid, liquid> selectedAttribute;
-        std::variant<light, solid, liquid> defaultAttribute;
+        std::vector<std::variant<light, solid, liquid>> selectedAttributes;
+        std::vector<std::variant<light, solid, liquid>> defaultAttributes;
 
-        bool showColorSelector;
-        bool showPixelEditorSidebar;
-        bool showGrid;
-        bool autoLink;
+        bool showColorSelector = false;
+        bool showPixelEditorSidebar = false;
+        bool showGrid = true;
+        bool autoLink = false;
         bool showLightOptions = false;
         bool showSolidOptions = false;
         bool showLiquidOptions = false;

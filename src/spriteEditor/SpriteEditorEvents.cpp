@@ -32,10 +32,3 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
     }
 }
 
-void SpriteEditor::checkInterfaceEvents(graphic::EventType event)
-{
-    if (event == graphic::EventType::KEY_C)
-    {
-        _graphic->editorData.showColorSelector = !_graphic->editorData.showColorSelector;
-    }
-}
