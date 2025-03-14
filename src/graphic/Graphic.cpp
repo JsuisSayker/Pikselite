@@ -120,6 +120,30 @@ namespace graphic
             posObj.AddMember("y", pixel.position.y, allocator);
             pixelObj.AddMember("position", posObj, allocator);
 
+            rapidjson::Value attributesArray(rapidjson::kArrayType);
+            for (const auto &attribute : pixel.attributes)
+            {
+                rapidjson::Value attributeObj(rapidjson::kObjectType);
+                if (std::holds_alternative<light>(attribute))
+                {
+                    const light &l = std::get<light>(attribute);
+                    attributeObj.AddMember("radius", l.radius, allocator);
+                    attributeObj.AddMember("intensity", l.intensity, allocator);
+                }
+                else if (std::holds_alternative<solid>(attribute))
+                {
+                    // do nothing
+                }
+                else if (std::holds_alternative<liquid>(attribute))
+                {
+                    const liquid &l = std::get<liquid>(attribute);
+                    attributeObj.AddMember("viscosity", l.viscosity, allocator);
+                }
+                attributesArray.PushBack(attributeObj, allocator);
+            }
+
+            pixelObj.AddMember("attributes", attributesArray, allocator);
+
             rapidjson::Value colorObj(rapidjson::kObjectType);
             colorObj.AddMember("r", static_cast<int>(pixel.color.r), allocator);
             colorObj.AddMember("g", static_cast<int>(pixel.color.g), allocator);
@@ -188,8 +212,9 @@ namespace graphic
 
             const rapidjson::Value &posObj = pixelObj["position"];
             const rapidjson::Value &colorObj = pixelObj["color"];
+            const rapidjson::Value &attributesArray = pixelObj["attributes"];
 
-            if (!posObj.IsObject() || !colorObj.IsObject())
+            if (!posObj.IsObject() || !colorObj.IsObject() || !attributesArray.IsArray())
                 continue;
 
             Pixel p;
@@ -200,6 +225,31 @@ namespace graphic
             p.color.b = colorObj["b"].GetInt();
             p.color.a = colorObj["a"].GetInt();
 
+            for (rapidjson::SizeType j = 0; j < attributesArray.Size(); ++j)
+            {
+                const rapidjson::Value &attributeObj = attributesArray[j];
+                if (!attributeObj.IsObject())
+                    continue;
+
+                if (attributeObj.HasMember("radius") && attributeObj.HasMember("intensity"))
+                {
+                    light l;
+                    l.radius = attributeObj["radius"].GetDouble();
+                    l.intensity = attributeObj["intensity"].GetDouble();
+                    p.attributes.push_back(l);
+                }
+                else if (attributeObj.HasMember("viscosity"))
+                {
+                    liquid l;
+                    l.viscosity = attributeObj["viscosity"].GetDouble();
+                    p.attributes.push_back(l);
+                }
+                else
+                {
+                    solid s;
+                    p.attributes.push_back(s);
+                }
+            }
             pixels.push_back(p);
         }
         Sprite sprite = Sprite{false, Position{0, 0}, filename, pixels};
