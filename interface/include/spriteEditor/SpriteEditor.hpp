@@ -15,7 +15,6 @@ class SpriteEditor {
         void checkInterfaceEvents(graphic::EventType event);
 
         void addPixel(graphic::Pixel pixel);
-        void getRealPixelPosition(graphic::Pixel *pixel);
 
     protected:
     private:
