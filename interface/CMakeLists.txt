@@ -11,6 +11,7 @@ add_library(pikselite_interface INTERFACE)
 
 target_include_directories(pikselite_interface
   INTERFACE "include"
+  engine_interface
   ../../extern/imgui
   ../../extern/imgui/backends
   ../../extern/icons

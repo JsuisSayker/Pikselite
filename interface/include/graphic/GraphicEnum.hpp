@@ -51,6 +51,14 @@ namespace graphic
         NONE,
     };
 
+    enum class ActionType : uint8_t
+    {
+        MOVE_UP,
+        MOVE_DOWN,
+        MOVE_LEFT,
+        MOVE_RIGHT,
+    };
+
     struct Color
     {
         uint8_t r;

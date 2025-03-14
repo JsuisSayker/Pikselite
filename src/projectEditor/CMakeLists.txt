@@ -7,7 +7,7 @@ add_library(project_editor
 
 target_link_libraries(project_editor
   pikselite_interface
+  engine_interface
   imgui
   graphic
-  core
 )
