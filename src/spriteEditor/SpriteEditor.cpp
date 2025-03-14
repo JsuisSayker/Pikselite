@@ -99,7 +99,7 @@ int SpriteEditor::run()
     graphic::EventType event;
 
     _graphic->isSpriteEditor = true;
-    _graphic->isProjectEditor = false; 
+    _graphic->isProjectEditor = false;
 
     while (_graphic->_windowOpen)
     {
@@ -109,11 +109,27 @@ int SpriteEditor::run()
         if (event == graphic::EventType::WINDOW_CLOSE)
             return 0;
 
-        if (event == graphic::EventType::KEY_TAB) {
+        if (event == graphic::EventType::KEY_TAB)
+        {
             _graphic->tabSelectorData.tabIndex += 1;
             return 0;
         }
 
+        if (!_graphic->projectData.folderPath.empty())
+        {
+            try
+            {
+                if (_graphic->projectData.folderPath.find(".json") != std::string::npos)
+                    _graphic->createExternalAttributeFile(_graphic->projectData.folderPath, _graphic->_pixels);
+                else
+                    _graphic->saveSprite(_graphic->_pixels, _graphic->projectData.folderPath);
+                _graphic->projectData.folderPath.clear();
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << e.what() << std::endl;
+            }
+        }
         if (_graphic->editorData.resetCamera)
         {
             _camera = graphic::Camera{0, 0, 4};

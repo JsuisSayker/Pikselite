@@ -100,10 +100,9 @@ namespace graphic
             {
                 _pixels.clear();
             }
-            if (ImGui::Button("Save", ImVec2(180, 40)))
+            if (ImGui::Button("Export Sprite", ImVec2(180, 40)))
             {
-                saveSprite(_pixels, "sprite.png");
-                createExternalAttributeFile("sprite.json", _pixels);
+                projectData.showDirectoryChooser = !projectData.showDirectoryChooser;
             }
         }
         ImGui::End();
@@ -135,23 +134,45 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
-    void Graphic::addFileExplorer()
+    void Graphic::addExportFileExplorer()
     {
-        // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
-        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png,.jpg,.jpeg,.bmp,.tga,.gif,.psd,.hdr,.pic");
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".png, .json");
 
         if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
         {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
-                if (ImGuiFileDialog::Instance()->IsOk())
-                {
-                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                    projectData.spritePath = filePathName;
-                }
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                projectData.folderPath = filePathName;
                 ImGuiFileDialog::Instance()->Close();
+                projectData.showDirectoryChooser = false;
+            } else {
+                ImGuiFileDialog::Instance()->Close();
+                projectData.showDirectoryChooser = false;
             }
-            ImGuiFileDialog::Instance()->Close();
+        }
+    }
+
+    void Graphic::addFileExplorer()
+    {
+        // Open the file dialog if needed. Note: It’s best to call OpenDialog only when you really want to open it.
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json, .png");
+
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                projectData.spritePath = filePathName;
+                ImGuiFileDialog::Instance()->Close();
+                projectData.showFileExplorer = false;
+            } else {
+                ImGuiFileDialog::Instance()->Close();
+                projectData.showFileExplorer = false;
+            }
         }
     }
 
@@ -394,6 +415,9 @@ namespace graphic
 
         if (projectData.showFileExplorer)
             addFileExplorer();
+
+        if (projectData.showDirectoryChooser)
+            addExportFileExplorer();
 
         if (editorData.showPixelEditorSidebar)
             pixelEditorSidebar();

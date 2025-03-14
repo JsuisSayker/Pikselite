@@ -65,19 +65,36 @@ namespace graphic
 
     void Graphic::saveSprite(std::vector<Pixel> pixels, std::string filename)
     {
-        SDL_Surface *surface = SDL_CreateRGBSurface(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, 0, 0, 0, 0);
+        SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, WINDOW_WIDTH, WINDOW_HEIGHT, 32, SDL_PIXELFORMAT_RGBA32);
+        if (!surface)
+        {
+            std::cerr << "Error while creating surface: " << SDL_GetError() << std::endl;
+            return;
+        }
 
-        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 255, 255, 255, 255));
+        SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND);
+
+        SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 0, 0, 0, 0));
+
+        int offsetX = WINDOW_WIDTH / 2;
+        int offsetY = WINDOW_HEIGHT / 2;
 
         for (const auto &pixel : pixels)
         {
-            SDL_Rect rect = {static_cast<int>(pixel.position.x), static_cast<int>(pixel.position.y), 1, 1};
-            SDL_FillRect(surface, &rect, SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a));
+            int sdlX = static_cast<int>(pixel.position.x) + offsetX;
+            int sdlY = offsetY + static_cast<int>(pixel.position.y);
+
+            if (sdlX >= 0 && sdlX < WINDOW_WIDTH && sdlY >= 0 && sdlY < WINDOW_HEIGHT)
+            {
+                SDL_Rect rect = {sdlX, sdlY, 1, 1};
+                Uint32 color = SDL_MapRGBA(surface->format, pixel.color.r, pixel.color.g, pixel.color.b, pixel.color.a);
+                SDL_FillRect(surface, &rect, color);
+            }
         }
 
         if (IMG_SavePNG(surface, filename.c_str()) != 0)
         {
-            std::cerr << "Erreur lors de l'enregistrement de l'image PNG : " << IMG_GetError() << std::endl;
+            std::cerr << "Error while saving image: " << SDL_GetError() << std::endl;
         }
 
         SDL_FreeSurface(surface);
@@ -85,12 +102,14 @@ namespace graphic
 
     void Graphic::createExternalAttributeFile(const std::string &filename, const std::vector<Pixel> &pixels)
     {
-
         rapidjson::Document doc;
         doc.SetObject();
         rapidjson::Document::AllocatorType &allocator = doc.GetAllocator();
 
         rapidjson::Value pixelArray(rapidjson::kArrayType);
+
+        // remove the file extension
+        std::string attributeFilename = filename.substr(0, filename.find_last_of('.')) + ".json";
 
         for (const auto &pixel : pixels)
         {
@@ -117,10 +136,10 @@ namespace graphic
         rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
         doc.Accept(writer);
 
-        std::ofstream ofs(filename);
+        std::ofstream ofs(attributeFilename);
         if (!ofs)
         {
-            throw std::runtime_error("Could not open file: " + filename);
+            throw std::runtime_error("Could not open file: " + attributeFilename);
         }
         ofs << buffer.GetString();
         ofs.close();
@@ -132,7 +151,7 @@ namespace graphic
         FILE *fp = std::fopen(filename.c_str(), "rb");
         if (!fp)
         {
-            std::perror("Erreur lors de l'ouverture du fichier");
+            std::perror("Error while opening file");
             throw std::runtime_error("Could not open file: " + filename);
         }
         char readBuffer[65536];
@@ -144,20 +163,20 @@ namespace graphic
 
         if (!doc.IsObject())
         {
-            std::cerr << "Le document JSON n'est pas un objet." << std::endl;
+            std::cerr << "The JSON document is not an object." << std::endl;
             throw std::runtime_error("Invalid JSON file: " + filename);
         }
 
         if (!doc.HasMember("pixels"))
         {
-            std::cerr << "Le document ne contient pas le membre 'pixels'." << std::endl;
+            std::cerr << "The JSON document does not have a 'pixels' member." << std::endl;
             throw std::runtime_error("Invalid JSON file: " + filename);
         }
 
         const rapidjson::Value &pixelsArray = doc["pixels"];
         if (!pixelsArray.IsArray())
         {
-            std::cerr << "Le membre 'pixels' n'est pas un tableau." << std::endl;
+            std::cerr << "The 'pixels' member is not an array." << std::endl;
             throw std::runtime_error("Invalid JSON file: " + filename);
         }
 

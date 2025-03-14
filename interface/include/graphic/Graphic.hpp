@@ -64,6 +64,7 @@ namespace graphic
         void projectEditorSidebar();
         void pixelEditorSidebar();
         void addFileExplorer();
+        void addExportFileExplorer();
 
         void homeInterface();
 
@@ -79,7 +80,7 @@ namespace graphic
 
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<graphic::light, graphic::solid, graphic::liquid>>()};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, ""};
+        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, "", ""};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};
         solid solidData = solid{};
