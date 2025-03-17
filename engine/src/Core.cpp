@@ -1,6 +1,6 @@
 #include <core/Core.hpp>
 
-Core::Core(std::shared_ptr<graphic::Graphic> graphic) : _graphic(graphic)
+Core::Core()
 {
 }
 
@@ -11,4 +11,24 @@ Core::~Core()
 void Core::addSprite(graphic::Sprite sprite)
 {
     this->_Sprites.push_back(sprite);
+}
+
+int Core::run(graphic::Camera camera)
+{
+    graphic::EventType event;
+    std::shared_ptr<graphic::Graphic> graphic = std::make_shared<graphic::Graphic>(false);
+
+    while (graphic->_windowOpen) {
+        event = graphic->checkEvent();
+
+        if (event == graphic::EventType::WINDOW_CLOSE)
+            return 0;
+
+        graphic->clearWindow();
+
+        graphic->drawSprites(this->_Sprites, camera);
+
+        graphic->updateWindow();
+    }
+    return 0;
 }

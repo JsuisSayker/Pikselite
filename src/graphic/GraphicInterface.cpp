@@ -177,6 +177,10 @@ namespace graphic
                 }
                 ImGui::EndCombo();
             }
+            if (ImGui::Button("run", ImVec2(180, 40)))
+            {
+                projectData.runGame = true;
+            }
         }
         ImGui::End();
 

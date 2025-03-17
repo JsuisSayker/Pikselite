@@ -2,7 +2,7 @@
 
 TabSelector::TabSelector(std::shared_ptr<graphic::Graphic> graphic) : _graphic(graphic)
 {
-    _editors.push_back(std::make_unique<ProjectEditor>(graphic, std::make_shared<Core>(graphic)));
+    _editors.push_back(std::make_unique<ProjectEditor>(graphic, std::make_shared<Core>()));
     _editors.push_back(std::make_unique<SpriteEditor>(graphic));
 }
 

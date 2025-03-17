@@ -146,15 +146,16 @@ namespace graphic
 
     struct ProjectEditorData
     {
-        bool showFileExplorer;
-        bool showDirectoryChooser;
-        bool showLayer;
-        bool showGameAssets;
-        bool showPixelLinker;
-        bool showScenes;
-        bool showImportSprite;
-        std::string spritePath;
-        std::string folderPath;
+        bool showFileExplorer = false;
+        bool showDirectoryChooser = false;
+        bool showLayer = false;
+        bool showGameAssets = false;
+        bool showPixelLinker = false;
+        bool showScenes = false;
+        bool showImportSprite = false;
+        bool runGame = false;
+        std::string spritePath = "";
+        std::string folderPath = "";
     };
 
     struct TabSelectorData

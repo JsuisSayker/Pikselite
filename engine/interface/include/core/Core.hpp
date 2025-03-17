@@ -9,15 +9,15 @@
 
 class Core {
     public:
-        Core(std::shared_ptr<graphic::Graphic> graphic);
+        Core();
         ~Core();
 
         std::vector<graphic::Sprite> getSprite() { return _Sprites; }
 
         void addSprite(graphic::Sprite sprite);
+        int run(graphic::Camera camera);
 
     protected:
     private:
-        std::shared_ptr<graphic::Graphic> _graphic;
         std::vector<graphic::Sprite> _Sprites;
 };

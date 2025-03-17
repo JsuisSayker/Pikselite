@@ -16,17 +16,23 @@ namespace graphic
                 if (event.wheel.y < 0)
                     return EventType::MOUSE_WHEEL_DOWN;
             }
-            // if the user closes the window
-            if (event.type == SDL_QUIT)
-            {
-                this->_windowOpen = false;
-                return EventType::WINDOW_CLOSE;
-            }
-            ImGui_ImplSDL2_ProcessEvent(&event);
 
-            ImGuiIO &io = ImGui::GetIO();
-            if (io.WantCaptureMouse)
-                return EventType::NONE;
+            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
+            {
+                if (event.window.windowID == SDL_GetWindowID(this->_window))
+                {
+                    this->_windowOpen = false;
+                    return EventType::WINDOW_CLOSE;
+                }
+            }
+
+            if (showInterface)
+            {
+                ImGui_ImplSDL2_ProcessEvent(&event);
+                ImGuiIO &io = ImGui::GetIO();
+                if (io.WantCaptureMouse)
+                    return EventType::NONE;
+            }
 
             // if the user clicks mouse button
             if (event.type == SDL_MOUSEBUTTONDOWN)

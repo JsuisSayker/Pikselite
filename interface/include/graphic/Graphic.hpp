@@ -37,7 +37,7 @@ namespace graphic
     class Graphic
     {
     public:
-        Graphic();
+        Graphic(bool interface = true);
         ~Graphic();
 
         void updateWindow();
@@ -83,7 +83,7 @@ namespace graphic
 
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, false};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, false, "", ""};
+        ProjectEditorData projectData = ProjectEditorData{};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};
         solid solidData = solid{};
@@ -99,6 +99,7 @@ namespace graphic
         bool spriteEditorSidebarInitialized = false;
         bool projectEditorSidebarInitialized = false;
         bool pixelEditorSidebarInitialized = false;
+        bool showInterface;
         float navBarHeight = 0.0f;
     };
 } // namespace sdl2

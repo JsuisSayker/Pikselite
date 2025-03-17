@@ -29,6 +29,11 @@ int ProjectEditor::run()
             return 0;
         }
 
+        if (_graphic->projectData.runGame) {
+            _graphic->projectData.runGame = false;
+            _core->run(_camera);
+        }
+
         if (!_graphic->projectData.spritePath.empty())
         {
             try
