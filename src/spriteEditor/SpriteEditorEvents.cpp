@@ -31,6 +31,12 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
 
     if (event == graphic::EventType::MOUSE_CLICK_LEFT || event == graphic::EventType::MOUSE_DRAG_LEFT)
     {
+        if (_graphic->selectedPixel != nullptr)
+        {
+            _graphic->editorData.showPixelEditorSidebar = false;
+            _graphic->selectedPixel = nullptr;
+        }
+
         position = _graphic->getPosition();
         float zoom = static_cast<float>(_camera.zoom);
         position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
@@ -43,7 +49,7 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
         addPixel(graphic::Pixel{false, _graphic->editorData.defaultColor, position, _graphic->editorData.defaultAttributes});
     }
 
-    if (event == graphic::EventType::MOUSE_CLICK_RIGHT || event == graphic::EventType::MOUSE_DRAG_RIGHT)
+    if (event == graphic::EventType::MOUSE_CLICK_RIGHT)
     {
         float zoom = static_cast<float>(_camera.zoom);
 
@@ -57,7 +63,8 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
 
         if (selectedPixel != nullptr)
         {
-            selectedPixel->isSelected = selectedPixel->isSelected = true;
+            _graphic->selectedPixel = selectedPixel;
+            _graphic->editorData.showPixelEditorSidebar = true;
         }
     }
 }
