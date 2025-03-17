@@ -348,9 +348,14 @@ namespace graphic
                 editorData.showLightOptions = false;
             }
             ImGui::SameLine();
-            if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+                {
+                }
             }
+
             ImGui::EndPopup();
         }
 
@@ -382,9 +387,14 @@ namespace graphic
                 editorData.showSolidOptions = false;
             }
             ImGui::SameLine();
-            ImGui::Checkbox("Enabled", &editorData.solidEnabled);
+
+            if (selectedPixel == nullptr)
             {
+                ImGui::Checkbox("Enabled", &editorData.solidEnabled);
+                {
+                }
             }
+
             ImGui::EndPopup();
         }
 
@@ -433,9 +443,14 @@ namespace graphic
                 editorData.showLiquidOptions = false;
             }
             ImGui::SameLine();
-            if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+                {
+                }
             }
+
             ImGui::EndPopup();
         }
 
