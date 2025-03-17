@@ -103,6 +103,7 @@ namespace graphic
             if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
             {
                 editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
+                this->pixelEditorSidebarInitialized = false;
             }
             ImGui::PopFont();
 
@@ -236,7 +237,6 @@ namespace graphic
         if (!pixelEditorSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            pixelEditorSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -246,7 +246,18 @@ namespace graphic
         {
             ImGui::Text("Color Selector");
             ImGui::BeginChild("Color Selector Child", ImVec2(ImGui::GetContentRegionAvail().x, 200), true, ImGuiWindowFlags_NoScrollbar);
-            static ImVec4 color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+            static ImVec4 color;
+            if (!pixelEditorSidebarInitialized)
+            {
+                color = ImVec4(
+                    editorData.defaultColor.r / 255.0f,
+                    editorData.defaultColor.g / 255.0f,
+                    editorData.defaultColor.b / 255.0f,
+                    editorData.defaultColor.a / 255.0f);
+
+                pixelEditorSidebarInitialized = true;
+            }
+
             ImGui::ColorPicker4("##color", (float *)&color, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
             ImGui::EndChild();
 
