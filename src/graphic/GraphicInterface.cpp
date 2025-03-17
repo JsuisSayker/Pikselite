@@ -175,7 +175,6 @@ namespace graphic
                             newFileName += ".png";
                             projectData.oldSpritePath = newFileName;
                         }
-                        std::cout << "AT THE END OF THE IF AND ELSE STATEMENT: " << projectData.oldSpritePath.c_str() << std::endl;
                         projectData.spritePath = it->second;
                     }
                     if (is_selected)
@@ -343,7 +342,8 @@ namespace graphic
         if (projectData.dragImagetextureId == 0)
             projectData.dragImagetextureId = LoadTextureFromFile(projectData.oldSpritePath.c_str(), this->_renderer);
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
 
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceExtern))
         {
@@ -355,6 +355,7 @@ namespace graphic
             ImGui::EndDragDropSource();
         }
 
+        ImGui::PopStyleColor();
         ImGui::PopStyleColor();
     }
 
