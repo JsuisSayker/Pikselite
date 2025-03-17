@@ -1,10 +1,3 @@
-/*
-** EPITECH PROJECT, 2024
-** Pikselite Engine
-** File description:
-** Clock
-*/
-
 #include <utils/Clock.hpp>
 
 Clock::Clock() : startTime(std::chrono::steady_clock::now())

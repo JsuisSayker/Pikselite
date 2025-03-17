@@ -6,4 +6,5 @@ add_library(managers
 
 target_link_libraries(managers
   engine_interface
+  graphic
 )

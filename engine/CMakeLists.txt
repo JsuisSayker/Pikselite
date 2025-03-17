@@ -14,6 +14,5 @@ target_link_libraries(engine
   pikselite_interface
   systems
   managers
-  graphic
   utils
 )

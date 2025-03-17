@@ -1,10 +1,3 @@
-/*
-** EPITECH PROJECT, 2024
-** Pikselite Engine
-** File description:
-** Clock
-*/
-
 #pragma once
 
 #include <iostream>

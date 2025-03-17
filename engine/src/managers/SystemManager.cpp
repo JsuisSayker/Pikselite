@@ -12,3 +12,20 @@ void SystemManager::updateSystems(float deltaTime)
         system->update(deltaTime);
     }
 }
+
+void SystemManager::addEvent(engine::Events event)
+{
+    systemsOrder.push_back(event);
+}
+
+void SystemManager::removeEvent(engine::Events event)
+{
+    for (auto it = systemsOrder.begin(); it != systemsOrder.end(); it++)
+    {
+        if (*it == event)
+        {
+            systemsOrder.erase(it);
+            return;
+        }
+    }
+}

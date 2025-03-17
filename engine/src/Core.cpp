@@ -27,6 +27,17 @@ int Core::run(graphic::Camera camera)
         if (event == graphic::EventType::WINDOW_CLOSE)
             return 0;
 
+        if (event != graphic::EventType::NONE)
+        {
+            for (int i = 0; _Sprites.size(); i++)
+            {
+                if (_Sprites[i].actions.find(event) != _Sprites[i].actions.end())
+                {
+                    this->_systemManager->addEvent(_Sprites[i].actions[event]);
+                }
+            }
+        }
+
         this->_systemManager->updateSystems(this->_clock.getElapsedTime());
         graphic->clearWindow();
 

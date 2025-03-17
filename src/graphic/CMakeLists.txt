@@ -17,4 +17,6 @@ target_link_libraries(graphic
   imgui
   pikselite_interface
   rapidjson_interface
+  engine_interface
+  engine
 )

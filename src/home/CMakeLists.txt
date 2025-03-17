@@ -7,4 +7,5 @@ add_library(home
 target_link_libraries(home
   pikselite_interface
   imgui
+  engine_interface
 )

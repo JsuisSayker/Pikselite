@@ -15,4 +15,5 @@ target_include_directories(pikselite_interface
   ../../extern/imgui
   ../../extern/imgui/backends
   ../../extern/icons
+  engine
 )
