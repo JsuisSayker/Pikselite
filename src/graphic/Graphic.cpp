@@ -169,7 +169,7 @@ namespace graphic
         ofs.close();
     }
 
-    Sprite Graphic::loadSpriteFromJSON(const std::string &filename)
+    Sprite Graphic::loadSpriteFromJSON(const std::string &filename, bool defaultUsage, Position actualPosition)
     {
         std::vector<Pixel> pixels;
         FILE *fp = std::fopen(filename.c_str(), "rb");
@@ -218,8 +218,15 @@ namespace graphic
                 continue;
 
             Pixel p;
-            p.position.x = posObj["x"].GetDouble();
-            p.position.y = posObj["y"].GetDouble();
+            if (defaultUsage)
+            {
+                p.position.x = posObj["x"].GetDouble();
+                p.position.y = posObj["y"].GetDouble();
+            } else {
+                p.position.x = actualPosition.x + posObj["x"].GetDouble();
+                p.position.y = actualPosition.y + posObj["y"].GetDouble();
+            }
+
             p.color.r = colorObj["r"].GetInt();
             p.color.g = colorObj["g"].GetInt();
             p.color.b = colorObj["b"].GetInt();

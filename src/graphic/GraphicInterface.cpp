@@ -65,6 +65,26 @@ namespace graphic
         ImGui::PopStyleVar();
     }
 
+    std::unordered_map<std::string, std::string> getSpriteFilesName(const std::string &path)
+    {
+        std::unordered_map<std::string, std::string> files;
+        try
+        {
+            for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(path))
+            {
+                if (std::filesystem::is_regular_file(entry.status()))
+                {
+                    files[entry.path().filename().string()] = entry.path().string();
+                }
+            }
+        }
+        catch (const std::filesystem::filesystem_error &ex)
+        {
+            std::cerr << "Error accessing directory: " << ex.what() << std::endl;
+        }
+        return files;
+    }
+
     void Graphic::spriteEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
@@ -128,6 +148,35 @@ namespace graphic
             {
                 projectData.showFileExplorer = !projectData.showFileExplorer;
             }
+            if (ImGui::BeginCombo("Sprites", nullptr))
+            {
+                static int currentItem = 0;
+                int index = 0;
+
+                std::unordered_map<std::string, std::string> items = getSpriteFilesName("sprites");
+
+                for (std::unordered_map<std::string, std::string>::iterator it = items.begin(); it != items.end(); ++it)
+                {
+                    bool is_selected = (currentItem == index);
+                    if (ImGui::Selectable(it->first.c_str(), is_selected))
+                    {
+                        currentItem = index;
+                        projectData.showImportSprite = !projectData.showImportSprite;
+                        if (it->second.find(".json") == std::string::npos)
+                        {
+                            std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
+                            newFileName += ".json";
+                            it->second = newFileName;
+                        }
+                        projectData.spritePath = it->second;
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+
+                    index++;
+                }
+                ImGui::EndCombo();
+            }
         }
         ImGui::End();
 
@@ -149,7 +198,9 @@ namespace graphic
                 projectData.folderPath = filePathName;
                 ImGuiFileDialog::Instance()->Close();
                 projectData.showDirectoryChooser = false;
-            } else {
+            }
+            else
+            {
                 ImGuiFileDialog::Instance()->Close();
                 projectData.showDirectoryChooser = false;
             }
@@ -169,7 +220,9 @@ namespace graphic
                 projectData.spritePath = filePathName;
                 ImGuiFileDialog::Instance()->Close();
                 projectData.showFileExplorer = false;
-            } else {
+            }
+            else
+            {
                 ImGuiFileDialog::Instance()->Close();
                 projectData.showFileExplorer = false;
             }
@@ -222,6 +275,14 @@ namespace graphic
         ImGui::End();
 
         ImGui::PopStyleColor();
+    }
+
+    void Graphic::spriteSelector()
+    {
+
+        // graphic::Sprite sprite = loadSpriteFromJSON(projectData.sp)
+
+        return;
     }
 
     void Graphic::lightOptions()
@@ -421,6 +482,9 @@ namespace graphic
 
         if (editorData.showPixelEditorSidebar)
             pixelEditorSidebar();
+
+        if (projectData.showImportSprite)
+            spriteSelector();
 
         if (editorData.showLightOptions)
             lightOptions();
