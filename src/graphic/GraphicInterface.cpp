@@ -104,6 +104,7 @@ namespace graphic
             {
                 editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
                 this->pixelEditorSidebarInitialized = false;
+                this->selectedPixel = nullptr;
             }
             ImGui::PopFont();
 
@@ -293,6 +294,13 @@ namespace graphic
             {
                 editorData.showLiquidOptions = true;
             }
+
+            ImGui::Separator();
+
+            if (selectedPixel)
+            {
+                ImGui::Text("Selected Pixel:\n(%f, %f)", selectedPixel->position.x, selectedPixel->position.y);
+            }
         }
         ImGui::End();
 
@@ -364,6 +372,10 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
                 {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.lightEnabled = editorData.lightEnabled;
+                    }
                 }
             }
             else
@@ -409,6 +421,10 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
                 {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.solidEnabled = editorData.solidEnabled;
+                    }
                 }
             }
             else
@@ -471,6 +487,10 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
                 {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.liquidEnabled = editorData.liquidEnabled;
+                    }
                 }
             }
             else
