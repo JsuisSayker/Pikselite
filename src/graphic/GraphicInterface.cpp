@@ -338,19 +338,35 @@ namespace graphic
 
     void Graphic::spriteSelector()
     {
-        ImVec2 imageSize(1000, 1000);
+        ImVec2 imageSize(200, 200);
+
         if (projectData.dragImagetextureId == 0)
             projectData.dragImagetextureId = LoadTextureFromFile(projectData.oldSpritePath.c_str(), this->_renderer);
 
-        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+        // Push style colors for the tooltip (adjust as needed)
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1, 1, 1, 0));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 1));
 
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceExtern))
         {
+            // Set the drag-drop payload.
             ImGui::SetDragDropPayload("DND_DEMO_CELL", &projectData.dragImagetextureId, sizeof(ImTextureID));
+
+            // Define a zoom level. Adjust this value as needed.
+            float zoomLevel = 50.0f;
+            ImVec2 zoomedSize = ImVec2(imageSize.x * zoomLevel, imageSize.y * zoomLevel);
+
+            // Get the current mouse position
+            ImVec2 mousePos = ImGui::GetIO().MousePos;
+
+            // Calculate the tooltip window position so that the image's center aligns with the mouse cursor.
+            ImVec2 tooltipPos = ImVec2(mousePos.x - zoomedSize.x * 0.5f,
+                                        mousePos.y - zoomedSize.y * 0.5f);
+            ImGui::SetNextWindowPos(tooltipPos, ImGuiCond_Always);
+
+            // Begin the tooltip that will display the zoomed image.
             ImGui::BeginTooltip();
-            // Draw the image with no tint modulation (shows as loaded)
-            ImGui::Image(projectData.dragImagetextureId, imageSize, ImVec2(0, 0), ImVec2(1, 1));
+            ImGui::Image(projectData.dragImagetextureId, zoomedSize, ImVec2(0, 0), ImVec2(1, 1));
             ImGui::EndTooltip();
             ImGui::EndDragDropSource();
         }
