@@ -110,6 +110,8 @@ namespace graphic
                     return EventType::KEY_ARROW_LEFT;
                 case SDLK_RIGHT:
                     return EventType::KEY_ARROW_RIGHT;
+                case SDLK_ESCAPE:
+                    return EventType::KEY_ESCAPE;
                 case SDLK_TAB:
                     return EventType::KEY_TAB;
                 default:

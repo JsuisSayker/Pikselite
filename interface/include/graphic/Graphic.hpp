@@ -5,7 +5,7 @@
 
 #include <graphic/GraphicEnum.hpp>
 
-#include <imgui.h>
+// #include <imgui.h>
 #include "../../extern/imgui/backends/ImGuiFileDialog.h"
 #include "../../extern/imgui/backends/imgui_impl_sdl2.h"
 #include "../../extern/imgui/backends/imgui_impl_sdlrenderer2.h"
@@ -83,7 +83,7 @@ namespace graphic
 
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, false};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, false, "", ""};
+        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, false, "", "", "", ImTextureID(0)};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};
         solid solidData = solid{};

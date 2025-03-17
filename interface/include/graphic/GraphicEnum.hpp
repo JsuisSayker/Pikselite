@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <variant>
+#include <imgui.h>
 
 namespace graphic
 {
@@ -22,6 +23,7 @@ namespace graphic
         KEY_ARROW_LEFT,
         KEY_ARROW_RIGHT,
         KEY_TAB,
+        KEY_ESCAPE,
         KEY_A,
         KEY_B,
         KEY_C,
@@ -147,6 +149,8 @@ namespace graphic
         bool showImportSprite;
         std::string spritePath;
         std::string folderPath;
+        std::string oldSpritePath;
+        ImTextureID dragImagetextureId;
     };
 
     struct TabSelectorData

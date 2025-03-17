@@ -164,10 +164,18 @@ namespace graphic
                         projectData.showImportSprite = !projectData.showImportSprite;
                         if (it->second.find(".json") == std::string::npos)
                         {
+                            projectData.oldSpritePath = it->second;
                             std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
                             newFileName += ".json";
                             it->second = newFileName;
                         }
+                        else
+                        {
+                            std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
+                            newFileName += ".png";
+                            projectData.oldSpritePath = newFileName;
+                        }
+                        std::cout << "AT THE END OF THE IF AND ELSE STATEMENT: " << projectData.oldSpritePath.c_str() << std::endl;
                         projectData.spritePath = it->second;
                     }
                     if (is_selected)
@@ -277,12 +285,77 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
+    ImTextureID LoadTextureFromFile(const char *filename, SDL_Renderer *renderer)
+    {
+        // Check if the filename is valid (non-null and not empty)
+        if (!filename || std::string(filename).empty())
+        {
+            std::cerr << "Empty filename provided!" << std::endl;
+            return ImTextureID(0);
+        }
+
+        // Convert to absolute path using std::filesystem
+        std::filesystem::path absPath = std::filesystem::absolute(filename);
+        std::string basePath = absPath.string();
+        std::cout << "Base path: " << basePath << std::endl;
+
+        // Check file accessibility
+        std::ifstream file(basePath);
+        if (!file)
+        {
+            std::cerr << "File not accessible!" << std::endl;
+            return ImTextureID(0);
+        }
+        else
+        {
+            std::cout << "File exists and is accessible." << std::endl;
+        }
+
+        // Load the image using SDL_image
+        SDL_Surface *loadedSurface = IMG_Load(basePath.c_str());
+        if (!loadedSurface)
+        {
+            std::cerr << "Unable to load image " << filename << "! SDL_image Error: "
+                      << IMG_GetError() << std::endl;
+            return ImTextureID(0);
+        }
+
+        // Create an SDL_Texture from the loaded surface
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+        if (!texture)
+        {
+            std::cerr << "Unable to create texture from " << filename
+                      << "! SDL Error: " << SDL_GetError() << std::endl;
+            SDL_FreeSurface(loadedSurface);
+            return ImTextureID(0);
+        }
+
+        // Free the loaded surface
+        SDL_FreeSurface(loadedSurface);
+
+        // Return the texture as ImTextureID (using SDL_Texture* directly)
+        return reinterpret_cast<ImTextureID>(texture);
+    }
+
     void Graphic::spriteSelector()
     {
+        ImVec2 imageSize(1000, 1000);
+        if (projectData.dragImagetextureId == 0)
+            projectData.dragImagetextureId = LoadTextureFromFile(projectData.oldSpritePath.c_str(), this->_renderer);
 
-        // graphic::Sprite sprite = loadSpriteFromJSON(projectData.sp)
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
 
-        return;
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceExtern))
+        {
+            ImGui::SetDragDropPayload("DND_DEMO_CELL", &projectData.dragImagetextureId, sizeof(ImTextureID));
+            ImGui::BeginTooltip();
+            // Draw the image with no tint modulation (shows as loaded)
+            ImGui::Image(projectData.dragImagetextureId, imageSize, ImVec2(0, 0), ImVec2(1, 1));
+            ImGui::EndTooltip();
+            ImGui::EndDragDropSource();
+        }
+
+        ImGui::PopStyleColor();
     }
 
     void Graphic::lightOptions()
