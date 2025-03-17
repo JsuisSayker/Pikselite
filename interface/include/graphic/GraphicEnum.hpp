@@ -109,6 +109,10 @@ namespace graphic
         Color color;
         Position position;
         std::vector<std::variant<light, solid, liquid>> attributes;
+
+        bool liquidEnabled = false;
+        bool solidEnabled = false;
+        bool lightEnabled = false;
     };
 
     struct SpriteEditorData

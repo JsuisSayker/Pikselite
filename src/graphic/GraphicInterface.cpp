@@ -349,8 +349,17 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->lightEnabled))
+                {
+                }
             }
 
             ImGui::EndPopup();
@@ -385,8 +394,17 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            ImGui::Checkbox("Enabled", &editorData.solidEnabled);
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->solidEnabled))
+                {
+                }
             }
 
             ImGui::EndPopup();
@@ -438,8 +456,17 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->liquidEnabled))
+                {
+                }
             }
 
             ImGui::EndPopup();
