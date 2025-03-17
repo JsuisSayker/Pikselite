@@ -8,7 +8,7 @@ class MovementSystem : public ASystem {
 public:
     virtual ~MovementSystem() = default;
 
-    void update(float deltaTime) override;
+    void update(float deltaTime, std::vector<graphic::Sprite> sprites) override;
 };
 
 #endif // MOVEMENT_SYSTEM_HPP
