@@ -11,19 +11,21 @@
 
 // the core is the engine that save entity and manage the game loop
 
-class Core {
-    public:
-        Core();
-        ~Core();
+class Core
+{
+public:
+    Core();
+    ~Core();
 
-        std::vector<graphic::Sprite> getSprite() { return _Sprites; }
+    std::vector<graphic::Sprite> getSprite() { return _sprites; }
 
-        void addSprite(graphic::Sprite sprite);
-        int run(graphic::Camera camera);
+    void addSprite(graphic::Sprite sprite);
+    int run(graphic::Camera camera);
 
-    protected:
-    private:
-        std::vector<graphic::Sprite> _Sprites;
-        std::shared_ptr<SystemManager> _systemManager = std::make_shared<SystemManager>();
-        Clock _clock;
+    std::vector<graphic::Sprite> _sprites;
+
+protected:
+private:
+    std::shared_ptr<SystemManager> _systemManager = std::make_shared<SystemManager>();
+    Clock _clock;
 };

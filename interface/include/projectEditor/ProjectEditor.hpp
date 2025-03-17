@@ -11,6 +11,8 @@ public:
     ~ProjectEditor();
 
     int run();
+    bool spriteIsClicked(graphic::Sprite sprite, graphic::Position position);
+    void checkIfSpriteIsSelected();
     void moveCamera(graphic::EventType event);
     void zoomCamera(graphic::EventType event);
 

@@ -147,25 +147,6 @@ namespace graphic
         bool resetCamera = false;
     };
 
-    struct ProjectEditorData
-    {
-        bool showFileExplorer = false;
-        bool showDirectoryChooser = false;
-        bool showLayer = false;
-        bool showGameAssets = false;
-        bool showPixelLinker = false;
-        bool showScenes = false;
-        bool showImportSprite = false;
-        bool runGame = false;
-        std::string spritePath = "";
-        std::string folderPath = "";
-    };
-
-    struct TabSelectorData
-    {
-        int tabIndex = 0;
-    };
-
     struct Sprite
     {
         bool isSelected;
@@ -180,4 +161,25 @@ namespace graphic
             {EventType::KEY_F, engine::Events::MOVE_RIGHT},
         };
     };
+
+    struct ProjectEditorData
+    {
+        bool showFileExplorer = false;
+        bool showDirectoryChooser = false;
+        bool showLayer = false;
+        bool showGameAssets = false;
+        bool showPixelLinker = false;
+        bool showScenes = false;
+        bool showImportSprite = false;
+        bool runGame = false;
+        bool showSpriteSelector = false;
+        std::string spritePath = "";
+        std::string folderPath = "";
+    };
+
+    struct TabSelectorData
+    {
+        int tabIndex = 0;
+    };
+
 }

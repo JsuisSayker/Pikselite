@@ -61,9 +61,10 @@ namespace graphic
         SDL_Window *getWindow() { return _window; }
 
         void navBar();
-        void spriteEditorSidebar();
         void projectEditorSidebar();
         void pixelEditorSidebar();
+        void spriteEditorSidebar();
+        void spriteInputSidebar();
         void spriteSelector();
         const char *getSpriteFileName(const std::string &path);
         void addFileExplorer();

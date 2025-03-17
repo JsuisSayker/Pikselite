@@ -10,7 +10,7 @@ Core::~Core()
 
 void Core::addSprite(graphic::Sprite sprite)
 {
-    this->_Sprites.push_back(sprite);
+    this->_sprites.push_back(sprite);
 }
 
 int Core::run(graphic::Camera camera)
@@ -29,19 +29,19 @@ int Core::run(graphic::Camera camera)
 
         if (event != graphic::EventType::NONE)
         {
-            for (int i = 0; i != _Sprites.size(); i++)
+            for (int i = 0; _sprites.size(); i++)
             {
-                if (_Sprites[i].actions.find(event) != _Sprites[i].actions.end())
+                if (_sprites[i].actions.find(event) != _sprites[i].actions.end())
                 {
-                    this->_systemManager->addEvent(_Sprites[i].actions[event]);
+                    this->_systemManager->addEvent(_sprites[i].actions[event]);
                 }
             }
         }
 
-        this->_systemManager->updateSystems(this->_clock.getElapsedTime(), this->_Sprites);
+        this->_systemManager->updateSystems(this->_clock.getElapsedTime(), this->_sprites);
         graphic->clearWindow();
 
-        graphic->drawSprites(this->_Sprites, camera);
+        graphic->drawSprites(this->_sprites, camera);
 
         this->_clock.restart();
         graphic->updateWindow();
