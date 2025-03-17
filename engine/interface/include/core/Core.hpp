@@ -1,7 +1,9 @@
 #pragma once
 
 #include <graphic/Graphic.hpp>
-#include <systems/ASystem.hpp>
+
+#include <managers/SystemManager.hpp>
+#include <systems/MovementSystem.hpp>
 
 #include <memory>
 
@@ -20,4 +22,5 @@ class Core {
     protected:
     private:
         std::vector<graphic::Sprite> _Sprites;
+        std::shared_ptr<SystemManager> _systemManager = std::make_shared<SystemManager>();
 };
