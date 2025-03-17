@@ -7,4 +7,5 @@ add_library(systems
 
 target_link_libraries(systems
   engine_interface
+  graphic
 )

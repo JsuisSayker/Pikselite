@@ -38,7 +38,7 @@ int Core::run(graphic::Camera camera)
             }
         }
 
-        this->_systemManager->updateSystems(this->_clock.getElapsedTime());
+        this->_systemManager->updateSystems(this->_clock.getElapsedTime(), this->_Sprites);
         graphic->clearWindow();
 
         graphic->drawSprites(this->_Sprites, camera);

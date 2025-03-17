@@ -19,7 +19,7 @@ public:
     void addEvent(engine::Events event);
     void removeEvent(engine::Events event);
 
-    void updateSystems(float deltaTime);
+    void updateSystems(float deltaTime, std::vector<graphic::Sprite> sprites);
 
 private:
     std::vector<std::unique_ptr<ISystem>> systems;

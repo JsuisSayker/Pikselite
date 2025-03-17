@@ -2,7 +2,7 @@
 
 namespace engine
 {
-    enum class Events
+    enum class Events : uint8_t
     {
         MOVE_UP,
         MOVE_DOWN,

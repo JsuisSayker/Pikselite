@@ -1,12 +1,11 @@
-#ifndef ISYSTEM_HPP
-#define ISYSTEM_HPP
+#pragma once
+
+#include <graphic/GraphicEnum.hpp>
 
 class ISystem
 {
 public:
     virtual ~ISystem() = default;
 
-    virtual void update(float deltaTime) = 0;
+    virtual void update(float deltaTime, std::vector<graphic::Sprite> sprites) = 0;
 };
-
-#endif // ISYSTEM_HPP
