@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 add_subdirectory(interface)
 add_subdirectory(src/systems)
 add_subdirectory(src/managers)
+add_subdirectory(src/utils)
 
 add_library(engine
   src/Core.cpp
@@ -14,4 +15,5 @@ target_link_libraries(engine
   systems
   managers
   graphic
+  utils
 )

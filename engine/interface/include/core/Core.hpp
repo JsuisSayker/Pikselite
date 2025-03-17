@@ -5,6 +5,8 @@
 #include <managers/SystemManager.hpp>
 #include <systems/MovementSystem.hpp>
 
+#include <utils/Clock.hpp>
+
 #include <memory>
 
 // the core is the engine that save entity and manage the game loop
@@ -23,4 +25,5 @@ class Core {
     private:
         std::vector<graphic::Sprite> _Sprites;
         std::shared_ptr<SystemManager> _systemManager = std::make_shared<SystemManager>();
+        Clock _clock;
 };
