@@ -17,6 +17,7 @@ class SpriteEditor {
         void checkAttribute();
 
         void addPixel(graphic::Pixel pixel);
+        graphic::Pixel* findPixelAt(const graphic::Position& pos);
 
     protected:
     private:

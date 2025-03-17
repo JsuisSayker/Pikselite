@@ -90,6 +90,7 @@ namespace graphic
         liquid liquidData = liquid{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
+        Pixel *selectedPixel = nullptr;
 
     private:
         SDL_Window *_window;

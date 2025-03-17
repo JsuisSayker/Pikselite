@@ -254,11 +254,22 @@ namespace graphic
             ImGui::ColorPicker4("##color", (float *)&color, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
             ImGui::EndChild();
 
-            editorData.defaultColor = {
-                static_cast<uint8_t>(color.x * 255),
-                static_cast<uint8_t>(color.y * 255),
-                static_cast<uint8_t>(color.z * 255),
-                static_cast<uint8_t>(color.w * 255)};
+            if (selectedPixel == nullptr)
+            {
+                editorData.defaultColor = {
+                    static_cast<uint8_t>(color.x * 255),
+                    static_cast<uint8_t>(color.y * 255),
+                    static_cast<uint8_t>(color.z * 255),
+                    static_cast<uint8_t>(color.w * 255)};
+            }
+            else
+            {
+                selectedPixel->color = {
+                    static_cast<uint8_t>(color.x * 255),
+                    static_cast<uint8_t>(color.y * 255),
+                    static_cast<uint8_t>(color.z * 255),
+                    static_cast<uint8_t>(color.w * 255)};
+            }
 
             ImGui::Separator();
 
@@ -325,17 +336,27 @@ namespace graphic
             ImGui::SameLine();
             if (ImGui::Button("Save"))
             {
-                lightData.radius = newRadius;
-                lightData.intensity = newIntensity;
+                if (selectedPixel == nullptr)
+                {
+                    lightData.radius = newRadius;
+                    lightData.intensity = newIntensity;
+                }
+                else
+                {
+                    selectedPixel->attributes.push_back(light{newRadius, newIntensity});
+                }
+
                 ImGui::CloseCurrentPopup();
                 newRadius = lightData.radius;
                 newIntensity = lightData.intensity;
                 editorData.showLightOptions = false;
             }
             ImGui::SameLine();
+
             if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
             {
             }
+
             ImGui::EndPopup();
         }
 
@@ -367,9 +388,11 @@ namespace graphic
                 editorData.showSolidOptions = false;
             }
             ImGui::SameLine();
+
             ImGui::Checkbox("Enabled", &editorData.solidEnabled);
             {
             }
+
             ImGui::EndPopup();
         }
 
@@ -405,15 +428,24 @@ namespace graphic
             ImGui::SameLine();
             if (ImGui::Button("Save"))
             {
-                liquidData.viscosity = newViscosity;
+                if (selectedPixel == nullptr)
+                {
+                    liquidData.viscosity = newViscosity;
+                }
+                else
+                {
+                    selectedPixel->attributes.push_back(liquid{newViscosity});
+                }
                 ImGui::CloseCurrentPopup();
                 newViscosity = liquidData.viscosity;
                 editorData.showLiquidOptions = false;
             }
             ImGui::SameLine();
+
             if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
             {
             }
+
             ImGui::EndPopup();
         }
 
