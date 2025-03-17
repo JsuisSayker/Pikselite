@@ -29,7 +29,7 @@ int Core::run(graphic::Camera camera)
 
         if (event != graphic::EventType::NONE)
         {
-            for (int i = 0; _Sprites.size(); i++)
+            for (int i = 0; i != _Sprites.size(); i++)
             {
                 if (_Sprites[i].actions.find(event) != _Sprites[i].actions.end())
                 {
