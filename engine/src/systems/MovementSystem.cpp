@@ -1,12 +1,6 @@
-#ifndef ISYSTEM_HPP
-#define ISYSTEM_HPP
+#include "systems/MovementSystem.hpp"
 
-class ISystem
+void MovementSystem::update(float deltaTime)
 {
-public:
-    virtual ~ISystem() = default;
-
-    virtual void update(float deltaTime) = 0;
-};
-
-#endif // ISYSTEM_HPP
+    std::cout << "MovementSystem update" << std::endl;
+}

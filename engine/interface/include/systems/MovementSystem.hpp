@@ -8,9 +8,7 @@ class MovementSystem : public ASystem {
 public:
     virtual ~MovementSystem() = default;
 
-    void update(float deltaTime) override {
-        std::cout << "MovementSystem updating for deltaTime: " << deltaTime << std::endl;
-    }
+    void update(float deltaTime) override;
 };
 
 #endif // MOVEMENT_SYSTEM_HPP
