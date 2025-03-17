@@ -1,6 +1,7 @@
 #pragma once
 
 #include <graphic/Graphic.hpp>
+#include <systems/ASystem.hpp>
 
 #include <memory>
 
