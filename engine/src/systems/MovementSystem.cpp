@@ -1,49 +1,73 @@
 #include "systems/MovementSystem.hpp"
 
+MovementSystem::MovementSystem()
+{
+}
+
+MovementSystem::~MovementSystem()
+{
+}
+
 void MovementSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
 {
     if (events.empty())
-        return;
-
-    graphic::EventType event = events.back();
-
-    for (auto &sprite : sprites)
     {
-        auto it = sprite.actions.find(event);
+        if (_clock.getElapsedTime() > 0.2)
+        {
+            _clock.restart();
+            _event = graphic::EventType::NONE;
+            return;
+        }
+    }
+    else
+    {
+        graphic::EventType event = events.back();
+
+        if (event != _event || _clock.getElapsedTime() > 0.2)
+        {
+            _event = event;
+            _clock.restart();
+        }
+    }
+
+
+    for (graphic::Sprite &sprite : sprites)
+    {
+        auto it = sprite.actions.find(_event);
 
         if (it == nullptr)
             return;
 
         if (it->second == engine::Events::MOVE_UP)
         {
-            sprite.position.y -= std::round(1000 * clock.getElapsedTime());
+            sprite.position.y -= 100 * clock.getElapsedTime();
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y -= std::round(1000 * clock.getElapsedTime());
+                pixel.position.y -= 100 * clock.getElapsedTime();
             }
         }
         if (it->second == engine::Events::MOVE_DOWN)
         {
-            sprite.position.y += std::round(1000 * clock.getElapsedTime());
+            sprite.position.y += 100 * clock.getElapsedTime();
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y += std::round(1000 * clock.getElapsedTime());
+                pixel.position.y += 100 * clock.getElapsedTime();
             }
         }
         if (it->second == engine::Events::MOVE_LEFT)
         {
-            sprite.position.x -= std::round(1000 * clock.getElapsedTime());
+            sprite.position.x -= 100 * clock.getElapsedTime();
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x -= std::round(1000 * clock.getElapsedTime());
+                pixel.position.x -= 100 * clock.getElapsedTime();
             }
         }
         if (it->second == engine::Events::MOVE_RIGHT)
         {
-            sprite.position.x += std::round(1000 * clock.getElapsedTime());
+            sprite.position.x += 100 * clock.getElapsedTime();
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x += std::round(1000 * clock.getElapsedTime());
+                pixel.position.x += 100 * clock.getElapsedTime();
             }
         }
     }

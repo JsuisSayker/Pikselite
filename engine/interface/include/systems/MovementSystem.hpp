@@ -9,9 +9,14 @@
 
 class MovementSystem : public ASystem {
 public:
-    virtual ~MovementSystem() = default;
+    MovementSystem();
+    ~MovementSystem();
 
     void update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events) override;
+
+    private:
+        Clock _clock;
+        graphic::EventType _event = graphic::EventType::NONE;
 };
 
 #endif // MOVEMENT_SYSTEM_HPP
