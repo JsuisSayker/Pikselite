@@ -9,37 +9,41 @@ void MovementSystem::update(float deltaTime, std::vector<graphic::Sprite> &sprit
 
     for (auto &sprite : sprites)
     {
+        auto it = sprite.actions.find(event);
 
-        if (sprite.actions[event] == engine::Events::MOVE_UP)
+        if (it == nullptr)
+            return;
+
+        if (it->second == engine::Events::MOVE_UP)
         {
-            sprite.position.y -= 50 * deltaTime;
+            sprite.position.y -= 100 * deltaTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y -= 50 * deltaTime;
+                pixel.position.y -= 100 * deltaTime;
             }
         }
-        else if (sprite.actions[event] == engine::Events::MOVE_DOWN)
+        if (it->second == engine::Events::MOVE_DOWN)
         {
-            sprite.position.y += 50 * deltaTime;
+            sprite.position.y += 100 * deltaTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y += 50 * deltaTime;
+                pixel.position.y += 100 * deltaTime;
             }
         }
-        else if (sprite.actions[event] == engine::Events::MOVE_LEFT)
+        if (it->second == engine::Events::MOVE_LEFT)
         {
-            sprite.position.x -= 50 * deltaTime;
+            sprite.position.x -= 100 * deltaTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x -= 50 * deltaTime;
+                pixel.position.x -= 100 * deltaTime;
             }
         }
-        else if (sprite.actions[event] == engine::Events::MOVE_RIGHT)
+        if (it->second == engine::Events::MOVE_RIGHT)
         {
-            sprite.position.x += 50 * deltaTime;
+            sprite.position.x += 100 * deltaTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x += 50 * deltaTime;
+                pixel.position.x += 100 * deltaTime;
             }
         }
     }
