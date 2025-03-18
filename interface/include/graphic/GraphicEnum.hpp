@@ -175,9 +175,11 @@ namespace graphic
         bool runGame = false;
         bool showSpriteSelector = false;
         bool showSpriteInputSidebar = false;
+        bool showGrid;
         std::string spritePath;
         std::string folderPath;
         std::string oldSpritePath;
+        std::string selectedFileName;
         ImTextureID dragImagetextureId;
     };
 
