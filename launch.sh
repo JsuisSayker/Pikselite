@@ -15,6 +15,7 @@ function fclean {
 function compile {
     cmake -B $buildDirectory -S .
     cmake --build $buildDirectory -j $(nproc)
+    ./pikselite
 }
 
 args=("$@")

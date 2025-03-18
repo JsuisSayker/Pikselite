@@ -146,7 +146,7 @@ int SpriteEditor::run()
         _graphic->drawPixels(_camera);
         if (_graphic->editorData.showGrid)
             _graphic->drawGrid(_camera);
-        _graphic->drawInterface();
+        _graphic->drawInterface(_camera);
 
         _graphic->updateWindow();
     }
