@@ -174,12 +174,7 @@ namespace graphic
         Position position;
         std::string name;
         std::vector<Pixel> pixels;
-        std::unordered_map<EventType, engine::Events> actions = {
-            {EventType::KEY_Z, engine::Events::MOVE_UP},
-            {EventType::KEY_Q, engine::Events::MOVE_LEFT},
-            {EventType::KEY_S, engine::Events::MOVE_DOWN},
-            {EventType::KEY_D, engine::Events::MOVE_RIGHT},
-        };
+        std::unordered_map<EventType, engine::Events> actions = {}; ////// Ex: {EventType::KEY_A, engine::Events::MOVE_UP},
     };
 
     struct ProjectEditorData
@@ -194,6 +189,7 @@ namespace graphic
         bool runGame = false;
         bool showGrid = true;
         bool showSpriteSelector = false;
+        bool showSpriteInputSidebar = false;
         std::string spritePath = "";
         std::string folderPath = "";
         std::string oldSpritePath = "";
@@ -205,5 +201,4 @@ namespace graphic
     {
         int tabIndex = 0;
     };
-
 }

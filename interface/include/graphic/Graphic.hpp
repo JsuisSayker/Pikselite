@@ -34,6 +34,7 @@
 #include <stdbool.h>
 #include <stdexcept>
 #include <vector>
+#include <magic_enum.hpp>
 
 namespace graphic
 {
@@ -101,6 +102,8 @@ namespace graphic
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
         Pixel *selectedPixel = nullptr;
+        std::unordered_map<EventType, engine::Events> selectedSpriteActions = {};
+        bool setSelectedSpriteActions = false;
 
     private:
         TTF_Font *m_font;
@@ -111,6 +114,7 @@ namespace graphic
         bool spriteEditorSidebarInitialized = false;
         bool projectEditorSidebarInitialized = false;
         bool pixelEditorSidebarInitialized = false;
+        bool spriteInputSidebarInitialized = false;
         bool showInterface;
         float navBarHeight = 0.0f;
     };

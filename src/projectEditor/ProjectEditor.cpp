@@ -19,6 +19,17 @@ bool ProjectEditor::spriteIsClicked(graphic::Sprite sprite, graphic::Position po
     return false;
 }
 
+void ProjectEditor::setSelectedSpriteActions()
+{
+    for (int i = 0; i < _core->_sprites.size(); i++)
+    {
+        if (_core->_sprites[i].isSelected)
+        {
+            _core->_sprites[i].actions = _graphic->selectedSpriteActions;
+        }
+    }
+}
+
 void ProjectEditor::checkIfSpriteIsSelected()
 {
     graphic::Position position = _graphic->getPosition();
@@ -33,7 +44,8 @@ void ProjectEditor::checkIfSpriteIsSelected()
         if (spriteIsClicked(_core->_sprites[i], position))
         {
             _core->_sprites[i].isSelected = true;
-            _graphic->projectData.showSpriteSelector = true;
+            _graphic->selectedSpriteActions = _core->_sprites[i].actions;
+            _graphic->projectData.showSpriteInputSidebar = true;
         }
     }
 }
@@ -64,7 +76,7 @@ int ProjectEditor::run()
             _core->run(_camera);
         }
 
-        if (event == graphic::EventType::MOUSE_CLICK_LEFT)
+        if (event == graphic::EventType::MOUSE_CLICK_RIGHT)
         {
             checkIfSpriteIsSelected();
         }
@@ -98,6 +110,11 @@ int ProjectEditor::run()
             catch (const std::exception &e)
             {
                 std::cerr << e.what() << std::endl;
+            }
+
+            if (_graphic->setSelectedSpriteActions)
+            {
+                setSelectedSpriteActions();
             }
         }
 
