@@ -154,12 +154,7 @@ namespace graphic
         Position position;
         std::string name;
         std::vector<Pixel> pixels;
-        std::unordered_map<EventType, engine::Events> actions = {
-            {EventType::KEY_A, engine::Events::MOVE_UP},
-            {EventType::KEY_S, engine::Events::MOVE_DOWN},
-            {EventType::KEY_D, engine::Events::MOVE_LEFT},
-            {EventType::KEY_F, engine::Events::MOVE_RIGHT},
-        };
+        std::unordered_map<EventType, engine::Events> actions = {}; ////// Ex: {EventType::KEY_A, engine::Events::MOVE_UP},
     };
 
     struct ProjectEditorData

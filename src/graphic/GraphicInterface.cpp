@@ -132,44 +132,19 @@ namespace graphic
 
     void Graphic::spriteInputSidebar()
     {
-        float sidebarWidth = 200.0f;
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
-        if (!spriteEditorSidebarInitialized)
+        if (!spriteInputSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            spriteEditorSidebarInitialized = true;
+            spriteInputSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
-        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - sidebarWidth, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
 
-        if (ImGui::Begin("Sprite Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
+        if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            ImGui::PushFont(this->_iconFont);
-            if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
-            {
-                editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
-            }
-            ImGui::PopFont();
-
-            if (ImGui::Button("Reset Camera", ImVec2(180, 40)))
-            {
-                editorData.resetCamera = true;
-            }
-            if (ImGui::Checkbox("Show grid", &editorData.showGrid))
-            {
-            }
-            if (ImGui::Checkbox("Auto link", &editorData.autoLink))
-            {
-            }
-            if (ImGui::Button("Clear", ImVec2(180, 40)))
-            {
-                _pixels.clear();
-            }
-            if (ImGui::Button("Export Sprite", ImVec2(180, 40)))
-            {
-                projectData.showDirectoryChooser = !projectData.showDirectoryChooser;
-            }
+            //
         }
         ImGui::End();
 

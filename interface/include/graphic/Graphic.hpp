@@ -101,6 +101,7 @@ namespace graphic
         bool spriteEditorSidebarInitialized = false;
         bool projectEditorSidebarInitialized = false;
         bool pixelEditorSidebarInitialized = false;
+        bool spriteInputSidebarInitialized = false;
         bool showInterface;
         float navBarHeight = 0.0f;
     };
