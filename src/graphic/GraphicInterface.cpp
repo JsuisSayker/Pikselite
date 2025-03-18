@@ -134,45 +134,127 @@ namespace graphic
 
     void Graphic::spriteInputSidebar()
     {
-        float sidebarWidth = 200.0f;
+        float sidebarWidth = 250.0f;
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
-        if (!spriteEditorSidebarInitialized)
+        if (!spriteInputSidebarInitialized)
         {
-            ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            spriteEditorSidebarInitialized = true;
+            ImGui::SetNextWindowSize(ImVec2(sidebarWidth, sidebarHeight), ImGuiCond_Always);
+            spriteInputSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
-        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - sidebarWidth, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - sidebarWidth, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
 
-        if (ImGui::Begin("Sprite Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
+        if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            ImGui::PushFont(this->_iconFont);
-            if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
-            {
-                editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
-            }
-            ImGui::PopFont();
+            ImGui::Text("Sprite Actions");
 
-            if (ImGui::Button("Reset Camera", ImVec2(180, 40)))
+            std::vector<EventType> itemsToDelete;
+
+            if (!selectedSpriteActions.empty())
             {
-                editorData.resetCamera = true;
+                for (const auto &[eventType, eventData] : selectedSpriteActions)
+                {
+                    ImGui::PushFont(this->_iconFont);
+                    ImGui::Text("%s ", magic_enum::enum_name(eventType).data());
+                    ImGui::SameLine();
+                    ImGui::Text("%s ", magic_enum::enum_name(eventData).data());
+                    ImGui::SameLine();
+
+                    std::string buttonLabel = ICON_FA_TRASH + std::string("##") + std::to_string(static_cast<int>(eventType));
+                    if (ImGui::Button(buttonLabel.c_str(), ImVec2(20, 20)))
+                    {
+                        itemsToDelete.push_back(eventType);
+                    }
+                    ImGui::PopFont();
+                }
+                for (const auto &eventType : itemsToDelete)
+                {
+                    selectedSpriteActions.erase(eventType);
+                }
+                itemsToDelete.clear();
             }
-            if (ImGui::Checkbox("Show grid", &editorData.showGrid))
+
+            if (ImGui::Button("Add", ImVec2(180, 40)))
             {
+                ImGui::OpenPopup("Add Action");
             }
-            if (ImGui::Checkbox("Auto link", &editorData.autoLink))
+
+            float popupWidth = 300.0f;
+            float popupHeight = 300.0f;
+            ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+            ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
+
+            if (ImGui::BeginPopup("Add Action", ImGuiWindowFlags_AlwaysAutoResize))
             {
-            }
-            if (ImGui::Button("Clear", ImVec2(180, 40)))
-            {
-                _pixels.clear();
-            }
-            if (ImGui::Button("Export Sprite", ImVec2(180, 40)))
-            {
-                projectData.showDirectoryChooser = !projectData.showDirectoryChooser;
+                static EventType selectedEventType;
+                static engine::Events selectedEvent;
+
+                ImGui::Dummy(ImVec2(0, 10));
+                ImGui::Text("Select Event Type");
+                ImGui::BeginChild("EventTypeChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                for (auto eventType : magic_enum::enum_values<EventType>())
+                {
+                    if (selectedSpriteActions.find(eventType) == selectedSpriteActions.end())
+                    {
+                        std::string eventLabel = magic_enum::enum_name(eventType).data();
+                        if (ImGui::Selectable(eventLabel.c_str()))
+                            selectedEventType = eventType;
+                    }
+                    else
+                    {
+                        std::string eventLabel = magic_enum::enum_name(eventType).data();
+                        ImGui::Selectable(eventLabel.c_str(), false);
+                    }
+                }
+                ImGui::EndChild();
+
+                ImGui::Dummy(ImVec2(0, 10));
+
+                ImGui::Text("Select Key Event");
+                ImGui::BeginChild("EventChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                for (auto event : magic_enum::enum_values<engine::Events>())
+                {
+                    if (selectedSpriteActions.find(selectedEventType) == selectedSpriteActions.end() ||
+                        selectedSpriteActions.at(selectedEventType) != event)
+                    {
+                        std::string eventLabel = magic_enum::enum_name(event).data();
+                        if (ImGui::Selectable(eventLabel.c_str()))
+                            selectedEvent = event;
+                    }
+                    else
+                    {
+                        std::string eventLabel = magic_enum::enum_name(event).data();
+                        ImGui::Selectable(eventLabel.c_str(), false);
+                    }
+                }
+                ImGui::EndChild();
+
+                ImGui::Dummy(ImVec2(0, 10));
+
+                if (ImGui::Button("Cancel"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Save"))
+                {
+                    if (selectedEventType != EventType::NONE && selectedEvent != engine::Events::NONE)
+                    {
+                        selectedSpriteActions[selectedEventType] = selectedEvent;
+                        ImGui::CloseCurrentPopup();
+                        setSelectedSpriteActions = true;
+                    }
+                }
+
+                ImGui::EndPopup();
             }
         }
+        ImGui::PopStyleColor();
+
         ImGui::End();
 
         ImGui::PopStyleColor();
@@ -858,7 +940,7 @@ namespace graphic
         if (editorData.showFlammableOptions)
             flammableOptions();
 
-        if (projectData.showSpriteSelector)
+        if (projectData.showSpriteInputSidebar)
             spriteInputSidebar();
 
         navBar();
