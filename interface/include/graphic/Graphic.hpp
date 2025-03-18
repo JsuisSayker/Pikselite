@@ -94,6 +94,7 @@ namespace graphic
         bool isProjectEditor = false;
         Pixel *selectedPixel = nullptr;
         std::unordered_map<EventType, engine::Events> selectedSpriteActions = {};
+        bool setSelectedSpriteActions = false;
 
     private:
         SDL_Window *_window;

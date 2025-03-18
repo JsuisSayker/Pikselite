@@ -134,11 +134,11 @@ namespace graphic
 
     void Graphic::spriteInputSidebar()
     {
-        float sidebarWidth = 200.0f;
+        float sidebarWidth = 250.0f;
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
         if (!spriteInputSidebarInitialized)
         {
-            ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(sidebarWidth, sidebarHeight), ImGuiCond_Always);
             spriteInputSidebarInitialized = true;
         }
 
@@ -147,7 +147,7 @@ namespace graphic
 
         if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            ImGui::Text("Sprite Actions:");
+            ImGui::Text("Sprite Actions");
 
             std::vector<EventType> itemsToDelete;
 
@@ -246,6 +246,7 @@ namespace graphic
                     {
                         selectedSpriteActions[selectedEventType] = selectedEvent;
                         ImGui::CloseCurrentPopup();
+                        setSelectedSpriteActions = true;
                     }
                 }
 
@@ -414,7 +415,7 @@ namespace graphic
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
         if (!pixelEditorSidebarInitialized)
         {
-            ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(sidebarWidth, sidebarHeight), ImGuiCond_Always);
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
