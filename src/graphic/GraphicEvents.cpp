@@ -33,6 +33,8 @@ namespace graphic
             {
                 if (event.button.button == SDL_BUTTON_LEFT)
                     return EventType::MOUSE_CLICK_LEFT;
+                if (event.button.button == SDL_BUTTON_RIGHT)
+                    return EventType::MOUSE_CLICK_RIGHT;
             }
 
             // if the user moves the mouse

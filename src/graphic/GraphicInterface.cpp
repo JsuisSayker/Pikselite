@@ -103,6 +103,8 @@ namespace graphic
             if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
             {
                 editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
+                this->pixelEditorSidebarInitialized = false;
+                this->selectedPixel = nullptr;
             }
             ImGui::PopFont();
 
@@ -243,7 +245,6 @@ namespace graphic
         if (!pixelEditorSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            pixelEditorSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -253,15 +254,37 @@ namespace graphic
         {
             ImGui::Text("Color Selector");
             ImGui::BeginChild("Color Selector Child", ImVec2(ImGui::GetContentRegionAvail().x, 200), true, ImGuiWindowFlags_NoScrollbar);
-            static ImVec4 color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+            static ImVec4 color;
+            if (!pixelEditorSidebarInitialized)
+            {
+                color = ImVec4(
+                    editorData.defaultColor.r / 255.0f,
+                    editorData.defaultColor.g / 255.0f,
+                    editorData.defaultColor.b / 255.0f,
+                    editorData.defaultColor.a / 255.0f);
+
+                pixelEditorSidebarInitialized = true;
+            }
+
             ImGui::ColorPicker4("##color", (float *)&color, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
             ImGui::EndChild();
 
-            editorData.defaultColor = {
-                static_cast<uint8_t>(color.x * 255),
-                static_cast<uint8_t>(color.y * 255),
-                static_cast<uint8_t>(color.z * 255),
-                static_cast<uint8_t>(color.w * 255)};
+            if (selectedPixel == nullptr)
+            {
+                editorData.defaultColor = {
+                    static_cast<uint8_t>(color.x * 255),
+                    static_cast<uint8_t>(color.y * 255),
+                    static_cast<uint8_t>(color.z * 255),
+                    static_cast<uint8_t>(color.w * 255)};
+            }
+            else
+            {
+                selectedPixel->color = {
+                    static_cast<uint8_t>(color.x * 255),
+                    static_cast<uint8_t>(color.y * 255),
+                    static_cast<uint8_t>(color.z * 255),
+                    static_cast<uint8_t>(color.w * 255)};
+            }
 
             ImGui::Separator();
 
@@ -277,6 +300,13 @@ namespace graphic
             if (ImGui::Button("Liquid", ImVec2(180, 40)))
             {
                 editorData.showLiquidOptions = true;
+            }
+
+            ImGui::Separator();
+
+            if (selectedPixel)
+            {
+                ImGui::Text("Selected Pixel:\n(%f, %f)", selectedPixel->position.x, selectedPixel->position.y);
             }
         }
         ImGui::End();
@@ -414,17 +444,40 @@ namespace graphic
             ImGui::SameLine();
             if (ImGui::Button("Save"))
             {
-                lightData.radius = newRadius;
-                lightData.intensity = newIntensity;
+                if (selectedPixel == nullptr)
+                {
+                    lightData.radius = newRadius;
+                    lightData.intensity = newIntensity;
+                }
+                else
+                {
+                    selectedPixel->attributes.push_back(light{newRadius, newIntensity});
+                }
+
                 ImGui::CloseCurrentPopup();
                 newRadius = lightData.radius;
                 newIntensity = lightData.intensity;
                 editorData.showLightOptions = false;
             }
             ImGui::SameLine();
-            if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+                {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.lightEnabled = editorData.lightEnabled;
+                    }
+                }
             }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->lightEnabled))
+                {
+                }
+            }
+
             ImGui::EndPopup();
         }
 
@@ -456,9 +509,24 @@ namespace graphic
                 editorData.showSolidOptions = false;
             }
             ImGui::SameLine();
-            ImGui::Checkbox("Enabled", &editorData.solidEnabled);
+
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
+                {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.solidEnabled = editorData.solidEnabled;
+                    }
+                }
             }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->solidEnabled))
+                {
+                }
+            }
+
             ImGui::EndPopup();
         }
 
@@ -494,15 +562,37 @@ namespace graphic
             ImGui::SameLine();
             if (ImGui::Button("Save"))
             {
-                liquidData.viscosity = newViscosity;
+                if (selectedPixel == nullptr)
+                {
+                    liquidData.viscosity = newViscosity;
+                }
+                else
+                {
+                    selectedPixel->attributes.push_back(liquid{newViscosity});
+                }
                 ImGui::CloseCurrentPopup();
                 newViscosity = liquidData.viscosity;
                 editorData.showLiquidOptions = false;
             }
             ImGui::SameLine();
-            if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+                {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.liquidEnabled = editorData.liquidEnabled;
+                    }
+                }
             }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->liquidEnabled))
+                {
+                }
+            }
+
             ImGui::EndPopup();
         }
 
