@@ -91,6 +91,7 @@ int ProjectEditor::run()
                     _graphic->projectData.showImportSprite = false;
                     _graphic->projectData.spritePath.clear();
                     _graphic->projectData.selectedFileName.clear();
+                    _graphic->projectData.dragImagetextureId = ImTextureID(0);
                 }
                 if (event == graphic::EventType::MOUSE_CLICK_LEFT)
                 {
