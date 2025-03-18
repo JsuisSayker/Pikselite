@@ -186,9 +186,49 @@ namespace graphic
             ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
             ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
-            if (ImGui::BeginPopup("Add Action"), ImGuiWindowFlags_AlwaysAutoResize)
+            if (ImGui::BeginPopup("Add Action", ImGuiWindowFlags_AlwaysAutoResize))
             {
-                //
+                EventType selectedEventType;
+                engine::Events selectedEvent;
+
+                ImGui::BeginChild("EventTypeChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                for (auto eventType : magic_enum::enum_values<EventType>())
+                {
+                    std::string eventLabel = magic_enum::enum_name(eventType).data();
+                    if (ImGui::Selectable(eventLabel.c_str()))
+                    {
+                        selectedEventType = eventType;
+                    }
+                }
+                ImGui::EndChild();
+
+                ImGui::BeginChild("EventChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                for (auto event : magic_enum::enum_values<engine::Events>())
+                {
+                    std::string eventLabel = magic_enum::enum_name(event).data();
+                    if (ImGui::Selectable(eventLabel.c_str()))
+                    {
+                        selectedEvent = event;
+                    }
+                }
+                ImGui::EndChild();
+
+                if (ImGui::Button("Cancel"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Save"))
+                {
+                    if (selectedEventType != EventType::NONE && selectedEvent != engine::Events::NONE)
+                    {
+                        selectedSpriteActions[selectedEventType] = selectedEvent;
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+
                 ImGui::EndPopup();
             }
         }

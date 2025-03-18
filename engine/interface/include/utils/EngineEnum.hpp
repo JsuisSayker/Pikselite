@@ -9,5 +9,6 @@ namespace engine
         MOVE_LEFT,
         MOVE_RIGHT,
         JUMP,
+        NONE
     };
 } // namespace engine
