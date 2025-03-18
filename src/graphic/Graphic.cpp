@@ -25,20 +25,20 @@ namespace graphic
             ImGui::StyleColorsDark();
             ImGuiIO &io = ImGui::GetIO();
 
-            // const char *defaultFontPath = "extern/imgui/misc/fonts/Roboto-Medium.ttf";
-            // ImFont *defaultFont = io.Fonts->AddFontFromFileTTF(defaultFontPath, 16.0f);
-            // IM_ASSERT(defaultFont != nullptr);
-            // io.FontDefault = defaultFont;
+            const char *defaultFontPath = "extern/imgui/misc/fonts/Roboto-Medium.ttf";
+            ImFont *defaultFont = io.Fonts->AddFontFromFileTTF(defaultFontPath, 16.0f);
+            IM_ASSERT(defaultFont != nullptr);
+            io.FontDefault = defaultFont;
 
             ImFontConfig config;
             config.MergeMode = true;
             config.PixelSnapH = true;
             config.OversampleH = 3;
-            // const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-            // const char *fontPath = "extern/icons/fa-solid-900.ttf";
-            // this->_iconFont = io.Fonts->AddFontFromFileTTF(fontPath, 16.0f, &config, icon_ranges);
-            // IM_ASSERT(this->_iconFont != nullptr);
-            // io.Fonts->Build();
+            const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+            const char *fontPath = "extern/icons/fa-solid-900.ttf";
+            this->_iconFont = io.Fonts->AddFontFromFileTTF(fontPath, 16.0f, &config, icon_ranges);
+            IM_ASSERT(this->_iconFont != nullptr);
+            io.Fonts->Build();
 
             if (_renderer && _window)
             {
