@@ -31,6 +31,7 @@
 #include <stdbool.h>
 #include <stdexcept>
 #include <vector>
+#include <magic_enum.hpp>
 
 namespace graphic
 {
@@ -92,6 +93,7 @@ namespace graphic
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
         Pixel *selectedPixel = nullptr;
+        std::unordered_map<EventType, engine::Events> selectedSpriteActions = {};
 
     private:
         SDL_Window *_window;

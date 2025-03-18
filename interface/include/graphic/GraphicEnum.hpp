@@ -168,6 +168,7 @@ namespace graphic
         bool showImportSprite = false;
         bool runGame = false;
         bool showSpriteSelector = false;
+        bool showSpriteInputSidebar = false;
         std::string spritePath = "";
         std::string folderPath = "";
     };

@@ -144,7 +144,13 @@ namespace graphic
 
         if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            //
+            ImGui::Text("Sprite Actions:");
+
+            for (const auto &[eventType, eventData] : selectedSpriteActions)
+            {
+                ImGui::Text("Event: %s", magic_enum::enum_name(eventType).data());
+                ImGui::Text("Action: %s", magic_enum::enum_name(eventData).data());
+            }
         }
         ImGui::End();
 
@@ -540,6 +546,9 @@ namespace graphic
         if (editorData.showPixelEditorSidebar)
             pixelEditorSidebar();
 
+        if (projectData.showSpriteInputSidebar)
+            spriteInputSidebar();
+
         if (projectData.showImportSprite)
             spriteSelector();
 
@@ -551,9 +560,6 @@ namespace graphic
 
         if (editorData.showLiquidOptions)
             liquidOptions();
-
-        if (projectData.showSpriteSelector)
-            spriteInputSidebar();
 
         navBar();
 

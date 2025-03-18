@@ -33,7 +33,8 @@ void ProjectEditor::checkIfSpriteIsSelected()
         if (spriteIsClicked(_core->_sprites[i], position))
         {
             _core->_sprites[i].isSelected = true;
-            _graphic->projectData.showSpriteSelector = true;
+            _graphic->selectedSpriteActions = _core->_sprites[i].actions;
+            _graphic->projectData.showSpriteInputSidebar = true;
         }
     }
 }
