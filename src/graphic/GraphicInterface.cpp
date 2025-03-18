@@ -361,6 +361,14 @@ namespace graphic
             {
                 editorData.showLiquidOptions = true;
             }
+            if (ImGui::Button("Fire", ImVec2(180, 40)))
+            {
+                editorData.showFireOptions = true;
+            }
+            if (ImGui::Button("Flammable", ImVec2(180, 40)))
+            {
+                editorData.showFlammableOptions = true;
+            }
 
             ImGui::Separator();
 
@@ -659,6 +667,112 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
+    void Graphic::fireOptions()
+    {
+        ImGui::OpenPopup("Fire Options", ImGuiWindowFlags_AlwaysAutoResize);
+        float popupWidth = 300.0f;
+        float popupHeight = 300.0f;
+        ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
+
+        if (ImGui::BeginPopup("Fire Options"))
+        {
+            static int newIntensity = 0;
+
+            ImGui::Text("Fire Options");
+
+            ImGui::SliderInt("##intensity_slider", &newIntensity, 0, 100);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(popupWidth / 3.0f);
+            ImGui::InputInt("##intensity_input", &newIntensity);
+
+            if (ImGui::Button("Cancel"))
+            {
+                ImGui::CloseCurrentPopup();
+                newIntensity = fireData.intensity;
+                editorData.showFireOptions = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                if (selectedPixel == nullptr)
+                {
+                    fireData.intensity = newIntensity;
+                }
+                else
+                {
+                    selectedPixel->attributes.push_back(fire{newIntensity});
+                }
+                ImGui::CloseCurrentPopup();
+                newIntensity = fireData.intensity;
+                editorData.showFireOptions = false;
+            }
+            ImGui::SameLine();
+
+            if (ImGui::Checkbox("Enabled", &editorData.fireEnabled))
+            {
+            }
+
+            ImGui::EndPopup();
+        }
+
+        ImGui::PopStyleColor();
+    }
+
+    void Graphic::flammableOptions()
+    {
+        ImGui::OpenPopup("Flammable Options", ImGuiWindowFlags_AlwaysAutoResize);
+        float popupWidth = 300.0f;
+        float popupHeight = 300.0f;
+        ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
+
+        if (ImGui::BeginPopup("Flammable Options"))
+        {
+            static int newHeatResistance = 0;
+
+            ImGui::Text("Flammable Options");
+
+            ImGui::SliderInt("##heat_resistance_slider", &newHeatResistance, 0, 100);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(popupWidth / 3.0f);
+            ImGui::InputInt("##heat_resistance_input", &newHeatResistance);
+
+            if (ImGui::Button("Cancel"))
+            {
+                ImGui::CloseCurrentPopup();
+                newHeatResistance = flammableData.heatResistance;
+                editorData.showFlammableOptions = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                if (selectedPixel == nullptr)
+                {
+                    flammableData.heatResistance = newHeatResistance;
+                }
+                else
+                {
+                    selectedPixel->attributes.push_back(flammable{newHeatResistance});
+                }
+                ImGui::CloseCurrentPopup();
+                newHeatResistance = flammableData.heatResistance;
+                editorData.showFlammableOptions = false;
+            }
+            ImGui::SameLine();
+
+            if (ImGui::Checkbox("Enabled", &editorData.flammableEnabled))
+            {
+            }
+
+            ImGui::EndPopup();
+        }
+
+        ImGui::PopStyleColor();
+    }
+
     void Graphic::homeInterface()
     {
         float menuBarHeight = 33.0f;
@@ -737,6 +851,12 @@ namespace graphic
 
         if (editorData.showLiquidOptions)
             liquidOptions();
+
+        if (editorData.showFireOptions)
+            fireOptions();
+
+        if (editorData.showFlammableOptions)
+            flammableOptions();
 
         if (projectData.showSpriteSelector)
             spriteInputSidebar();
