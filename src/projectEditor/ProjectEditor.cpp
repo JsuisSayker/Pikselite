@@ -37,9 +37,8 @@ int ProjectEditor::run()
                 if (event == graphic::EventType::KEY_ESCAPE)
                 {
                     _graphic->projectData.showImportSprite = false;
-                    // Need to add this line if we want to clear the sprite path after loading the sprite
                     _graphic->projectData.spritePath.clear();
-                    // _graphic->projectData.oldSpritePath.clear();
+                    _graphic->projectData.selectedFileName.clear();
                 }
                 if (event == graphic::EventType::MOUSE_CLICK_LEFT)
                 {
@@ -67,6 +66,8 @@ int ProjectEditor::run()
         _graphic->clearWindow();
 
         _graphic->drawSprites(_core->getSprite(), _camera);
+        if (_graphic->projectData.showGrid)
+            _graphic->drawGrid(_camera);
         _graphic->drawInterface(_camera);
 
         _graphic->updateWindow();
