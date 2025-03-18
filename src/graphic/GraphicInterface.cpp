@@ -103,6 +103,8 @@ namespace graphic
             if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
             {
                 editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
+                this->pixelEditorSidebarInitialized = false;
+                this->selectedPixel = nullptr;
             }
             ImGui::PopFont();
 
@@ -176,6 +178,45 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
+    void getSpriteFromFileName(graphic::ProjectEditorData *projectData)
+    {
+        static int currentItem = 0;
+        int index = 0;
+
+        // Change the string to the path of the sprites folder of the user
+        std::unordered_map<std::string, std::string> items = getSpriteFilesName("sprites");
+
+        for (std::unordered_map<std::string, std::string>::iterator it = items.begin(); it != items.end(); ++it)
+        {
+            bool is_selected = (currentItem == index);
+            if (ImGui::Selectable(it->first.c_str(), is_selected))
+            {
+                currentItem = index;
+                projectData->showImportSprite = !projectData->showImportSprite;
+                if (it->second.find(".json") == std::string::npos)
+                {
+                    projectData->oldSpritePath = it->second;
+                    std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
+                    newFileName += ".json";
+                    it->second = newFileName;
+                }
+                else
+                {
+                    std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
+                    newFileName += ".png";
+                    projectData->oldSpritePath = newFileName;
+                }
+                projectData->spritePath = it->second;
+                projectData->selectedFileName = it->first;
+            }
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+
+            index++;
+        }
+        ImGui::EndCombo();
+    }
+
     void Graphic::projectEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
@@ -194,34 +235,12 @@ namespace graphic
             {
                 projectData.showFileExplorer = !projectData.showFileExplorer;
             }
-            if (ImGui::BeginCombo("Sprites", nullptr))
+            if (ImGui::Checkbox("Show grid", &projectData.showGrid))
             {
-                static int currentItem = 0;
-                int index = 0;
-
-                std::unordered_map<std::string, std::string> items = getSpriteFilesName("sprites");
-
-                for (std::unordered_map<std::string, std::string>::iterator it = items.begin(); it != items.end(); ++it)
-                {
-                    bool is_selected = (currentItem == index);
-                    if (ImGui::Selectable(it->first.c_str(), is_selected))
-                    {
-                        currentItem = index;
-                        projectData.showImportSprite = !projectData.showImportSprite;
-                        if (it->second.find(".json") == std::string::npos)
-                        {
-                            std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
-                            newFileName += ".json";
-                            it->second = newFileName;
-                        }
-                        projectData.spritePath = it->second;
-                    }
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-
-                    index++;
-                }
-                ImGui::EndCombo();
+            }
+            if (ImGui::BeginCombo("Sprites", projectData.selectedFileName.c_str()))
+            {
+                getSpriteFromFileName(&projectData);
             }
             if (ImGui::Button("run", ImVec2(180, 40)))
             {
@@ -286,7 +305,6 @@ namespace graphic
         if (!pixelEditorSidebarInitialized)
         {
             ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
-            pixelEditorSidebarInitialized = true;
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -296,7 +314,18 @@ namespace graphic
         {
             ImGui::Text("Color Selector");
             ImGui::BeginChild("Color Selector Child", ImVec2(ImGui::GetContentRegionAvail().x, 200), true, ImGuiWindowFlags_NoScrollbar);
-            static ImVec4 color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+            static ImVec4 color;
+            if (!pixelEditorSidebarInitialized)
+            {
+                color = ImVec4(
+                    editorData.defaultColor.r / 255.0f,
+                    editorData.defaultColor.g / 255.0f,
+                    editorData.defaultColor.b / 255.0f,
+                    editorData.defaultColor.a / 255.0f);
+
+                pixelEditorSidebarInitialized = true;
+            }
+
             ImGui::ColorPicker4("##color", (float *)&color, ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
             ImGui::EndChild();
 
@@ -332,18 +361,111 @@ namespace graphic
             {
                 editorData.showLiquidOptions = true;
             }
+
+            ImGui::Separator();
+
+            if (selectedPixel)
+            {
+                ImGui::Text("Selected Pixel:\n(%f, %f)", selectedPixel->position.x, selectedPixel->position.y);
+            }
         }
         ImGui::End();
 
         ImGui::PopStyleColor();
     }
 
-    void Graphic::spriteSelector()
+    ImTextureID LoadTextureFromFile(const char *filename, SDL_Renderer *renderer)
     {
+        // Check if the filename is valid (non-null and not empty)
+        if (!filename || std::string(filename).empty())
+        {
+            std::cerr << "Empty filename provided!" << std::endl;
+            return ImTextureID(0);
+        }
 
-        // graphic::Sprite sprite = loadSpriteFromJSON(projectData.sp)
+        // Convert to absolute path using std::filesystem
+        std::filesystem::path absPath = std::filesystem::absolute(filename);
+        std::string basePath = absPath.string();
 
-        return;
+        // Check file accessibility
+        std::ifstream file(basePath);
+        if (!file)
+        {
+            std::cerr << "File not accessible!" << std::endl;
+            return ImTextureID(0);
+        }
+
+        // Load the image using SDL_image
+        SDL_Surface *loadedSurface = IMG_Load(basePath.c_str());
+        if (!loadedSurface)
+        {
+            std::cerr << "Unable to load image " << filename << "! SDL_image Error: "
+                      << IMG_GetError() << std::endl;
+            return ImTextureID(0);
+        }
+
+        // Create an SDL_Texture from the loaded surface
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+        if (!texture)
+        {
+            std::cerr << "Unable to create texture from " << filename
+                      << "! SDL Error: " << SDL_GetError() << std::endl;
+            SDL_FreeSurface(loadedSurface);
+            return ImTextureID(0);
+        }
+
+        // Free the loaded surface
+        SDL_FreeSurface(loadedSurface);
+
+        // Return the texture as ImTextureID (using SDL_Texture* directly)
+        return reinterpret_cast<ImTextureID>(texture);
+    }
+
+    void Graphic::spriteSelector(Camera camera)
+    {
+        // If the texture hasn't been loaded yet, load it.
+        if (projectData.dragImagetextureId == 0)
+            projectData.dragImagetextureId = LoadTextureFromFile(projectData.oldSpritePath.c_str(), this->_renderer);
+
+        // Retrieve the texture's dimensions using SDL_QueryTexture.
+        int texW = 0, texH = 0;
+        SDL_Texture *texture = reinterpret_cast<SDL_Texture *>(projectData.dragImagetextureId);
+        if (SDL_QueryTexture(texture, nullptr, nullptr, &texW, &texH) != 0)
+        {
+            std::cerr << "Failed to query texture: " << SDL_GetError() << std::endl;
+            texW = texH = 200;
+        }
+        ImVec2 imageSize(static_cast<float>(texW), static_cast<float>(texH));
+
+        // Push style colors for the tooltip.
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1, 1, 1, 0));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
+
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceExtern))
+        {
+            ImGui::SetDragDropPayload("DND_DEMO_CELL", &projectData.dragImagetextureId, sizeof(ImTextureID));
+
+            float zoomLevel = camera.zoom;
+            ImVec2 zoomedSize = ImVec2(imageSize.x * zoomLevel, imageSize.y * zoomLevel);
+
+            ImVec2 mousePos = ImGui::GetIO().MousePos;
+            // Offset the tooltip window so that the image center is at the mouse position.
+            ImVec2 tooltipPos = ImVec2(mousePos.x - zoomedSize.x * 0.5f,
+                                       (mousePos.y - zoomedSize.y * 0.5f));
+            ImGui::SetNextWindowPos(tooltipPos, ImGuiCond_Always);
+
+            // Remove default window padding for the tooltip to ensure pixel-perfect centering.
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+            ImGui::BeginTooltip();
+            ImGui::Image(projectData.dragImagetextureId, zoomedSize, ImVec2(0, 0), ImVec2(1, 1));
+            ImGui::EndTooltip();
+            ImGui::PopStyleVar();
+
+            ImGui::EndDragDropSource();
+        }
+
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
     }
 
     void Graphic::lightOptions()
@@ -399,8 +521,21 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
+                {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.lightEnabled = editorData.lightEnabled;
+                    }
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->lightEnabled))
+                {
+                }
             }
 
             ImGui::EndPopup();
@@ -435,8 +570,21 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            ImGui::Checkbox("Enabled", &editorData.solidEnabled);
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
+                {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.solidEnabled = editorData.solidEnabled;
+                    }
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->solidEnabled))
+                {
+                }
             }
 
             ImGui::EndPopup();
@@ -488,8 +636,21 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
+                {
+                    for (Pixel &pixel : _pixels)
+                    {
+                        pixel.liquidEnabled = editorData.liquidEnabled;
+                    }
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->liquidEnabled))
+                {
+                }
             }
 
             ImGui::EndPopup();
@@ -541,7 +702,7 @@ namespace graphic
         ImGui::End();
     }
 
-    void Graphic::drawInterface()
+    void Graphic::drawInterface(Camera camera)
     {
         ImGui_ImplSDLRenderer2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
@@ -566,7 +727,7 @@ namespace graphic
             pixelEditorSidebar();
 
         if (projectData.showImportSprite)
-            spriteSelector();
+            spriteSelector(camera);
 
         if (editorData.showLightOptions)
             lightOptions();

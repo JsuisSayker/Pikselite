@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <utils/EngineEnum.hpp>
+#include <imgui.h>
 
 namespace graphic
 {
@@ -25,6 +26,7 @@ namespace graphic
         KEY_ARROW_LEFT,
         KEY_ARROW_RIGHT,
         KEY_TAB,
+        KEY_ESCAPE,
         KEY_A,
         KEY_B,
         KEY_C,
@@ -120,6 +122,10 @@ namespace graphic
         Color color;
         Position position;
         std::vector<std::variant<light, solid, liquid>> attributes;
+
+        bool liquidEnabled = false;
+        bool solidEnabled = false;
+        bool lightEnabled = false;
     };
 
     struct SpriteEditorData
@@ -172,9 +178,13 @@ namespace graphic
         bool showScenes = false;
         bool showImportSprite = false;
         bool runGame = false;
+        bool showGrid = true;
         bool showSpriteSelector = false;
         std::string spritePath = "";
         std::string folderPath = "";
+        std::string oldSpritePath = "";
+        std::string selectedFileName = "";
+        ImTextureID dragImagetextureId;
     };
 
     struct TabSelectorData
