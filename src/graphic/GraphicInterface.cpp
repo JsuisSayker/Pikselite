@@ -156,9 +156,9 @@ namespace graphic
                 for (const auto &[eventType, eventData] : selectedSpriteActions)
                 {
                     ImGui::PushFont(this->_iconFont);
-                    ImGui::Text("Event: %s\t", magic_enum::enum_name(eventType).data());
+                    ImGui::Text("%s ", magic_enum::enum_name(eventType).data());
                     ImGui::SameLine();
-                    ImGui::Text("Action: %s\t", magic_enum::enum_name(eventData).data());
+                    ImGui::Text("%s ", magic_enum::enum_name(eventData).data());
                     ImGui::SameLine();
 
                     std::string buttonLabel = ICON_FA_TRASH + std::string("##") + std::to_string(static_cast<int>(eventType));
@@ -188,30 +188,50 @@ namespace graphic
 
             if (ImGui::BeginPopup("Add Action", ImGuiWindowFlags_AlwaysAutoResize))
             {
-                EventType selectedEventType;
-                engine::Events selectedEvent;
+                static EventType selectedEventType;
+                static engine::Events selectedEvent;
 
+                ImGui::Dummy(ImVec2(0, 10));
+                ImGui::Text("Select Event Type");
                 ImGui::BeginChild("EventTypeChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
                 for (auto eventType : magic_enum::enum_values<EventType>())
                 {
-                    std::string eventLabel = magic_enum::enum_name(eventType).data();
-                    if (ImGui::Selectable(eventLabel.c_str()))
+                    if (selectedSpriteActions.find(eventType) == selectedSpriteActions.end())
                     {
-                        selectedEventType = eventType;
+                        std::string eventLabel = magic_enum::enum_name(eventType).data();
+                        if (ImGui::Selectable(eventLabel.c_str()))
+                            selectedEventType = eventType;
+                    }
+                    else
+                    {
+                        std::string eventLabel = magic_enum::enum_name(eventType).data();
+                        ImGui::Selectable(eventLabel.c_str(), false);
                     }
                 }
                 ImGui::EndChild();
 
+                ImGui::Dummy(ImVec2(0, 10));
+
+                ImGui::Text("Select Key Event");
                 ImGui::BeginChild("EventChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
                 for (auto event : magic_enum::enum_values<engine::Events>())
                 {
-                    std::string eventLabel = magic_enum::enum_name(event).data();
-                    if (ImGui::Selectable(eventLabel.c_str()))
+                    if (selectedSpriteActions.find(selectedEventType) == selectedSpriteActions.end() ||
+                        selectedSpriteActions.at(selectedEventType) != event)
                     {
-                        selectedEvent = event;
+                        std::string eventLabel = magic_enum::enum_name(event).data();
+                        if (ImGui::Selectable(eventLabel.c_str()))
+                            selectedEvent = event;
+                    }
+                    else
+                    {
+                        std::string eventLabel = magic_enum::enum_name(event).data();
+                        ImGui::Selectable(eventLabel.c_str(), false);
                     }
                 }
                 ImGui::EndChild();
+
+                ImGui::Dummy(ImVec2(0, 10));
 
                 if (ImGui::Button("Cancel"))
                 {
