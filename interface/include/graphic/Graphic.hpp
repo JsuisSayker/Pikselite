@@ -64,14 +64,14 @@ namespace graphic
         void spriteEditorSidebar();
         void projectEditorSidebar();
         void pixelEditorSidebar();
-        void spriteSelector();
+        void spriteSelector(Camera camera);
         const char *getSpriteFileName(const std::string &path);
         void addFileExplorer();
         void addExportFileExplorer();
 
         void homeInterface();
 
-        void drawInterface();
+        void drawInterface(Camera camera);
 
         void lightOptions();
         void solidOptions();
