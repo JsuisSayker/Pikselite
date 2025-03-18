@@ -134,6 +134,7 @@ namespace graphic
 
     void Graphic::spriteInputSidebar()
     {
+        float sidebarWidth = 200.0f;
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
         if (!spriteInputSidebarInitialized)
         {
@@ -142,18 +143,57 @@ namespace graphic
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
-        ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - sidebarWidth, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
 
         if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
             ImGui::Text("Sprite Actions:");
 
-            for (const auto &[eventType, eventData] : selectedSpriteActions)
+            std::vector<EventType> itemsToDelete;
+
+            if (!selectedSpriteActions.empty())
             {
-                ImGui::Text("Event: %s", magic_enum::enum_name(eventType).data());
-                ImGui::Text("Action: %s", magic_enum::enum_name(eventData).data());
+                for (const auto &[eventType, eventData] : selectedSpriteActions)
+                {
+                    ImGui::PushFont(this->_iconFont);
+                    ImGui::Text("Event: %s\t", magic_enum::enum_name(eventType).data());
+                    ImGui::SameLine();
+                    ImGui::Text("Action: %s\t", magic_enum::enum_name(eventData).data());
+                    ImGui::SameLine();
+
+                    std::string buttonLabel = ICON_FA_TRASH + std::string("##") + std::to_string(static_cast<int>(eventType));
+                    if (ImGui::Button(buttonLabel.c_str(), ImVec2(20, 20)))
+                    {
+                        itemsToDelete.push_back(eventType);
+                    }
+                    ImGui::PopFont();
+                }
+                for (const auto &eventType : itemsToDelete)
+                {
+                    selectedSpriteActions.erase(eventType);
+                }
+                itemsToDelete.clear();
+            }
+
+            if (ImGui::Button("Add", ImVec2(180, 40)))
+            {
+                ImGui::OpenPopup("Add Action");
+            }
+
+            float popupWidth = 300.0f;
+            float popupHeight = 300.0f;
+            ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+            ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
+
+            if (ImGui::BeginPopup("Add Action"), ImGuiWindowFlags_AlwaysAutoResize)
+            {
+                //
+                ImGui::EndPopup();
             }
         }
+        ImGui::PopStyleColor();
+
         ImGui::End();
 
         ImGui::PopStyleColor();
@@ -441,14 +481,14 @@ namespace graphic
 
     void Graphic::lightOptions()
     {
-        ImGui::OpenPopup("Light Options", ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::OpenPopup("Light Options");
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
-        if (ImGui::BeginPopup("Light Options"))
+        if (ImGui::BeginPopup("Light Options"), ImGuiWindowFlags_AlwaysAutoResize)
         {
             static int newRadius = 0;
             static int newIntensity = 0;
@@ -517,14 +557,14 @@ namespace graphic
 
     void Graphic::solidOptions()
     {
-        ImGui::OpenPopup("Solid Options", ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::OpenPopup("Solid Options");
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
-        if (ImGui::BeginPopup("Solid Options"))
+        if (ImGui::BeginPopup("Solid Options"), ImGuiWindowFlags_AlwaysAutoResize)
         {
             ImGui::Text("Solid Options");
 
@@ -566,14 +606,14 @@ namespace graphic
 
     void Graphic::liquidOptions()
     {
-        ImGui::OpenPopup("Liquid Options", ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::OpenPopup("Liquid Options");
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
-        if (ImGui::BeginPopup("Liquid Options"))
+        if (ImGui::BeginPopup("Liquid Options"), ImGuiWindowFlags_AlwaysAutoResize)
         {
             static int newViscosity = 0;
 
