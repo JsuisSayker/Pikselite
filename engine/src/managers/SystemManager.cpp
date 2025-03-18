@@ -5,27 +5,37 @@ void SystemManager::addSystem(std::unique_ptr<ISystem> system)
     systems.push_back(std::move(system));
 }
 
-void SystemManager::updateSystems(float deltaTime, std::vector<graphic::Sprite> sprites)
+void SystemManager::updateSystems(float deltaTime, std::vector<graphic::Sprite> &sprites)
 {
     for (auto &system : systems)
     {
-        system->update(deltaTime, sprites);
+        system->update(deltaTime, sprites, eventStack);
     }
 }
 
-void SystemManager::addEvent(engine::Events event)
+void SystemManager::addEvent(graphic::EventType event)
 {
-    systemsOrder.push_back(event);
+    eventStack.push_back(event);
 }
 
-void SystemManager::removeEvent(engine::Events event)
+void SystemManager::popEvent(graphic::EventType event)
 {
-    for (auto it = systemsOrder.begin(); it != systemsOrder.end(); it++)
+    eventStack.pop_back();
+}
+
+void SystemManager::removeEvent(graphic::EventType event)
+{
+    for (auto it = eventStack.begin(); it != eventStack.end(); it++)
     {
         if (*it == event)
         {
-            systemsOrder.erase(it);
+            eventStack.erase(it);
             return;
         }
     }
+}
+
+bool SystemManager::hasEvent()
+{
+    return !eventStack.empty();
 }

@@ -28,17 +28,13 @@ int Core::run(graphic::Camera camera)
             return 0;
 
         if (event != graphic::EventType::NONE)
-        {
-            for (int i = 0; _sprites.size(); i++)
-            {
-                if (_sprites[i].actions.find(event) != _sprites[i].actions.end())
-                {
-                    this->_systemManager->addEvent(_sprites[i].actions[event]);
-                }
-            }
-        }
+            this->_systemManager->addEvent(event);
 
         this->_systemManager->updateSystems(this->_clock.getElapsedTime(), this->_sprites);
+
+        if (this->_systemManager->hasEvent())
+            this->_systemManager->popEvent(event);
+
         graphic->clearWindow();
 
         graphic->drawSprites(this->_sprites, camera);
