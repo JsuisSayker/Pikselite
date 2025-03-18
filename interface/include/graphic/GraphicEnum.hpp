@@ -151,9 +151,11 @@ namespace graphic
         bool showPixelLinker;
         bool showScenes;
         bool showImportSprite;
+        bool showGrid;
         std::string spritePath;
         std::string folderPath;
         std::string oldSpritePath;
+        std::string selectedFileName;
         ImTextureID dragImagetextureId;
     };
 
