@@ -12,6 +12,7 @@ int Home::run()
 {
     graphic::EventType event;
     _graphic->showHome = true;
+    graphic::Camera camera;
 
     while (_graphic->_windowOpen)
     {
@@ -22,7 +23,7 @@ int Home::run()
 
         _graphic->clearWindow();
 
-        _graphic->drawInterface();
+        _graphic->drawInterface(camera);
 
         _graphic->updateWindow();
     }
