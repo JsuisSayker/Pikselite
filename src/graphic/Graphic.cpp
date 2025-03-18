@@ -46,6 +46,14 @@ namespace graphic
                 ImGui_ImplSDLRenderer2_Init(_renderer);
             }
         }
+        if (TTF_Init() == -1) {
+            std::cerr << "Erreur TTF_Init : " << TTF_GetError() << std::endl;
+        }
+
+        m_font = TTF_OpenFont("extern/fonts/pixely.ttf", 24);
+        if (!m_font) {
+            std::cerr << "Erreur lors du chargement de la police : " << TTF_GetError() << std::endl;
+        }
     }
 
     Graphic::~Graphic()
@@ -59,6 +67,11 @@ namespace graphic
             ImGui_ImplSDL2_Shutdown();
             ImGui::DestroyContext();
         }
+        if (m_font)
+        {
+            TTF_CloseFont(m_font);
+        }
+        TTF_Quit();
     }
 
     void Graphic::updateWindow()
@@ -231,7 +244,9 @@ namespace graphic
             {
                 p.position.x = posObj["x"].GetDouble();
                 p.position.y = posObj["y"].GetDouble();
-            } else {
+            }
+            else
+            {
                 p.position.x = actualPosition.x + posObj["x"].GetDouble();
                 p.position.y = actualPosition.y + posObj["y"].GetDouble();
             }

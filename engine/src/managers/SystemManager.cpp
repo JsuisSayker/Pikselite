@@ -5,11 +5,11 @@ void SystemManager::addSystem(std::unique_ptr<ISystem> system)
     systems.push_back(std::move(system));
 }
 
-void SystemManager::updateSystems(float deltaTime, std::vector<graphic::Sprite> &sprites)
+void SystemManager::updateSystems(Clock clock, std::vector<graphic::Sprite> &sprites)
 {
     for (auto &system : systems)
     {
-        system->update(deltaTime, sprites, eventStack);
+        system->update(clock, sprites, eventStack);
     }
 }
 

@@ -8,7 +8,7 @@ class InputSystem : public ASystem {
 public:
     virtual ~InputSystem() = default;
 
-    void update(float deltaTime, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events) override;
+    void update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events) override;
 };
 
 #endif // INPUT_SYSTEM_HPP

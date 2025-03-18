@@ -9,11 +9,13 @@ add_library(graphic
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
+find_package(SDL2_ttf REQUIRED)
 
 target_link_libraries(graphic
   SDL2::SDL2
   SDL2::SDL2main
   SDL2_image::SDL2_image
+  SDL2_ttf::SDL2_ttf
   imgui
   pikselite_interface
   rapidjson_interface

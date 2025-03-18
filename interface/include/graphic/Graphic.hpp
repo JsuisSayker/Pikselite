@@ -14,6 +14,9 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+
+#include <utils/Clock.hpp>
 
 // rapidjson includes
 #include "document.h"
@@ -51,6 +54,8 @@ namespace graphic
         void drawPixel(Pixel pixel, Camera camera);
         void drawPixels(Camera camera);
         void drawGrid(Camera camera);
+        void drawText(const std::string &text, int x, int y, SDL_Color color);
+        void drawFps(Clock clock);
         void drawRectangle(Rectangle rectangle);
 
         void saveSprite(std::vector<Pixel> pixels, std::string filename);
@@ -94,6 +99,7 @@ namespace graphic
         Pixel *selectedPixel = nullptr;
 
     private:
+        TTF_Font *m_font;
         SDL_Window *_window;
         SDL_Renderer *_renderer;
         ImFont *_iconFont = nullptr;

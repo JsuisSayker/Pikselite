@@ -94,6 +94,39 @@ namespace graphic
             }
         }
     }
+    void Graphic::drawText(const std::string &text, int x, int y, SDL_Color color)
+    {
+        SDL_Surface *surface = TTF_RenderText_Blended(m_font, text.c_str(), color);
+        if (!surface)
+        {
+            std::cerr << "Error TTF_RenderText_Blended : " << TTF_GetError() << std::endl;
+            return;
+        }
+
+        SDL_Texture *texture = SDL_CreateTextureFromSurface(_renderer, surface);
+        if (!texture)
+        {
+            std::cerr << "Error SDL_CreateTextureFromSurface : " << SDL_GetError() << std::endl;
+            SDL_FreeSurface(surface);
+            return;
+        }
+
+        int w = surface->w;
+        int h = surface->h;
+        SDL_FreeSurface(surface);
+
+        SDL_Rect dstRect = {x, y, w, h};
+        SDL_RenderCopy(_renderer, texture, nullptr, &dstRect);
+
+        SDL_DestroyTexture(texture);
+    }
+
+    void Graphic::drawFps(Clock clock)
+    {
+        std::string fps = "FPS: " + std::to_string(static_cast<int>(1.0f / clock.getElapsedTime()));
+        SDL_Color color = {0, 0, 0, 255};
+        drawText(fps, 10, 10, color);
+    }
 
     void Graphic::drawRectangle(Rectangle rectangle)
     {

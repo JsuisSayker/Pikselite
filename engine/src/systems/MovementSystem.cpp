@@ -1,6 +1,6 @@
 #include "systems/MovementSystem.hpp"
 
-void MovementSystem::update(float deltaTime, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
+void MovementSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
 {
     if (events.empty())
         return;
@@ -16,34 +16,35 @@ void MovementSystem::update(float deltaTime, std::vector<graphic::Sprite> &sprit
 
         if (it->second == engine::Events::MOVE_UP)
         {
-            sprite.position.y -= 100 * deltaTime;
+            // round the position to avoid pixel blurring
+            sprite.position.y = std::round(sprite.position.y - 1000 * clock.getElapsedTime());
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y -= 100 * deltaTime;
+                pixel.position.y -= std::round(1000 * clock.getElapsedTime());
             }
         }
         if (it->second == engine::Events::MOVE_DOWN)
         {
-            sprite.position.y += 100 * deltaTime;
+            sprite.position.y += std::round(1000 * clock.getElapsedTime());
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y += 100 * deltaTime;
+                pixel.position.y += std::round(1000 * clock.getElapsedTime());
             }
         }
         if (it->second == engine::Events::MOVE_LEFT)
         {
-            sprite.position.x -= 100 * deltaTime;
+            sprite.position.x -= std::round(1000 * clock.getElapsedTime());
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x -= 100 * deltaTime;
+                pixel.position.x -= std::round(1000 * clock.getElapsedTime());
             }
         }
         if (it->second == engine::Events::MOVE_RIGHT)
         {
-            sprite.position.x += 100 * deltaTime;
+            sprite.position.x += std::round(1000 * clock.getElapsedTime());
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x += 100 * deltaTime;
+                pixel.position.x += std::round(1000 * clock.getElapsedTime());
             }
         }
     }

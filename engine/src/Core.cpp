@@ -18,9 +18,8 @@ int Core::run(graphic::Camera camera)
     std::vector<graphic::Sprite> TmpSprites = this->_sprites;
     graphic::EventType event;
     std::shared_ptr<graphic::Graphic> graphic = std::make_shared<graphic::Graphic>(false);
-    this->_clock.restart();
     this->_systemManager->addSystem(std::make_unique<MovementSystem>());
-
+    this->_clock.restart();
     while (graphic->_windowOpen)
     {
         event = graphic->checkEvent();
@@ -31,7 +30,7 @@ int Core::run(graphic::Camera camera)
         if (event != graphic::EventType::NONE)
             this->_systemManager->addEvent(event);
 
-        this->_systemManager->updateSystems(this->_clock.getElapsedTime(), TmpSprites);
+        this->_systemManager->updateSystems(this->_clock, TmpSprites);
 
         if (this->_systemManager->hasEvent())
             this->_systemManager->popEvent(event);
@@ -39,6 +38,7 @@ int Core::run(graphic::Camera camera)
         graphic->clearWindow();
 
         graphic->drawSprites(TmpSprites, camera);
+        graphic->drawFps(this->_clock);
 
         this->_clock.restart();
         graphic->updateWindow();
