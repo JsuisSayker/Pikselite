@@ -35,7 +35,12 @@ int ProjectEditor::run()
             {
                 graphic::Position position;
                 if (event == graphic::EventType::KEY_ESCAPE)
+                {
                     _graphic->projectData.showImportSprite = false;
+                    // Need to add this line if we want to clear the sprite path after loading the sprite
+                    _graphic->projectData.spritePath.clear();
+                    // _graphic->projectData.oldSpritePath.clear();
+                }
                 if (event == graphic::EventType::MOUSE_CLICK_LEFT)
                 {
                     position = _graphic->getPosition();
@@ -47,10 +52,8 @@ int ProjectEditor::run()
                     position.y = std::round(position.y);
                     graphic::Sprite sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath, false, position);
                     _core->addSprite(sprite);
-                    _graphic->projectData.oldSpritePath.clear();
-                    // Need to add this line if we want to clear the sprite path after loading the sprite
-                    // _graphic->projectData.spritePath.clear();
                 }
+                _graphic->projectData.oldSpritePath.clear();
             }
             catch (const std::exception &e)
             {
@@ -64,7 +67,7 @@ int ProjectEditor::run()
         _graphic->clearWindow();
 
         _graphic->drawSprites(_core->getSprite(), _camera);
-        _graphic->drawInterface();
+        _graphic->drawInterface(_camera);
 
         _graphic->updateWindow();
     }

@@ -296,7 +296,6 @@ namespace graphic
         // Convert to absolute path using std::filesystem
         std::filesystem::path absPath = std::filesystem::absolute(filename);
         std::string basePath = absPath.string();
-        std::cout << "Base path: " << basePath << std::endl;
 
         // Check file accessibility
         std::ifstream file(basePath);
@@ -304,10 +303,6 @@ namespace graphic
         {
             std::cerr << "File not accessible!" << std::endl;
             return ImTextureID(0);
-        }
-        else
-        {
-            std::cout << "File exists and is accessible." << std::endl;
         }
 
         // Load the image using SDL_image
@@ -336,38 +331,46 @@ namespace graphic
         return reinterpret_cast<ImTextureID>(texture);
     }
 
-    void Graphic::spriteSelector()
+    void Graphic::spriteSelector(Camera camera)
     {
-        ImVec2 imageSize(200, 200);
-
+        // If the texture hasn't been loaded yet, load it.
         if (projectData.dragImagetextureId == 0)
             projectData.dragImagetextureId = LoadTextureFromFile(projectData.oldSpritePath.c_str(), this->_renderer);
 
-        // Push style colors for the tooltip (adjust as needed)
+        // Retrieve the texture's dimensions using SDL_QueryTexture.
+        int texW = 0, texH = 0;
+        SDL_Texture *texture = reinterpret_cast<SDL_Texture *>(projectData.dragImagetextureId);
+        if (SDL_QueryTexture(texture, nullptr, nullptr, &texW, &texH) != 0)
+        {
+            std::cerr << "Failed to query texture: " << SDL_GetError() << std::endl;
+            texW = texH = 200;
+        }
+        ImVec2 imageSize(static_cast<float>(texW), static_cast<float>(texH));
+
+        // Push style colors for the tooltip.
         ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1, 1, 1, 0));
-        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 1));
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
 
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceExtern))
         {
-            // Set the drag-drop payload.
             ImGui::SetDragDropPayload("DND_DEMO_CELL", &projectData.dragImagetextureId, sizeof(ImTextureID));
 
-            // Define a zoom level. Adjust this value as needed.
-            float zoomLevel = 50.0f;
+            float zoomLevel = camera.zoom;
             ImVec2 zoomedSize = ImVec2(imageSize.x * zoomLevel, imageSize.y * zoomLevel);
 
-            // Get the current mouse position
             ImVec2 mousePos = ImGui::GetIO().MousePos;
-
-            // Calculate the tooltip window position so that the image's center aligns with the mouse cursor.
+            // Offset the tooltip window so that the image center is at the mouse position.
             ImVec2 tooltipPos = ImVec2(mousePos.x - zoomedSize.x * 0.5f,
-                                        mousePos.y - zoomedSize.y * 0.5f);
+                                       (mousePos.y - zoomedSize.y * 0.5f));
             ImGui::SetNextWindowPos(tooltipPos, ImGuiCond_Always);
 
-            // Begin the tooltip that will display the zoomed image.
+            // Remove default window padding for the tooltip to ensure pixel-perfect centering.
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
             ImGui::BeginTooltip();
             ImGui::Image(projectData.dragImagetextureId, zoomedSize, ImVec2(0, 0), ImVec2(1, 1));
             ImGui::EndTooltip();
+            ImGui::PopStyleVar();
+
             ImGui::EndDragDropSource();
         }
 
@@ -549,7 +552,7 @@ namespace graphic
         ImGui::End();
     }
 
-    void Graphic::drawInterface()
+    void Graphic::drawInterface(Camera camera)
     {
         ImGui_ImplSDLRenderer2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
@@ -574,7 +577,7 @@ namespace graphic
             pixelEditorSidebar();
 
         if (projectData.showImportSprite)
-            spriteSelector();
+            spriteSelector(camera);
 
         if (editorData.showLightOptions)
             lightOptions();
