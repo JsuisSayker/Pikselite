@@ -132,6 +132,45 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
+    void getSpriteFromFileName(graphic::ProjectEditorData *projectData)
+    {
+        static int currentItem = 0;
+        int index = 0;
+
+        // Change the string to the path of the sprites folder of the user
+        std::unordered_map<std::string, std::string> items = getSpriteFilesName("sprites");
+
+        for (std::unordered_map<std::string, std::string>::iterator it = items.begin(); it != items.end(); ++it)
+        {
+            bool is_selected = (currentItem == index);
+            if (ImGui::Selectable(it->first.c_str(), is_selected))
+            {
+                currentItem = index;
+                projectData->showImportSprite = !projectData->showImportSprite;
+                if (it->second.find(".json") == std::string::npos)
+                {
+                    projectData->oldSpritePath = it->second;
+                    std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
+                    newFileName += ".json";
+                    it->second = newFileName;
+                }
+                else
+                {
+                    std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
+                    newFileName += ".png";
+                    projectData->oldSpritePath = newFileName;
+                }
+                projectData->spritePath = it->second;
+                projectData->selectedFileName = it->first;
+            }
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+
+            index++;
+        }
+        ImGui::EndCombo();
+    }
+
     void Graphic::projectEditorSidebar()
     {
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
@@ -150,41 +189,12 @@ namespace graphic
             {
                 projectData.showFileExplorer = !projectData.showFileExplorer;
             }
-            if (ImGui::BeginCombo("Sprites", nullptr))
+            if (ImGui::Checkbox("Show grid", &projectData.showGrid))
             {
-                static int currentItem = 0;
-                int index = 0;
-
-                std::unordered_map<std::string, std::string> items = getSpriteFilesName("sprites");
-
-                for (std::unordered_map<std::string, std::string>::iterator it = items.begin(); it != items.end(); ++it)
-                {
-                    bool is_selected = (currentItem == index);
-                    if (ImGui::Selectable(it->first.c_str(), is_selected))
-                    {
-                        currentItem = index;
-                        projectData.showImportSprite = !projectData.showImportSprite;
-                        if (it->second.find(".json") == std::string::npos)
-                        {
-                            projectData.oldSpritePath = it->second;
-                            std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
-                            newFileName += ".json";
-                            it->second = newFileName;
-                        }
-                        else
-                        {
-                            std::string newFileName = it->second.substr(0, it->second.find_last_of('.'));
-                            newFileName += ".png";
-                            projectData.oldSpritePath = newFileName;
-                        }
-                        projectData.spritePath = it->second;
-                    }
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-
-                    index++;
-                }
-                ImGui::EndCombo();
+            }
+            if (ImGui::BeginCombo("Sprites", projectData.selectedFileName.c_str()))
+            {
+                getSpriteFromFileName(&projectData);
             }
         }
         ImGui::End();
