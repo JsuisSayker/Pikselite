@@ -64,6 +64,8 @@ namespace graphic
         void navBar();
         void projectEditorSidebar();
         void pixelEditorSidebar();
+        void spriteEditorSidebar();
+        void spriteInputSidebar();
         void spriteSelector(Camera camera);
         const char *getSpriteFileName(const std::string &path);
         void addFileExplorer();
@@ -83,7 +85,7 @@ namespace graphic
 
         bool showHome = true;
         SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, false};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, false, true, "", "", "", "", ImTextureID(0)};
+        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, false, false, false, false, true, "", "", "", "", ImTextureID(0)};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};
         solid solidData = solid{};
@@ -92,6 +94,7 @@ namespace graphic
         bool isProjectEditor = false;
         Pixel *selectedPixel = nullptr;
         std::unordered_map<EventType, engine::Events> selectedSpriteActions = {};
+        bool setSelectedSpriteActions = false;
 
     private:
         SDL_Window *_window;

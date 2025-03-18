@@ -3,6 +3,9 @@
 #include <iostream>
 #include <vector>
 #include <variant>
+#include <unordered_map>
+
+#include <utils/EngineEnum.hpp>
 #include <imgui.h>
 
 namespace graphic
@@ -150,28 +153,6 @@ namespace graphic
         bool resetCamera = false;
     };
 
-    struct ProjectEditorData
-    {
-        bool showFileExplorer;
-        bool showDirectoryChooser;
-        bool showLayer;
-        bool showGameAssets;
-        bool showPixelLinker;
-        bool showScenes;
-        bool showImportSprite;
-        bool showGrid;
-        std::string spritePath;
-        std::string folderPath;
-        std::string oldSpritePath;
-        std::string selectedFileName;
-        ImTextureID dragImagetextureId;
-    };
-
-    struct TabSelectorData
-    {
-        int tabIndex = 0;
-    };
-
     struct Sprite
     {
         bool isSelected;
@@ -194,13 +175,16 @@ namespace graphic
         bool runGame = false;
         bool showSpriteSelector = false;
         bool showSpriteInputSidebar = false;
-        std::string spritePath = "";
-        std::string folderPath = "";
+        bool showGrid;
+        std::string spritePath;
+        std::string folderPath;
+        std::string oldSpritePath;
+        std::string selectedFileName;
+        ImTextureID dragImagetextureId;
     };
 
     struct TabSelectorData
     {
         int tabIndex = 0;
     };
-
 }

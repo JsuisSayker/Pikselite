@@ -132,6 +132,134 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
+    void Graphic::spriteInputSidebar()
+    {
+        float sidebarWidth = 250.0f;
+        float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
+        if (!spriteInputSidebarInitialized)
+        {
+            ImGui::SetNextWindowSize(ImVec2(sidebarWidth, sidebarHeight), ImGuiCond_Always);
+            spriteInputSidebarInitialized = true;
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - sidebarWidth, ImGui::GetIO().DisplaySize.y - sidebarHeight), ImGuiCond_Always);
+
+        if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
+        {
+            ImGui::Text("Sprite Actions");
+
+            std::vector<EventType> itemsToDelete;
+
+            if (!selectedSpriteActions.empty())
+            {
+                for (const auto &[eventType, eventData] : selectedSpriteActions)
+                {
+                    ImGui::PushFont(this->_iconFont);
+                    ImGui::Text("%s ", magic_enum::enum_name(eventType).data());
+                    ImGui::SameLine();
+                    ImGui::Text("%s ", magic_enum::enum_name(eventData).data());
+                    ImGui::SameLine();
+
+                    std::string buttonLabel = ICON_FA_TRASH + std::string("##") + std::to_string(static_cast<int>(eventType));
+                    if (ImGui::Button(buttonLabel.c_str(), ImVec2(20, 20)))
+                    {
+                        itemsToDelete.push_back(eventType);
+                    }
+                    ImGui::PopFont();
+                }
+                for (const auto &eventType : itemsToDelete)
+                {
+                    selectedSpriteActions.erase(eventType);
+                }
+                itemsToDelete.clear();
+            }
+
+            if (ImGui::Button("Add", ImVec2(180, 40)))
+            {
+                ImGui::OpenPopup("Add Action");
+            }
+
+            float popupWidth = 300.0f;
+            float popupHeight = 300.0f;
+            ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+            ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
+
+            if (ImGui::BeginPopup("Add Action", ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                static EventType selectedEventType;
+                static engine::Events selectedEvent;
+
+                ImGui::Dummy(ImVec2(0, 10));
+                ImGui::Text("Select Event Type");
+                ImGui::BeginChild("EventTypeChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                for (auto eventType : magic_enum::enum_values<EventType>())
+                {
+                    if (selectedSpriteActions.find(eventType) == selectedSpriteActions.end())
+                    {
+                        std::string eventLabel = magic_enum::enum_name(eventType).data();
+                        if (ImGui::Selectable(eventLabel.c_str()))
+                            selectedEventType = eventType;
+                    }
+                    else
+                    {
+                        std::string eventLabel = magic_enum::enum_name(eventType).data();
+                        ImGui::Selectable(eventLabel.c_str(), false);
+                    }
+                }
+                ImGui::EndChild();
+
+                ImGui::Dummy(ImVec2(0, 10));
+
+                ImGui::Text("Select Key Event");
+                ImGui::BeginChild("EventChild", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysUseWindowPadding);
+                for (auto event : magic_enum::enum_values<engine::Events>())
+                {
+                    if (selectedSpriteActions.find(selectedEventType) == selectedSpriteActions.end() ||
+                        selectedSpriteActions.at(selectedEventType) != event)
+                    {
+                        std::string eventLabel = magic_enum::enum_name(event).data();
+                        if (ImGui::Selectable(eventLabel.c_str()))
+                            selectedEvent = event;
+                    }
+                    else
+                    {
+                        std::string eventLabel = magic_enum::enum_name(event).data();
+                        ImGui::Selectable(eventLabel.c_str(), false);
+                    }
+                }
+                ImGui::EndChild();
+
+                ImGui::Dummy(ImVec2(0, 10));
+
+                if (ImGui::Button("Cancel"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Save"))
+                {
+                    if (selectedEventType != EventType::NONE && selectedEvent != engine::Events::NONE)
+                    {
+                        selectedSpriteActions[selectedEventType] = selectedEvent;
+                        ImGui::CloseCurrentPopup();
+                        setSelectedSpriteActions = true;
+                    }
+                }
+
+                ImGui::EndPopup();
+            }
+        }
+        ImGui::PopStyleColor();
+
+        ImGui::End();
+
+        ImGui::PopStyleColor();
+    }
+
     void getSpriteFromFileName(graphic::ProjectEditorData *projectData)
     {
         static int currentItem = 0;
@@ -189,7 +317,7 @@ namespace graphic
             {
                 projectData.showFileExplorer = !projectData.showFileExplorer;
             }
-            if (ImGui::Checkbox("Show grid", &projectData.showGrid))
+            if (ImGui::BeginCombo("Sprites", nullptr))
             {
             }
             if (ImGui::BeginCombo("Sprites", projectData.selectedFileName.c_str()))
@@ -254,7 +382,7 @@ namespace graphic
         float sidebarHeight = ImGui::GetIO().DisplaySize.y - this->navBarHeight;
         if (!pixelEditorSidebarInitialized)
         {
-            ImGui::SetNextWindowSize(ImVec2(200, sidebarHeight), ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(sidebarWidth, sidebarHeight), ImGuiCond_Always);
         }
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
@@ -420,14 +548,14 @@ namespace graphic
 
     void Graphic::lightOptions()
     {
-        ImGui::OpenPopup("Light Options", ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::OpenPopup("Light Options");
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
-        if (ImGui::BeginPopup("Light Options"))
+        if (ImGui::BeginPopup("Light Options"), ImGuiWindowFlags_AlwaysAutoResize)
         {
             static int newRadius = 0;
             static int newIntensity = 0;
@@ -496,14 +624,14 @@ namespace graphic
 
     void Graphic::solidOptions()
     {
-        ImGui::OpenPopup("Solid Options", ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::OpenPopup("Solid Options");
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
-        if (ImGui::BeginPopup("Solid Options"))
+        if (ImGui::BeginPopup("Solid Options"), ImGuiWindowFlags_AlwaysAutoResize)
         {
             ImGui::Text("Solid Options");
 
@@ -545,14 +673,14 @@ namespace graphic
 
     void Graphic::liquidOptions()
     {
-        ImGui::OpenPopup("Liquid Options", ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::OpenPopup("Liquid Options");
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
         ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
 
-        if (ImGui::BeginPopup("Liquid Options"))
+        if (ImGui::BeginPopup("Liquid Options"), ImGuiWindowFlags_AlwaysAutoResize)
         {
             static int newViscosity = 0;
 
