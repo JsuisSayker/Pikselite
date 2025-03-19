@@ -465,6 +465,10 @@ namespace graphic
             {
                 editorData.showFlammableOptions = true;
             }
+            if (ImGui::Button("Sand", ImVec2(180, 40)))
+            {
+                editorData.showSandOptions = true;
+            }
 
             ImGui::Separator();
 
@@ -744,16 +748,21 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
                 {
-                    for (Pixel &pixel : _pixels)
-                    {
-                        pixel.liquidEnabled = editorData.liquidEnabled;
-                    }
                 }
             }
             else
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->liquidEnabled))
                 {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<liquid>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(liquid{newViscosity});
                 }
             }
 
@@ -869,6 +878,42 @@ namespace graphic
         ImGui::PopStyleColor();
     }
 
+    void Graphic::sandOptions()
+    {
+        ImGui::OpenPopup("Sand Options", ImGuiWindowFlags_AlwaysAutoResize);
+        float popupWidth = 300.0f;
+        float popupHeight = 300.0f;
+        ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
+
+        if (ImGui::BeginPopup("Sand Options"))
+        {
+            ImGui::Text("Sand Options");
+
+            if (ImGui::Button("Cancel"))
+            {
+                ImGui::CloseCurrentPopup();
+                editorData.showSandOptions = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                ImGui::CloseCurrentPopup();
+                editorData.showSandOptions = false;
+            }
+            ImGui::SameLine();
+
+            if (ImGui::Checkbox("Enabled", &editorData.sandEnabled))
+            {
+            }
+
+            ImGui::EndPopup();
+        }
+
+        ImGui::PopStyleColor();
+    }
+
     void Graphic::homeInterface()
     {
         float menuBarHeight = 33.0f;
@@ -953,6 +998,9 @@ namespace graphic
 
         if (editorData.showFlammableOptions)
             flammableOptions();
+        
+        if (editorData.showSandOptions)
+            sandOptions();
 
         if (projectData.showSpriteInputSidebar)
             spriteInputSidebar();

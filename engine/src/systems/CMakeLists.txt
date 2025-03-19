@@ -4,6 +4,7 @@ add_library(systems
   MovementSystem.cpp
   InputSystem.cpp
   FireSystem.cpp
+  SandSystem.cpp
 )
 
 target_link_libraries(systems

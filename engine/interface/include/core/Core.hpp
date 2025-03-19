@@ -4,6 +4,7 @@
 
 #include <managers/SystemManager.hpp>
 #include <systems/MovementSystem.hpp>
+#include <systems/SandSystem.hpp>
 
 #include <utils/Clock.hpp>
 

@@ -15,10 +15,11 @@ void SpriteEditor::checkAttribute()
     bool noLiquid = true;
     bool noFire = true;
     bool noFlammable = true;
+    bool noSand = true;
 
     if (_graphic->editorData.lightEnabled)
     {
-        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute : _graphic->editorData.defaultAttributes)
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute : _graphic->editorData.defaultAttributes)
         {
             if (std::holds_alternative<graphic::light>(attribute))
             {
@@ -37,7 +38,7 @@ void SpriteEditor::checkAttribute()
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute)
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute)
                 {
                     return std::holds_alternative<graphic::light>(attribute);
                 }),
@@ -45,7 +46,7 @@ void SpriteEditor::checkAttribute()
     }
     if (_graphic->editorData.solidEnabled)
     {
-        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute : _graphic->editorData.defaultAttributes)
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute : _graphic->editorData.defaultAttributes)
         {
             if (std::holds_alternative<graphic::solid>(attribute))
             {
@@ -64,7 +65,7 @@ void SpriteEditor::checkAttribute()
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute)
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute)
                 {
                     return std::holds_alternative<graphic::solid>(attribute);
                 }),
@@ -72,7 +73,7 @@ void SpriteEditor::checkAttribute()
     }
     if (_graphic->editorData.liquidEnabled)
     {
-        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute : _graphic->editorData.defaultAttributes)
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute : _graphic->editorData.defaultAttributes)
         {
             if (std::holds_alternative<graphic::liquid>(attribute))
             {
@@ -91,7 +92,7 @@ void SpriteEditor::checkAttribute()
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute)
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute)
                 {
                     return std::holds_alternative<graphic::liquid>(attribute);
                 }),
@@ -99,7 +100,7 @@ void SpriteEditor::checkAttribute()
     }
     if (_graphic->editorData.fireEnabled)
     {
-        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute : _graphic->editorData.defaultAttributes)
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute : _graphic->editorData.defaultAttributes)
         {
             if (std::holds_alternative<graphic::fire>(attribute))
             {
@@ -118,7 +119,7 @@ void SpriteEditor::checkAttribute()
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute)
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute)
                 {
                     return std::holds_alternative<graphic::fire>(attribute);
                 }),
@@ -126,7 +127,7 @@ void SpriteEditor::checkAttribute()
     }
     if (_graphic->editorData.flammableEnabled)
     {
-        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute : _graphic->editorData.defaultAttributes)
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute : _graphic->editorData.defaultAttributes)
         {
             if (std::holds_alternative<graphic::flammable>(attribute))
             {
@@ -145,9 +146,35 @@ void SpriteEditor::checkAttribute()
             std::remove_if(
                 _graphic->editorData.defaultAttributes.begin(),
                 _graphic->editorData.defaultAttributes.end(),
-                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable> &attribute)
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute)
                 {
                     return std::holds_alternative<graphic::flammable>(attribute);
+                }),
+            _graphic->editorData.defaultAttributes.end());
+    }
+    if (_graphic->editorData.sandEnabled)
+    {
+        for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute : _graphic->editorData.defaultAttributes)
+        {
+            if (std::holds_alternative<graphic::sand>(attribute))
+            {
+                attribute = graphic::sand{};
+            }
+        }
+        if (noSand)
+        {
+            _graphic->editorData.defaultAttributes.push_back(graphic::sand{});
+        }
+    }
+    else
+    {
+        _graphic->editorData.defaultAttributes.erase(
+            std::remove_if(
+                _graphic->editorData.defaultAttributes.begin(),
+                _graphic->editorData.defaultAttributes.end(),
+                [](const std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::sand> &attribute)
+                {
+                    return std::holds_alternative<graphic::sand>(attribute);
                 }),
             _graphic->editorData.defaultAttributes.end());
     }
