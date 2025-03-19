@@ -244,9 +244,9 @@ namespace graphic
                 {
                     if (selectedEventType != EventType::NONE && selectedEvent != engine::Events::NONE)
                     {
+                        projectData.ActionSpriteSaved = true;
                         selectedSpriteActions[selectedEventType] = selectedEvent;
                         ImGui::CloseCurrentPopup();
-                        setSelectedSpriteActions = true;
                     }
                 }
 

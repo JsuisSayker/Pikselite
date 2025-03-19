@@ -112,10 +112,12 @@ int ProjectEditor::run()
                 std::cerr << e.what() << std::endl;
             }
 
-            if (_graphic->setSelectedSpriteActions)
-            {
-                setSelectedSpriteActions();
-            }
+        }
+        
+        if (_graphic->projectData.ActionSpriteSaved)
+        {
+            _graphic->projectData.ActionSpriteSaved = false;
+            setSelectedSpriteActions();
         }
 
         moveCamera(event);
