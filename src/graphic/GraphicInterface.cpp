@@ -168,11 +168,15 @@ namespace graphic
                     }
                     ImGui::PopFont();
                 }
-                for (const auto &eventType : itemsToDelete)
+                if (!itemsToDelete.empty())
                 {
-                    selectedSpriteActions.erase(eventType);
+                    for (const auto &eventType : itemsToDelete)
+                    {
+                        selectedSpriteActions.erase(eventType);
+                    }
+                    itemsToDelete.clear();
+                    setSelectedSpriteActions = true;
                 }
-                itemsToDelete.clear();
             }
 
             if (ImGui::Button("Add", ImVec2(180, 40)))
