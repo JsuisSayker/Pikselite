@@ -7,6 +7,7 @@
 #include "systems/ISystem.hpp"
 
 #include <utils/EngineEnum.hpp>
+#include "utils/Clock.hpp"
 
 class SystemManager
 {
@@ -16,12 +17,14 @@ public:
 
     void addSystem(std::unique_ptr<ISystem> system);
 
-    void addEvent(engine::Events event);
-    void removeEvent(engine::Events event);
+    void addEvent(graphic::EventType event);
+    void removeEvent(graphic::EventType event);
+    void popEvent(graphic::EventType event);
+    bool hasEvent();
 
-    void updateSystems(float deltaTime, std::vector<graphic::Sprite> sprites);
+    void updateSystems(Clock clock, std::vector<graphic::Sprite> &sprites);
 
 private:
     std::vector<std::unique_ptr<ISystem>> systems;
-    std::vector<engine::Events> systemsOrder;
+    std::vector<graphic::EventType> eventStack;
 };

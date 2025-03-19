@@ -2,13 +2,21 @@
 #define MOVEMENT_SYSTEM_HPP
 
 #include "ASystem.hpp"
+
+#include <algorithm>
 #include <iostream>
+#include <cmath>
 
 class MovementSystem : public ASystem {
 public:
-    virtual ~MovementSystem() = default;
+    MovementSystem();
+    ~MovementSystem();
 
-    void update(float deltaTime, std::vector<graphic::Sprite> sprites) override;
+    void update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events) override;
+
+    private:
+        Clock _clock;
+        graphic::EventType _event = graphic::EventType::NONE;
 };
 
 #endif // MOVEMENT_SYSTEM_HPP

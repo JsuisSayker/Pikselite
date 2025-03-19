@@ -14,6 +14,9 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+
+#include <utils/Clock.hpp>
 
 // rapidjson includes
 #include "document.h"
@@ -52,6 +55,8 @@ namespace graphic
         void drawPixel(Pixel pixel, Camera camera);
         void drawPixels(Camera camera);
         void drawGrid(Camera camera);
+        void drawText(const std::string &text, int x, int y, SDL_Color color);
+        void drawFps(Clock clock);
         void drawRectangle(Rectangle rectangle);
 
         void saveSprite(std::vector<Pixel> pixels, std::string filename);
@@ -78,25 +83,29 @@ namespace graphic
         void lightOptions();
         void solidOptions();
         void liquidOptions();
+        void fireOptions();
+        void flammableOptions();
 
         bool _windowOpen = true;
 
         std::vector<Pixel> _pixels;
 
         bool showHome = true;
-        SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, std::vector<std::variant<light, solid, liquid>>{light{0, 0}}, false};
-        ProjectEditorData projectData = ProjectEditorData{false, false, false, false, false, false, false, false, false, false, true, "", "", "", "", ImTextureID(0)};
+        SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<light, solid, liquid, fire, flammable>>{light{0, 0}}, std::vector<std::variant<light, solid, liquid, fire, flammable>>{light{0, 0}}, false};
+        ProjectEditorData projectData = ProjectEditorData{ImTextureID(0)};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};
         solid solidData = solid{};
         liquid liquidData = liquid{0};
+        fire fireData = fire{0};
+        flammable flammableData = flammable{0};
         bool isSpriteEditor = false;
         bool isProjectEditor = false;
         Pixel *selectedPixel = nullptr;
         std::unordered_map<EventType, engine::Events> selectedSpriteActions = {};
-        bool setSelectedSpriteActions = false;
 
     private:
+        TTF_Font *m_font;
         SDL_Window *_window;
         SDL_Renderer *_renderer;
         ImFont *_iconFont = nullptr;

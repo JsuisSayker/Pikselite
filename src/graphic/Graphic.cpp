@@ -46,6 +46,16 @@ namespace graphic
                 ImGui_ImplSDLRenderer2_Init(_renderer);
             }
         }
+        if (TTF_Init() == -1)
+        {
+            std::cerr << "Erreur TTF_Init : " << TTF_GetError() << std::endl;
+        }
+
+        m_font = TTF_OpenFont("extern/fonts/pixely.ttf", 24);
+        if (!m_font)
+        {
+            std::cerr << "Erreur lors du chargement de la police : " << TTF_GetError() << std::endl;
+        }
     }
 
     Graphic::~Graphic()
@@ -59,6 +69,11 @@ namespace graphic
             ImGui_ImplSDL2_Shutdown();
             ImGui::DestroyContext();
         }
+        if (m_font)
+        {
+            TTF_CloseFont(m_font);
+        }
+        TTF_Quit();
     }
 
     void Graphic::updateWindow()
@@ -135,9 +150,11 @@ namespace graphic
                 rapidjson::Value attributeObj(rapidjson::kObjectType);
                 if (std::holds_alternative<light>(attribute))
                 {
+                    rapidjson::Value lightObj(rapidjson::kObjectType);
                     const light &l = std::get<light>(attribute);
-                    attributeObj.AddMember("radius", l.radius, allocator);
-                    attributeObj.AddMember("intensity", l.intensity, allocator);
+                    lightObj.AddMember("radius", l.radius, allocator);
+                    lightObj.AddMember("intensity", l.intensity, allocator);
+                    attributeObj.AddMember("light", lightObj, allocator);
                 }
                 else if (std::holds_alternative<solid>(attribute))
                 {
@@ -145,8 +162,24 @@ namespace graphic
                 }
                 else if (std::holds_alternative<liquid>(attribute))
                 {
+                    rapidjson::Value liquidObj(rapidjson::kObjectType);
                     const liquid &l = std::get<liquid>(attribute);
-                    attributeObj.AddMember("viscosity", l.viscosity, allocator);
+                    liquidObj.AddMember("viscosity", l.viscosity, allocator);
+                    attributeObj.AddMember("liquid", liquidObj, allocator);
+                }
+                else if (std::holds_alternative<fire>(attribute))
+                {
+                    rapidjson::Value fireObj(rapidjson::kObjectType);
+                    const fire &f = std::get<fire>(attribute);
+                    fireObj.AddMember("intensity", f.intensity, allocator);
+                    attributeObj.AddMember("fire", fireObj, allocator);
+                }
+                else if (std::holds_alternative<flammable>(attribute))
+                {
+                    rapidjson::Value flammableObj(rapidjson::kObjectType);
+                    const flammable &f = std::get<flammable>(attribute);
+                    flammableObj.AddMember("heatResistance", f.heatResistance, allocator);
+                    attributeObj.AddMember("flammable", flammableObj, allocator);
                 }
                 attributesArray.PushBack(attributeObj, allocator);
             }
@@ -231,7 +264,9 @@ namespace graphic
             {
                 p.position.x = posObj["x"].GetDouble();
                 p.position.y = posObj["y"].GetDouble();
-            } else {
+            }
+            else
+            {
                 p.position.x = actualPosition.x + posObj["x"].GetDouble();
                 p.position.y = actualPosition.y + posObj["y"].GetDouble();
             }
@@ -247,23 +282,50 @@ namespace graphic
                 if (!attributeObj.IsObject())
                     continue;
 
-                if (attributeObj.HasMember("radius") && attributeObj.HasMember("intensity"))
+                if (attributeObj.HasMember("light"))
                 {
+                    const rapidjson::Value &lightObj = attributeObj["light"];
+                    if (!lightObj.IsObject())
+                        continue;
+
                     light l;
-                    l.radius = attributeObj["radius"].GetDouble();
-                    l.intensity = attributeObj["intensity"].GetDouble();
+                    l.radius = lightObj["radius"].GetDouble();
+                    l.intensity = lightObj["intensity"].GetDouble();
                     p.attributes.push_back(l);
                 }
-                else if (attributeObj.HasMember("viscosity"))
+                else if (attributeObj.HasMember("solid"))
                 {
+                    p.attributes.push_back(solid{});
+                }
+                else if (attributeObj.HasMember("liquid"))
+                {
+                    const rapidjson::Value &liquidObj = attributeObj["liquid"];
+                    if (!liquidObj.IsObject())
+                        continue;
+
                     liquid l;
-                    l.viscosity = attributeObj["viscosity"].GetDouble();
+                    l.viscosity = liquidObj["viscosity"].GetDouble();
                     p.attributes.push_back(l);
                 }
-                else
+                else if (attributeObj.HasMember("fire"))
                 {
-                    solid s;
-                    p.attributes.push_back(s);
+                    const rapidjson::Value &fireObj = attributeObj["fire"];
+                    if (!fireObj.IsObject())
+                        continue;
+
+                    fire f;
+                    f.intensity = fireObj["intensity"].GetDouble();
+                    p.attributes.push_back(f);
+                }
+                else if (attributeObj.HasMember("flammable"))
+                {
+                    const rapidjson::Value &flammableObj = attributeObj["flammable"];
+                    if (!flammableObj.IsObject())
+                        continue;
+
+                    flammable f;
+                    f.heatResistance = flammableObj["heatResistance"].GetDouble();
+                    p.attributes.push_back(f);
                 }
             }
             pixels.push_back(p);
