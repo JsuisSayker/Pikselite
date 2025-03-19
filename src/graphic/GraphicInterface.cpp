@@ -633,16 +633,21 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
                 {
-                    for (Pixel &pixel : _pixels)
-                    {
-                        pixel.lightEnabled = editorData.lightEnabled;
-                    }
                 }
             }
             else
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->lightEnabled))
                 {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<light>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(light{newRadius, newIntensity});
                 }
             }
 
@@ -682,17 +687,23 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
                 {
-                    for (Pixel &pixel : _pixels)
-                    {
-                        pixel.solidEnabled = editorData.solidEnabled;
-                    }
                 }
             }
             else
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->solidEnabled))
                 {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<solid>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(solid{});
                 }
+
             }
 
             ImGui::EndPopup();
@@ -815,8 +826,26 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.fireEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.fireEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->fireEnabled))
+                {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<fire>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(fire{newIntensity});
+                }
             }
 
             ImGui::EndPopup();
@@ -868,10 +897,27 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.flammableEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.flammableEnabled))
+                {
+                }
             }
-
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->flammableEnabled))
+                {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<flammable>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(flammable{newHeatResistance});
+                }
+            }
             ImGui::EndPopup();
         }
 
@@ -904,8 +950,26 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.sandEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.sandEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->sandEnabled))
+                {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<sand>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(sand{});
+                }
             }
 
             ImGui::EndPopup();
