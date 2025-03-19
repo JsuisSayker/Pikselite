@@ -158,7 +158,9 @@ namespace graphic
                 }
                 else if (std::holds_alternative<solid>(attribute))
                 {
-                    // do nothing
+                    rapidjson::Value solidObj(rapidjson::kObjectType);
+                    const solid &s = std::get<solid>(attribute);
+                    attributeObj.AddMember("solid", solidObj, allocator);
                 }
                 else if (std::holds_alternative<liquid>(attribute))
                 {
@@ -180,6 +182,12 @@ namespace graphic
                     const flammable &f = std::get<flammable>(attribute);
                     flammableObj.AddMember("heatResistance", f.heatResistance, allocator);
                     attributeObj.AddMember("flammable", flammableObj, allocator);
+                }
+                else if (std::holds_alternative<sand>(attribute))
+                {
+                    rapidjson::Value sandObj(rapidjson::kObjectType);
+                    const sand &s = std::get<sand>(attribute);
+                    attributeObj.AddMember("sand", sandObj, allocator);
                 }
                 attributesArray.PushBack(attributeObj, allocator);
             }
@@ -326,6 +334,10 @@ namespace graphic
                     flammable f;
                     f.heatResistance = flammableObj["heatResistance"].GetDouble();
                     p.attributes.push_back(f);
+                }
+                else if (attributeObj.HasMember("sand"))
+                {
+                    p.attributes.push_back(sand{});
                 }
             }
             pixels.push_back(p);

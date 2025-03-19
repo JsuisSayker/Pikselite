@@ -129,17 +129,24 @@ namespace graphic
         int heatResistance;
     };
 
+    struct sand
+    {
+    };
+
     struct Pixel
     {
         bool isSelected = false;
 
         Color color;
         Position position;
-        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>> attributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand>> attributes;
 
         bool liquidEnabled = false;
         bool solidEnabled = false;
         bool lightEnabled = false;
+        bool fireEnabled = false;
+        bool flammableEnabled = false;
+        bool sandEnabled = false;
     };
 
     struct SpriteEditorData
@@ -147,8 +154,8 @@ namespace graphic
         Color selectedColor;
         Color defaultColor;
 
-        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>> selectedAttributes;
-        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>> defaultAttributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand>> selectedAttributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand>> defaultAttributes;
 
         bool showColorSelector = false;
         bool showPixelEditorSidebar = false;
@@ -161,12 +168,14 @@ namespace graphic
         bool showLiquidOptions = false;
         bool showFireOptions = false;
         bool showFlammableOptions = false;
+        bool showSandOptions = false;
 
         bool liquidEnabled = false;
         bool solidEnabled = false;
         bool lightEnabled = false;
         bool fireEnabled = false;
         bool flammableEnabled = false;
+        bool sandEnabled = false;
 
         bool resetCamera = false;
     };

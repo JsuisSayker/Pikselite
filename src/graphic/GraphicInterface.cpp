@@ -99,14 +99,12 @@ namespace graphic
 
         if (ImGui::Begin("Sprite Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            ImGui::PushFont(this->_iconFont);
             if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
             {
                 editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
                 this->pixelEditorSidebarInitialized = false;
                 this->selectedPixel = nullptr;
             }
-            ImGui::PopFont();
 
             if (ImGui::Button("Reset Camera", ImVec2(180, 40)))
             {
@@ -147,26 +145,36 @@ namespace graphic
 
         if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            ImGui::Text("Sprite Actions");
+            ImGui::SetCursorPosX(sidebarWidth - 25);
+            if (ImGui::Button(ICON_FA_TIMES, ImVec2(20, 20)))
+            {
+                projectData.showSpriteInputSidebar = false;
+            }
 
+            ImGui::Text("Sprite Actions");
+            ImGui::Dummy(ImVec2(0, 10));
             std::vector<EventType> itemsToDelete;
 
             if (!selectedSpriteActions.empty())
             {
+                float availableWidth = ImGui::GetContentRegionAvail().x;
                 for (const auto &[eventType, eventData] : selectedSpriteActions)
                 {
-                    ImGui::PushFont(this->_iconFont);
+                    ImGui::PushItemWidth(availableWidth * 0.5f);
                     ImGui::Text("%s ", magic_enum::enum_name(eventType).data());
+                    ImGui::PopItemWidth();
                     ImGui::SameLine();
+                    ImGui::PushItemWidth(availableWidth * 0.5f);
                     ImGui::Text("%s ", magic_enum::enum_name(eventData).data());
+                    ImGui::PopItemWidth();
                     ImGui::SameLine();
-
+                    ImGui::PushItemWidth(availableWidth * 0.5f);
                     std::string buttonLabel = ICON_FA_TRASH + std::string("##") + std::to_string(static_cast<int>(eventType));
                     if (ImGui::Button(buttonLabel.c_str(), ImVec2(20, 20)))
                     {
                         itemsToDelete.push_back(eventType);
                     }
-                    ImGui::PopFont();
+                    ImGui::PopItemWidth();
                 }
                 if (!itemsToDelete.empty())
                 {
@@ -178,8 +186,10 @@ namespace graphic
                     projectData.saveSpriteActions = true;
                 }
             }
-
-            if (ImGui::Button("Add", ImVec2(180, 40)))
+            ImGui::Dummy(ImVec2(0, 10));
+            float addButtonWidth = 180.0f;
+            ImGui::SetCursorPosX((sidebarWidth - addButtonWidth) * 0.5f);
+            if (ImGui::Button("Add", ImVec2(addButtonWidth, 40)))
             {
                 ImGui::OpenPopup("Add Action");
             }
@@ -455,6 +465,10 @@ namespace graphic
             {
                 editorData.showFlammableOptions = true;
             }
+            if (ImGui::Button("Sand", ImVec2(180, 40)))
+            {
+                editorData.showSandOptions = true;
+            }
 
             ImGui::Separator();
 
@@ -619,16 +633,21 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.lightEnabled))
                 {
-                    for (Pixel &pixel : _pixels)
-                    {
-                        pixel.lightEnabled = editorData.lightEnabled;
-                    }
                 }
             }
             else
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->lightEnabled))
                 {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<light>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(light{newRadius, newIntensity});
                 }
             }
 
@@ -668,17 +687,23 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
                 {
-                    for (Pixel &pixel : _pixels)
-                    {
-                        pixel.solidEnabled = editorData.solidEnabled;
-                    }
                 }
             }
             else
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->solidEnabled))
                 {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<solid>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(solid{});
                 }
+
             }
 
             ImGui::EndPopup();
@@ -734,16 +759,21 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &editorData.liquidEnabled))
                 {
-                    for (Pixel &pixel : _pixels)
-                    {
-                        pixel.liquidEnabled = editorData.liquidEnabled;
-                    }
                 }
             }
             else
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->liquidEnabled))
                 {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<liquid>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(liquid{newViscosity});
                 }
             }
 
@@ -796,8 +826,26 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.fireEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.fireEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->fireEnabled))
+                {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<fire>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(fire{newIntensity});
+                }
             }
 
             ImGui::EndPopup();
@@ -849,8 +897,79 @@ namespace graphic
             }
             ImGui::SameLine();
 
-            if (ImGui::Checkbox("Enabled", &editorData.flammableEnabled))
+            if (selectedPixel == nullptr)
             {
+                if (ImGui::Checkbox("Enabled", &editorData.flammableEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->flammableEnabled))
+                {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<flammable>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(flammable{newHeatResistance});
+                }
+            }
+            ImGui::EndPopup();
+        }
+
+        ImGui::PopStyleColor();
+    }
+
+    void Graphic::sandOptions()
+    {
+        ImGui::OpenPopup("Sand Options", ImGuiWindowFlags_AlwaysAutoResize);
+        float popupWidth = 300.0f;
+        float popupHeight = 300.0f;
+        ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.329f, 0.424f, 0.698f, 1.0f));
+        ImGui::SetNextWindowPos(ImVec2(WINDOW_WIDTH - popupWidth - 280, 300));
+
+        if (ImGui::BeginPopup("Sand Options"))
+        {
+            ImGui::Text("Sand Options");
+
+            if (ImGui::Button("Cancel"))
+            {
+                ImGui::CloseCurrentPopup();
+                editorData.showSandOptions = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                ImGui::CloseCurrentPopup();
+                editorData.showSandOptions = false;
+            }
+            ImGui::SameLine();
+
+            if (selectedPixel == nullptr)
+            {
+                if (ImGui::Checkbox("Enabled", &editorData.sandEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->sandEnabled))
+                {
+                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
+                    {
+                        if (std::holds_alternative<sand>(*it))
+                        {
+                            selectedPixel->attributes.erase(it);
+                            break;
+                        }
+                    }
+                    selectedPixel->attributes.push_back(sand{});
+                }
             }
 
             ImGui::EndPopup();
@@ -943,6 +1062,9 @@ namespace graphic
 
         if (editorData.showFlammableOptions)
             flammableOptions();
+        
+        if (editorData.showSandOptions)
+            sandOptions();
 
         if (projectData.showSpriteInputSidebar)
             spriteInputSidebar();
