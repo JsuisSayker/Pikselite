@@ -33,6 +33,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     libsdl2-ttf-dev \
     libsdl2-mixer-dev \
     libsdl2-net-dev \
+    libmagicenum-dev \
     coreutils
 
 
