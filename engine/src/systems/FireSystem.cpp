@@ -3,7 +3,7 @@
 
 void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
 {
-    if (_timer.getElapsedTime() < _time)
+    if (_timer.getElapsedTime() < 1)
         return;
 
     std::cout << "Timer before :" << _timer.getElapsedTime() << std::endl;

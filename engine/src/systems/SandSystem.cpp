@@ -10,13 +10,13 @@ SandSystem::~SandSystem()
 
 void SandSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
 {
-    if (_clock.getElapsedTime() < 0.1)
+    if (_timer.getElapsedTime() < 0.1)
         return;
 
     bool canMoveDown = true;
     bool canMoveDLeft = true;
     bool canMoveRight = true;
-    _clock.restart();
+    _timer.restart();
     for (graphic::Sprite &sprite : sprites)
     {
         for (graphic::Pixel &pixel : sprite.pixels)

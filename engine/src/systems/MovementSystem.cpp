@@ -12,9 +12,9 @@ void MovementSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, 
 {
     if (events.empty())
     {
-        if (_clock.getElapsedTime() > 0.2)
+        if (_timer.getElapsedTime() > 0.2)
         {
-            _clock.restart();
+            _timer.restart();
             _event = graphic::EventType::NONE;
             return;
         }
@@ -23,10 +23,10 @@ void MovementSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, 
     {
         graphic::EventType event = events.back();
 
-        if (event != _event || _clock.getElapsedTime() > 0.2)
+        if (event != _event || _timer.getElapsedTime() > 0.2)
         {
             _event = event;
-            _clock.restart();
+            _timer.restart();
         }
     }
 

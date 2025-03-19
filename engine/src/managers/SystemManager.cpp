@@ -39,3 +39,11 @@ bool SystemManager::hasEvent()
 {
     return !eventStack.empty();
 }
+
+void SystemManager::restartSystemsTimers()
+{
+    for (auto &system : systems)
+    {
+        system->restartTimer();
+    }
+}

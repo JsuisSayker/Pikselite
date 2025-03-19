@@ -15,7 +15,6 @@ public:
     void update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events) override;
 
     private:
-        Clock _clock;
         graphic::EventType _event = graphic::EventType::NONE;
 };
 

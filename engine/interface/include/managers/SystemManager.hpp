@@ -22,6 +22,8 @@ public:
     void popEvent(graphic::EventType event);
     bool hasEvent();
 
+    void restartSystemsTimers();
+
     void updateSystems(Clock clock, std::vector<graphic::Sprite> &sprites);
 
 private:

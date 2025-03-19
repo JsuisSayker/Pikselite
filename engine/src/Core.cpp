@@ -2,6 +2,9 @@
 
 Core::Core()
 {
+    this->_systemManager->addSystem(std::make_unique<MovementSystem>());
+    this->_systemManager->addSystem(std::make_unique<FireSystem>());
+    this->_systemManager->addSystem(std::make_unique<SandSystem>());
 }
 
 Core::~Core()
@@ -18,10 +21,8 @@ int Core::run(graphic::Camera camera)
     std::vector<graphic::Sprite> TmpSprites = this->_sprites;
     graphic::EventType event;
     std::shared_ptr<graphic::Graphic> graphic = std::make_shared<graphic::Graphic>(false);
-    this->_systemManager->addSystem(std::make_unique<MovementSystem>());
-    this->_systemManager->addSystem(std::make_unique<FireSystem>());
-    this->_systemManager->addSystem(std::make_unique<SandSystem>());
     this->_clock.restart();
+    this->_systemManager->restartSystemsTimers();
     while (graphic->_windowOpen)
     {
         event = graphic->checkEvent();
