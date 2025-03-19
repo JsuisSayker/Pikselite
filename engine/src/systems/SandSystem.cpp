@@ -10,7 +10,7 @@ SandSystem::~SandSystem()
 
 void SandSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
 {
-    if (_timer.getElapsedTime() < 0.1)
+    if (_timer.getElapsedTime() < 0.03)
         return;
 
     bool canMoveDown = true;
