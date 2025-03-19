@@ -120,6 +120,10 @@ namespace graphic
         int intensity;
     };
 
+    struct willBurn
+    {
+    };
+
     struct flammable
     {
         int heatResistance;
@@ -131,7 +135,7 @@ namespace graphic
 
         Color color;
         Position position;
-        std::vector<std::variant<light, solid, liquid, fire, flammable>> attributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>> attributes;
 
         bool liquidEnabled = false;
         bool solidEnabled = false;
@@ -143,8 +147,8 @@ namespace graphic
         Color selectedColor;
         Color defaultColor;
 
-        std::vector<std::variant<light, solid, liquid, fire, flammable>> selectedAttributes;
-        std::vector<std::variant<light, solid, liquid, fire, flammable>> defaultAttributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>> selectedAttributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>> defaultAttributes;
 
         bool showColorSelector = false;
         bool showPixelEditorSidebar = false;

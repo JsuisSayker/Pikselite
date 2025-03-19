@@ -91,7 +91,7 @@ namespace graphic
         std::vector<Pixel> _pixels;
 
         bool showHome = true;
-        SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<light, solid, liquid, fire, flammable>>{light{0, 0}}, std::vector<std::variant<light, solid, liquid, fire, flammable>>{light{0, 0}}, false};
+        SpriteEditorData editorData = SpriteEditorData{Color{0, 0, 0, 255}, Color{0, 0, 0, 255}, std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>>{light{0, 0}}, std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn>>{light{0, 0}}, false};
         ProjectEditorData projectData = ProjectEditorData{ImTextureID(0)};
         TabSelectorData tabSelectorData = TabSelectorData{0};
         light lightData = light{0, 0};

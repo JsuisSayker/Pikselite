@@ -19,6 +19,7 @@ int Core::run(graphic::Camera camera)
     graphic::EventType event;
     std::shared_ptr<graphic::Graphic> graphic = std::make_shared<graphic::Graphic>(false);
     this->_systemManager->addSystem(std::make_unique<MovementSystem>());
+    this->_systemManager->addSystem(std::make_unique<FireSystem>());
     this->_clock.restart();
     while (graphic->_windowOpen)
     {
