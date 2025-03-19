@@ -51,7 +51,7 @@ namespace graphic
             std::cerr << "Erreur TTF_Init : " << TTF_GetError() << std::endl;
         }
 
-        m_font = TTF_OpenFont("extern/fonts/pixely.ttf", 24);
+        m_font = TTF_OpenFont("extern/fonts/MonospaceBold.ttf", 24);
         if (!m_font)
         {
             std::cerr << "Erreur lors du chargement de la police : " << TTF_GetError() << std::endl;
