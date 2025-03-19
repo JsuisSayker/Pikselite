@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <utils/EngineEnum.hpp>
+#include <utils/Clock.hpp>
 #include <imgui.h>
 
 namespace graphic
@@ -124,6 +125,10 @@ namespace graphic
     {
     };
 
+    struct burned
+    {
+    };
+
     struct flammable
     {
         int heatResistance;
@@ -139,7 +144,8 @@ namespace graphic
 
         Color color;
         Position position;
-        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand>> attributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand, burned>> attributes;
+        Clock _burnedTimer;
 
         bool liquidEnabled = false;
         bool solidEnabled = false;
@@ -154,8 +160,8 @@ namespace graphic
         Color selectedColor;
         Color defaultColor;
 
-        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand>> selectedAttributes;
-        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand>> defaultAttributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand, burned>> selectedAttributes;
+        std::vector<std::variant<light, solid, liquid, fire, flammable, willBurn, sand, burned>> defaultAttributes;
 
         bool showColorSelector = false;
         bool showPixelEditorSidebar = false;

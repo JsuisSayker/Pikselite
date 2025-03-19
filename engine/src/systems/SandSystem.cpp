@@ -30,7 +30,7 @@ void SandSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
                 continue;
             }
 
-            for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::willBurn, graphic::sand> &attribute : pixel.attributes)
+            for (std::variant<graphic::light, graphic::solid, graphic::liquid, graphic::fire, graphic::flammable, graphic::willBurn, graphic::sand, graphic::burned> &attribute : pixel.attributes)
             {
                 if (std::holds_alternative<graphic::sand>(attribute))
                 {

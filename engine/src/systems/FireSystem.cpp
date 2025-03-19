@@ -1,8 +1,4 @@
 #include <systems/FireSystem.hpp>
-#include <unistd.h>
-#include <cmath>
-#include <chrono>
-#include <cstdint>
 
 graphic::Pixel *findPixelAt(std::vector<graphic::Sprite> &sprites, int x, int y)
 {
@@ -92,6 +88,7 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
                     bool flammable = false;
                     bool neighborOnFire = false;
                     bool alreadyWillBurn = false;
+                    bool burned = false;
                     for (auto &nAttr : neighbor->attributes)
                     {
                         if (std::holds_alternative<graphic::flammable>(nAttr))
@@ -100,8 +97,10 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
                             neighborOnFire = true;
                         if (std::holds_alternative<graphic::willBurn>(nAttr))
                             alreadyWillBurn = true;
+                        if (std::holds_alternative<graphic::burned>(nAttr))
+                            burned = true;
                     }
-                    if (flammable && !neighborOnFire && !alreadyWillBurn)
+                    if (flammable && !neighborOnFire && !alreadyWillBurn && !burned)
                     {
                         neighbor->attributes.push_back(graphic::willBurn{});
                     }
@@ -114,12 +113,12 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
     {
         for (graphic::Pixel &pixel : sprite.pixels)
         {
-            bool hasWillBurn = false;
+            bool shouldBurn = false;
             for (auto it = pixel.attributes.begin(); it != pixel.attributes.end();)
             {
                 if (std::holds_alternative<graphic::willBurn>(*it))
                 {
-                    hasWillBurn = true;
+                    shouldBurn = true;
                     it = pixel.attributes.erase(it);
                 }
                 else
@@ -127,20 +126,38 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
                     ++it;
                 }
             }
-            if (hasWillBurn)
+
+            bool isFire = false;
+            for (auto &attr : pixel.attributes)
             {
-                bool alreadyFire = false;
-                for (auto &attribute : pixel.attributes)
+                if (std::holds_alternative<graphic::fire>(attr))
                 {
-                    if (std::holds_alternative<graphic::fire>(attribute))
-                    {
-                        alreadyFire = true;
-                        break;
-                    }
+                    isFire = true;
+                    break;
                 }
-                if (!alreadyFire)
+            }
+
+            if (isFire)
+            {
+                if (pixel._burnedTimer.getElapsedTime() > 5.0)
+                {
+                    pixel.attributes.erase(
+                        std::remove_if(pixel.attributes.begin(), pixel.attributes.end(),
+                                       [](const auto &attr)
+                                       {
+                                           return std::holds_alternative<graphic::fire>(attr);
+                                       }),
+                        pixel.attributes.end());
+                    pixel.attributes.push_back(graphic::burned{});
+                    pixel.color = {0, 0, 0, 255};
+                }
+            }
+            else
+            {
+                if (shouldBurn)
                 {
                     pixel.attributes.push_back(graphic::fire{});
+                    pixel._burnedTimer.restart();
                 }
             }
         }
