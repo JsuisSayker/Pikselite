@@ -30,6 +30,7 @@ void MovementSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, 
         }
     }
 
+    double elapsedTime = clock.getElapsedTime();
 
     for (graphic::Sprite &sprite : sprites)
     {
@@ -40,34 +41,34 @@ void MovementSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, 
 
         if (it->second == engine::Events::MOVE_UP)
         {
-            sprite.position.y -= 100 * clock.getElapsedTime();
+            sprite.position.y -= 100 * elapsedTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y -= 100 * clock.getElapsedTime();
+                pixel.position.y -= 100 * elapsedTime;
             }
         }
         if (it->second == engine::Events::MOVE_DOWN)
         {
-            sprite.position.y += 100 * clock.getElapsedTime();
+            sprite.position.y += 100 * elapsedTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.y += 100 * clock.getElapsedTime();
+                pixel.position.y += 100 * elapsedTime;
             }
         }
         if (it->second == engine::Events::MOVE_LEFT)
         {
-            sprite.position.x -= 100 * clock.getElapsedTime();
+            sprite.position.x -= 100 * elapsedTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x -= 100 * clock.getElapsedTime();
+                pixel.position.x -= 100 * elapsedTime;
             }
         }
         if (it->second == engine::Events::MOVE_RIGHT)
         {
-            sprite.position.x += 100 * clock.getElapsedTime();
+            sprite.position.x += 100 * elapsedTime;
             for (auto &pixel : sprite.pixels)
             {
-                pixel.position.x += 100 * clock.getElapsedTime();
+                pixel.position.x += 100 * elapsedTime;
             }
         }
     }
