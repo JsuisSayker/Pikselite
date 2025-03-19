@@ -590,6 +590,7 @@ namespace graphic
     void Graphic::lightOptions()
     {
         ImGui::OpenPopup("Light Options", ImGuiWindowFlags_AlwaysAutoResize);
+
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
@@ -600,6 +601,28 @@ namespace graphic
         {
             static int newRadius = 0;
             static int newIntensity = 0;
+
+            if (!editorData.lightOptionsInitialized)
+            {
+                if (selectedPixel == nullptr)
+                {
+                    newRadius = lightData.radius;
+                    newIntensity = lightData.intensity;
+                }
+                else
+                {
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<light>(attribute))
+                        {
+                            newRadius = std::get<light>(attribute).radius;
+                            newIntensity = std::get<light>(attribute).intensity;
+                            break;
+                        }
+                    }
+                }
+                editorData.lightOptionsInitialized = true;
+            }
 
             ImGui::Text("Light Options");
 
@@ -616,9 +639,26 @@ namespace graphic
             if (ImGui::Button("Cancel"))
             {
                 ImGui::CloseCurrentPopup();
-                newRadius = lightData.radius;
-                newIntensity = lightData.intensity;
-                editorData.showLightOptions = false;
+                if (selectedPixel == nullptr)
+                {
+                    newRadius = lightData.radius;
+                    newIntensity = lightData.intensity;
+                    editorData.showLightOptions = false;
+                }
+                else
+                {
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<light>(attribute))
+                        {
+                            newRadius = std::get<light>(attribute).radius;
+                            newIntensity = std::get<light>(attribute).intensity;
+                            break;
+                        }
+                    }
+                    editorData.showLightOptions = false;
+                    editorData.lightOptionsInitialized = false;
+                }
             }
             ImGui::SameLine();
             if (ImGui::Button("Save"))
@@ -630,13 +670,20 @@ namespace graphic
                 }
                 else
                 {
-                    selectedPixel->attributes.push_back(light{newRadius, newIntensity});
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<light>(attribute))
+                        {
+                            std::get<light>(attribute).radius = newRadius;
+                            std::get<light>(attribute).intensity = newIntensity;
+                            break;
+                        }
+                    }
                 }
 
                 ImGui::CloseCurrentPopup();
-                newRadius = lightData.radius;
-                newIntensity = lightData.intensity;
                 editorData.showLightOptions = false;
+                editorData.lightOptionsInitialized = false;
             }
             ImGui::SameLine();
 
