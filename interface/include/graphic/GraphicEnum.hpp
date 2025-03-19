@@ -190,7 +190,7 @@ namespace graphic
         bool showGrid = true;
         bool showSpriteSelector = false;
         bool showSpriteInputSidebar = false;
-        bool ActionSpriteSaved = false;
+        bool saveSpriteActions = false;
         std::string spritePath = "";
         std::string folderPath = "";
         std::string oldSpritePath = "";

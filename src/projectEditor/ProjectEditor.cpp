@@ -114,9 +114,9 @@ int ProjectEditor::run()
 
         }
         
-        if (_graphic->projectData.ActionSpriteSaved)
+        if (_graphic->projectData.saveSpriteActions)
         {
-            _graphic->projectData.ActionSpriteSaved = false;
+            _graphic->projectData.saveSpriteActions = false;
             setSelectedSpriteActions();
         }
 

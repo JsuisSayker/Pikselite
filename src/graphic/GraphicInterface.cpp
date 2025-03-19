@@ -175,7 +175,7 @@ namespace graphic
                         selectedSpriteActions.erase(eventType);
                     }
                     itemsToDelete.clear();
-                    setSelectedSpriteActions = true;
+                    projectData.saveSpriteActions = true;
                 }
             }
 
@@ -248,8 +248,8 @@ namespace graphic
                 {
                     if (selectedEventType != EventType::NONE && selectedEvent != engine::Events::NONE)
                     {
-                        projectData.ActionSpriteSaved = true;
                         selectedSpriteActions[selectedEventType] = selectedEvent;
+                        projectData.saveSpriteActions = true;
                         ImGui::CloseCurrentPopup();
                     }
                 }
