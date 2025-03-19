@@ -6,6 +6,12 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
     if (_timer.getElapsedTime() < _time)
         return;
 
+    std::cout << "Timer before :" << _timer.getElapsedTime() << std::endl;
+
+    _timer.restart();
+
+    std::cout << "Timer after :" << _timer.getElapsedTime() << std::endl;
+
     graphic::Color fireColor = {255, 69, 0, 255};
 
     auto findPixelAt = [&sprites](int x, int y) -> graphic::Pixel *
@@ -31,7 +37,7 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
             bool isOnFire = false;
             for (auto &attribute : pixel.attributes)
             {
-                if (std::holds_alternative<graphic::fire>(attribute) || std::holds_alternative<graphic::willBurn>(attribute))
+                if (std::holds_alternative<graphic::fire>(attribute))
                 {
                     isOnFire = true;
                     break;
@@ -39,6 +45,8 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
             }
             if (!isOnFire)
                 continue;
+
+            std::cout << "| ";
 
             pixel.color = fireColor;
 
@@ -62,12 +70,7 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
                         if (std::holds_alternative<graphic::willBurn>(nAttr))
                             alreadyWillBurn = true;
                     }
-                    if (flammable && !neighborOnFire && alreadyWillBurn)
-                    {
-                        neighbor->attributes.push_back(graphic::fire{});
-                        neighbor->color = fireColor;
-                    }
-                    else if (flammable && !neighborOnFire && !alreadyWillBurn)
+                    if (flammable && !neighborOnFire && !alreadyWillBurn)
                     {
                         neighbor->attributes.push_back(graphic::willBurn{});
                     }
@@ -112,5 +115,4 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
             }
         }
     }
-    _timer.restart();
 }

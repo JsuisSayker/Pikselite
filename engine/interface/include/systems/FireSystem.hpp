@@ -13,5 +13,5 @@ public:
 
 protected:
     Clock _timer;
-    float _time = 1.0f;
+    float _time = 2.0f;
 };
