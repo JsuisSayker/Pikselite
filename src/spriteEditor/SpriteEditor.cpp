@@ -159,6 +159,7 @@ void SpriteEditor::checkAttribute()
             if (std::holds_alternative<graphic::sand>(attribute))
             {
                 attribute = graphic::sand{};
+                noSand = false;
             }
         }
         if (noSand)
