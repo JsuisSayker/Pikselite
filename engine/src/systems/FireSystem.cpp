@@ -31,7 +31,7 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
 {
     auto now = std::chrono::steady_clock::now();
     float timeInSeconds = std::chrono::duration<float>(now.time_since_epoch()).count();
-    float frequency = 30.0f;
+    float frequency = 500.0f;
 
     graphic::Color fireColor = {255, 69, 0, 255};
     graphic::Color fireColor2 = {255, 165, 0, 255};
