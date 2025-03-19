@@ -639,26 +639,9 @@ namespace graphic
             if (ImGui::Button("Cancel"))
             {
                 ImGui::CloseCurrentPopup();
-                if (selectedPixel == nullptr)
-                {
-                    newRadius = lightData.radius;
-                    newIntensity = lightData.intensity;
-                    editorData.showLightOptions = false;
-                }
-                else
-                {
-                    for (auto &attribute : selectedPixel->attributes)
-                    {
-                        if (std::holds_alternative<light>(attribute))
-                        {
-                            newRadius = std::get<light>(attribute).radius;
-                            newIntensity = std::get<light>(attribute).intensity;
-                            break;
-                        }
-                    }
-                    editorData.showLightOptions = false;
-                    editorData.lightOptionsInitialized = false;
-                }
+
+                editorData.showLightOptions = false;
+                editorData.lightOptionsInitialized = false;
             }
             ImGui::SameLine();
             if (ImGui::Button("Save"))
@@ -697,15 +680,6 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->lightEnabled))
                 {
-                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
-                    {
-                        if (std::holds_alternative<light>(*it))
-                        {
-                            selectedPixel->attributes.erase(it);
-                            break;
-                        }
-                    }
-                    selectedPixel->attributes.push_back(light{newRadius, newIntensity});
                 }
             }
 
@@ -718,6 +692,7 @@ namespace graphic
     void Graphic::solidOptions()
     {
         ImGui::OpenPopup("Solid Options", ImGuiWindowFlags_AlwaysAutoResize);
+
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
@@ -726,43 +701,12 @@ namespace graphic
 
         if (ImGui::BeginPopup("Solid Options"))
         {
-            ImGui::Text("Solid Options");
-
             if (ImGui::Button("Cancel"))
             {
                 ImGui::CloseCurrentPopup();
+
                 editorData.showSolidOptions = false;
             }
-            ImGui::SameLine();
-            if (ImGui::Button("Save"))
-            {
-                ImGui::CloseCurrentPopup();
-                editorData.showSolidOptions = false;
-            }
-            ImGui::SameLine();
-
-            if (selectedPixel == nullptr)
-            {
-                if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
-                {
-                }
-            }
-            else
-            {
-                if (ImGui::Checkbox("Enabled", &selectedPixel->solidEnabled))
-                {
-                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
-                    {
-                        if (std::holds_alternative<solid>(*it))
-                        {
-                            selectedPixel->attributes.erase(it);
-                            break;
-                        }
-                    }
-                    selectedPixel->attributes.push_back(solid{});
-                }
-            }
-
             ImGui::EndPopup();
         }
 
@@ -772,6 +716,7 @@ namespace graphic
     void Graphic::liquidOptions()
     {
         ImGui::OpenPopup("Liquid Options", ImGuiWindowFlags_AlwaysAutoResize);
+
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
@@ -782,7 +727,27 @@ namespace graphic
         {
             static int newViscosity = 0;
 
-            ImGui::Text("liquid Options");
+            if (!editorData.liquidOptionsInitialized)
+            {
+                if (selectedPixel == nullptr)
+                {
+                    newViscosity = liquidData.viscosity;
+                }
+                else
+                {
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<liquid>(attribute))
+                        {
+                            newViscosity = std::get<liquid>(attribute).viscosity;
+                            break;
+                        }
+                    }
+                }
+                editorData.liquidOptionsInitialized = true;
+            }
+
+            ImGui::Text("Liquid Options");
 
             ImGui::SliderInt("##viscosity_slider", &newViscosity, 0, 100);
             ImGui::SameLine();
@@ -792,8 +757,9 @@ namespace graphic
             if (ImGui::Button("Cancel"))
             {
                 ImGui::CloseCurrentPopup();
-                newViscosity = liquidData.viscosity;
+
                 editorData.showLiquidOptions = false;
+                editorData.liquidOptionsInitialized = false;
             }
             ImGui::SameLine();
             if (ImGui::Button("Save"))
@@ -804,11 +770,19 @@ namespace graphic
                 }
                 else
                 {
-                    selectedPixel->attributes.push_back(liquid{newViscosity});
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<liquid>(attribute))
+                        {
+                            std::get<liquid>(attribute).viscosity = newViscosity;
+                            break;
+                        }
+                    }
                 }
+
                 ImGui::CloseCurrentPopup();
-                newViscosity = liquidData.viscosity;
                 editorData.showLiquidOptions = false;
+                editorData.liquidOptionsInitialized = false;
             }
             ImGui::SameLine();
 
@@ -822,18 +796,8 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->liquidEnabled))
                 {
-                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
-                    {
-                        if (std::holds_alternative<liquid>(*it))
-                        {
-                            selectedPixel->attributes.erase(it);
-                            break;
-                        }
-                    }
-                    selectedPixel->attributes.push_back(liquid{newViscosity});
                 }
             }
-
             ImGui::EndPopup();
         }
 
@@ -843,6 +807,7 @@ namespace graphic
     void Graphic::fireOptions()
     {
         ImGui::OpenPopup("Fire Options", ImGuiWindowFlags_AlwaysAutoResize);
+
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
@@ -852,6 +817,26 @@ namespace graphic
         if (ImGui::BeginPopup("Fire Options"))
         {
             static int newIntensity = 0;
+
+            if (!editorData.fireOptionsInitialized)
+            {
+                if (selectedPixel == nullptr)
+                {
+                    newIntensity = fireData.intensity;
+                }
+                else
+                {
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<fire>(attribute))
+                        {
+                            newIntensity = std::get<fire>(attribute).intensity;
+                            break;
+                        }
+                    }
+                }
+                editorData.fireOptionsInitialized = true;
+            }
 
             ImGui::Text("Fire Options");
 
@@ -863,8 +848,9 @@ namespace graphic
             if (ImGui::Button("Cancel"))
             {
                 ImGui::CloseCurrentPopup();
-                newIntensity = fireData.intensity;
+
                 editorData.showFireOptions = false;
+                editorData.fireOptionsInitialized = false;
             }
             ImGui::SameLine();
             if (ImGui::Button("Save"))
@@ -875,11 +861,19 @@ namespace graphic
                 }
                 else
                 {
-                    selectedPixel->attributes.push_back(fire{newIntensity});
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<fire>(attribute))
+                        {
+                            std::get<fire>(attribute).intensity = newIntensity;
+                            break;
+                        }
+                    }
                 }
+
                 ImGui::CloseCurrentPopup();
-                newIntensity = fireData.intensity;
                 editorData.showFireOptions = false;
+                editorData.fireOptionsInitialized = false;
             }
             ImGui::SameLine();
 
@@ -893,18 +887,8 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->fireEnabled))
                 {
-                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
-                    {
-                        if (std::holds_alternative<fire>(*it))
-                        {
-                            selectedPixel->attributes.erase(it);
-                            break;
-                        }
-                    }
-                    selectedPixel->attributes.push_back(fire{newIntensity});
                 }
             }
-
             ImGui::EndPopup();
         }
 
@@ -914,6 +898,7 @@ namespace graphic
     void Graphic::flammableOptions()
     {
         ImGui::OpenPopup("Flammable Options", ImGuiWindowFlags_AlwaysAutoResize);
+
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
@@ -923,6 +908,26 @@ namespace graphic
         if (ImGui::BeginPopup("Flammable Options"))
         {
             static int newHeatResistance = 0;
+
+            if (!editorData.flammableOptionsInitialized)
+            {
+                if (selectedPixel == nullptr)
+                {
+                    newHeatResistance = flammableData.heatResistance;
+                }
+                else
+                {
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<flammable>(attribute))
+                        {
+                            newHeatResistance = std::get<flammable>(attribute).heatResistance;
+                            break;
+                        }
+                    }
+                }
+                editorData.flammableOptionsInitialized = true;
+            }
 
             ImGui::Text("Flammable Options");
 
@@ -934,8 +939,9 @@ namespace graphic
             if (ImGui::Button("Cancel"))
             {
                 ImGui::CloseCurrentPopup();
-                newHeatResistance = flammableData.heatResistance;
+
                 editorData.showFlammableOptions = false;
+                editorData.flammableOptionsInitialized = false;
             }
             ImGui::SameLine();
             if (ImGui::Button("Save"))
@@ -946,11 +952,19 @@ namespace graphic
                 }
                 else
                 {
-                    selectedPixel->attributes.push_back(flammable{newHeatResistance});
+                    for (auto &attribute : selectedPixel->attributes)
+                    {
+                        if (std::holds_alternative<flammable>(attribute))
+                        {
+                            std::get<flammable>(attribute).heatResistance = newHeatResistance;
+                            break;
+                        }
+                    }
                 }
+
                 ImGui::CloseCurrentPopup();
-                newHeatResistance = flammableData.heatResistance;
                 editorData.showFlammableOptions = false;
+                editorData.flammableOptionsInitialized = false;
             }
             ImGui::SameLine();
 
@@ -964,15 +978,6 @@ namespace graphic
             {
                 if (ImGui::Checkbox("Enabled", &selectedPixel->flammableEnabled))
                 {
-                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
-                    {
-                        if (std::holds_alternative<flammable>(*it))
-                        {
-                            selectedPixel->attributes.erase(it);
-                            break;
-                        }
-                    }
-                    selectedPixel->attributes.push_back(flammable{newHeatResistance});
                 }
             }
             ImGui::EndPopup();
@@ -984,6 +989,7 @@ namespace graphic
     void Graphic::sandOptions()
     {
         ImGui::OpenPopup("Sand Options", ImGuiWindowFlags_AlwaysAutoResize);
+
         float popupWidth = 300.0f;
         float popupHeight = 300.0f;
         ImGui::SetNextWindowSize(ImVec2(popupWidth, popupHeight), ImGuiCond_Appearing);
@@ -992,43 +998,12 @@ namespace graphic
 
         if (ImGui::BeginPopup("Sand Options"))
         {
-            ImGui::Text("Sand Options");
-
             if (ImGui::Button("Cancel"))
             {
                 ImGui::CloseCurrentPopup();
+
                 editorData.showSandOptions = false;
             }
-            ImGui::SameLine();
-            if (ImGui::Button("Save"))
-            {
-                ImGui::CloseCurrentPopup();
-                editorData.showSandOptions = false;
-            }
-            ImGui::SameLine();
-
-            if (selectedPixel == nullptr)
-            {
-                if (ImGui::Checkbox("Enabled", &editorData.sandEnabled))
-                {
-                }
-            }
-            else
-            {
-                if (ImGui::Checkbox("Enabled", &selectedPixel->sandEnabled))
-                {
-                    for (auto it = selectedPixel->attributes.begin(); it != selectedPixel->attributes.end(); ++it)
-                    {
-                        if (std::holds_alternative<sand>(*it))
-                        {
-                            selectedPixel->attributes.erase(it);
-                            break;
-                        }
-                    }
-                    selectedPixel->attributes.push_back(sand{});
-                }
-            }
-
             ImGui::EndPopup();
         }
 
