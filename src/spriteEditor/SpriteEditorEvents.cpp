@@ -65,6 +65,7 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
         {
             _graphic->selectedPixel = selectedPixel;
             _graphic->editorData.showPixelEditorSidebar = true;
+            _graphic->pixelEditorSidebarInitialized = false;
         }
     }
 }

@@ -413,11 +413,22 @@ namespace graphic
             static ImVec4 color;
             if (!pixelEditorSidebarInitialized)
             {
-                color = ImVec4(
-                    editorData.defaultColor.r / 255.0f,
-                    editorData.defaultColor.g / 255.0f,
-                    editorData.defaultColor.b / 255.0f,
-                    editorData.defaultColor.a / 255.0f);
+                if (selectedPixel == nullptr)
+                {
+                    color = ImVec4(
+                        editorData.defaultColor.r / 255.0f,
+                        editorData.defaultColor.g / 255.0f,
+                        editorData.defaultColor.b / 255.0f,
+                        editorData.defaultColor.a / 255.0f);
+                }
+                else
+                {
+                    color = ImVec4(
+                        selectedPixel->color.r / 255.0f,
+                        selectedPixel->color.g / 255.0f,
+                        selectedPixel->color.b / 255.0f,
+                        selectedPixel->color.a / 255.0f);
+                }
 
                 pixelEditorSidebarInitialized = true;
             }
@@ -703,7 +714,6 @@ namespace graphic
                     }
                     selectedPixel->attributes.push_back(solid{});
                 }
-
             }
 
             ImGui::EndPopup();
@@ -1062,7 +1072,7 @@ namespace graphic
 
         if (editorData.showFlammableOptions)
             flammableOptions();
-        
+
         if (editorData.showSandOptions)
             sandOptions();
 
