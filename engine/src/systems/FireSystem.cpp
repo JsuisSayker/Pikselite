@@ -1,31 +1,27 @@
 #include <systems/FireSystem.hpp>
 #include <unistd.h>
 
+graphic::Pixel *findPixelAt(std::vector<graphic::Sprite> &sprites, int x, int y)
+{
+    for (auto &sprite : sprites)
+    {
+        for (auto &pix : sprite.pixels)
+        {
+            if (pix.position.x == x && pix.position.y == y)
+                return &pix;
+        }
+    }
+    return nullptr;
+}
+
 void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
 {
-    if (_timer.getElapsedTime() < 1)
+    if (_timer.getElapsedTime() < _time)
         return;
-
-    std::cout << "Timer before :" << _timer.getElapsedTime() << std::endl;
 
     _timer.restart();
 
-    std::cout << "Timer after :" << _timer.getElapsedTime() << std::endl;
-
     graphic::Color fireColor = {255, 69, 0, 255};
-
-    auto findPixelAt = [&sprites](int x, int y) -> graphic::Pixel *
-    {
-        for (auto &sprite : sprites)
-        {
-            for (auto &pix : sprite.pixels)
-            {
-                if (pix.position.x == x && pix.position.y == y)
-                    return &pix;
-            }
-        }
-        return nullptr;
-    };
 
     const std::vector<std::pair<int, int>> directions = {
         {0, -1}, {-1, 0}, {1, 0}, {0, 1}};
@@ -46,8 +42,6 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
             if (!isOnFire)
                 continue;
 
-            std::cout << "| ";
-
             pixel.color = fireColor;
 
             for (const auto &dir : directions)
@@ -55,7 +49,7 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
                 int nx = pixel.position.x + dir.first;
                 int ny = pixel.position.y + dir.second;
 
-                graphic::Pixel *neighbor = findPixelAt(nx, ny);
+                graphic::Pixel *neighbor = findPixelAt(sprites, nx, ny);
                 if (neighbor)
                 {
                     bool flammable = false;

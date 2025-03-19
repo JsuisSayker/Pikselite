@@ -15,4 +15,5 @@ public:
 
     protected:
         Clock _timer;
+        float _time = 0.5;
 };
