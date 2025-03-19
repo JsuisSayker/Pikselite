@@ -99,14 +99,12 @@ namespace graphic
 
         if (ImGui::Begin("Sprite Editor Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            ImGui::PushFont(this->_iconFont);
             if (ImGui::Button(ICON_FA_PAINT_BRUSH, ImVec2(180, 40)))
             {
                 editorData.showPixelEditorSidebar = !editorData.showPixelEditorSidebar;
                 this->pixelEditorSidebarInitialized = false;
                 this->selectedPixel = nullptr;
             }
-            ImGui::PopFont();
 
             if (ImGui::Button("Reset Camera", ImVec2(180, 40)))
             {
@@ -147,26 +145,36 @@ namespace graphic
 
         if (ImGui::Begin("Sprite Input Sidebar", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDecoration))
         {
-            ImGui::Text("Sprite Actions");
+            ImGui::SetCursorPosX(sidebarWidth - 25);
+            if (ImGui::Button(ICON_FA_TIMES, ImVec2(20, 20)))
+            {
+                projectData.showSpriteInputSidebar = false;
+            }
 
+            ImGui::Text("Sprite Actions");
+            ImGui::Dummy(ImVec2(0, 10));
             std::vector<EventType> itemsToDelete;
 
             if (!selectedSpriteActions.empty())
             {
+                float availableWidth = ImGui::GetContentRegionAvail().x;
                 for (const auto &[eventType, eventData] : selectedSpriteActions)
                 {
-                    ImGui::PushFont(this->_iconFont);
+                    ImGui::PushItemWidth(availableWidth * 0.5f);
                     ImGui::Text("%s ", magic_enum::enum_name(eventType).data());
+                    ImGui::PopItemWidth();
                     ImGui::SameLine();
+                    ImGui::PushItemWidth(availableWidth * 0.5f);
                     ImGui::Text("%s ", magic_enum::enum_name(eventData).data());
+                    ImGui::PopItemWidth();
                     ImGui::SameLine();
-
+                    ImGui::PushItemWidth(availableWidth * 0.5f);
                     std::string buttonLabel = ICON_FA_TRASH + std::string("##") + std::to_string(static_cast<int>(eventType));
                     if (ImGui::Button(buttonLabel.c_str(), ImVec2(20, 20)))
                     {
                         itemsToDelete.push_back(eventType);
                     }
-                    ImGui::PopFont();
+                    ImGui::PopItemWidth();
                 }
                 if (!itemsToDelete.empty())
                 {
@@ -178,8 +186,10 @@ namespace graphic
                     projectData.saveSpriteActions = true;
                 }
             }
-
-            if (ImGui::Button("Add", ImVec2(180, 40)))
+            ImGui::Dummy(ImVec2(0, 10));
+            float addButtonWidth = 180.0f;
+            ImGui::SetCursorPosX((sidebarWidth - addButtonWidth) * 0.5f);
+            if (ImGui::Button("Add", ImVec2(addButtonWidth, 40)))
             {
                 ImGui::OpenPopup("Add Action");
             }
