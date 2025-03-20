@@ -150,6 +150,7 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
                         pixel.attributes.end());
                     pixel.attributes.push_back(graphic::burned{});
                     pixel.color = {0, 0, 0, 255};
+                    pixel.attributes.push_back(graphic::sand{});
                 }
             }
             else
