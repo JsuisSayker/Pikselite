@@ -26,7 +26,6 @@ void SandSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
             canMoveRight = true;
             if (pixel.attributes.empty())
             {
-                std::cout << "No attributes" << std::endl;
                 continue;
             }
 

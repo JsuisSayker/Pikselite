@@ -713,6 +713,14 @@ namespace graphic
 
             ImGui::SameLine();
 
+            if (ImGui::Button("Save"))
+            {
+                ImGui::CloseCurrentPopup();
+                editorData.showSolidOptions = false;
+            }
+
+            ImGui::SameLine();
+
             if (selectedPixel == nullptr)
             {
                 if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
@@ -1021,6 +1029,13 @@ namespace graphic
             {
                 ImGui::CloseCurrentPopup();
 
+                editorData.showSandOptions = false;
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                ImGui::CloseCurrentPopup();
                 editorData.showSandOptions = false;
             }
 
