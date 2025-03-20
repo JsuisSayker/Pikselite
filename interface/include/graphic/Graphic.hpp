@@ -104,6 +104,7 @@ namespace graphic
         bool isProjectEditor = false;
         Pixel *selectedPixel = nullptr;
         std::unordered_map<EventType, engine::Events> selectedSpriteActions = {};
+        bool pixelEditorSidebarInitialized = false;
 
     private:
         TTF_Font *m_font;
@@ -113,7 +114,6 @@ namespace graphic
         bool colorSelectorInitialized = false;
         bool spriteEditorSidebarInitialized = false;
         bool projectEditorSidebarInitialized = false;
-        bool pixelEditorSidebarInitialized = false;
         bool spriteInputSidebarInitialized = false;
         bool showInterface;
         float navBarHeight = 0.0f;

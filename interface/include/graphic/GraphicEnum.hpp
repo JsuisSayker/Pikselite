@@ -176,6 +176,13 @@ namespace graphic
         bool showFlammableOptions = false;
         bool showSandOptions = false;
 
+        bool lightOptionsInitialized = false;
+        bool solidOptionsInitialized = false;
+        bool liquidOptionsInitialized = false;
+        bool fireOptionsInitialized = false;
+        bool flammableOptionsInitialized = false;
+        bool sandOptionsInitialized = false;
+
         bool liquidEnabled = false;
         bool solidEnabled = false;
         bool lightEnabled = false;
@@ -184,6 +191,7 @@ namespace graphic
         bool sandEnabled = false;
 
         bool resetCamera = false;
+        bool erase = false;
     };
 
     struct Sprite
@@ -193,7 +201,7 @@ namespace graphic
         Position position;
         std::string name;
         std::vector<Pixel> pixels;
-        std::unordered_map<EventType, engine::Events> actions = {}; ////// Ex: {EventType::KEY_A, engine::Events::MOVE_UP},
+        std::unordered_map<EventType, engine::Events> actions = {};
     };
 
     struct ProjectEditorData
