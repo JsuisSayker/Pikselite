@@ -58,7 +58,7 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
         position.x = std::round(position.x);
         position.y = std::round(position.y);
         
-        if (_graphic->editorData.erase)
+        if (_graphic->editorData.eraser)
         {
             deletePixel(position);
         }

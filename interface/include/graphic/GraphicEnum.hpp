@@ -191,7 +191,7 @@ namespace graphic
         bool sandEnabled = false;
 
         bool resetCamera = false;
-        bool erase = false;
+        bool eraser = false;
     };
 
     struct Sprite
@@ -218,6 +218,7 @@ namespace graphic
         bool showSpriteSelector = false;
         bool showSpriteInputSidebar = false;
         bool saveSpriteActions = false;
+        bool eraser = false;
         std::string spritePath = "";
         std::string folderPath = "";
         std::string oldSpritePath = "";

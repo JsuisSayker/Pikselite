@@ -116,7 +116,7 @@ namespace graphic
             if (ImGui::Checkbox("Auto link", &editorData.autoLink))
             {
             }
-            if (ImGui::Checkbox("Erase", &editorData.erase))
+            if (ImGui::Checkbox("Eraser", &editorData.eraser))
             {
             }
             if (ImGui::Button("Clear", ImVec2(180, 40)))
@@ -340,6 +340,9 @@ namespace graphic
             if (ImGui::BeginCombo("Sprites", projectData.selectedFileName.c_str()))
             {
                 getSpriteFromFileName(&projectData);
+            }
+            if (ImGui::Checkbox("Erase", &projectData.eraser))
+            {
             }
             if (ImGui::Button("run", ImVec2(180, 40)))
             {

@@ -16,6 +16,7 @@ public:
     void setSelectedSpriteActions();
     void moveCamera(graphic::EventType event);
     void zoomCamera(graphic::EventType event);
+    void eraseSprite(graphic::Position position);
 
 protected:
 private:

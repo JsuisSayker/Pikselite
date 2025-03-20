@@ -55,6 +55,17 @@ void ProjectEditor::checkIfSpriteIsSelected()
     }
 }
 
+void ProjectEditor::eraseSprite(graphic::Position position)
+{
+    for (int i = 0; i < _core->_sprites.size(); i++)
+    {
+        if (spriteIsClicked(_core->_sprites[i], position))
+        {
+            _core->_sprites.erase(_core->_sprites.begin() + i);
+        }
+    }
+}
+
 int ProjectEditor::run()
 {
     graphic::EventType event;
@@ -86,6 +97,21 @@ int ProjectEditor::run()
             checkIfSpriteIsSelected();
         }
 
+        if (_graphic->projectData.eraser)
+        {
+            if (event == graphic::EventType::MOUSE_CLICK_LEFT)
+            {
+                graphic::Position position = _graphic->getPosition();
+                float zoom = static_cast<float>(_camera.zoom);
+                position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
+                position.y = (position.y - WINDOW_HEIGHT / 2.0f) / zoom + _camera.position.y;
+                position.x = std::round(position.x);
+                position.y = std::round(position.y);
+
+                eraseSprite(position);
+            }
+        }
+
         if (!_graphic->projectData.spritePath.empty())
         {
             try
@@ -107,8 +133,12 @@ int ProjectEditor::run()
 
                     position.x = std::round(position.x);
                     position.y = std::round(position.y);
-                    graphic::Sprite sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath, false, position);
-                    _core->addSprite(sprite);
+
+                    if (!_graphic->projectData.eraser)
+                    {
+                        graphic::Sprite sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath, false, position);
+                        _core->addSprite(sprite);
+                    }
                 }
                 _graphic->projectData.oldSpritePath.clear();
             }
@@ -116,9 +146,8 @@ int ProjectEditor::run()
             {
                 std::cerr << e.what() << std::endl;
             }
-
         }
-        
+
         if (_graphic->projectData.saveSpriteActions)
         {
             _graphic->projectData.saveSpriteActions = false;
