@@ -25,30 +25,30 @@ graphic::Color mixColors(const graphic::Color &c1, const graphic::Color &c2, flo
 
 void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events)
 {
-    auto now = std::chrono::steady_clock::now();
-    float timeInSeconds = std::chrono::duration<float>(now.time_since_epoch()).count();
-    float frequency = 500.0f;
+    graphic::Color fireColor = {249, 136, 4, 255};
+    graphic::Color fireColor2 = {242, 251, 0, 255};
 
-    graphic::Color fireColor = {255, 69, 0, 255};
-    graphic::Color fireColor2 = {255, 165, 0, 255};
-
-    for (auto &sprite : sprites)
+    if (this->_sparklingTimer.getElapsedTime() > 0.05)
     {
-        for (graphic::Pixel &pixel : sprite.pixels)
+        this->_sparklingTimer.restart();
+        for (auto &sprite : sprites)
         {
-            bool isOnFire = false;
-            for (auto &attribute : pixel.attributes)
+            for (graphic::Pixel &pixel : sprite.pixels)
             {
-                if (std::holds_alternative<graphic::fire>(attribute))
+                bool isOnFire = false;
+                for (auto &attribute : pixel.attributes)
                 {
-                    isOnFire = true;
-                    break;
+                    if (std::holds_alternative<graphic::fire>(attribute))
+                    {
+                        isOnFire = true;
+                        break;
+                    }
                 }
-            }
-            if (isOnFire)
-            {
-                float flicker = (std::sin(timeInSeconds * frequency + pixel.position.x * 0.1f + pixel.position.y * 0.1f) + 1.0f) / 2.0f;
-                pixel.color = mixColors(fireColor, fireColor2, flicker);
+                if (isOnFire)
+                {
+                    float randomFactor = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+                    pixel.color = mixColors(fireColor, fireColor2, randomFactor);
+                }
             }
         }
     }

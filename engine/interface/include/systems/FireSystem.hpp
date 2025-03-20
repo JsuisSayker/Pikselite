@@ -18,4 +18,5 @@ public:
     void update(Clock clock, std::vector<graphic::Sprite> &sprites, std::vector<graphic::EventType> events) override;
 
 protected:
+    Clock _sparklingTimer;
 };
