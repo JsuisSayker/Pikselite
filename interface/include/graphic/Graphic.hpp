@@ -61,7 +61,7 @@ namespace graphic
 
         void saveSprite(std::vector<Pixel> pixels, std::string filename);
         void createExternalAttributeFile(const std::string &filename, const std::vector<Pixel> &pixels);
-        graphic::Sprite loadSpriteFromJSON(const std::string &filename, bool defaultUsage, Position actualPosition);
+        std::vector<Pixel> loadSpriteFromJSON(const std::string &filename, bool defaultUsage, Position actualPosition);
 
         SDL_Renderer *getRenderer() { return _renderer; }
         SDL_Window *getWindow() { return _window; }
@@ -74,6 +74,7 @@ namespace graphic
         void spriteSelector(Camera camera);
         const char *getSpriteFileName(const std::string &path);
         void addFileExplorer();
+        void importSpriteExplorer();
         void addExportFileExplorer();
 
         void homeInterface();

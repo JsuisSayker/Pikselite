@@ -221,6 +221,15 @@ int SpriteEditor::run()
             _graphic->editorData.resetCamera = false;
         }
 
+        if (!_graphic->editorData.spritePath.empty()) {
+            try {
+                _graphic->_pixels = _graphic->loadSpriteFromJSON(_graphic->editorData.spritePath, false, graphic::Position{0, 0});
+                _graphic->editorData.spritePath.clear();
+            } catch (const std::exception &e) {
+                std::cerr << e.what() << std::endl;
+            }
+        }
+
         checkMouseEvents(event);
         moveCamera(event);
         zoomCamera(event);

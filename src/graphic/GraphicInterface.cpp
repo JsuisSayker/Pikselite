@@ -105,7 +105,10 @@ namespace graphic
                 this->pixelEditorSidebarInitialized = false;
                 this->selectedPixel = nullptr;
             }
-
+            if (ImGui::Button("Import Sprite", ImVec2(180, 40)))
+            {
+                editorData.importSprite = true;
+            }
             if (ImGui::Button("Reset Camera", ImVec2(180, 40)))
             {
                 editorData.resetCamera = true;
@@ -374,6 +377,30 @@ namespace graphic
             {
                 ImGuiFileDialog::Instance()->Close();
                 projectData.showDirectoryChooser = false;
+            }
+        }
+    }
+
+    void Graphic::importSpriteExplorer()
+    {
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        config.flags = ImGuiFileDialogFlags_ConfirmOverwrite;
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".json");
+
+        if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                editorData.spritePath = filePathName;
+                ImGuiFileDialog::Instance()->Close();
+                editorData.importSprite = false;
+            }
+            else
+            {
+                ImGuiFileDialog::Instance()->Close();
+                editorData.importSprite = false;
             }
         }
     }
@@ -1131,6 +1158,9 @@ namespace graphic
 
         if (projectData.showImportSprite)
             spriteSelector(camera);
+
+        if (editorData.importSprite)
+            importSpriteExplorer();
 
         if (editorData.showLightOptions)
             lightOptions();

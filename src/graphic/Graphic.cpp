@@ -219,7 +219,7 @@ namespace graphic
         ofs.close();
     }
 
-    Sprite Graphic::loadSpriteFromJSON(const std::string &filename, bool defaultUsage, Position actualPosition)
+    std::vector<Pixel> Graphic::loadSpriteFromJSON(const std::string &filename, bool defaultUsage, Position actualPosition)
     {
         std::vector<Pixel> pixels;
         FILE *fp = std::fopen(filename.c_str(), "rb");
@@ -300,10 +300,12 @@ namespace graphic
                     l.radius = lightObj["radius"].GetDouble();
                     l.intensity = lightObj["intensity"].GetDouble();
                     p.attributes.push_back(l);
+                    p.lightEnabled = true;
                 }
                 else if (attributeObj.HasMember("solid"))
                 {
                     p.attributes.push_back(solid{});
+                    p.solidEnabled = true;
                 }
                 else if (attributeObj.HasMember("liquid"))
                 {
@@ -314,6 +316,7 @@ namespace graphic
                     liquid l;
                     l.viscosity = liquidObj["viscosity"].GetDouble();
                     p.attributes.push_back(l);
+                    p.liquidEnabled = true;
                 }
                 else if (attributeObj.HasMember("fire"))
                 {
@@ -324,6 +327,7 @@ namespace graphic
                     fire f;
                     f.intensity = fireObj["intensity"].GetDouble();
                     p.attributes.push_back(f);
+                    p.fireEnabled = true;
                 }
                 else if (attributeObj.HasMember("flammable"))
                 {
@@ -334,15 +338,16 @@ namespace graphic
                     flammable f;
                     f.heatResistance = flammableObj["heatResistance"].GetDouble();
                     p.attributes.push_back(f);
+                    p.flammableEnabled = true;
                 }
                 else if (attributeObj.HasMember("sand"))
                 {
                     p.attributes.push_back(sand{});
+                    p.sandEnabled = true;
                 }
             }
             pixels.push_back(p);
         }
-        Sprite sprite = Sprite{false, Position{0, 0}, filename, pixels};
-        return sprite;
+        return pixels;
     }
 }

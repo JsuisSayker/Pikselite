@@ -192,6 +192,9 @@ namespace graphic
 
         bool resetCamera = false;
         bool eraser = false;
+        bool importSprite = false;
+
+        std::string spritePath = "";
     };
 
     struct Sprite

@@ -136,7 +136,8 @@ int ProjectEditor::run()
 
                     if (!_graphic->projectData.eraser)
                     {
-                        graphic::Sprite sprite = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath, false, position);
+                        std::vector<graphic::Pixel> pixels = _graphic->loadSpriteFromJSON(_graphic->projectData.spritePath, false, position);
+                        graphic::Sprite sprite = graphic::Sprite{false, position, _graphic->projectData.selectedFileName, pixels};
                         _core->addSprite(sprite);
                     }
                 }
