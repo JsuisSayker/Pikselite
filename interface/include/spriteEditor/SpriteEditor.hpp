@@ -16,6 +16,7 @@ class SpriteEditor {
         void checkMouseEvents(graphic::EventType event);
         void checkAttribute();
 
+        void deletePixel(graphic::Position position);
         void addPixel(graphic::Pixel pixel);
         graphic::Pixel* findPixelAt(const graphic::Position& pos);
 

@@ -185,6 +185,7 @@ namespace graphic
         bool sandEnabled = false;
 
         bool resetCamera = false;
+        bool erase = false;
     };
 
     struct Sprite

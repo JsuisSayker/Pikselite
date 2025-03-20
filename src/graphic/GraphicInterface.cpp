@@ -116,6 +116,9 @@ namespace graphic
             if (ImGui::Checkbox("Auto link", &editorData.autoLink))
             {
             }
+            if (ImGui::Checkbox("Erase", &editorData.erase))
+            {
+            }
             if (ImGui::Button("Clear", ImVec2(180, 40)))
             {
                 _pixels.clear();
@@ -707,6 +710,22 @@ namespace graphic
 
                 editorData.showSolidOptions = false;
             }
+
+            ImGui::SameLine();
+
+            if (selectedPixel == nullptr)
+            {
+                if (ImGui::Checkbox("Enabled", &editorData.solidEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->solidEnabled))
+                {
+                }
+            }
+
             ImGui::EndPopup();
         }
 
@@ -1004,6 +1023,21 @@ namespace graphic
 
                 editorData.showSandOptions = false;
             }
+
+            ImGui::SameLine();
+            if (selectedPixel == nullptr)
+            {
+                if (ImGui::Checkbox("Enabled", &editorData.sandEnabled))
+                {
+                }
+            }
+            else
+            {
+                if (ImGui::Checkbox("Enabled", &selectedPixel->sandEnabled))
+                {
+                }
+            }
+
             ImGui::EndPopup();
         }
 

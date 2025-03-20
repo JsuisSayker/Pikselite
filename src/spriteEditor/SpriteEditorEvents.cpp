@@ -25,6 +25,18 @@ graphic::Pixel *SpriteEditor::findPixelAt(const graphic::Position &pos)
     return nullptr;
 }
 
+void SpriteEditor::deletePixel(graphic::Position position)
+{
+    for (auto it = _graphic->_pixels.begin(); it != _graphic->_pixels.end(); ++it)
+    {
+        if (it->position.x == position.x && it->position.y == position.y)
+        {
+            _graphic->_pixels.erase(it);
+            return;
+        }
+    }
+}
+
 void SpriteEditor::checkMouseEvents(graphic::EventType event)
 {
     graphic::Position position;
@@ -37,16 +49,23 @@ void SpriteEditor::checkMouseEvents(graphic::EventType event)
             _graphic->selectedPixel = nullptr;
         }
 
+        
         position = _graphic->getPosition();
         float zoom = static_cast<float>(_camera.zoom);
         position.x = (position.x - WINDOW_WIDTH / 2.0f) / zoom + _camera.position.x;
         position.y = (position.y - WINDOW_HEIGHT / 2.0f) / zoom + _camera.position.y;
-
         // Snap to grid (integer grid)
         position.x = std::round(position.x);
         position.y = std::round(position.y);
-
-        addPixel(graphic::Pixel{false, _graphic->editorData.defaultColor, position, _graphic->editorData.defaultAttributes, _graphic->editorData.liquidEnabled, _graphic->editorData.solidEnabled, _graphic->editorData.lightEnabled, _graphic->editorData.fireEnabled, _graphic->editorData.flammableEnabled, _graphic->editorData.sandEnabled});
+        
+        if (_graphic->editorData.erase)
+        {
+            deletePixel(position);
+        }
+        else
+        {
+            addPixel(graphic::Pixel{false, _graphic->editorData.defaultColor, position, _graphic->editorData.defaultAttributes, _graphic->editorData.liquidEnabled, _graphic->editorData.solidEnabled, _graphic->editorData.lightEnabled, _graphic->editorData.fireEnabled, _graphic->editorData.flammableEnabled, _graphic->editorData.sandEnabled});
+        }
     }
 
     if (event == graphic::EventType::MOUSE_CLICK_RIGHT)
