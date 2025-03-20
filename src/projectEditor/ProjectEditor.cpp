@@ -43,6 +43,11 @@ void ProjectEditor::checkIfSpriteIsSelected()
     {
         if (spriteIsClicked(_core->_sprites[i], position))
         {
+            for (int j = 0; j < _core->_sprites.size(); j++)
+            {
+                if (i != j)
+                    _core->_sprites[j].isSelected = false;
+            }
             _core->_sprites[i].isSelected = true;
             _graphic->selectedSpriteActions = _core->_sprites[i].actions;
             _graphic->projectData.showSpriteInputSidebar = true;

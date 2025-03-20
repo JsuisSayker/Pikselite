@@ -37,7 +37,7 @@ void MovementSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, 
         auto it = sprite.actions.find(_event);
 
         if (it == nullptr)
-            return;
+            continue;
 
         if (it->second == engine::Events::MOVE_UP)
         {
