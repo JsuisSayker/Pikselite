@@ -128,16 +128,20 @@ void FireSystem::update(Clock clock, std::vector<graphic::Sprite> &sprites, std:
             }
 
             bool isFire = false;
+            bool isFlammable = false;
             for (auto &attr : pixel.attributes)
             {
                 if (std::holds_alternative<graphic::fire>(attr))
                 {
                     isFire = true;
-                    break;
+                }
+                if (std::holds_alternative<graphic::flammable>(attr))
+                {
+                    isFlammable = true;
                 }
             }
 
-            if (isFire)
+            if (isFire && isFlammable)
             {
                 if (pixel._burnedTimer.getElapsedTime() > 5.0)
                 {
