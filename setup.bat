@@ -12,7 +12,7 @@ set "TARGET_TRIPLET=x64-windows"
 set "VCPKG_HASH_FILE=%USERPROFILE%\.vcpkg_hash"
 set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
-set "CMAKE_EXE=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe"
+@REM set "CMAKE_EXE=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe"
 
 :: -------------------------------------------------
 :: SEARCH FOR EXISTING VCPKG
@@ -45,14 +45,81 @@ if "!VCPKG_ROOT!" equ "" (
     echo Using existing vcpkg at "!VCPKG_ROOT!"
 )
 
-:: -------------------------------------------------
-:: CHECK CMAKE BINARY
-:: -------------------------------------------------
-if not exist "!CMAKE_EXE!" (
-    echo CMake not found at "!CMAKE_EXE!"!
+:: =====================================================
+:: CHECK / INSTALL CMAKE (Portable)
+:: =====================================================
+echo === Checking for CMake ===
+
+setlocal enabledelayedexpansion
+set "CMAKE_EXE="
+set "CMAKE_DIR=%USERPROFILE%\cmake"
+
+:: Try finding cmake from PATH
+for /f "delims=" %%i in ('where cmake 2^>nul') do (
+    set "CMAKE_EXE=%%i"
+    goto :found_cmake
+)
+
+:: Try common installation paths
+if exist "%ProgramFiles%\CMake\bin\cmake.exe" (
+    set "CMAKE_EXE=%ProgramFiles%\CMake\bin\cmake.exe"
+    goto :found_cmake
+)
+if exist "%ProgramFiles(x86)%\CMake\bin\cmake.exe" (
+    set "CMAKE_EXE=%ProgramFiles(x86)%\CMake\bin\cmake.exe"
+    goto :found_cmake
+)
+
+if exist "%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe" (
+    set "CMAKE_EXE=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe"
+    goto :found_cmake
+)
+
+:: Try local portable version
+for /r "%CMAKE_DIR%" %%i in (cmake.exe) do (
+    set "CMAKE_EXE=%%i"
+    goto :found_cmake
+)
+
+:: If still not found, install portable version
+echo CMake not found. Installing portable version...
+if not exist "%CMAKE_DIR%" mkdir "%CMAKE_DIR%"
+pushd "%CMAKE_DIR%"
+curl -L -o cmake.zip https://github.com/Kitware/CMake/releases/download/v3.30.0/cmake-3.30.0-windows-x86_64.zip
+
+if exist cmake.zip (
+    powershell -Command "Expand-Archive -Path 'cmake.zip' -DestinationPath . -Force"
+    del cmake.zip
+
+    :: Find the cmake.exe in the extracted subfolder
+    for /r "%CMAKE_DIR%" %%f in (cmake.exe) do (
+        set "CMAKE_EXE=%%f"
+        goto :cmake_found_after_extract
+    )
+
+    :cmake_found_after_extract
+    if not defined CMAKE_EXE (
+        echo Failed to extract CMake executable!
+        popd
+        exit /b 1
+    )
+    echo CMake installed locally at "%CMAKE_EXE%"
+) else (
+    echo Failed to download portable CMake!
+    popd
     exit /b 1
 )
-echo Found CMake at "!CMAKE_EXE!"
+popd
+
+:found_cmake
+echo Found CMake at "%CMAKE_EXE%"
+
+:: Add only the directory to PATH
+for %%i in ("%CMAKE_EXE%") do set "CMAKE_BIN=%%~dpi"
+set "PATH=%CMAKE_BIN%;%PATH%"
+
+cmake --version
+
 
 :: -------------------------------------------------
 :: DETERMINE IF DEPENDENCIES NEED INSTALLATION
