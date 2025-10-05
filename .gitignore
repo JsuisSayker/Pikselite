@@ -10,3 +10,5 @@ pikselite
 *.json
 
 *.vs
+
+vcpkg_installed/
