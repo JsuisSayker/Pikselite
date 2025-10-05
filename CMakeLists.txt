@@ -1,28 +1,36 @@
 cmake_minimum_required(VERSION 3.20)
 project(PikseliteEngine)
 
-# Utiliser le standard C++17
+# Use C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # -------------------------------------------------
-# Si vcpkg est dans le dossier du projet, indiquer le toolchain
-# (Optionnel si l'intégration vcpkg est activée globalement)
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-    CACHE STRING "Vcpkg toolchain file")
+# Automatically detect system vcpkg installation
+# -------------------------------------------------
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(EXISTS "$ENV{USERPROFILE}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{USERPROFILE}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    endif()
+endif()
 
 # -------------------------------------------------
-# Chercher les packages via vcpkg
+# Find dependencies
+# -------------------------------------------------
 find_package(SDL2 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 
 # -------------------------------------------------
-# Ajouter l'exécutable
-add_executable(PikseliteEngine main.cpp)
+# Build executable
+# -------------------------------------------------
+add_executable(${PROJECT_NAME} main.cpp)
 
-# Lier les bibliothèques nécessaires
-target_link_libraries(PikseliteEngine
+target_link_libraries(${PROJECT_NAME}
     PRIVATE
         SDL2::SDL2
         SDL2::SDL2main
