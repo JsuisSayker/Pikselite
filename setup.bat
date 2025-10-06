@@ -12,7 +12,7 @@ set "TARGET_TRIPLET=x64-windows"
 set "VCPKG_HASH_FILE=%USERPROFILE%\.vcpkg_hash"
 set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
-@REM set "CMAKE_EXE=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe"
+set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe"
 
 :: -------------------------------------------------
 :: SEARCH FOR EXISTING VCPKG
@@ -87,7 +87,7 @@ if exist cmake.zip (
     del cmake.zip
 
     :: Find the cmake.exe in the extracted subfolder
-    for /r "%CMAKE_DIR%" %%f in (cmake.exe) do (
+    for /r "%CMAKE_LOCATION%" %%f in (cmake.exe) do (
         set "CMAKE_EXE=%%f"
         goto :cmake_found_after_extract
     )
