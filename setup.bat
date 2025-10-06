@@ -71,10 +71,10 @@ if exist "%ProgramFiles(x86)%\CMake\bin\cmake.exe" (
 )
 
 :: Try local portable version
-@REM for /r "%CMAKE_DIR%" %%i in (cmake.exe) do (
-@REM     set "CMAKE_EXE=%%i"
-@REM     goto :found_cmake
-@REM )
+for /r "%CMAKE_LOCATION%" %%i in (cmake.exe) do (
+    set "CMAKE_EXE=%%i"
+    goto :found_cmake
+)
 
 :: If still not found, install portable version
 echo CMake not found. Installing portable version...
@@ -127,7 +127,6 @@ if exist "%VCPKG_HASH_FILE%" (
     )
 )
 
-echo %INSTALL_DEPS%
 if "%INSTALL_DEPS%" equ "1" (
     echo === Installing dependencies via vcpkg ===
 
