@@ -99,10 +99,6 @@ if exist cmake.zip (
         exit /b 1
     )
     echo CMake installed locally at "%CMAKE_EXE%"
-) else (
-    echo Failed to download portable CMake!
-    popd
-    exit /b 1
 )
 popd
 
