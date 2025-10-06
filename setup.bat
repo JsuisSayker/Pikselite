@@ -71,10 +71,10 @@ if exist "%ProgramFiles(x86)%\CMake\bin\cmake.exe" (
 )
 
 :: Try local portable version
-for /r "%CMAKE_DIR%" %%i in (cmake.exe) do (
-    set "CMAKE_EXE=%%i"
-    goto :found_cmake
-)
+@REM for /r "%CMAKE_DIR%" %%i in (cmake.exe) do (
+@REM     set "CMAKE_EXE=%%i"
+@REM     goto :found_cmake
+@REM )
 
 :: If still not found, install portable version
 echo CMake not found. Installing portable version...
