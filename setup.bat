@@ -52,7 +52,7 @@ echo === Checking for CMake ===
 
 setlocal enabledelayedexpansion
 set "CMAKE_EXE="
-set "CMAKE_DIR=%USERPROFILE%\cmake"
+set "CMAKE_DIR=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin"
 
 :: Try finding cmake from PATH
 for /f "delims=" %%i in ('where cmake 2^>nul') do (
@@ -136,18 +136,60 @@ if exist "%VCPKG_HASH_FILE%" (
     )
 )
 
-:: -------------------------------------------------
-:: INSTALL DEPENDENCIES (if needed)
-:: -------------------------------------------------
-if "!INSTALL_DEPS!"=="1" (
+echo %INSTALL_DEPS%
+if "%INSTALL_DEPS%" equ "1" (
     echo === Installing dependencies via vcpkg ===
 
-    :: Setup VS 2022 x64 environment
-    call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    set "VCVARS_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
 
+    :: -------------------------------------------------
+    :: Check if VS Build Tools are installed
+    :: -------------------------------------------------
+    echo %VCVARS_PATH%
+    if not exist "%VCVARS_PATH%" (
+        echo Visual Studio Build Tools not found.
+
+        :: Create temp folder
+        set "TEMP_DIR=%TEMP%\vs_buildtools_installer"
+        if not exist "!TEMP_DIR!" mkdir "!TEMP_DIR!"
+        pushd "!TEMP_DIR!"
+
+        :: Download Visual Studio Build Tools installer
+        curl -L -o vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe
+
+        if exist vs_buildtools.exe (
+            echo Running silent installation...
+            start /wait vs_buildtools.exe ^
+                --quiet --wait --norestart --nocache ^
+                --add Microsoft.VisualStudio.Workload.VCTools ^
+                --includeRecommended
+        ) else (
+            echo Failed to download Visual Studio Build Tools installer!
+            popd
+            exit /b 1
+        )
+
+        popd
+
+        :: Verify installation success
+        if not exist "%VCVARS_PATH%" (
+            echo Visual Studio Build Tools installation failed!
+            exit /b 1
+        )
+        echo Visual Studio Build Tools installed successfully.
+    )
+
+    :: -------------------------------------------------
+    :: Setup VS 2022 x64 environment
+    :: -------------------------------------------------
+    echo Setting up Visual Studio environment...
+    call "%VCVARS_PATH%" x64
+
+    :: -------------------------------------------------
     :: Force vcpkg to use the correct toolset and triplet
+    :: -------------------------------------------------
     set VCPKG_PLATFORM_TOOLSET=v143
-    "!VCPKG_ROOT!\vcpkg.exe" integrate install --triplet !TARGET_TRIPLET!
+    "%VCPKG_ROOT%\vcpkg.exe" integrate install --triplet !TARGET_TRIPLET!
     if %ERRORLEVEL% neq 0 (
         echo Failed to install dependencies.
         exit /b 1
@@ -155,7 +197,9 @@ if "!INSTALL_DEPS!"=="1" (
 
     echo Dependencies installed successfully.
 
+    :: -------------------------------------------------
     :: Save current hash
+    :: -------------------------------------------------
     certutil -hashfile vcpkg.json SHA256 | find /i " " > "%VCPKG_HASH_FILE%"
 )
 
