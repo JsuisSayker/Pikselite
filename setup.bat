@@ -12,7 +12,7 @@ set "TARGET_TRIPLET=x64-windows"
 set "VCPKG_HASH_FILE=%USERPROFILE%\.vcpkg_hash"
 set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
-set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe"
+set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\"
 
 :: -------------------------------------------------
 :: SEARCH FOR EXISTING VCPKG
