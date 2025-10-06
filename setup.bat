@@ -70,11 +70,6 @@ if exist "%ProgramFiles(x86)%\CMake\bin\cmake.exe" (
     goto :found_cmake
 )
 
-if exist "%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe" (
-    set "CMAKE_EXE=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\cmake.exe"
-    goto :found_cmake
-)
-
 :: Try local portable version
 for /r "%CMAKE_DIR%" %%i in (cmake.exe) do (
     set "CMAKE_EXE=%%i"
@@ -145,8 +140,8 @@ if "%INSTALL_DEPS%" equ "1" (
     :: -------------------------------------------------
     :: Check if VS Build Tools are installed
     :: -------------------------------------------------
-    echo %VCVARS_PATH%
-    if not exist "%VCVARS_PATH%" (
+    echo !VC_VARS_PATH!
+    if not exist "!VC_VARS_PATH!" (
         echo Visual Studio Build Tools not found.
 
         :: Create temp folder
@@ -163,6 +158,7 @@ if "%INSTALL_DEPS%" equ "1" (
                 --quiet --wait --norestart --nocache ^
                 --add Microsoft.VisualStudio.Workload.VCTools ^
                 --includeRecommended
+            set "VC_VARS_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
         ) else (
             echo Failed to download Visual Studio Build Tools installer!
             popd
@@ -172,7 +168,7 @@ if "%INSTALL_DEPS%" equ "1" (
         popd
 
         :: Verify installation success
-        if not exist "%VCVARS_PATH%" (
+        if not exist "!VC_VARS_PATH!" (
             echo Visual Studio Build Tools installation failed!
             exit /b 1
         )
@@ -183,7 +179,7 @@ if "%INSTALL_DEPS%" equ "1" (
     :: Setup VS 2022 x64 environment
     :: -------------------------------------------------
     echo Setting up Visual Studio environment...
-    call "%VCVARS_PATH%" x64
+    call "!VC_VARS_PATH!" x64
 
     :: -------------------------------------------------
     :: Force vcpkg to use the correct toolset and triplet
