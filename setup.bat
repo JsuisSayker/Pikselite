@@ -52,7 +52,7 @@ echo === Checking for CMake ===
 
 setlocal enabledelayedexpansion
 set "CMAKE_EXE="
-set "CMAKE_DIR=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin"
+set "CMAKE_DIR=%USERPROFILE%\cmake"
 
 :: Try finding cmake from PATH
 for /f "delims=" %%i in ('where cmake 2^>nul') do (
