@@ -26,6 +26,12 @@ find_package(GLEW CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 
 # -------------------------------------------------
+# Add subdirectories
+# -------------------------------------------------
+add_subdirectory(interface)
+add_subdirectory(src/graphics)
+
+# -------------------------------------------------
 # Build executable
 # -------------------------------------------------
 add_executable(${PROJECT_NAME} src/main.cpp)
@@ -36,4 +42,7 @@ target_link_libraries(${PROJECT_NAME}
         SDL2::SDL2main
         GLEW::GLEW
         OpenGL::GL
+        pikselite_interface
+        graphics
+    
 )
