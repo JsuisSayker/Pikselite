@@ -7,18 +7,23 @@ int main() {
     graphics::Interface sdlInterface(1280, 720);
     graphics::Renderer renderer(sdlInterface.getWindow(), sdlInterface.getGLContext());
 
-    bool running = true;
-    SDL_Event e;
+    std::vector<graphics::Pixel> pixels;
+    pixels.push_back({100, 100, 1, 0, 0, 10});
+    pixels.push_back({200, 200, 0, 1, 0, 20});
+    pixels.push_back({300, 300, 0, 0, 1, 30});
 
-    while (running) {
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT)
-                running = false;
+    while (true) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                return 0;
+            }
         }
-
-        glClear(GL_COLOR_BUFFER_BIT);
-        SDL_GL_SwapWindow(sdlInterface.getWindow());
+        renderer.clear();
+        renderer.drawPixels(pixels);
+        renderer.present(sdlInterface.getWindow());
     }
+
 
     return 0;
 }
