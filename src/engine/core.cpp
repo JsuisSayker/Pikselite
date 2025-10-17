@@ -12,9 +12,8 @@ namespace engine
             running = false;
         });
 
-        pixels.push_back({100, 100, 1, 0, 0, 10});
-        pixels.push_back({200, 200, 0, 1, 0, 20});
-        pixels.push_back({300, 300, 0, 0, 1, 30});
+        pixels.push_back({200, 200, 0, 1, 0});
+        pixels.push_back({300, 300, 0, 0, 1});
     }
 
     void Core::mainLoop()
@@ -52,7 +51,8 @@ namespace engine
     void Core::render()
     {
         renderer.clear();
-        renderer.drawPixels(pixels);
+        renderer.drawGrid(10.0f, 0.8f, 0.8f, 0.8f);
+        renderer.drawPixels(pixels, 10.0f);
         renderer.present(sdlInterface.getWindow());
     }
 

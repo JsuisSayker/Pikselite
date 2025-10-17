@@ -8,7 +8,6 @@ namespace graphics {
     struct Pixel {
         float x, y;
         float r, g, b;
-        float size;
     };
 
     class Renderer {
@@ -18,7 +17,9 @@ namespace graphics {
 
         void clear();
         void present(SDL_Window* window);
-        void drawPixels(const std::vector<Pixel>& pixels);
+        void drawPixels(const std::vector<Pixel>& pixels, float pixelSize = 1.0f);
+
+        void drawGrid(float cellSize, float r, float g, float b);
 
     private:
         SDL_Window* _window;
