@@ -8,3 +8,6 @@ pikselite
 
 *.png
 *.json
+
+.env
+/.github/scripts/*.env
