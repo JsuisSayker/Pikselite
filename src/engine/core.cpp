@@ -14,16 +14,21 @@ namespace engine
 
         pixels.push_back({200, 200, 0, 1, 0});
         pixels.push_back({300, 300, 0, 0, 1});
+
+        // temp sprite editor
+        spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer);
     }
 
     void Core::mainLoop()
     {
+        graphics::InputEventType eventType = graphics::NO_EVENT;
         while (running)
         {
             timer.tick();
-            handleEvents();
+            eventType = handleEvents();
             update(timer.getDeltaTime());
-            render();
+            spriteEditor->run(eventType);
+            //render();
         }
     }
 
@@ -34,16 +39,19 @@ namespace engine
         shutdown();
     }
 
-    void Core::handleEvents()
+    graphics::InputEventType Core::handleEvents()
     {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
+        graphics::InputEventType eventType = sdlInterface.pollEvent();
+
+        switch (eventType)
         {
-            if (event.type == SDL_QUIT)
-            {
-                eventBus.publish(std::make_unique<engine::events::QuitEvent>());
-            }
+        case graphics::QUIT:
+            eventBus.publish(std::make_unique<engine::events::QuitEvent>());
+            break;
+        default:
+            return eventType;
         }
+        return eventType;
     }
 
     void Core::update(float deltaTime) {}
@@ -51,7 +59,6 @@ namespace engine
     void Core::render()
     {
         renderer.clear();
-        renderer.drawGrid(10.0f, 0.8f, 0.8f, 0.8f);
         renderer.drawPixels(pixels, 10.0f);
         renderer.present(sdlInterface.getWindow());
     }

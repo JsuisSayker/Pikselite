@@ -2,8 +2,7 @@
 
 #include <vector>
 #include <SDL2/SDL.h>
-#include <graphics/interface/interface.hpp>
-#include <graphics/renderer/renderer.hpp>
+#include <editors/spriteEditor.hpp>
 #include <engine/time.hpp>
 #include <engine/eventBus.hpp>
 #include <engine/events.hpp>
@@ -22,6 +21,9 @@ namespace engine
         void run();
 
     private:
+        // temp
+        editors::SpriteEditor* spriteEditor;
+
         bool running;
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
@@ -32,7 +34,7 @@ namespace engine
 
         void init();
 
-        void handleEvents();
+        graphics::InputEventType handleEvents();
 
         void update(float deltaTime);
 

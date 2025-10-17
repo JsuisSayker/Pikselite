@@ -51,4 +51,20 @@ namespace graphics {
         }
         SDL_Quit();
     }
+
+    InputEventType Interface::pollEvent()
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                return QUIT;
+            }
+            if (event.type == SDL_MOUSEBUTTONDOWN) {
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    return MOUSE_LEFT_CLICK;
+                }
+            }
+        }
+        return NO_EVENT;
+    }
 }

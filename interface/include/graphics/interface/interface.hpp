@@ -3,6 +3,12 @@
 #include <iostream>
 
 namespace graphics {
+    enum InputEventType {
+        MOUSE_LEFT_CLICK,
+        QUIT,
+        NO_EVENT,
+    };
+
     class Interface {
         public:
             Interface(int width, int height);
@@ -10,6 +16,8 @@ namespace graphics {
 
             SDL_Window* getWindow() const { return _window; }
             SDL_GLContext getGLContext() const { return _glContext; }
+
+            InputEventType pollEvent();
 
         private:
             SDL_Window* _window;
