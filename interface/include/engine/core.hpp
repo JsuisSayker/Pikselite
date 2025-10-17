@@ -6,6 +6,7 @@
 #include <graphics/renderer/renderer.hpp>
 #include <engine/time.hpp>
 #include <engine/eventBus.hpp>
+#include <engine/events.hpp>
 #include <iostream>
 
 namespace engine
@@ -25,6 +26,7 @@ namespace engine
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
         Timer timer;
+        events::EventBus eventBus;
 
         std::vector<graphics::Pixel> pixels;
 
