@@ -1,6 +1,7 @@
 add_library(graphics
     interface/interface.cpp
     renderer/renderer.cpp
+    renderer/camera.cpp
 )
 
 target_include_directories(graphics

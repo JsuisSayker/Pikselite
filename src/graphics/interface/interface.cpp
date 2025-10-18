@@ -56,13 +56,24 @@ namespace graphics {
     {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                return QUIT;
-            }
-            if (event.type == SDL_MOUSEBUTTONDOWN) {
+            switch (event.type) {
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.sym) {
+                case SDLK_w: return KEY_W;
+                case SDLK_a: return KEY_A;
+                case SDLK_s: return KEY_S;
+                case SDLK_d: return KEY_D;
+                case SDLK_i: return KEY_I;
+                case SDLK_o: return KEY_O;
+                }
+                break;
+            case SDL_MOUSEBUTTONDOWN:
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     return MOUSE_LEFT_CLICK;
                 }
+                break;
+            case SDL_QUIT:
+                return QUIT;
             }
         }
         return NO_EVENT;

@@ -203,7 +203,7 @@ namespace graphics {
         // Vertical lines
         for (float x = 0; x <= width; x += cellSize) {
             for (float y = 0; y <= height; y += 1.0f) {
-                gridLines.push_back({x, y, r, g, b});
+                gridLines.push_back({x - PIXEL_SIZE / 2, y - PIXEL_SIZE / 2.0f, r, g, b});
             }
         }
 
