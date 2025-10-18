@@ -25,7 +25,7 @@ void main() {
     gl_PointSize = uPointSize;
     vColor = aColor;
 }
-)";  
+)";
 
 
 const char* fragmentShaderSrc = R"(
@@ -136,8 +136,9 @@ namespace graphics {
         if (screenLoc != -1) glUniform2f(screenLoc, (float)width, (float)height);
 
         // Point size
+        float effectivePointSize = pixelSize * camera.getZoom();
         GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
-        if (sizeLoc != -1) glUniform1f(sizeLoc, pixelSize);
+        if (sizeLoc != -1) glUniform1f(sizeLoc, effectivePointSize);
 
         // Upload vertex data
         glBindVertexArray(_vao);
@@ -145,10 +146,10 @@ namespace graphics {
         glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(), GL_DYNAMIC_DRAW);
 
         // Attribute layout
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, x)); // adjust offset if your Pixel has x,y first
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, position));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, r));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, color));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
@@ -182,10 +183,10 @@ namespace graphics {
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(), GL_DYNAMIC_DRAW);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, x));
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, position));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, r));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, color));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
@@ -194,7 +195,7 @@ namespace graphics {
     }
 
 
-    void Renderer::drawGrid(float cellSize, float r, float g, float b) {
+    void Renderer::drawGrid(float cellSize, glm::vec3 color) {
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
 
@@ -203,14 +204,14 @@ namespace graphics {
         // Vertical lines
         for (float x = 0; x <= width; x += cellSize) {
             for (float y = 0; y <= height; y += 1.0f) {
-                gridLines.push_back({x - PIXEL_SIZE / 2, y - PIXEL_SIZE / 2.0f, r, g, b});
+                gridLines.push_back({{x - cellSize / 2.0f, y - cellSize / 2.0f}, color});
             }
         }
 
         // Horizontal lines
         for (float y = 0; y <= height; y += cellSize) {
             for (float x = 0; x <= width; x += 1.0f) {
-                gridLines.push_back({x, y, r, g, b});
+                gridLines.push_back({{x, y}, color});
             }
         }
 

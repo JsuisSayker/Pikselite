@@ -17,7 +17,7 @@ namespace graphics {
         void drawPixelsOverlay(const std::vector<Pixel>& pixels, float pixelSize = PIXEL_SIZE);
         void drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D &camera, float pixelSize = PIXEL_SIZE);
 
-        void drawGrid(float cellSize, float r, float g, float b);
+        void drawGrid(float cellSize, glm::vec3 color);
 
     private:
         SDL_Window* _window;

@@ -13,8 +13,8 @@
 
 namespace graphics {
     struct Pixel {
-        float x, y;
-        float r, g, b;
+        glm::vec2 position;
+        glm::vec3 color;
     };
 
     enum InputEventType {

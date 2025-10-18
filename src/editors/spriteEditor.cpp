@@ -12,7 +12,7 @@ namespace editors {
 
         _renderer->clear();
         _renderer->drawPixelsWCamera(_spritePixels, _camera, PIXEL_SIZE);
-        _renderer->drawGrid(PIXEL_SIZE, 0.7f, 0.7f, 0.7f); // Draw grid with cell size 16
+        _renderer->drawGrid(PIXEL_SIZE * _camera.getZoom(), {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
         _renderer->present(_graphicsInterface->getWindow());
     }
 
@@ -68,10 +68,10 @@ namespace editors {
         // remove any existing pixel at (x, y)
         _spritePixels.erase(std::remove_if(_spritePixels.begin(), _spritePixels.end(),
             [worldPos](const graphics::Pixel& pixel) {
-                return pixel.x == worldPos.x && pixel.y == worldPos.y;
+                return pixel.position.x == worldPos.x && pixel.position.y == worldPos.y;
             }), _spritePixels.end());
 
-        _spritePixels.push_back({worldPos.x, worldPos.y, r, g, b});
+        _spritePixels.push_back({worldPos, {r, g, b}});
     }
 
 } // namespace editors

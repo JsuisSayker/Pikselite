@@ -12,8 +12,8 @@ namespace engine
             running = false;
         });
 
-        pixels.push_back({200, 200, 0, 1, 0});
-        pixels.push_back({300, 300, 0, 0, 1});
+        pixels.push_back({{200, 200}, {0, 1, 0}});
+        pixels.push_back({{300, 300}, {0, 0, 1}});
 
         // temp sprite editor
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer);
