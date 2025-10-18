@@ -30,6 +30,9 @@ namespace graphics {
         KEY_I,
         KEY_O,
         MOUSE_LEFT_CLICK,
+        MOUSE_LEFT_DRAG,
+        MOUSE_RIGHT_CLICK,
+        MOUSE_RIGHT_DRAG,
         QUIT,
         NO_EVENT,
     };

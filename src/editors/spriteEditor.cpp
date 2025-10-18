@@ -21,6 +21,9 @@ namespace editors {
         case graphics::MOUSE_LEFT_CLICK:
             mouseLeftClick();
             break;
+        case graphics::MOUSE_LEFT_DRAG:
+            mouseLeftClick();
+            break;
         case graphics::KEY_W:
             _camera.move(glm::vec2(0.0f, -PIXEL_SIZE));
             break;

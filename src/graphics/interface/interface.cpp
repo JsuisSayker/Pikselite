@@ -72,6 +72,19 @@ namespace graphics {
                     return MOUSE_LEFT_CLICK;
                 }
                 break;
+            case SDL_MOUSEBUTTONUP:
+                if (event.button.button == SDL_BUTTON_RIGHT) {
+                    return MOUSE_RIGHT_CLICK;
+                }
+                break;
+            case SDL_MOUSEMOTION:
+                if (event.motion.state & SDL_BUTTON_LMASK) {
+                    return MOUSE_LEFT_DRAG;
+                }
+                if (event.motion.state & SDL_BUTTON_RMASK) {
+                    return MOUSE_RIGHT_DRAG;
+                }
+                break;
             case SDL_QUIT:
                 return QUIT;
             }
