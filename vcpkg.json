@@ -5,6 +5,13 @@
   "dependencies": [
     "sdl2",
     "glew",
-    "opengl"
+    "opengl",
+    {
+      "name": "imgui",
+      "features": [
+        "opengl3-binding",
+        "sdl2-binding"
+      ]
+    }
   ]
 }
