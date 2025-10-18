@@ -3,8 +3,6 @@
 #include <graphics/graphicsEnum.hpp>
 
 #include <vector>
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
 #include <iostream>
 
 namespace graphics {
@@ -15,7 +13,8 @@ namespace graphics {
 
         void clear();
         void present(SDL_Window* window);
-        void drawPixels(const std::vector<Pixel>& pixels, float pixelSize = 1.0f);
+        void drawPixelsOverlay(const std::vector<Pixel>& pixels, float pixelSize = PIXEL_SIZE);
+        void drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D &camera, float pixelSize = PIXEL_SIZE);
 
         void drawGrid(float cellSize, float r, float g, float b);
 

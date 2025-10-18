@@ -11,7 +11,7 @@ namespace editors {
         handleEvents(eventType);
 
         _renderer->clear();
-        _renderer->drawPixels(_spritePixels, PIXEL_SIZE);
+        _renderer->drawPixelsWCamera(_spritePixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(PIXEL_SIZE, 0.7f, 0.7f, 0.7f); // Draw grid with cell size 16
         _renderer->present(_graphicsInterface->getWindow());
     }
@@ -27,21 +27,33 @@ namespace editors {
     }
 
     void SpriteEditor::mouseLeftClick() {
-        graphics::Coord mousePos = _graphicsInterface->getMousePosition();
+        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         addPixel(mousePos.x, mousePos.y, 1.0f, 0.0f, 0.0f); // Add red pixel
     }
 
-    void SpriteEditor::addPixel(float x, float y, float r, float g, float b) {
-        float px = std::round(x / PIXEL_SIZE) * PIXEL_SIZE;
-        float py = std::round(y / PIXEL_SIZE) * PIXEL_SIZE;
+    void SpriteEditor::addPixel(float mx, float my, float r, float g, float b) {
+        int winW, winH;
+        SDL_GetWindowSize(_graphicsInterface->getWindow(), &winW, &winH);
+
+        // Convert mouse to world
+        glm::vec2 ndc;
+        ndc.x = ( (float)mx / winW ) * 2.0f - 1.0f;
+        ndc.y = - ( (float)my / winH ) * 2.0f + 1.0f;  // invert Y
+
+        glm::mat4 invVP = glm::inverse(_camera.getViewProjection(winW, winH));
+        glm::vec4 world4 = invVP * glm::vec4(ndc.x, ndc.y, 0.0f, 1.0f);
+        
+        float gx = std::round(world4.x / PIXEL_SIZE) * PIXEL_SIZE;
+        float gy = std::round(world4.y / PIXEL_SIZE) * PIXEL_SIZE;
+        glm::vec2 worldPos(gx, gy);
 
         // remove any existing pixel at (x, y)
         _spritePixels.erase(std::remove_if(_spritePixels.begin(), _spritePixels.end(),
-            [px, py](const graphics::Pixel& pixel) {
-                return pixel.x == px && pixel.y == py;
+            [worldPos](const graphics::Pixel& pixel) {
+                return pixel.x == worldPos.x && pixel.y == worldPos.y;
             }), _spritePixels.end());
 
-        _spritePixels.push_back({px, py, r, g, b});
+        _spritePixels.push_back({worldPos.x, worldPos.y, r, g, b});
     }
 
 } // namespace editors

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
 #include <iostream>
 
 #include <graphics/graphicsEnum.hpp>
@@ -16,7 +14,7 @@ namespace graphics {
             SDL_GLContext getGLContext() const { return _glContext; }
 
             InputEventType pollEvent();
-            Coord getMousePosition() const;
+            glm::vec2 getMousePosition() const;
 
         private:
             SDL_Window* _window;

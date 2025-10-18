@@ -2,21 +2,31 @@
 
 const char* vertexShaderSrc = R"(
 #version 330 core
+
 layout (location = 0) in vec2 aPos;
 layout (location = 1) in vec3 aColor;
 
+uniform mat4 uVP;         // camera View × Projection
+uniform float uPointSize;
+uniform bool uUseCamera;  // if true, apply camera; else, screen-space pass-through
+uniform vec2 uScreenSize; // width, height of window
+
 out vec3 vColor;
-uniform vec2 uResolution;
-uniform float uPointSize; // new uniform
 
 void main() {
-    vec2 pos = (aPos / uResolution) * 2.0 - 1.0;
-    pos.y = -pos.y;
-    gl_Position = vec4(pos, 0.0, 1.0);
-    gl_PointSize = uPointSize; // use uniform
+    if (uUseCamera) {
+        gl_Position = uVP * vec4(aPos, 0.0, 1.0);
+    } else {
+        // screen‐space overlay: aPos is in pixel coordinates (0..width, 0..height)
+        vec2 ndc = aPos / uScreenSize * 2.0 - 1.0;
+        ndc.y = -ndc.y;  // flip Y because window origin is usually top-left
+        gl_Position = vec4(ndc, 0.0, 1.0);
+    }
+    gl_PointSize = uPointSize;
     vColor = aColor;
 }
-)";
+)";  
+
 
 const char* fragmentShaderSrc = R"(
 #version 330 core
@@ -104,38 +114,85 @@ namespace graphics {
         SDL_GL_SwapWindow(window);
     }
 
-    void Renderer::drawPixels(const std::vector<Pixel>& pixels, float pixelSize) {
+    void Renderer::drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D& camera, float pixelSize) {
         if (pixels.empty()) return;
 
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
 
         glUseProgram(_shader);
-        // set uniforms
-        GLint resLoc = glGetUniformLocation(_shader, "uResolution");
-        if (resLoc != -1) glUniform2f(resLoc, (float)width, (float)height);
 
+        // set uniforms for camera mode
+        GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
+        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_TRUE);
+
+        // Upload VP matrix
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
+        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+
+        // Screen size (for fallback pass-through mode, but still good to set it)
+        GLint screenLoc = glGetUniformLocation(_shader, "uScreenSize");
+        if (screenLoc != -1) glUniform2f(screenLoc, (float)width, (float)height);
+
+        // Point size
         GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
         if (sizeLoc != -1) glUniform1f(sizeLoc, pixelSize);
 
+        // Upload vertex data
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
         glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(), GL_DYNAMIC_DRAW);
 
-        // Attributes layout
-        // position (location = 0) : vec2 (x,y)
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)0);
+        // Attribute layout
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, x)); // adjust offset if your Pixel has x,y first
         glEnableVertexAttribArray(0);
 
-        // color (location = 1) : vec3 (r,g,b)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)(2 * sizeof(float)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, r));
         glEnableVertexAttribArray(1);
 
-        // removed attribute location 2 (we now use a uniform for size)
-
         glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
+
         glBindVertexArray(0);
     }
+
+    void Renderer::drawPixelsOverlay(const std::vector<Pixel>& pixels, float pixelSize) {
+        if (pixels.empty()) return;
+
+        int width, height;
+        SDL_GetWindowSize(_window, &width, &height);
+
+        glUseProgram(_shader);
+
+        // set uniforms for overlay mode
+        GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
+        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_FALSE);
+
+        // We may skip setting uVP (not used when uUseCamera = false) but it's safe to provide
+        // Also set screen size so the pass-through code works
+        GLint screenLoc = glGetUniformLocation(_shader, "uScreenSize");
+        if (screenLoc != -1) glUniform2f(screenLoc, (float)width, (float)height);
+
+        // Set point size
+        GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
+        if (sizeLoc != -1) glUniform1f(sizeLoc, pixelSize);
+
+        // Upload vertex data
+        glBindVertexArray(_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+        glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(), GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, x));
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, r));
+        glEnableVertexAttribArray(1);
+
+        glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
+
+        glBindVertexArray(0);
+    }
+
 
     void Renderer::drawGrid(float cellSize, float r, float g, float b) {
         int width, height;
@@ -146,17 +203,17 @@ namespace graphics {
         // Vertical lines
         for (float x = 0; x <= width; x += cellSize) {
             for (float y = 0; y <= height; y += 1.0f) {
-                gridLines.push_back({x - PIXEL_SIZE / 2.0f, y - PIXEL_SIZE / 2.0f, r, g, b});
+                gridLines.push_back({x, y, r, g, b});
             }
         }
 
         // Horizontal lines
         for (float y = 0; y <= height; y += cellSize) {
             for (float x = 0; x <= width; x += 1.0f) {
-                gridLines.push_back({x - PIXEL_SIZE / 2.0f, y - PIXEL_SIZE / 2.0f, r, g, b});
+                gridLines.push_back({x, y, r, g, b});
             }
         }
 
-        drawPixels(gridLines, 1.0f);
+        drawPixelsOverlay(gridLines, 1.0f);
     }
 }

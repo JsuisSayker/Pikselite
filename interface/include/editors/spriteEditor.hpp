@@ -16,11 +16,13 @@ namespace editors {
         graphics::Interface* _graphicsInterface;
         graphics::Renderer* _renderer;
 
+        graphics::Camera2D _camera;
+
         std::vector<graphics::Pixel> _spritePixels;
 
         void handleEvents(graphics::InputEventType eventType);
         void mouseLeftClick();
 
-        void addPixel(float x, float y, float r, float g, float b);
+        void addPixel(float mx, float my, float r, float g, float b);
     };
 } // namespace editors

@@ -59,7 +59,7 @@ namespace engine
     void Core::render()
     {
         renderer.clear();
-        renderer.drawPixels(pixels, PIXEL_SIZE);
+        renderer.drawPixelsOverlay(pixels, PIXEL_SIZE);
         renderer.present(sdlInterface.getWindow());
     }
 
