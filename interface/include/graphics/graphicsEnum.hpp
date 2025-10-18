@@ -17,6 +17,11 @@ namespace graphics {
         glm::vec3 color;
     };
 
+    struct LineVertex {
+        glm::vec2 position;
+        glm::vec3 color;
+    };
+
     enum InputEventType {
         KEY_W,
         KEY_A,

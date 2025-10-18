@@ -195,26 +195,65 @@ namespace graphics {
     }
 
 
-    void Renderer::drawGrid(float cellSize, glm::vec3 color) {
+    void Renderer::drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color) {
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
 
-        std::vector<Pixel> gridLines;
+        // Compute world bounds visible through the camera
+        float halfW = (width * 0.5f) / camera.getZoom();
+        float halfH = (height * 0.5f) / camera.getZoom();
+        glm::vec2 camPos = camera.getPosition();
+
+        float left   = camPos.x - halfW;
+        float right  = camPos.x + halfW;
+        float bottom = camPos.y - halfH;
+        float top    = camPos.y + halfH;
+
+        // Align grid start to nearest cell boundary
+        float startX = std::floor(left / cellSize) * cellSize + cellSize / 2.0f;
+        float endX   = std::ceil(right / cellSize) * cellSize + cellSize / 2.0f;
+        float startY = std::floor(bottom / cellSize) * cellSize + cellSize / 2.0f;
+        float endY   = std::ceil(top / cellSize) * cellSize + cellSize / 2.0f;
+
+        std::vector<LineVertex> vertices;
 
         // Vertical lines
-        for (float x = 0; x <= width; x += cellSize) {
-            for (float y = 0; y <= height; y += 1.0f) {
-                gridLines.push_back({{x - cellSize / 2.0f, y - cellSize / 2.0f}, color});
-            }
+        for (float x = startX; x <= endX; x += cellSize) {
+            vertices.push_back({{x, bottom}, color});
+            vertices.push_back({{x, top}, color});
         }
 
         // Horizontal lines
-        for (float y = 0; y <= height; y += cellSize) {
-            for (float x = 0; x <= width; x += 1.0f) {
-                gridLines.push_back({{x, y}, color});
-            }
+        for (float y = startY; y <= endY; y += cellSize) {
+            vertices.push_back({{left, y}, color});
+            vertices.push_back({{right, y}, color});
         }
 
-        drawPixelsOverlay(gridLines, 1.0f);
+        if (vertices.empty()) return;
+
+        glUseProgram(_shader);
+
+        // Set camera mode
+        GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
+        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_TRUE);
+
+        // Upload camera VP matrix
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
+        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+
+        // Upload vertices
+        glBindVertexArray(_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(LineVertex), vertices.data(), GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, position));
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, color));
+        glEnableVertexAttribArray(1);
+
+        glDrawArrays(GL_LINES, 0, (GLsizei)vertices.size());
+        glBindVertexArray(0);
     }
 }

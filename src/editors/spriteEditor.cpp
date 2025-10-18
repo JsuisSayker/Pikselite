@@ -12,7 +12,7 @@ namespace editors {
 
         _renderer->clear();
         _renderer->drawPixelsWCamera(_spritePixels, _camera, PIXEL_SIZE);
-        _renderer->drawGrid(PIXEL_SIZE * _camera.getZoom(), {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
+        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
         _renderer->present(_graphicsInterface->getWindow());
     }
 
