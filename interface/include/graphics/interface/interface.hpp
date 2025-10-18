@@ -1,14 +1,12 @@
+#pragma once
+
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <iostream>
 
-namespace graphics {
-    enum InputEventType {
-        MOUSE_LEFT_CLICK,
-        QUIT,
-        NO_EVENT,
-    };
+#include <graphics/graphicsEnum.hpp>
 
+namespace graphics {
     class Interface {
         public:
             Interface(int width, int height);
@@ -18,6 +16,7 @@ namespace graphics {
             SDL_GLContext getGLContext() const { return _glContext; }
 
             InputEventType pollEvent();
+            Coord getMousePosition() const;
 
         private:
             SDL_Window* _window;

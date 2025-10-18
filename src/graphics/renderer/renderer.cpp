@@ -146,14 +146,14 @@ namespace graphics {
         // Vertical lines
         for (float x = 0; x <= width; x += cellSize) {
             for (float y = 0; y <= height; y += 1.0f) {
-                gridLines.push_back({x, y, r, g, b});
+                gridLines.push_back({x - PIXEL_SIZE / 2.0f, y - PIXEL_SIZE / 2.0f, r, g, b});
             }
         }
 
         // Horizontal lines
         for (float y = 0; y <= height; y += cellSize) {
             for (float x = 0; x <= width; x += 1.0f) {
-                gridLines.push_back({x, y, r, g, b});
+                gridLines.push_back({x - PIXEL_SIZE / 2.0f, y - PIXEL_SIZE / 2.0f, r, g, b});
             }
         }
 

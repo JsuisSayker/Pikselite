@@ -3,7 +3,7 @@
 
 int main()
 {
-    engine::Core app(1280, 720);
+    engine::Core app(WINDOW_WIDTH, WINDOW_HEIGHT);
     app.run();
     return 0;
 }

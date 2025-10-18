@@ -1,4 +1,5 @@
 #include <editors/spriteEditor.hpp>
+#include <algorithm>
 
 namespace editors {
     SpriteEditor::SpriteEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer)
@@ -10,8 +11,8 @@ namespace editors {
         handleEvents(eventType);
 
         _renderer->clear();
-        _renderer->drawGrid(10.0f, 0.9f, 0.9f, 0.9f); // Draw grid with cell size 16
-        _renderer->drawPixels(_spritePixels, 10.0f);
+        _renderer->drawPixels(_spritePixels, PIXEL_SIZE);
+        _renderer->drawGrid(PIXEL_SIZE, 0.7f, 0.7f, 0.7f); // Draw grid with cell size 16
         _renderer->present(_graphicsInterface->getWindow());
     }
 
@@ -26,6 +27,21 @@ namespace editors {
     }
 
     void SpriteEditor::mouseLeftClick() {
-        std::cout << "Mouse left click detected in SpriteEditor." << std::endl;
+        graphics::Coord mousePos = _graphicsInterface->getMousePosition();
+        addPixel(mousePos.x, mousePos.y, 1.0f, 0.0f, 0.0f); // Add red pixel
     }
+
+    void SpriteEditor::addPixel(float x, float y, float r, float g, float b) {
+        float px = std::round(x / PIXEL_SIZE) * PIXEL_SIZE;
+        float py = std::round(y / PIXEL_SIZE) * PIXEL_SIZE;
+
+        // remove any existing pixel at (x, y)
+        _spritePixels.erase(std::remove_if(_spritePixels.begin(), _spritePixels.end(),
+            [px, py](const graphics::Pixel& pixel) {
+                return pixel.x == px && pixel.y == py;
+            }), _spritePixels.end());
+
+        _spritePixels.push_back({px, py, r, g, b});
+    }
+
 } // namespace editors

@@ -1,5 +1,8 @@
+#pragma once
+
 #include <graphics/renderer/renderer.hpp>
 #include <graphics/interface/interface.hpp>
+#include <iostream>
 
 namespace editors {
     class SpriteEditor {
@@ -17,5 +20,7 @@ namespace editors {
 
         void handleEvents(graphics::InputEventType eventType);
         void mouseLeftClick();
+
+        void addPixel(float x, float y, float r, float g, float b);
     };
 } // namespace editors

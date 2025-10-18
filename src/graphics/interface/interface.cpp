@@ -67,4 +67,11 @@ namespace graphics {
         }
         return NO_EVENT;
     }
+
+    Coord Interface::getMousePosition() const
+    {
+        int x, y;
+        SDL_GetMouseState(&x, &y);
+        return Coord{static_cast<float>(x), static_cast<float>(y)};
+    }
 }

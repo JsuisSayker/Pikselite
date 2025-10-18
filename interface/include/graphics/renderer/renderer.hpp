@@ -1,15 +1,13 @@
 #pragma once
+
+#include <graphics/graphicsEnum.hpp>
+
 #include <vector>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <iostream>
 
 namespace graphics {
-    struct Pixel {
-        float x, y;
-        float r, g, b;
-    };
-
     class Renderer {
     public:
         Renderer(SDL_Window* window, SDL_GLContext glContext);
