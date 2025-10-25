@@ -1,18 +1,15 @@
-add_library(graphics
-    interface/interface.cpp
-    renderer/renderer.cpp
-    renderer/camera.cpp
-    imgui/imguiInterface.cpp
+add_library(editor
+    spriteEditor.cpp
 )
 
-target_include_directories(graphics
+target_include_directories(editor
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${SDL2_INCLUDE_DIRS}
         ${GLEW_INCLUDE_DIRS}
 )
 
-target_link_libraries(graphics
+target_link_libraries(editor
     PUBLIC
     ${SDL2_LIBRARIES}
     ${GLEW_LIBRARIES}

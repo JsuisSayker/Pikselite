@@ -39,6 +39,8 @@ find_package(OpenGL REQUIRED)
 # -------------------------------------------------
 add_subdirectory(interface)
 add_subdirectory(src/graphics)
+add_subdirectory(src/editors)
+add_subdirectory(src/engine)
 
 # -------------------------------------------------
 # Build executable
@@ -84,5 +86,6 @@ target_link_libraries(${PROJECT_NAME}
         imgui_backends
         pikselite_interface
         graphics
-
+        engine
+        editor
 )

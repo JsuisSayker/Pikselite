@@ -6,6 +6,7 @@
     "sdl2",
     "glew",
     "opengl",
+    "glm",
     {
       "name": "imgui",
       "features": [

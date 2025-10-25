@@ -51,4 +51,55 @@ namespace graphics {
         }
         SDL_Quit();
     }
+
+    InputEventType Interface::pollEvent()
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            ImGuiIO &io = ImGui::GetIO();
+            if (io.WantCaptureKeyboard || io.WantCaptureMouse)
+                continue;
+            switch (event.type) {
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.sym) {
+                case SDLK_w: return KEY_W;
+                case SDLK_a: return KEY_A;
+                case SDLK_s: return KEY_S;
+                case SDLK_d: return KEY_D;
+                case SDLK_i: return KEY_I;
+                case SDLK_o: return KEY_O;
+                }
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    return MOUSE_LEFT_CLICK;
+                }
+                break;
+            case SDL_MOUSEBUTTONUP:
+                if (event.button.button == SDL_BUTTON_RIGHT) {
+                    return MOUSE_RIGHT_CLICK;
+                }
+                break;
+            case SDL_MOUSEMOTION:
+                if (event.motion.state & SDL_BUTTON_LMASK) {
+                    return MOUSE_LEFT_DRAG;
+                }
+                if (event.motion.state & SDL_BUTTON_RMASK) {
+                    return MOUSE_RIGHT_DRAG;
+                }
+                break;
+            case SDL_QUIT:
+                return QUIT;
+            }
+        }
+        return NO_EVENT;
+    }
+
+    glm::vec2 Interface::getMousePosition() const
+    {
+        int x, y;
+        SDL_GetMouseState(&x, &y);
+        return glm::vec2(static_cast<float>(x), static_cast<float>(y));
+    }
 }

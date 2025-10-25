@@ -1,16 +1,12 @@
 #pragma once
+
+#include <graphics/graphicsEnum.hpp>
+#include <graphics/renderer/camera.hpp>
+
 #include <vector>
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
 #include <iostream>
 
 namespace graphics {
-    struct Pixel {
-        float x, y;
-        float r, g, b;
-        float size;
-    };
-
     class Renderer {
     public:
         Renderer(SDL_Window* window, SDL_GLContext glContext);
@@ -18,7 +14,10 @@ namespace graphics {
 
         void clear();
         void present(SDL_Window* window);
-        void drawPixels(const std::vector<Pixel>& pixels);
+        void drawPixelsOverlay(const std::vector<Pixel>& pixels, float pixelSize = PIXEL_SIZE);
+        void drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D &camera, float pixelSize = PIXEL_SIZE);
+
+        void drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color);
 
     private:
         SDL_Window* _window;
