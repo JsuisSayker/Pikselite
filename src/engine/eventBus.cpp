@@ -16,4 +16,3 @@ namespace engine::events
     }
 
 } // namespace engine::events
-#include <engine/eventBus.hpp>
