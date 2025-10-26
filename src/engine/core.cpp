@@ -1,6 +1,4 @@
 #include <engine/core.hpp>
-#include <engine/eventBus.hpp>
-#include <engine/events.hpp>
 
 namespace engine
 {
@@ -17,7 +15,7 @@ namespace engine
 
         // temp sprite editor
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
-        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);  
+        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
     }
 
     void Core::mainLoop()

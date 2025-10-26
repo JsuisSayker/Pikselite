@@ -1,13 +1,17 @@
 #pragma once
 
-#include <vector>
-#include <SDL2/SDL.h>
 #include <editors/sprite/spriteEditor.hpp>
 #include <editors/project/projectEditor.hpp>
+
 #include <engine/time.hpp>
-#include <engine/eventBus.hpp>
 #include <engine/events.hpp>
+#include <engine/eventBus.hpp>
+#include <engine/managers/entityManager.hpp>
+#include <engine/managers/componentManager.hpp>
+
+#include <vector>
 #include <iostream>
+#include <SDL2/SDL.h>
 
 namespace engine
 {
@@ -20,13 +24,12 @@ namespace engine
               renderer(sdlInterface.getWindow(), sdlInterface.getGLContext()),
               imguiInterface(sdlInterface.getWindow(), sdlInterface.getGLContext()) {}
 
-
         void run();
 
     private:
         // temp
-        editors::SpriteEditor* spriteEditor;
-        editors::ProjectEditor* projectEditor;
+        editors::SpriteEditor *spriteEditor;
+        editors::ProjectEditor *projectEditor;
         bool isProjectEditorActive = false;
 
         bool running;
@@ -35,6 +38,8 @@ namespace engine
         graphics::ImguiInterface imguiInterface;
         Timer timer;
         events::EventBus eventBus;
+        engine::EntityManager entityManager;
+        engine::ComponentManager componentManager;
 
         std::vector<graphics::Pixel> pixels;
 

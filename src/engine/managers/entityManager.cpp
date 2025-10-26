@@ -1,20 +1,15 @@
 #include "engine/ecs/entity.hpp"
 #include "engine/managers/entityManager.hpp"
+#include <algorithm>
 
+// ...existing code...
 namespace engine
 {
     EntityManager::EntityManager() = default;
 
-    EntityManager::~EntityManager()
-    {
-        for (auto entity : entities)
-        {
-            delete entity;
-        }
-        entities.clear();
-    }
+    EntityManager::~EntityManager() = default;
 
-    ecs::Entity* EntityManager::createEntity()
+    ecs::Entity EntityManager::createEntity()
     {
         ecs::EntityID id;
         if (!availableIds.empty())
@@ -26,24 +21,24 @@ namespace engine
         {
             id = nextId++;
         }
-
-        ecs::Entity* entity = new ecs::Entity(id);
-        entities.push_back(entity);
-        return entity;
+        auto entity = std::make_unique<ecs::Entity>(id);
+        entities.push_back(std::move(entity));
+        return ecs::Entity(id);
     }
 
-    void EntityManager::destroyEntity(ecs::Entity* entity)
+    void EntityManager::destroyEntity(ecs::Entity entity)
     {
-        auto it = std::find(entities.begin(), entities.end(), entity);
+        auto it = std::remove_if(entities.begin(), entities.end(),
+                                 [entity](const std::unique_ptr<ecs::Entity> &e)
+                                 { return e->id == entity.id; });
         if (it != entities.end())
         {
-            availableIds.push_back(entity->id);
-            delete *it;
-            entities.erase(it);
+            entities.erase(it, entities.end());
+            availableIds.push_back(entity.id);
         }
     }
 
-    const std::vector<ecs::Entity*>& EntityManager::getEntities() const
+    const std::vector<std::unique_ptr<ecs::Entity>> &EntityManager::getEntities() const
     {
         return entities;
     }
