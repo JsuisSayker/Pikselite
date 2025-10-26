@@ -1,4 +1,4 @@
-#include <editors/spriteEditor.hpp>
+#include <editors/sprite/spriteEditor.hpp>
 #include <algorithm>
 
 namespace editors {

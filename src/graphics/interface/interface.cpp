@@ -69,6 +69,7 @@ namespace graphics {
                 case SDLK_d: return KEY_D;
                 case SDLK_i: return KEY_I;
                 case SDLK_o: return KEY_O;
+                case SDLK_TAB: return KEY_TAB;
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:

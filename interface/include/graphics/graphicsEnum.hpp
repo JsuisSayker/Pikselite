@@ -29,6 +29,7 @@ namespace graphics {
         KEY_D,
         KEY_I,
         KEY_O,
+        KEY_TAB,
         MOUSE_LEFT_CLICK,
         MOUSE_LEFT_DRAG,
         MOUSE_RIGHT_CLICK,

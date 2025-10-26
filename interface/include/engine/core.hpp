@@ -2,7 +2,8 @@
 
 #include <vector>
 #include <SDL2/SDL.h>
-#include <editors/spriteEditor.hpp>
+#include <editors/sprite/spriteEditor.hpp>
+#include <editors/project/projectEditor.hpp>
 #include <engine/time.hpp>
 #include <engine/eventBus.hpp>
 #include <engine/events.hpp>
@@ -25,6 +26,8 @@ namespace engine
     private:
         // temp
         editors::SpriteEditor* spriteEditor;
+        editors::ProjectEditor* projectEditor;
+        bool isProjectEditorActive = false;
 
         bool running;
         graphics::Interface sdlInterface;

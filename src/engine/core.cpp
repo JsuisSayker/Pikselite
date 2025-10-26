@@ -16,8 +16,8 @@ namespace engine
         pixels.push_back({{300, 300}, {0, 0, 1}});
 
         // temp sprite editor
-        // spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer);
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
+        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);  
     }
 
     void Core::mainLoop()
@@ -28,6 +28,9 @@ namespace engine
             timer.tick();
             eventType = handleEvents();
             update(timer.getDeltaTime());
+            if (isProjectEditorActive)
+                projectEditor->run(eventType);
+            else
             spriteEditor->run(eventType);
             //render();
         }
@@ -48,6 +51,9 @@ namespace engine
         {
         case graphics::QUIT:
             eventBus.publish(std::make_unique<engine::events::QuitEvent>());
+            break;
+        case graphics::KEY_TAB:
+            isProjectEditorActive = !isProjectEditorActive;
             break;
         default:
             return eventType;
