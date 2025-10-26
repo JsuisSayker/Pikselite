@@ -3,6 +3,7 @@ add_library(engine
     event.cpp
     eventBus.cpp
     time.cpp
+    managers/entityManager.cpp
 )
 
 target_include_directories(engine
