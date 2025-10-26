@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <graphics/interface/interface.hpp>
@@ -17,6 +18,9 @@ namespace graphics {
         ~ImguiInterface();
 
         void showImGuiDemo();
+
+        void pixelEditor(Pixel& pixel, const char* label);
+        glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void startFrame();
         void endFrame(SDL_Window* window);

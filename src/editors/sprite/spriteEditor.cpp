@@ -12,12 +12,12 @@ namespace editors {
         handleEvents(eventType);
 
         _renderer->clear();
+        _imguiInterface->startFrame();
+
         _renderer->drawPixelsWCamera(_spritePixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
-        
-        // ImGui part
-        _imguiInterface->startFrame();
-        _imguiInterface->showImGuiDemo();
+
+        imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
 
         _renderer->present(_graphicsInterface->getWindow());
@@ -29,7 +29,7 @@ namespace editors {
             mouseLeftClick();
             break;
         case graphics::MOUSE_LEFT_DRAG:
-            mouseLeftClick();
+            mouseLeftDrag();
             break;
         case graphics::KEY_W:
             _camera.move(glm::vec2(0.0f, -PIXEL_SIZE));
@@ -54,33 +54,76 @@ namespace editors {
         }
     }
 
-    void SpriteEditor::mouseLeftClick() {
-        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
-        addPixel(mousePos.x, mousePos.y, 1.0f, 0.0f, 0.0f); // Add red pixel
+    void SpriteEditor::imguiHandling() {
+        _imguiInterface->showImGuiDemo();
+        if (_showPixelEditor) {
+            if (_currentPixel) {
+                _imguiInterface->pixelEditor(*_currentPixel, "Pixel Color");
+            }
+        }
     }
 
-    void SpriteEditor::addPixel(float mx, float my, float r, float g, float b) {
+    void SpriteEditor::mouseLeftClick() {
+        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+        glm::vec2 worldPos = screenToWorld(mousePos);
+
+        graphics::Pixel* pixel = getPixelAt(worldPos);
+        if (pixel) {
+            _currentPixel = pixel;
+            _showPixelEditor = true;
+            return;
+        }
+        addPixel(worldPos, 1.0f, 0.0f, 0.0f);
+    }
+
+    void SpriteEditor::mouseLeftDrag() {
+        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+        glm::vec2 worldPos = screenToWorld(mousePos);
+
+        removePixelAt(worldPos);
+        addPixel(worldPos, 1.0f, 0.0f, 0.0f);
+    }
+
+    glm::vec2 SpriteEditor::screenToWorld(glm::vec2 screenPos) {
         int winW, winH;
         SDL_GetWindowSize(_graphicsInterface->getWindow(), &winW, &winH);
 
         // Convert mouse to world
         glm::vec2 ndc;
-        ndc.x = ( (float)mx / winW ) * 2.0f - 1.0f;
-        ndc.y = - ( (float)my / winH ) * 2.0f + 1.0f;  // invert Y
+        ndc.x = ( (float)screenPos.x / winW ) * 2.0f - 1.0f;
+        ndc.y = - ( (float)screenPos.y / winH ) * 2.0f + 1.0f;
 
         glm::mat4 invVP = glm::inverse(_camera.getViewProjection(winW, winH));
         glm::vec4 world4 = invVP * glm::vec4(ndc.x, ndc.y, 0.0f, 1.0f);
         
         float gx = std::round(world4.x / PIXEL_SIZE) * PIXEL_SIZE;
         float gy = std::round(world4.y / PIXEL_SIZE) * PIXEL_SIZE;
-        glm::vec2 worldPos(gx, gy);
 
-        // remove any existing pixel at (x, y)
-        _spritePixels.erase(std::remove_if(_spritePixels.begin(), _spritePixels.end(),
-            [worldPos](const graphics::Pixel& pixel) {
-                return pixel.position.x == worldPos.x && pixel.position.y == worldPos.y;
-            }), _spritePixels.end());
+        return glm::vec2(gx, gy);
+    }
 
+    graphics::Pixel* SpriteEditor::getPixelAt(glm::vec2 worldPos) {
+        for (auto& pixel : _spritePixels) {
+            if (pixel.position == worldPos) {
+                return &pixel;
+            }
+        }
+        return nullptr;
+    }
+
+    bool SpriteEditor::removePixelAt(glm::vec2 worldPos) {
+        auto it = std::remove_if(_spritePixels.begin(), _spritePixels.end(),
+                                 [&worldPos](const graphics::Pixel& pixel) {
+                                     return pixel.position == worldPos;
+                                 });
+        if (it != _spritePixels.end()) {
+            _spritePixels.erase(it, _spritePixels.end());
+            return true;
+        }
+        return false;
+    }
+
+    void SpriteEditor::addPixel(glm::vec2 worldPos, float r, float g, float b) {
         _spritePixels.push_back({worldPos, {r, g, b}});
     }
 

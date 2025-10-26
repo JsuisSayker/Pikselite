@@ -24,7 +24,18 @@ namespace editors {
 
         void handleEvents(graphics::InputEventType eventType);
         void mouseLeftClick();
+        void mouseLeftDrag();
 
-        void addPixel(float mx, float my, float r, float g, float b);
+        glm::vec2 screenToWorld(glm::vec2 screenPos);
+        graphics::Pixel* getPixelAt(glm::vec2 worldPos);
+        bool removePixelAt(glm::vec2 worldPos);
+        void addPixel(glm::vec2 worldPos, float r, float g, float b);
+
+        void imguiHandling();
+
+        // Imgui state
+        graphics::Pixel* _currentPixel = nullptr;
+
+        bool _showPixelEditor = false;
     };
 } // namespace editors

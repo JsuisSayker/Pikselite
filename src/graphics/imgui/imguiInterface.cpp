@@ -32,4 +32,19 @@ namespace graphics {
         ImGui::Text("This is a simple ImGui window.");
         ImGui::End();
     }
+
+    void ImguiInterface::pixelEditor(Pixel& pixel, const char* label) {
+        float color[3] = { pixel.color.r, pixel.color.g, pixel.color.b };
+        if (ImGui::ColorPicker3(label, color)) {
+            pixel.color = glm::vec3(color[0], color[1], color[2]);
+        }
+    }
+
+    glm::vec3 ImguiInterface::colorSelector(const glm::vec3& currentColor, const char* label) {
+        float color[3] = { currentColor.r, currentColor.g, currentColor.b };
+        if (ImGui::ColorPicker3(label, color)) {
+            return glm::vec3(color[0], color[1], color[2]);
+        }
+        return currentColor;
+    }
 } // namespace graphics
