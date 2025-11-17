@@ -23,6 +23,7 @@ namespace engine
         }
         auto entity = std::make_unique<ecs::Entity>(id);
         entities.push_back(std::move(entity));
+        signatures[id] = ecs::Signature{};
         return ecs::Entity(id);
     }
 
@@ -35,6 +36,7 @@ namespace engine
         {
             entities.erase(it, entities.end());
             availableIds.push_back(entity.id);
+            signatures.erase(entity.id);
         }
     }
 
@@ -42,4 +44,15 @@ namespace engine
     {
         return entities;
     }
+
+    void EntityManager::setSignature(ecs::EntityID entity, const ecs::Signature &signature)
+    {
+        signatures[entity] = signature;
+    }
+
+    ecs::Signature EntityManager::getSignature(ecs::EntityID entity)
+    {
+        return signatures.at(entity);
+    }
+
 } // namespace engine

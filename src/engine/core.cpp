@@ -5,10 +5,10 @@ namespace engine
     void Core::init()
     {
         // subscribe to quit event
-        eventBus.subscribe<engine::events::QuitEvent>([this](const engine::events::QuitEvent &e){
+        eventBus.subscribe<engine::events::QuitEvent>([this](const engine::events::QuitEvent &e)
+                                                      {
             (void)e;
-            running = false;
-        });
+            running = false; });
 
         pixels.push_back({{200, 200}, {0, 1, 0}});
         pixels.push_back({{300, 300}, {0, 0, 1}});
@@ -29,8 +29,8 @@ namespace engine
             if (isProjectEditorActive)
                 projectEditor->run(eventType);
             else
-            spriteEditor->run(eventType);
-            //render();
+                spriteEditor->run(eventType);
+            // render();
         }
     }
 

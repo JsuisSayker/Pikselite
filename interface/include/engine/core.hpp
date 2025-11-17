@@ -8,6 +8,7 @@
 #include <engine/eventBus.hpp>
 #include <engine/managers/entityManager.hpp>
 #include <engine/managers/componentManager.hpp>
+#include <engine/managers/systemManager.hpp>
 
 #include <vector>
 #include <iostream>
@@ -40,6 +41,7 @@ namespace engine
         events::EventBus eventBus;
         engine::EntityManager entityManager;
         engine::ComponentManager componentManager;
+        engine::SystemManager systemManager;
 
         std::vector<graphics::Pixel> pixels;
 
