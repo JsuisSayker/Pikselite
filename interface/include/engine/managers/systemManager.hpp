@@ -10,13 +10,15 @@
 
 #include "engine/ecs/systems/movementSystem.hpp"
 #include "engine/ecs/components/transformComponent.hpp"
+#include "engine/ecs/components/velocityComponent.hpp"
+#include "engine/managers/componentManager.hpp"
 
 namespace engine
 {
     class SystemManager
     {
     public:
-        void update(double deltaTime);
+        void update(double deltaTime, engine::ComponentManager& componentManager);
 
         void entitySignatureChanged(ecs::EntityID entity, const ecs::Signature &entitySignature);
 

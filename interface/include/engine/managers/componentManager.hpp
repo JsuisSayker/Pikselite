@@ -29,8 +29,10 @@ namespace engine
                 std::cerr << "Registering component type more than once: " << key.name() << std::endl;
                 return;
             }
+
             componentTypes.emplace(key, nextComponentType++);
-            componentArrays.emplace(key, std::make_unique<ecs::ComponentArray<T>>());
+            auto array = std::make_unique<ecs::ComponentArray<T>>();
+            componentArrays.emplace(key, std::move(array));
         }
 
         template <typename T>
@@ -47,28 +49,28 @@ namespace engine
         }
 
         template <typename T>
-        void addComponent(ecs::Entity entity, const T &component)
+        void addComponent(ecs::EntityID entity, const T &component)
         {
-            getComponentArray<T>()->insertData(entity.id, component);
+            getComponentArray<T>()->insertData(entity, component);
         }
 
         template <typename T>
-        void removeComponent(ecs::Entity entity)
+        void removeComponent(ecs::EntityID entity)
         {
-            getComponentArray<T>()->removeData(entity.id);
+            getComponentArray<T>()->removeData(entity);
         }
 
         template <typename T>
-        T &getComponent(ecs::Entity entity)
+        T &getComponent(ecs::EntityID entity)
         {
-            return getComponentArray<T>()->getData(entity.id);
+            return getComponentArray<T>()->getData(entity);
         }
 
-        void entityDestroyed(ecs::Entity entity)
+        void entityDestroyed(ecs::EntityID entity)
         {
             for (auto &pair : componentArrays)
             {
-                pair.second->entityDestroyed(entity.id);
+                pair.second->entityDestroyed(entity);
             }
         }
 

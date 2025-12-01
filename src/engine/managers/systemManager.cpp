@@ -2,11 +2,11 @@
 
 namespace engine
 {
-    void SystemManager::update(double deltaTime)
+    void SystemManager::update(double deltaTime, engine::ComponentManager& componentManager)
     {
         for (const auto &system : systems)
         {
-            system->update(deltaTime);
+            system->update(deltaTime, componentManager);
         }
     }
 

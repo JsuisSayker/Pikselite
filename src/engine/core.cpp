@@ -1,5 +1,8 @@
 #include <engine/core.hpp>
 
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/ecs/systems/movementSystem.hpp>
 namespace engine
 {
     void Core::init()
@@ -59,7 +62,10 @@ namespace engine
         return eventType;
     }
 
-    void Core::update(float deltaTime) {}
+    void Core::update(float deltaTime) 
+    {
+        systemManager.update(deltaTime, componentManager);
+    }
 
     void Core::render()
     {

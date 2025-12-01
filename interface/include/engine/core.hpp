@@ -4,8 +4,8 @@
 #include <editors/project/projectEditor.hpp>
 
 #include <engine/time.hpp>
-#include <engine/events.hpp>
-#include <engine/eventBus.hpp>
+#include <engine/events/events.hpp>
+#include <engine/events/eventBus.hpp>
 #include <engine/managers/entityManager.hpp>
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/systemManager.hpp>

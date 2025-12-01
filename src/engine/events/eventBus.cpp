@@ -1,4 +1,4 @@
-#include "engine/eventBus.hpp"
+#include "engine/events/eventBus.hpp"
 
 namespace engine::events
 {

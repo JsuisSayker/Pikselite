@@ -72,11 +72,6 @@ namespace ecs
             return entityToIndex.find(id) != entityToIndex.end();
         }
 
-        // Wrappers pratiques si tu passes encore ecs::Entity
-        void insertData(ecs::Entity e, const T& c) { insertData(e.id, c); }
-        void removeData(ecs::Entity e) { removeData(e.id); }
-        T& getData(ecs::Entity e) { return getData(e.id); }
-
         // IComponentArray
         void entityDestroyed(ecs::EntityID id) override { removeData(id); }
 
