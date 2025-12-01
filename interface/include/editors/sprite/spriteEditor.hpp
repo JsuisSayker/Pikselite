@@ -3,6 +3,7 @@
 #include <graphics/renderer/renderer.hpp>
 #include <graphics/interface/interface.hpp>
 #include <graphics/imgui/imguiInterface.hpp>
+#include <engine/pixels/chunk.hpp>
 #include <iostream>
 
 namespace editors {
@@ -20,6 +21,9 @@ namespace editors {
 
         graphics::Camera2D _camera;
 
+        uint32_t pixelIdCounter = 1;
+        Pixel::ChunkGrid _chunkGrid;
+        
         std::vector<graphics::Pixel> _spritePixels;
 
         void handleEvents(graphics::InputEventType eventType);

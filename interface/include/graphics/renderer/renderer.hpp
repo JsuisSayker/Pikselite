@@ -1,6 +1,7 @@
 #pragma once
 
 #include <graphics/graphicsEnum.hpp>
+#include <engine/pixels/pixelEnum.hpp>
 #include <graphics/renderer/camera.hpp>
 
 #include <vector>

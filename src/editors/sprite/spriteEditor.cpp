@@ -81,6 +81,7 @@ namespace editors {
         glm::vec2 worldPos = screenToWorld(mousePos);
 
         removePixelAt(worldPos);
+        _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
         addPixel(worldPos, 1.0f, 0.0f, 0.0f);
     }
 
@@ -118,6 +119,7 @@ namespace editors {
                                  });
         if (it != _spritePixels.end()) {
             _spritePixels.erase(it, _spritePixels.end());
+            _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
             return true;
         }
         return false;
@@ -125,6 +127,15 @@ namespace editors {
 
     void SpriteEditor::addPixel(glm::vec2 worldPos, float r, float g, float b) {
         _spritePixels.push_back({worldPos, {r, g, b}});
+        int cx = (int)std::floor(worldPos.x / Pixel::CHUNK_SIZE);
+        int cy = (int)std::floor(worldPos.y / Pixel::CHUNK_SIZE);
+        Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+        
+        // Safe modulo for negative coordinates
+        int lx = ((int)worldPos.x % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        int ly = ((int)worldPos.y % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        
+        chunk.set(lx, ly, pixelIdCounter);
+        pixelIdCounter++;
     }
-
 } // namespace editors
