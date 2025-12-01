@@ -14,6 +14,17 @@ set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
 set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\"
 
+
+:: -------------------------------------------------
+:: CLEAN VCPKG ARCHIVES IF BUILD DIR MISSING
+:: -------------------------------------------------
+echo === Checking build directory ===
+if not exist "%BUILD_DIR%" (
+    echo Build directory missing, cleaning vcpkg archives...
+    rmdir /s /q "%LOCALAPPDATA%\vcpkg\archives"
+)
+
+
 :: -------------------------------------------------
 :: SEARCH FOR EXISTING VCPKG
 :: -------------------------------------------------
