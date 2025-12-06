@@ -1,4 +1,5 @@
 #include <graphics/imgui/imguiInterface.hpp>
+#include <algorithm>
 
 namespace graphics {
     ImguiInterface::ImguiInterface(SDL_Window* window, SDL_GLContext glContext)
@@ -90,9 +91,18 @@ namespace graphics {
             }
 
             PopupButton("Add attribute", [&]() {
-                // Add search bar here
+                static char search[64] = "";
+                ImGui::InputText("Search", search, IM_ARRAYSIZE(search));
+                std::string query = search;
+                std::transform(query.begin(), query.end(), query.begin(), ::tolower);
 
                 for (const auto& attr : availableAttributes) {
+                    std::string lowerAttr = attr;
+                    std::transform(lowerAttr.begin(), lowerAttr.end(), lowerAttr.begin(), ::tolower);
+
+                    if (!query.empty() && lowerAttr.find(query) == std::string::npos)
+                        continue;
+                    
                     if (ImGui::Selectable(attr.c_str())) {
                         if (attr == "Solid") {
                             pixelAttributes.solidAttributes[pixelId] = ::Pixel::Solid();
@@ -104,6 +114,8 @@ namespace graphics {
                             pixelAttributes.gaseousAttributes[pixelId] = ::Pixel::Gaseous{0.5f};
                             availableAttributes.erase(std::remove(availableAttributes.begin(), availableAttributes.end(), "Gaseous"), availableAttributes.end());
                         }
+                        query.clear();
+                        search[0] = '\0';
                     }
                 }
             });
