@@ -33,11 +33,23 @@ namespace graphics {
         ImGui::End();
     }
 
-    void ImguiInterface::pixelEditor(Pixel& pixel, const char* label) {
-        float color[3] = { pixel.color.r, pixel.color.g, pixel.color.b };
-        if (ImGui::ColorPicker3(label, color)) {
-            pixel.color = glm::vec3(color[0], color[1], color[2]);
-        }
+    void ImguiInterface::pixelEditor(Pixel& pixel, const char* label) { ///////////////////////// make this a sidebar
+        static BarConfig sideBarConfig {
+            BarOrientation::Vertical,
+            "Pixel Editor",
+            ImVec2(200, 400),
+            true,
+            ImVec2(-1, 0)
+        };
+
+        static Bar sideBar(sideBarConfig);
+
+        sideBar.Draw([&]() {
+            float color[3] = { pixel.color.r, pixel.color.g, pixel.color.b };
+            if (ImGui::ColorPicker3(label, color)) {
+                pixel.color = glm::vec3(color[0], color[1], color[2]);
+            }
+        });
     }
 
     glm::vec3 ImguiInterface::colorSelector(const glm::vec3& currentColor, const char* label) {

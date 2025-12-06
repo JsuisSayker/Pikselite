@@ -3,6 +3,8 @@ add_library(graphics
     renderer/renderer.cpp
     renderer/camera.cpp
     imgui/imguiInterface.cpp
+    imgui/components/bars.cpp
+    imgui/components/buttons.cpp
 )
 
 target_include_directories(graphics
