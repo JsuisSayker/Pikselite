@@ -49,6 +49,12 @@ namespace editors {
         case graphics::KEY_O:
             _camera.zoomOut(1.1f);
             break;
+        case graphics::KEY_L:
+            loadSpriteFromFile("sprite.dat");
+            break;
+        case graphics::KEY_K:
+            saveSpriteToFile("sprite.dat");
+            break;
         default:
             break;
         }
@@ -138,4 +144,94 @@ namespace editors {
         chunk.set(lx, ly, pixelIdCounter);
         pixelIdCounter++;
     }
+
+    bool SpriteEditor::saveSpriteToFile(const std::string& filename) {
+        std::ofstream fout(filename, std::ios::binary);
+        if (!fout) return false;
+    
+        uint32_t numChunks = static_cast<uint32_t>(_chunkGrid.getChunks().size());
+        fout.write(reinterpret_cast<const char*>(&numChunks), sizeof(numChunks));
+        
+        for (const auto& [coord, chunk] : _chunkGrid.getChunks()) {
+            int32_t cx = coord.first;
+            int32_t cy = coord.second;
+
+            fout.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
+            fout.write(reinterpret_cast<const char*>(&cy), sizeof(cy));
+    
+            for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
+                for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
+                    Pixel::PixelEntityID id = chunk.get(x, y);
+                    fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
+                }
+            }
+        }
+
+        uint32_t numPixels = static_cast<uint32_t>(_spritePixels.size());
+        fout.write(reinterpret_cast<const char*>(&numPixels), sizeof(numPixels));
+        for (const auto& pixel : _spritePixels) {
+            float px = pixel.position.x;
+            float py = pixel.position.y;
+            float r = pixel.color.r;
+            float g = pixel.color.g;
+            float b = pixel.color.b;
+
+            fout.write(reinterpret_cast<const char*>(&px), sizeof(px));
+            fout.write(reinterpret_cast<const char*>(&py), sizeof(py));
+            fout.write(reinterpret_cast<const char*>(&r), sizeof(r));
+            fout.write(reinterpret_cast<const char*>(&g), sizeof(g));
+            fout.write(reinterpret_cast<const char*>(&b), sizeof(b));
+        }
+
+        fout.close();
+        return true;
+    }
+
+    bool SpriteEditor::loadSpriteFromFile(const std::string& filename) {
+        std::ifstream fin(filename, std::ios::binary);
+        if (!fin) return false;
+        _chunkGrid = Pixel::ChunkGrid();
+        _spritePixels.clear();
+
+        uint32_t numChunks = 0;
+        fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
+        for (uint32_t i = 0; i < numChunks; ++i)
+        {
+            int32_t cx = 0;
+            int32_t cy = 0;
+            fin.read(reinterpret_cast<char*>(&cx), sizeof(cx));
+            fin.read(reinterpret_cast<char*>(&cy), sizeof(cy));
+
+            Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+            for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
+                for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
+                    Pixel::PixelEntityID id = Pixel::EMPTY;
+                    fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+                    chunk.set(x, y, id);
+                }
+            }
+        }
+
+        uint32_t numPixels = 0;
+        fin.read(reinterpret_cast<char*>(&numPixels), sizeof(numPixels));
+        for (uint32_t i = 0; i < numPixels; ++i) {
+            float px = 0.0f;
+            float py = 0.0f;
+            float r = 0.0f;
+            float g = 0.0f;
+            float b = 0.0f;
+
+            fin.read(reinterpret_cast<char*>(&px), sizeof(px));
+            fin.read(reinterpret_cast<char*>(&py), sizeof(py));
+            fin.read(reinterpret_cast<char*>(&r), sizeof(r));
+            fin.read(reinterpret_cast<char*>(&g), sizeof(g));
+            fin.read(reinterpret_cast<char*>(&b), sizeof(b));
+
+            _spritePixels.push_back({{px, py}, {r, g, b}});
+        }
+
+        fin.close();
+        return true;
+    }
+
 } // namespace editors

@@ -68,6 +68,8 @@ namespace graphics {
                 case SDLK_s: return KEY_S;
                 case SDLK_d: return KEY_D;
                 case SDLK_i: return KEY_I;
+                case SDLK_k: return KEY_K;
+                case SDLK_l: return KEY_L;
                 case SDLK_o: return KEY_O;
                 case SDLK_TAB: return KEY_TAB;
                 }

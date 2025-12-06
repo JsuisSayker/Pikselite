@@ -24,7 +24,14 @@ namespace Pixel
             }
 
             PixelEntityID get(int x, int y) const {
-                return get(x, y);
+                for (int i = 0; i < CHUNK_SIZE; ++i) {
+                    for (int j = 0; j < CHUNK_SIZE; ++j) {
+                        if (x == i && y == j) {
+                            return cells[x][y];
+                        }
+                    }
+                }
+                return EMPTY;
             }
 
             void set(int x, int y, PixelEntityID id) {
@@ -48,6 +55,10 @@ namespace Pixel
             Chunk* getChunk(int cx, int cy) {
                 auto it = chunks.find({cx, cy});
                 return (it == chunks.end()) ? nullptr : &it->second;
+            }
+
+            const std::unordered_map<ChunkCoord, Chunk, PairHash>& getChunks() const {
+                return chunks;
             }
 
             PixelEntityID getPixel(int x, int y) {

@@ -28,6 +28,8 @@ namespace graphics {
         KEY_S,
         KEY_D,
         KEY_I,
+        KEY_K,
+        KEY_L,
         KEY_O,
         KEY_TAB,
         MOUSE_LEFT_CLICK,

@@ -5,6 +5,7 @@
 #include <graphics/imgui/imguiInterface.hpp>
 #include <engine/pixels/chunk.hpp>
 #include <iostream>
+#include <fstream>
 
 namespace editors {
     class SpriteEditor {
@@ -36,6 +37,9 @@ namespace editors {
         void addPixel(glm::vec2 worldPos, float r, float g, float b);
 
         void imguiHandling();
+
+        bool saveSpriteToFile(const std::string& filename);
+        bool loadSpriteFromFile(const std::string& filename);
 
         // Imgui state
         graphics::Pixel* _currentPixel = nullptr;
