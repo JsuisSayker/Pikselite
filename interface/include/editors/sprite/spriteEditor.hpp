@@ -26,6 +26,8 @@ namespace editors {
         
         std::vector<graphics::Pixel> _spritePixels;
 
+        Pixel::PixelAttributes _pixelAttributes;
+
         void handleEvents(graphics::InputEventType eventType);
         void mouseLeftClick();
         void mouseLeftDrag();

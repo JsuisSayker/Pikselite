@@ -1,4 +1,5 @@
 #pragma once
+
 #include <engine/pixels/pixelEnum.hpp>
 #include <array>
 
@@ -24,7 +25,14 @@ namespace Pixel
             }
 
             PixelEntityID get(int x, int y) const {
-                return get(x, y);
+                for (int i = 0; i < CHUNK_SIZE; ++i) {
+                    for (int j = 0; j < CHUNK_SIZE; ++j) {
+                        if (x == i && y == j) {
+                            return cells[x][y];
+                        }
+                     }
+                  }
+                return EMPTY;
             }
 
             void set(int x, int y, PixelEntityID id) {

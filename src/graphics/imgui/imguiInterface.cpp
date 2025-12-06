@@ -33,7 +33,7 @@ namespace graphics {
         ImGui::End();
     }
 
-    void ImguiInterface::pixelEditor(Pixel& pixel, const char* label) { ///////////////////////// make this a sidebar
+    void ImguiInterface::pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label) {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Pixel Editor",
@@ -49,6 +49,38 @@ namespace graphics {
             if (ImGui::ColorPicker3(label, color)) {
                 pixel.color = glm::vec3(color[0], color[1], color[2]);
             }
+
+            ::Pixel::PixelEntityID pixelId = grid.getPixel(pixel.position.x, pixel.position.y);
+
+            for (const auto& [id, solid] : pixelAttributes.solidAttributes) {
+                if (id == pixelId) {
+                     if (ImGui::CollapsingHeader("")) {
+                        ImGui::TextWrapped("Solid");
+                    }
+                }
+            }
+
+            for (const auto& [id, liquid] : pixelAttributes.liquidAttributes) {
+                if (id == pixelId) {
+                     if (ImGui::CollapsingHeader("")) {
+                        ImGui::TextWrapped("Liquid");
+                    }
+                }
+            }
+
+            for (const auto& [id, gaseous] : pixelAttributes.gaseousAttributes) {
+                if (id == pixelId) {
+                     if (ImGui::CollapsingHeader("")) {
+                        ImGui::TextWrapped("Gaseous");
+                    }
+                }
+            }
+
+            PopupButton("Add attribute", [&]() {
+                // Add search bar here
+                // List of attributes
+                // On selection: add attribute to pixel
+            });
         });
     }
 

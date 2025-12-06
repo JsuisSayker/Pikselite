@@ -47,3 +47,22 @@ void graphics::ColorButton(const std::string &label, ImVec4 &color)
         ImGui::EndPopup();
     }
 }
+
+// Draws a button that opens a popup when clicked. The content of the popup is defined by the provided contentFunction.
+void graphics::PopupButton(const std::string& label, const std::function<void()> &contentFunction)
+{
+    std::string popupId = label + "##popup";
+
+    if (ImGui::Button(label.c_str())) {
+        ImGui::OpenPopup(popupId.c_str());
+    }
+
+    if (ImGui::BeginPopup(popupId.c_str())) {
+
+        if (contentFunction) {
+            contentFunction();
+        }
+
+        ImGui::EndPopup();
+    }
+}
