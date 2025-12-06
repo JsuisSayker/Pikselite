@@ -52,34 +52,60 @@ namespace graphics {
 
             ::Pixel::PixelEntityID pixelId = grid.getPixel(pixel.position.x, pixel.position.y);
 
-            for (const auto& [id, solid] : pixelAttributes.solidAttributes) {
-                if (id == pixelId) {
-                     if (ImGui::CollapsingHeader("")) {
-                        ImGui::TextWrapped("Solid");
+            std::vector<std::string> availableAttributes;
+
+            auto s = pixelAttributes.solidAttributes.find(pixelId);
+            if (s != pixelAttributes.solidAttributes.end()) {
+                if (ImGui::CollapsingHeader("Solid")) {
+                    if (ImGui::Button("Remove Attribute")) {
+                        pixelAttributes.solidAttributes.erase(s);
                     }
                 }
+            } else {
+                availableAttributes.push_back("Solid");
             }
 
-            for (const auto& [id, liquid] : pixelAttributes.liquidAttributes) {
-                if (id == pixelId) {
-                     if (ImGui::CollapsingHeader("")) {
-                        ImGui::TextWrapped("Liquid");
+            auto l = pixelAttributes.liquidAttributes.find(pixelId);
+            if (l != pixelAttributes.liquidAttributes.end()) {
+                if (ImGui::CollapsingHeader("Liquid")) {
+                    ImGui::SliderFloat("Viscosity", &l->second.viscosity, 0.0f, 1.0f);
+                    if (ImGui::Button("Remove Attribute")) {
+                        pixelAttributes.liquidAttributes.erase(l);
                     }
                 }
+            } else {
+                availableAttributes.push_back("Liquid");
             }
 
-            for (const auto& [id, gaseous] : pixelAttributes.gaseousAttributes) {
-                if (id == pixelId) {
-                     if (ImGui::CollapsingHeader("")) {
-                        ImGui::TextWrapped("Gaseous");
+            auto g = pixelAttributes.gaseousAttributes.find(pixelId);
+            if (g != pixelAttributes.gaseousAttributes.end()) {
+                if (ImGui::CollapsingHeader("Gaseous")) {
+                    ImGui::SliderFloat("Density", &g->second.density, 0.0f, 1.0f);
+                    if (ImGui::Button("Remove Attribute")) {
+                        pixelAttributes.gaseousAttributes.erase(g);
                     }
                 }
+            } else {
+                availableAttributes.push_back("Gaseous");
             }
 
             PopupButton("Add attribute", [&]() {
                 // Add search bar here
-                // List of attributes
-                // On selection: add attribute to pixel
+
+                for (const auto& attr : availableAttributes) {
+                    if (ImGui::Selectable(attr.c_str())) {
+                        if (attr == "Solid") {
+                            pixelAttributes.solidAttributes[pixelId] = ::Pixel::Solid();
+                            availableAttributes.erase(std::remove(availableAttributes.begin(), availableAttributes.end(), "Solid"), availableAttributes.end());
+                        } else if (attr == "Liquid") {
+                            pixelAttributes.liquidAttributes[pixelId] = ::Pixel::Liquid{0.5f};
+                            availableAttributes.erase(std::remove(availableAttributes.begin(), availableAttributes.end(), "Liquid"), availableAttributes.end());
+                        } else if (attr == "Gaseous") {
+                            pixelAttributes.gaseousAttributes[pixelId] = ::Pixel::Gaseous{0.5f};
+                            availableAttributes.erase(std::remove(availableAttributes.begin(), availableAttributes.end(), "Gaseous"), availableAttributes.end());
+                        }
+                    }
+                }
             });
         });
     }

@@ -137,5 +137,7 @@ namespace editors {
         
         chunk.set(lx, ly, pixelIdCounter);
         pixelIdCounter++;
+
+        _currentPixel = getPixelAt(worldPos);
     }
 } // namespace editors
