@@ -25,7 +25,8 @@ namespace editors {
         uint32_t pixelIdCounter = 1;
         Pixel::ChunkGrid _chunkGrid;
         
-        std::vector<graphics::Pixel> _spritePixels;
+        Pixel::PixelAttributes _pixelAttributes;
+        std::vector<graphics::Pixel> _renderPixels;
 
         void handleEvents(graphics::InputEventType eventType);
         void mouseLeftClick();

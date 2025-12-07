@@ -14,7 +14,7 @@ namespace editors {
         _renderer->clear();
         _imguiInterface->startFrame();
 
-        _renderer->drawPixelsWCamera(_spritePixels, _camera, PIXEL_SIZE);
+        _renderer->drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
 
         imguiHandling();
@@ -110,7 +110,7 @@ namespace editors {
     }
 
     graphics::Pixel* SpriteEditor::getPixelAt(glm::vec2 worldPos) {
-        for (auto& pixel : _spritePixels) {
+        for (auto& pixel : _renderPixels) {
             if (pixel.position == worldPos) {
                 return &pixel;
             }
@@ -119,12 +119,12 @@ namespace editors {
     }
 
     bool SpriteEditor::removePixelAt(glm::vec2 worldPos) {
-        auto it = std::remove_if(_spritePixels.begin(), _spritePixels.end(),
+        auto it = std::remove_if(_renderPixels.begin(), _renderPixels.end(),
                                  [&worldPos](const graphics::Pixel& pixel) {
                                      return pixel.position == worldPos;
                                  });
-        if (it != _spritePixels.end()) {
-            _spritePixels.erase(it, _spritePixels.end());
+        if (it != _renderPixels.end()) {
+            _renderPixels.erase(it, _renderPixels.end());
             _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
             return true;
         }
@@ -132,7 +132,7 @@ namespace editors {
     }
 
     void SpriteEditor::addPixel(glm::vec2 worldPos, float r, float g, float b) {
-        _spritePixels.push_back({worldPos, {r, g, b}});
+        _renderPixels.push_back({worldPos, {r, g, b}});
         int cx = (int)std::floor(worldPos.x / Pixel::CHUNK_SIZE);
         int cy = (int)std::floor(worldPos.y / Pixel::CHUNK_SIZE);
         Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
@@ -167,9 +167,38 @@ namespace editors {
             }
         }
 
-        uint32_t numPixels = static_cast<uint32_t>(_spritePixels.size());
+        uint32_t count = static_cast<uint32_t>(_pixelAttributes.renderIndex.size());
+        fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
+        for (const auto& [id, index] : _pixelAttributes.renderIndex) {
+            fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
+            fout.write(reinterpret_cast<const char*>(&index), sizeof(index));
+        }
+
+        count = static_cast<uint32_t>(_pixelAttributes.solidAttributes.size());
+        fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
+        for (const auto& [id, solid] : _pixelAttributes.solidAttributes) {
+            fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
+        }
+        
+        count = static_cast<uint32_t>(_pixelAttributes.liquidAttributes.size());
+        fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
+        for (const auto& [id, liquid] : _pixelAttributes.liquidAttributes)
+        {
+            fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
+            fout.write(reinterpret_cast<const char*>(&liquid.viscosity), sizeof(liquid.viscosity));
+        }
+
+        count = static_cast<uint32_t>(_pixelAttributes.gaseousAttributes.size());
+        fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
+        for (const auto& [id, gaseous] : _pixelAttributes.gaseousAttributes)
+        {
+            fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
+            fout.write(reinterpret_cast<const char*>(&gaseous.density), sizeof(gaseous.density));
+        }
+
+        uint32_t numPixels = static_cast<uint32_t>(_renderPixels.size());
         fout.write(reinterpret_cast<const char*>(&numPixels), sizeof(numPixels));
-        for (const auto& pixel : _spritePixels) {
+        for (const auto& pixel : _renderPixels) {
             float px = pixel.position.x;
             float py = pixel.position.y;
             float r = pixel.color.r;
@@ -191,7 +220,7 @@ namespace editors {
         std::ifstream fin(filename, std::ios::binary);
         if (!fin) return false;
         _chunkGrid = Pixel::ChunkGrid();
-        _spritePixels.clear();
+        _renderPixels.clear();
 
         uint32_t numChunks = 0;
         fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
@@ -212,6 +241,44 @@ namespace editors {
             }
         }
 
+        uint32_t count = 0;
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            int index = 0;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            fin.read(reinterpret_cast<char*>(&index), sizeof(index));
+            _pixelAttributes.renderIndex[id] = index;
+        }
+
+        count = 0;
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            _pixelAttributes.solidAttributes[id] = Pixel::Solid();
+        }
+
+        count = 0;
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            float viscosity = 0.0f;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            fin.read(reinterpret_cast<char*>(&viscosity), sizeof(viscosity));
+            _pixelAttributes.liquidAttributes[id] = Pixel::Liquid{viscosity};
+        }
+
+        count = 0;
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            float density = 0.0f;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            fin.read(reinterpret_cast<char*>(&density), sizeof(density));
+            _pixelAttributes.gaseousAttributes[id] = Pixel::Gaseous{density};
+        }
+
         uint32_t numPixels = 0;
         fin.read(reinterpret_cast<char*>(&numPixels), sizeof(numPixels));
         for (uint32_t i = 0; i < numPixels; ++i) {
@@ -227,10 +294,11 @@ namespace editors {
             fin.read(reinterpret_cast<char*>(&g), sizeof(g));
             fin.read(reinterpret_cast<char*>(&b), sizeof(b));
 
-            _spritePixels.push_back({{px, py}, {r, g, b}});
+            _renderPixels.push_back({{px, py}, {r, g, b}});
         }
 
         fin.close();
+        pixelIdCounter = _renderPixels.size() + 1;
         return true;
     }
 

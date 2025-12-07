@@ -3,7 +3,9 @@
 #include <graphics/renderer/renderer.hpp>
 #include <graphics/interface/interface.hpp>
 #include <graphics/imgui/imguiInterface.hpp>
+#include <engine/pixels/chunk.hpp>
 #include <iostream>
+#include <fstream>
 
 namespace editors {
     class ProjectEditor {
@@ -19,7 +21,16 @@ namespace editors {
         graphics::Renderer* _renderer;
 
         graphics::Camera2D _camera;
+        
+        uint32_t pixelIdCounter = 1;
+        uint32_t spriteIdCounter = 1;
+        
+        Pixel::PixelAttributes _pixelAttributes;
+
+        std::vector<Pixel::PixelSprite> _sprites;
+        std::vector<graphics::Pixel> _renderPixels;
 
         void handleEvents(graphics::InputEventType eventType);
+        bool loadSpriteFromFile(const std::string& filename);
     };
 } // namespace editors
