@@ -1,4 +1,5 @@
 #pragma once
+
 #include <engine/pixels/pixelEnum.hpp>
 #include <array>
 

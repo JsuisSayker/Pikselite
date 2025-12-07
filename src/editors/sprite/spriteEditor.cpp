@@ -64,7 +64,7 @@ namespace editors {
         _imguiInterface->showImGuiDemo();
         if (_showPixelEditor) {
             if (_currentPixel) {
-                _imguiInterface->pixelEditor(*_currentPixel, "Pixel Color");
+                _imguiInterface->pixelEditor(*_currentPixel, _chunkGrid, _pixelAttributes, "Pixel Editor");
             }
         }
     }
@@ -143,6 +143,8 @@ namespace editors {
         
         chunk.set(lx, ly, pixelIdCounter);
         pixelIdCounter++;
+
+        _currentPixel = getPixelAt(worldPos);
     }
 
     bool SpriteEditor::saveSpriteToFile(const std::string& filename) {
