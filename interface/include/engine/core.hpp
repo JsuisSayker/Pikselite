@@ -34,6 +34,7 @@ namespace engine
         bool isProjectEditorActive = false;
 
         bool running;
+        bool isGamePreviewActive = false;
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
         graphics::ImguiInterface imguiInterface;
@@ -55,6 +56,8 @@ namespace engine
 
         void mainLoop();
 
+        // helper: run a single frame (step) of the game preview; returns whether preview continues
+        bool runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime, graphics::InputEventType gameEventType);
         void shutdown();
     };
 } // namespace engine

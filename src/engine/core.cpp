@@ -1,5 +1,4 @@
 #include <engine/core.hpp>
-
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
@@ -7,15 +6,6 @@ namespace engine
 {
     void Core::init()
     {
-        // subscribe to quit event
-        eventBus.subscribe<engine::events::QuitEvent>([this](const engine::events::QuitEvent &e)
-                                                      {
-            (void)e;
-            running = false; });
-
-        pixels.push_back({{200, 200}, {0, 1, 0}});
-        pixels.push_back({{300, 300}, {0, 0, 1}});
-
         // temp sprite editor
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
@@ -28,13 +18,56 @@ namespace engine
         {
             timer.tick();
             eventType = handleEvents();
-            update(timer.getDeltaTime());
+
+            if (isGamePreviewActive)
+            {
+                graphics::Renderer gameRenderer(sdlInterface.getWindow(), sdlInterface.getGLContext());
+                graphics::Interface gameInterface(WINDOW_WIDTH, WINDOW_HEIGHT);
+                while (isGamePreviewActive)
+                {
+                    float deltaTime = timer.getDeltaTime();
+                    if (!runGamePreviewStep(gameRenderer, gameInterface, deltaTime, eventType))
+                        break;
+                }
+            }
             if (isProjectEditorActive)
                 projectEditor->run(eventType);
             else
                 spriteEditor->run(eventType);
-            // render();
         }
+    }
+
+    bool Core::runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime, graphics::InputEventType gameEventType)
+    {
+        if (!running || !isGamePreviewActive)
+            return false;
+
+        timer.tick();
+        gameEventType = handleEvents();
+
+        std::cout << "Game Preview Event: " << gameEventType << std::endl;
+
+        if (gameEventType == graphics::QUIT)
+        {
+            isGamePreviewActive = false;
+            return false;
+        }
+
+        // Allow closing preview with F5 pressed in the preview window
+        if (gameEventType == graphics::KEY_F5)
+        {
+            isGamePreviewActive = false;
+            std::cout << "Exiting game preview." << std::endl;
+            return false;
+        }
+
+        update(deltaTime);
+
+        gameRenderer.clear();
+        gameRenderer.drawPixelsOverlay(pixels, PIXEL_SIZE);
+        gameRenderer.present(gameInterface.getWindow());
+
+        return isGamePreviewActive;
     }
 
     void Core::run()
@@ -51,10 +84,14 @@ namespace engine
         switch (eventType)
         {
         case graphics::QUIT:
-            eventBus.publish(std::make_unique<engine::events::QuitEvent>());
+            running = false;
             break;
         case graphics::KEY_TAB:
             isProjectEditorActive = !isProjectEditorActive;
+            break;
+        case graphics::KEY_F5:
+            if (!isGamePreviewActive)
+                isGamePreviewActive = true;
             break;
         default:
             return eventType;
@@ -62,7 +99,7 @@ namespace engine
         return eventType;
     }
 
-    void Core::update(float deltaTime) 
+    void Core::update(float deltaTime)
     {
         systemManager.update(deltaTime, componentManager);
     }
