@@ -2,7 +2,7 @@
 
 import os
 import requests
-# import json
+import json
 from dotenv import load_dotenv
 import sys
 
@@ -26,6 +26,9 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_PROJECT_ID = os.getenv("GITHUB_PROJECT_ID")
 GITHUB_PROJECT_OWNER = os.getenv("GITHUB_PROJECT_OWNER")
 GITHUB_PROJECT_NUMBER = os.getenv("GITHUB_PROJECT_NUMBER")
+
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# history_dir = os.path.join(BASE_DIR, "history")
 
 
 def create_repository_issue(title, body, repo_id):
@@ -103,7 +106,7 @@ def get_repository_id(owner, repository):
 def create_issue_on_board(title, body, target_repo_id):
     issue_node_id, issue_number = create_repository_issue(title, body, target_repo_id)
     project_item_id = add_issue_to_project(issue_node_id, DST_PROJECT_ID)
-    return project_item_id, issue_number
+    return project_item_id, issue_number, issue_node_id
 
 
 # def get_project_details():
@@ -285,25 +288,25 @@ def run_graphql(query, variables):
 #         assign_iteration_to_issue(issue_node_id, created_sprint, side_infos_dict)
 
 
-# def get_user_node_id(username):
-#     url = "https://api.github.com/graphql"
-#     query = """
-#     query GetUserId($login: String!) {
-#       user(login: $login) {
-#         id
-#       }
-#     }
-#     """
-#     variables = {"login": username}
-#     headers = {
-#         "Authorization": f"bearer {GITHUB_TOKEN}",
-#         "Content-Type": "application/json"
-#     }
-#     response = requests.post(url, json={
-#         "query": query, "variables": variables}, headers=headers)
-#     response.raise_for_status()
-#     data = response.json()
-#     return data["data"]["user"]["id"]
+def get_user_node_id(username):
+    url = "https://api.github.com/graphql"
+    query = """
+    query GetUserId($login: String!) {
+      user(login: $login) {
+        id
+      }
+    }
+    """
+    variables = {"login": username}
+    headers = {
+        "Authorization": f"bearer {GITHUB_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(url, json={
+        "query": query, "variables": variables}, headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    return data["data"]["user"]["id"]
 
 
 def sprint_found_in_github(items_id):
@@ -532,6 +535,19 @@ headers = {
 }
 
 
+# def get_github_issue(issue_number):
+#     url = f"https://api.github.com/repos/{GITHUB_PROJECT_OWNER}/{SRC_REPO}/issues/{issue_number}"
+#     headers = {
+#         "Authorization": f"Bearer {GITHUB_TOKEN}",
+#         "Accept": "application/vnd.github.v3+json"
+#     }
+#     response = requests.get(url, headers=headers)
+#     if response.status_code == 200:
+#         return response.json()
+#     else:
+#         raise Exception(f"Failed to fetch issue: {response.status_code}, {response.text}")
+
+
 def add_to_project(project_id, issue_id):
     mutation = """
     mutation ($input: AddProjectV2ItemByIdInput!) {
@@ -752,6 +768,7 @@ def get_issue_comments(owner, repo, issue_number):
 
 
 def transfer_issues():
+    saved_infos = []
     print(f"Fetching issues from {SRC_OWNER}/{SRC_REPO}...")
     source_issues = list_project_issues(GITHUB_PROJECT_ID)
     print(f"Found {len(source_issues)} issues")
@@ -761,6 +778,8 @@ def transfer_issues():
     for issue in source_issues:
         issue_base_values = issue[0]
         issue_fields_values = issue[1]
+        print(issue_base_values)
+        print(issue_fields_values)
         print(f"Transferring: #{issue_base_values['number']} {issue_base_values['title']}")
         issue_comment = get_issue_comments(
             SRC_OWNER, SRC_REPO, issue_base_values['number'])
@@ -768,9 +787,10 @@ def transfer_issues():
         for comment in issue_comment:
             new_body += f"\n\n---\n### Imported comment by **{comment['user']['login']}**\n\n{comment['body']}"
 
-        issue_node_id, issue_number = create_issue_on_board(
+        issue_node_id, issue_number, issue_id = create_issue_on_board(
             issue_base_values["title"], new_body, target_repo_id
             )
+        print(f"Issue created: #{issue_number}")
         # Add labels
         labels = [label["name"] for label in issue_base_values["labels"]["nodes"]]
         if labels:
@@ -794,6 +814,32 @@ def transfer_issues():
         status_field_id = get_current_field_id("Status")
         if status:
             add_status(issue_node_id, DST_PROJECT_ID, status_field_id, status[0])
+        side_infos_dict = {
+            "Story point": story_points,
+            "Sprint": sprint,
+            "Assignees": assignees,
+            "Status": status,
+            "Labels": labels,
+        }
+
+        # issue_id = get_github_issue(issue_number)
+        # print(f"Issue ID: {issue_id}")
+        infos = {
+            "title": issue_base_values["title"],
+            "description": new_body,
+            "issue_node_id": issue_node_id,
+            "issue_number": issue_number,
+            "issue_id": issue_id,
+            "user_id": get_user_node_id(assignees[0]) if assignees else None,
+            "side_infos": side_infos_dict,
+            }
+        saved_infos.append(infos)
+    # If the save file does not exist, create it
+    # if not os.path.exists(f"history/{DST_REPO}_save.json"):
+        # os.makedirs("history", exist_ok=True)
+
+    with open(f"history/{DST_REPO}_save.json", "w") as file:
+        json.dump(saved_infos, file, indent=4)
 
 
 def delete_all_project_issues(project_id, per_page=50):
@@ -856,8 +902,12 @@ def delete_all_project_issues(project_id, per_page=50):
         deleted = result.get("data", {}).get("deleteProjectV2Item", {}).get("deletedItemId")
         print(f"Deleted item {item_id} -> {deleted}")
 
-    print("✅ All issue items removed.")
+    print("All issue items removed.")
 
 
 if __name__ == "__main__":
-    transfer_issues()
+    # transfer_issues()
+    # delete_all_project_issues(DST_PROJECT_ID)
+    # print(history_dir)
+    while (True):
+        pass

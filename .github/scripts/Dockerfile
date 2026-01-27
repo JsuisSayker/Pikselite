@@ -10,6 +10,7 @@ COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 COPY ./.env /app/.env
+COPY ./history /app/history
 COPY ./replicateGithubIssues.py /app/replicateGithubIssues.py
 
 CMD ["/app/replicateGithubIssues.py", "/app/.env"]
