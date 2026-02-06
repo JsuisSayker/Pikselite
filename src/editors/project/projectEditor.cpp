@@ -14,11 +14,8 @@ namespace editors {
 
         // ImGui part
         _imguiInterface->startFrame();
-
         _renderer->drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
-
-        _imguiInterface->showImGuiDemo();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
 
         _renderer->present(_graphicsInterface->getWindow());
@@ -58,10 +55,10 @@ namespace editors {
         _renderPixels.clear();
 
         uint32_t numChunks = 0;
-        Pixel::PixelSprite newSprite;
+        Pixel::GameObject newSprite;
         std::unordered_map<Pixel::PixelEntityID, Pixel::PixelEntityID> pixelIds;
 
-        newSprite.id = spriteIdCounter++;
+        newSprite.id = gameObjectCounter++;
         fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
 
         for (uint32_t i = 0; i < numChunks; ++i)
@@ -82,7 +79,7 @@ namespace editors {
                 }
             }
         }
-        _sprites.push_back(newSprite);
+        _gameObjects.push_back(newSprite);
 
         uint32_t count = 0;
         fin.read(reinterpret_cast<char*>(&count), sizeof(count));

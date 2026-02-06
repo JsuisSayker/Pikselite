@@ -61,7 +61,7 @@ namespace editors {
     }
 
     void SpriteEditor::imguiHandling() {
-        _imguiInterface->showImGuiDemo();
+        // _imguiInterface->showImGuiDemo();
         if (_showPixelEditor) {
             if (_currentPixel) {
                 _imguiInterface->pixelEditor(*_currentPixel, _chunkGrid, _pixelAttributes, "Pixel Editor");

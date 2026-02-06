@@ -44,7 +44,13 @@ namespace engine
         engine::ComponentManager componentManager;
         engine::SystemManager systemManager;
 
-        std::vector<graphics::Pixel> pixels;
+        uint32_t pixelIdCounter = 1;
+        uint32_t gameObjectCounter = 1;
+        
+        graphics::Camera2D _camera;
+        Pixel::PixelAttributes _pixelAttributes;
+        std::vector<Pixel::GameObject> _gameObjects;
+        std::vector<graphics::Pixel> _renderPixels;
 
         void init();
 
@@ -57,7 +63,10 @@ namespace engine
         void mainLoop();
 
         // helper: run a single frame (step) of the game preview; returns whether preview continues
-        bool runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime, graphics::InputEventType gameEventType);
+        void runGamePreview();
+        bool runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime);
         void shutdown();
+
+        bool copyProjectEditorDataToCore();
     };
 } // namespace engine

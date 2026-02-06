@@ -21,14 +21,7 @@ namespace engine
 
             if (isGamePreviewActive)
             {
-                graphics::Renderer gameRenderer(sdlInterface.getWindow(), sdlInterface.getGLContext());
-                graphics::Interface gameInterface(WINDOW_WIDTH, WINDOW_HEIGHT);
-                while (isGamePreviewActive)
-                {
-                    float deltaTime = timer.getDeltaTime();
-                    if (!runGamePreviewStep(gameRenderer, gameInterface, deltaTime, eventType))
-                        break;
-                }
+                runGamePreview();
             }
             if (isProjectEditorActive)
                 projectEditor->run(eventType);
@@ -37,34 +30,39 @@ namespace engine
         }
     }
 
-    bool Core::runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime, graphics::InputEventType gameEventType)
+    void Core::runGamePreview()
+    {
+        graphics::Interface gameInterface(WINDOW_WIDTH, WINDOW_HEIGHT);
+        graphics::Renderer gameRenderer(gameInterface.getWindow(), gameInterface.getGLContext());
+        
+        if (copyProjectEditorDataToCore() == false)
+            return;
+        while (isGamePreviewActive)
+        {
+            float deltaTime = timer.getDeltaTime();
+            if (!runGamePreviewStep(gameRenderer, gameInterface, deltaTime))
+                break;
+        }
+    }
+
+    bool Core::runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime)
     {
         if (!running || !isGamePreviewActive)
             return false;
 
+        graphics::InputEventType gameEventType = gameInterface.pollEvent();
+
+        if (gameEventType == graphics::QUIT || gameEventType == graphics::KEY_F5)
+        {
+            isGamePreviewActive = false;
+            return false;
+        }
+        
         timer.tick();
-        gameEventType = handleEvents();
-
-        std::cout << "Game Preview Event: " << gameEventType << std::endl;
-
-        if (gameEventType == graphics::QUIT)
-        {
-            isGamePreviewActive = false;
-            return false;
-        }
-
-        // Allow closing preview with F5 pressed in the preview window
-        if (gameEventType == graphics::KEY_F5)
-        {
-            isGamePreviewActive = false;
-            std::cout << "Exiting game preview." << std::endl;
-            return false;
-        }
-
         update(deltaTime);
 
         gameRenderer.clear();
-        gameRenderer.drawPixelsOverlay(pixels, PIXEL_SIZE);
+        gameRenderer.drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
         gameRenderer.present(gameInterface.getWindow());
 
         return isGamePreviewActive;
@@ -107,12 +105,23 @@ namespace engine
     void Core::render()
     {
         renderer.clear();
-        renderer.drawPixelsOverlay(pixels, PIXEL_SIZE);
+        renderer.drawPixelsOverlay(_renderPixels, PIXEL_SIZE);
         renderer.present(sdlInterface.getWindow());
     }
 
     void Core::shutdown()
     {
         SDL_Quit();
+    }
+
+    bool Core::copyProjectEditorDataToCore()
+    {
+        if (!isProjectEditorActive)
+            return false;
+
+        _renderPixels = projectEditor->getPixels();
+        _gameObjects = projectEditor->getGameObjects();
+        _pixelAttributes = projectEditor->getPixelAttributes();
+        return true;
     }
 } // namespace engine

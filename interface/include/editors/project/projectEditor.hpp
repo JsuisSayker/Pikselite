@@ -15,6 +15,10 @@ namespace editors {
 
         void run(graphics::InputEventType eventType);
 
+        std::vector<graphics::Pixel> getPixels() const { return _renderPixels; }
+        std::vector<Pixel::GameObject> getGameObjects() const { return _gameObjects; }
+        Pixel::PixelAttributes getPixelAttributes() const { return _pixelAttributes; }
+
     private:
         graphics::ImguiInterface* _imguiInterface;
         graphics::Interface* _graphicsInterface;
@@ -23,11 +27,11 @@ namespace editors {
         graphics::Camera2D _camera;
         
         uint32_t pixelIdCounter = 1;
-        uint32_t spriteIdCounter = 1;
+        uint32_t gameObjectCounter = 1;
         
         Pixel::PixelAttributes _pixelAttributes;
 
-        std::vector<Pixel::PixelSprite> _sprites;
+        std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
 
         void handleEvents(graphics::InputEventType eventType);
