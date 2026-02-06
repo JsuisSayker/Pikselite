@@ -10,6 +10,8 @@
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/systemManager.hpp>
 
+#include <engine/pixels/simulation/water.hpp>
+
 #include <vector>
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -51,6 +53,8 @@ namespace engine
         Pixel::PixelAttributes _pixelAttributes;
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
+
+        std::vector<Pixel::IPixelSystem*> _pixelSystems;
 
         void init();
 

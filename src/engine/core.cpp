@@ -6,7 +6,8 @@ namespace engine
 {
     void Core::init()
     {
-        // temp sprite editor
+        _pixelSystems.push_back(std::make_unique<Pixel::WaterSystem>().release());
+
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
     }
