@@ -13,7 +13,7 @@ namespace editors {
         SpriteEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
         ~SpriteEditor();
 
-        void run(graphics::InputEventType eventType);
+        void run(const graphics::InputEvent& event);
 
     private:
         graphics::ImguiInterface* _imguiInterface;
@@ -28,7 +28,7 @@ namespace editors {
         Pixel::PixelAttributes _pixelAttributes;
         std::vector<graphics::Pixel> _renderPixels;
 
-        void handleEvents(graphics::InputEventType eventType);
+        void handleEvents(const graphics::InputEvent& event);
         void mouseLeftClick();
         void mouseLeftDrag();
 

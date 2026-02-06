@@ -48,7 +48,7 @@ namespace engine
 
         void init();
 
-        graphics::InputEventType handleEvents();
+        graphics::InputEvent handleEvents();
 
         void update(float deltaTime);
 
@@ -56,8 +56,7 @@ namespace engine
 
         void mainLoop();
 
-        // helper: run a single frame (step) of the game preview; returns whether preview continues
-        bool runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime, graphics::InputEventType gameEventType);
+        bool runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime, graphics::InputEvent gameEvent);
         void shutdown();
     };
 } // namespace engine

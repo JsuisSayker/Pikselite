@@ -49,55 +49,77 @@ namespace graphics {
         if (_window) {
             SDL_DestroyWindow(_window);
         }
-        SDL_Quit();
     }
 
-    InputEventType Interface::pollEvent()
+    InputEvent Interface::pollEvent()
     {
         SDL_Event event;
+        InputEvent result;
+        result.type = NO_EVENT;
+        result.windowID = 0;
+
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL2_ProcessEvent(&event);
             ImGuiIO &io = ImGui::GetIO();
             if (io.WantCaptureKeyboard || io.WantCaptureMouse)
                 continue;
             switch (event.type) {
+            case SDL_WINDOWEVENT:
+                if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                    std::cout << "Window close event for window ID: " << event.window.windowID << std::endl;
+                    result.type = WINDOW_CLOSE;
+                    result.windowID = event.window.windowID;
+                    return result;
+                }
+                break;
             case SDL_KEYDOWN:
+                result.windowID = event.key.windowID;
                 switch (event.key.keysym.sym) {
-                case SDLK_w: return KEY_W;
-                case SDLK_a: return KEY_A;
-                case SDLK_s: return KEY_S;
-                case SDLK_d: return KEY_D;
-                case SDLK_i: return KEY_I;
-                case SDLK_k: return KEY_K;
-                case SDLK_l: return KEY_L;
-                case SDLK_o: return KEY_O;
-                case SDLK_TAB: return KEY_TAB;
-                case SDLK_F5: return KEY_F5;
+                case SDLK_w: result.type = KEY_W; return result;
+                case SDLK_a: result.type = KEY_A; return result;
+                case SDLK_s: result.type = KEY_S; return result;
+                case SDLK_d: result.type = KEY_D; return result;
+                case SDLK_i: result.type = KEY_I; return result;
+                case SDLK_k: result.type = KEY_K; return result;
+                case SDLK_l: result.type = KEY_L; return result;
+                case SDLK_o: result.type = KEY_O; return result;
+                case SDLK_TAB: result.type = KEY_TAB; return result;
+                case SDLK_F5: result.type = KEY_F5; return result;
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 if (event.button.button == SDL_BUTTON_LEFT) {
-                    return MOUSE_LEFT_CLICK;
+                    result.type = MOUSE_LEFT_CLICK;
+                    result.windowID = event.button.windowID;
+                    return result;
                 }
                 break;
             case SDL_MOUSEBUTTONUP:
                 if (event.button.button == SDL_BUTTON_RIGHT) {
-                    return MOUSE_RIGHT_CLICK;
+                    result.type = MOUSE_RIGHT_CLICK;
+                    result.windowID = event.button.windowID;
+                    return result;
                 }
                 break;
             case SDL_MOUSEMOTION:
                 if (event.motion.state & SDL_BUTTON_LMASK) {
-                    return MOUSE_LEFT_DRAG;
+                    result.type = MOUSE_LEFT_DRAG;
+                    result.windowID = event.motion.windowID;
+                    return result;
                 }
                 if (event.motion.state & SDL_BUTTON_RMASK) {
-                    return MOUSE_RIGHT_DRAG;
+                    result.type = MOUSE_RIGHT_DRAG;
+                    result.windowID = event.motion.windowID;
+                    return result;
                 }
                 break;
             case SDL_QUIT:
-                return QUIT;
+                result.type = QUIT;
+                result.windowID = 0;
+                return result;
             }
         }
-        return NO_EVENT;
+        return result;
     }
 
     glm::vec2 Interface::getMousePosition() const

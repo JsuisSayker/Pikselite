@@ -13,7 +13,7 @@ namespace editors {
         ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
         ~ProjectEditor();
 
-        void run(graphics::InputEventType eventType);
+        void run(const graphics::InputEvent& event);
 
     private:
         graphics::ImguiInterface* _imguiInterface;
@@ -30,7 +30,7 @@ namespace editors {
         std::vector<Pixel::PixelSprite> _sprites;
         std::vector<graphics::Pixel> _renderPixels;
 
-        void handleEvents(graphics::InputEventType eventType);
+        void handleEvents(const graphics::InputEvent& event);
         bool loadSpriteFromFile(const std::string& filename);
     };
 } // namespace editors
