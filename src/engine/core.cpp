@@ -131,6 +131,12 @@ namespace engine
 
     void Core::update(float deltaTime)
     {
+        for (auto& system : _pixelSystems)
+        {
+            system->collectPixels(_chunkGrid, _pixelAttributes, _renderPixels);
+            system->step(_chunkGrid, _pixelAttributes, _renderPixels);
+        }
+
         systemManager.update(deltaTime, componentManager);
     }
 
@@ -154,6 +160,7 @@ namespace engine
         _renderPixels = projectEditor->getPixels();
         _gameObjects = projectEditor->getGameObjects();
         _pixelAttributes = projectEditor->getPixelAttributes();
+        _chunkGrid = projectEditor->getChunkGrid();
         return true;
     }
 } // namespace engine

@@ -87,7 +87,7 @@ namespace editors {
         glm::vec2 worldPos = screenToWorld(mousePos);
 
         removePixelAt(worldPos);
-        _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
+        _chunkGrid.removePixel((int)(worldPos.x) / PIXEL_SIZE, (int)(worldPos.y) / PIXEL_SIZE);
         addPixel(worldPos, 1.0f, 0.0f, 0.0f);
     }
 
@@ -125,7 +125,7 @@ namespace editors {
                                  });
         if (it != _renderPixels.end()) {
             _renderPixels.erase(it, _renderPixels.end());
-            _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
+            _chunkGrid.removePixel((int)(worldPos.x) / PIXEL_SIZE, (int)(worldPos.y) / PIXEL_SIZE);
             return true;
         }
         return false;
@@ -133,14 +133,16 @@ namespace editors {
 
     void SpriteEditor::addPixel(glm::vec2 worldPos, float r, float g, float b) {
         _renderPixels.push_back({worldPos, {r, g, b}});
-        int cx = (int)std::floor(worldPos.x / Pixel::CHUNK_SIZE);
-        int cy = (int)std::floor(worldPos.y / Pixel::CHUNK_SIZE);
+        int cx = (int)(std::floor((worldPos.x / Pixel::CHUNK_SIZE) / PIXEL_SIZE));
+        int cy = (int)(std::floor((worldPos.y / Pixel::CHUNK_SIZE) / PIXEL_SIZE));
         Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
         
         // Safe modulo for negative coordinates
-        int lx = ((int)worldPos.x % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
-        int ly = ((int)worldPos.y % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        int lx = (((int)worldPos.x % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE) / PIXEL_SIZE;
+        int ly = (((int)worldPos.y % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE) / PIXEL_SIZE;
         
+        std::cout << "Adding pixel at chunk (" << cx << ", " << cy << ") local (" << lx << ", " << ly << ") with ID " << pixelIdCounter << std::endl;
+
         chunk.set(lx, ly, pixelIdCounter);
         pixelIdCounter++;
 
@@ -186,6 +188,7 @@ namespace editors {
         fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
         for (const auto& [id, liquid] : _pixelAttributes.liquidAttributes)
         {
+            std::cout << "Saving liquid pixel ID " << id << " with viscosity " << liquid.viscosity << std::endl;
             fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
             fout.write(reinterpret_cast<const char*>(&liquid.viscosity), sizeof(liquid.viscosity));
         }

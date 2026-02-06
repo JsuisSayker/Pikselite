@@ -53,6 +53,7 @@ namespace engine
         Pixel::PixelAttributes _pixelAttributes;
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
+        Pixel::ChunkGrid _chunkGrid;
 
         std::vector<Pixel::IPixelSystem*> _pixelSystems;
 

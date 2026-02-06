@@ -18,6 +18,7 @@ namespace editors {
         std::vector<graphics::Pixel> getPixels() const { return _renderPixels; }
         std::vector<Pixel::GameObject> getGameObjects() const { return _gameObjects; }
         Pixel::PixelAttributes getPixelAttributes() const { return _pixelAttributes; }
+        Pixel::ChunkGrid getChunkGrid() const { return _chunkGrid; }
 
     private:
         graphics::ImguiInterface* _imguiInterface;
@@ -33,6 +34,7 @@ namespace editors {
 
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
+        Pixel::ChunkGrid _chunkGrid;
 
         void handleEvents(const graphics::InputEvent& event);
         bool loadSpriteFromFile(const std::string& filename);

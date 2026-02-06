@@ -29,6 +29,7 @@ namespace Pixel {
                             if (id != Pixel::EMPTY && attrs.liquidAttributes.count(id)) {
                                 int wx = cx * CHUNK_SIZE + lx;
                                 int wy = cy * CHUNK_SIZE + ly;
+                                std::cout << "Found water pixel at (" << cx << ", " << cy << ") with ID " << id << std::endl;
                                 activeWater.push_back({wx, wy});
                             }
                         }

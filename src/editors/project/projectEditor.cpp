@@ -75,6 +75,9 @@ namespace editors {
                     if (id != Pixel::EMPTY) {
                         pixelIds[id] = pixelIdCounter++;
                         newSprite.pixelEntities.push_back(pixelIds[id]);
+                        Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+                        std::cout << "Loaded pixel at chunk (" << cx << ", " << cy << ") local (" << x << ", " << y << ") with old ID " << id << " new ID " << pixelIds[id] << std::endl;
+                        chunk.set(x, y, pixelIds[id]);
                     }
                 }
             }
@@ -106,6 +109,7 @@ namespace editors {
             float viscosity = 0.0f;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
             fin.read(reinterpret_cast<char*>(&viscosity), sizeof(viscosity));
+            std::cout << "Loaded liquid pixel ID " << id << " with pixelId " << pixelIds[id] << " and viscosity " << viscosity << std::endl;
             _pixelAttributes.liquidAttributes[pixelIds[id]] = Pixel::Liquid{viscosity};
         }
 
