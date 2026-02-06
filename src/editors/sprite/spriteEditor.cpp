@@ -8,8 +8,8 @@ namespace editors {
 
     SpriteEditor::~SpriteEditor() {}
 
-    void SpriteEditor::run(graphics::InputEventType eventType) {
-        handleEvents(eventType);
+    void SpriteEditor::run(const graphics::InputEvent& event) {
+        handleEvents(event);
 
         _renderer->clear();
         _imguiInterface->startFrame();
@@ -23,8 +23,8 @@ namespace editors {
         _renderer->present(_graphicsInterface->getWindow());
     }
 
-    void SpriteEditor::handleEvents(graphics::InputEventType eventType) {
-        switch (eventType) {
+    void SpriteEditor::handleEvents(const graphics::InputEvent& event) {
+        switch (event.type) {
         case graphics::MOUSE_LEFT_CLICK:
             mouseLeftClick();
             break;

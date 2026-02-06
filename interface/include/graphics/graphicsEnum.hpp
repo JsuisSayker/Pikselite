@@ -37,7 +37,13 @@ namespace graphics {
         MOUSE_LEFT_DRAG,
         MOUSE_RIGHT_CLICK,
         MOUSE_RIGHT_DRAG,
+        WINDOW_CLOSE,
         QUIT,
         NO_EVENT,
+    };
+
+    struct InputEvent {
+        InputEventType type = NO_EVENT;
+        uint32_t windowID = 0;
     };
 }

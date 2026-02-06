@@ -7,8 +7,8 @@ namespace editors {
 
     ProjectEditor::~ProjectEditor() {}
 
-    void ProjectEditor::run(graphics::InputEventType eventType) {
-        handleEvents(eventType);
+    void ProjectEditor::run(const graphics::InputEvent& event) {
+        handleEvents(event);
 
         _renderer->clear();
 
@@ -21,8 +21,8 @@ namespace editors {
         _renderer->present(_graphicsInterface->getWindow());
     }
 
-    void ProjectEditor::handleEvents(graphics::InputEventType eventType) {
-        switch (eventType) {
+    void ProjectEditor::handleEvents(const graphics::InputEvent& event) {
+        switch (event.type) {
         case graphics::KEY_W:
             _camera.move(glm::vec2(0.0f, -10.0f));
             break;

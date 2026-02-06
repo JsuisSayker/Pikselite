@@ -58,7 +58,7 @@ namespace engine
 
         void init();
 
-        graphics::InputEventType handleEvents();
+        graphics::InputEvent handleEvents();
 
         void update(float deltaTime);
 
@@ -68,7 +68,6 @@ namespace engine
 
         // helper: run a single frame (step) of the game preview; returns whether preview continues
         void runGamePreview();
-        bool runGamePreviewStep(graphics::Renderer &gameRenderer, graphics::Interface &gameInterface, float deltaTime);
         void shutdown();
 
         bool copyProjectEditorDataToCore();
