@@ -76,7 +76,6 @@ namespace editors {
                         pixelIds[id] = pixelIdCounter++;
                         newSprite.pixelEntities.push_back(pixelIds[id]);
                         Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-                        std::cout << "Loaded pixel at chunk (" << cx << ", " << cy << ") local (" << x << ", " << y << ") with old ID " << id << " new ID " << pixelIds[id] << std::endl;
                         chunk.set(x, y, pixelIds[id]);
                     }
                 }

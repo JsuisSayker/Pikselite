@@ -86,8 +86,11 @@ namespace editors {
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
 
+        int gridX = (int)(worldPos.x / PIXEL_SIZE);
+        int gridY = (int)(worldPos.y / PIXEL_SIZE);
+        
         removePixelAt(worldPos);
-        _chunkGrid.removePixel((int)(worldPos.x) / PIXEL_SIZE, (int)(worldPos.y) / PIXEL_SIZE);
+        _chunkGrid.removePixel(gridX, gridY);
         addPixel(worldPos, 1.0f, 0.0f, 0.0f);
     }
 
@@ -125,7 +128,10 @@ namespace editors {
                                  });
         if (it != _renderPixels.end()) {
             _renderPixels.erase(it, _renderPixels.end());
-            _chunkGrid.removePixel((int)(worldPos.x) / PIXEL_SIZE, (int)(worldPos.y) / PIXEL_SIZE);
+            
+            int gridX = (int)(worldPos.x / PIXEL_SIZE);
+            int gridY = (int)(worldPos.y / PIXEL_SIZE);
+            _chunkGrid.removePixel(gridX, gridY);
             return true;
         }
         return false;
