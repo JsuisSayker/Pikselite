@@ -90,7 +90,6 @@ namespace editors {
             int index = 0;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
             fin.read(reinterpret_cast<char*>(&index), sizeof(index));
-            std::cout << "Mapping loaded pixel ID " << id << " to pixelId " << pixelIds[id] << " with render index " << index << std::endl;
             _pixelAttributes.renderIndex[pixelIds[id]] = index;
         }
 
@@ -109,7 +108,6 @@ namespace editors {
             float viscosity = 0.0f;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
             fin.read(reinterpret_cast<char*>(&viscosity), sizeof(viscosity));
-            std::cout << "Loaded liquid pixel ID " << id << " with pixelId " << pixelIds[id] << " and viscosity " << viscosity << std::endl;
             _pixelAttributes.liquidAttributes[pixelIds[id]] = Pixel::Liquid{viscosity};
         }
 
