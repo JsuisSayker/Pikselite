@@ -90,6 +90,7 @@ namespace editors {
             int index = 0;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
             fin.read(reinterpret_cast<char*>(&index), sizeof(index));
+            std::cout << "Mapping loaded pixel ID " << id << " to pixelId " << pixelIds[id] << " with render index " << index << std::endl;
             _pixelAttributes.renderIndex[pixelIds[id]] = index;
         }
 

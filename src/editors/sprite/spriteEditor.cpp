@@ -131,7 +131,9 @@ namespace editors {
             
             int gridX = (int)(worldPos.x / PIXEL_SIZE);
             int gridY = (int)(worldPos.y / PIXEL_SIZE);
+            Pixel::PixelEntityID removedId = _chunkGrid.getPixel(gridX, gridY);
             _chunkGrid.removePixel(gridX, gridY);
+            removePixelAttributes(removedId);
             return true;
         }
         return false;
@@ -149,6 +151,7 @@ namespace editors {
         int lx = (((int)(worldPos.x / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
         int ly = (((int)(worldPos.y / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
         chunk.set(lx, ly, pixelIdCounter);
+        _pixelAttributes.renderIndex[pixelIdCounter] = (int)_renderPixels.size() - 1;
         pixelIdCounter++;
 
         _currentPixel = getPixelAt(worldPos);
@@ -309,6 +312,13 @@ namespace editors {
         fin.close();
         pixelIdCounter = _renderPixels.size() + 1;
         return true;
+    }
+
+    void SpriteEditor::removePixelAttributes(Pixel::PixelEntityID id) {
+        _pixelAttributes.renderIndex.erase(id);
+        _pixelAttributes.solidAttributes.erase(id);
+        _pixelAttributes.liquidAttributes.erase(id);
+        _pixelAttributes.gaseousAttributes.erase(id);
     }
 
 } // namespace editors

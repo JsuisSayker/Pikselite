@@ -134,7 +134,7 @@ namespace engine
         for (auto& system : _pixelSystems)
         {
             system->collectPixels(_chunkGrid, _pixelAttributes, _renderPixels);
-            system->step(_chunkGrid, _pixelAttributes, _renderPixels);
+            system->step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
         }
 
         systemManager.update(deltaTime, componentManager);

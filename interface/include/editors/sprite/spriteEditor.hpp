@@ -42,6 +42,8 @@ namespace editors {
         bool saveSpriteToFile(const std::string& filename);
         bool loadSpriteFromFile(const std::string& filename);
 
+        void removePixelAttributes(Pixel::PixelEntityID id);
+
         // Imgui state
         graphics::Pixel* _currentPixel = nullptr;
 
