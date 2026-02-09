@@ -62,6 +62,9 @@ namespace editors {
 
     void SpriteEditor::imguiHandling() {
         _imguiInterface->showImGuiDemo();
+
+        _imguiInterface->pixelSpriteHandler();
+
         if (_showPixelEditor) {
             if (_currentPixel) {
                 _imguiInterface->pixelEditor(*_currentPixel, _chunkGrid, _pixelAttributes, "Pixel Editor");
@@ -79,7 +82,7 @@ namespace editors {
             _showPixelEditor = true;
             return;
         }
-        addPixel(worldPos, 1.0f, 0.0f, 0.0f);
+        addPixel(worldPos, _defaultPixelProperties);
     }
 
     void SpriteEditor::mouseLeftDrag() {
@@ -88,7 +91,7 @@ namespace editors {
 
         removePixelAt(worldPos);
         _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
-        addPixel(worldPos, 1.0f, 0.0f, 0.0f);
+        addPixel(worldPos, _defaultPixelProperties);
     }
 
     glm::vec2 SpriteEditor::screenToWorld(glm::vec2 screenPos) {
@@ -131,8 +134,8 @@ namespace editors {
         return false;
     }
 
-    void SpriteEditor::addPixel(glm::vec2 worldPos, float r, float g, float b) {
-        _renderPixels.push_back({worldPos, {r, g, b}});
+    void SpriteEditor::addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) {
+        _renderPixels.push_back({worldPos, defaultProperties.color});
         int cx = (int)std::floor(worldPos.x / Pixel::CHUNK_SIZE);
         int cy = (int)std::floor(worldPos.y / Pixel::CHUNK_SIZE);
         Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
@@ -142,6 +145,17 @@ namespace editors {
         int ly = ((int)worldPos.y % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
         
         chunk.set(lx, ly, pixelIdCounter);
+
+        if (defaultProperties.isSolid) {
+            _pixelAttributes.solidAttributes[pixelIdCounter] = defaultProperties.solidAttributes;
+        }
+        if (defaultProperties.isLiquid) {
+            _pixelAttributes.liquidAttributes[pixelIdCounter] = defaultProperties.liquidAttributes;
+        }
+        if (defaultProperties.isGaseous) {
+            _pixelAttributes.gaseousAttributes[pixelIdCounter] = defaultProperties.gaseousAttributes;
+        }
+        
         pixelIdCounter++;
 
         _currentPixel = getPixelAt(worldPos);

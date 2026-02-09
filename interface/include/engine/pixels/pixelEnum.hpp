@@ -30,4 +30,14 @@ namespace Pixel {
         PixelSpriteID id;
         std::vector<PixelEntityID> pixelEntities;
     };
+
+    struct DefaultPixelProperties {
+        glm::vec3 color = glm::vec3(1.0f, 0.0f, 0.0f);
+        bool isSolid = false;
+        bool isLiquid = false;
+        bool isGaseous = false;
+        Solid solidAttributes;
+        Liquid liquidAttributes{0.5f};
+        Gaseous gaseousAttributes{0.5f};
+    };
 }

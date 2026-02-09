@@ -122,6 +122,27 @@ namespace graphics {
         });
     }
 
+    void ImguiInterface::pixelSpriteHandler()
+    {
+        static BarConfig sideBarConfig {
+            BarOrientation::Vertical,
+            "Pixel Sprite Handler",
+            ImVec2(200, 400),
+            true,
+            ImVec2(0, 0)
+        };
+
+        static Bar sideBar(sideBarConfig);
+
+        sideBar.Draw([&]() {
+            if (BasicButton("Pixel Parameters")) {    
+            };
+
+            BasicButton("Load Sprite");
+            BasicButton("Save Sprite");
+        });
+    }
+
     glm::vec3 ImguiInterface::colorSelector(const glm::vec3& currentColor, const char* label) {
         float color[3] = { currentColor.r, currentColor.g, currentColor.b };
         if (ImGui::ColorPicker3(label, color)) {
