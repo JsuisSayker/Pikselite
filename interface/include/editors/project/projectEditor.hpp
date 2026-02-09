@@ -13,7 +13,12 @@ namespace editors {
         ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
         ~ProjectEditor();
 
-        void run(graphics::InputEventType eventType);
+        void run(const graphics::InputEvent& event);
+
+        std::vector<graphics::Pixel> getPixels() const { return _renderPixels; }
+        std::vector<Pixel::GameObject> getGameObjects() const { return _gameObjects; }
+        Pixel::PixelAttributes getPixelAttributes() const { return _pixelAttributes; }
+        Pixel::ChunkGrid getChunkGrid() const { return _chunkGrid; }
 
     private:
         graphics::ImguiInterface* _imguiInterface;
@@ -23,14 +28,15 @@ namespace editors {
         graphics::Camera2D _camera;
         
         uint32_t pixelIdCounter = 1;
-        uint32_t spriteIdCounter = 1;
+        uint32_t gameObjectCounter = 1;
         
         Pixel::PixelAttributes _pixelAttributes;
 
-        std::vector<Pixel::PixelSprite> _sprites;
+        std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
+        Pixel::ChunkGrid _chunkGrid;
 
-        void handleEvents(graphics::InputEventType eventType);
+        void handleEvents(const graphics::InputEvent& event);
         bool loadSpriteFromFile(const std::string& filename);
     };
 } // namespace editors

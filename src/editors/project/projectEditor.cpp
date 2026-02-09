@@ -7,25 +7,22 @@ namespace editors {
 
     ProjectEditor::~ProjectEditor() {}
 
-    void ProjectEditor::run(graphics::InputEventType eventType) {
-        handleEvents(eventType);
+    void ProjectEditor::run(const graphics::InputEvent& event) {
+        handleEvents(event);
 
         _renderer->clear();
 
         // ImGui part
         _imguiInterface->startFrame();
-
         _renderer->drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
-
-        _imguiInterface->showImGuiDemo();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
 
         _renderer->present(_graphicsInterface->getWindow());
     }
 
-    void ProjectEditor::handleEvents(graphics::InputEventType eventType) {
-        switch (eventType) {
+    void ProjectEditor::handleEvents(const graphics::InputEvent& event) {
+        switch (event.type) {
         case graphics::KEY_W:
             _camera.move(glm::vec2(0.0f, -10.0f));
             break;
@@ -58,10 +55,10 @@ namespace editors {
         _renderPixels.clear();
 
         uint32_t numChunks = 0;
-        Pixel::PixelSprite newSprite;
+        Pixel::GameObject newSprite;
         std::unordered_map<Pixel::PixelEntityID, Pixel::PixelEntityID> pixelIds;
 
-        newSprite.id = spriteIdCounter++;
+        newSprite.id = gameObjectCounter++;
         fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
 
         for (uint32_t i = 0; i < numChunks; ++i)
@@ -78,11 +75,13 @@ namespace editors {
                     if (id != Pixel::EMPTY) {
                         pixelIds[id] = pixelIdCounter++;
                         newSprite.pixelEntities.push_back(pixelIds[id]);
+                        Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+                        chunk.set(x, y, pixelIds[id]);
                     }
                 }
             }
         }
-        _sprites.push_back(newSprite);
+        _gameObjects.push_back(newSprite);
 
         uint32_t count = 0;
         fin.read(reinterpret_cast<char*>(&count), sizeof(count));

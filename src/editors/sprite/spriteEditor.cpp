@@ -8,8 +8,8 @@ namespace editors {
 
     SpriteEditor::~SpriteEditor() {}
 
-    void SpriteEditor::run(graphics::InputEventType eventType) {
-        handleEvents(eventType);
+    void SpriteEditor::run(const graphics::InputEvent& event) {
+        handleEvents(event);
 
         _renderer->clear();
         _imguiInterface->startFrame();
@@ -23,8 +23,8 @@ namespace editors {
         _renderer->present(_graphicsInterface->getWindow());
     }
 
-    void SpriteEditor::handleEvents(graphics::InputEventType eventType) {
-        switch (eventType) {
+    void SpriteEditor::handleEvents(const graphics::InputEvent& event) {
+        switch (event.type) {
         case graphics::MOUSE_LEFT_CLICK:
             mouseLeftClick();
             break;
@@ -96,8 +96,11 @@ namespace editors {
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
 
+        int gridX = (int)(worldPos.x / PIXEL_SIZE);
+        int gridY = (int)(worldPos.y / PIXEL_SIZE);
+        
         removePixelAt(worldPos);
-        _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
+        _chunkGrid.removePixel(gridX, gridY);
         addPixel(worldPos, _defaultPixelProperties);
     }
 
@@ -135,7 +138,12 @@ namespace editors {
                                  });
         if (it != _renderPixels.end()) {
             _renderPixels.erase(it, _renderPixels.end());
-            _chunkGrid.removePixel((int)worldPos.x, (int)worldPos.y);
+            
+            int gridX = (int)(worldPos.x / PIXEL_SIZE);
+            int gridY = (int)(worldPos.y / PIXEL_SIZE);
+            Pixel::PixelEntityID removedId = _chunkGrid.getPixel(gridX, gridY);
+            _chunkGrid.removePixel(gridX, gridY);
+            removePixelAttributes(removedId);
             return true;
         }
         return false;
@@ -143,14 +151,15 @@ namespace editors {
 
     void SpriteEditor::addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) {
         _renderPixels.push_back({worldPos, defaultProperties.color});
-        int cx = (int)std::floor(worldPos.x / Pixel::CHUNK_SIZE);
-        int cy = (int)std::floor(worldPos.y / Pixel::CHUNK_SIZE);
+        
+        // Correct: world position → chunk coords
+        int cx = (int)std::floor(worldPos.x / (Pixel::CHUNK_SIZE * PIXEL_SIZE));
+        int cy = (int)std::floor(worldPos.y / (Pixel::CHUNK_SIZE * PIXEL_SIZE));
         Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
         
-        // Safe modulo for negative coordinates
-        int lx = ((int)worldPos.x % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
-        int ly = ((int)worldPos.y % Pixel::CHUNK_SIZE + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
-        
+        // Local coords within chunk (0..31)
+        int lx = (((int)(worldPos.x / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        int ly = (((int)(worldPos.y / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
         chunk.set(lx, ly, pixelIdCounter);
 
         if (defaultProperties.isSolid) {
@@ -163,6 +172,7 @@ namespace editors {
             _pixelAttributes.gaseousAttributes[pixelIdCounter] = defaultProperties.gaseousAttributes;
         }
 
+        _pixelAttributes.renderIndex[pixelIdCounter] = (int)_renderPixels.size() - 1;
         pixelIdCounter++;
 
         _currentPixel = getPixelAt(worldPos);
@@ -323,6 +333,13 @@ namespace editors {
         fin.close();
         pixelIdCounter = _renderPixels.size() + 1;
         return true;
+    }
+
+    void SpriteEditor::removePixelAttributes(Pixel::PixelEntityID id) {
+        _pixelAttributes.renderIndex.erase(id);
+        _pixelAttributes.solidAttributes.erase(id);
+        _pixelAttributes.liquidAttributes.erase(id);
+        _pixelAttributes.gaseousAttributes.erase(id);
     }
 
 } // namespace editors

@@ -6,10 +6,10 @@
 
 namespace Pixel {
     using PixelEntityID = std::uint32_t;
-    using PixelSpriteID = std::uint32_t;
+    using GameObjectID = std::uint32_t;
 
     static constexpr PixelEntityID EMPTY = 0;
-    static constexpr PixelSpriteID NO_SPRITE = 0;
+    static constexpr GameObjectID NO_SPRITE = 0;
 
     struct Solid {};
     struct Liquid {
@@ -26,8 +26,8 @@ namespace Pixel {
         std::unordered_map<PixelEntityID, Gaseous> gaseousAttributes;
     };
 
-    struct PixelSprite {
-        PixelSpriteID id;
+    struct GameObject {
+        GameObjectID id;
         std::vector<PixelEntityID> pixelEntities;
     };
 

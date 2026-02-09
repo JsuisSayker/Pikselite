@@ -25,14 +25,10 @@ namespace Pixel
             }
 
             PixelEntityID get(int x, int y) const {
-                for (int i = 0; i < CHUNK_SIZE; ++i) {
-                    for (int j = 0; j < CHUNK_SIZE; ++j) {
-                        if (x == i && y == j) {
-                            return cells[x][y];
-                        }
-                    }
+                if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_SIZE) {
+                    return EMPTY;
                 }
-                return EMPTY;
+                return cells[x][y];
             }
 
             void set(int x, int y, PixelEntityID id) {

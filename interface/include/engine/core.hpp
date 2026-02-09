@@ -10,6 +10,8 @@
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/systemManager.hpp>
 
+#include <engine/pixels/simulation/water.hpp>
+
 #include <vector>
 #include <iostream>
 #include <SDL2/SDL.h>
@@ -34,6 +36,7 @@ namespace engine
         bool isProjectEditorActive = false;
 
         bool running;
+        bool isGamePreviewActive = false;
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
         graphics::ImguiInterface imguiInterface;
@@ -43,11 +46,20 @@ namespace engine
         engine::ComponentManager componentManager;
         engine::SystemManager systemManager;
 
-        std::vector<graphics::Pixel> pixels;
+        uint32_t pixelIdCounter = 1;
+        uint32_t gameObjectCounter = 1;
+        
+        graphics::Camera2D _camera;
+        Pixel::PixelAttributes _pixelAttributes;
+        std::vector<Pixel::GameObject> _gameObjects;
+        std::vector<graphics::Pixel> _renderPixels;
+        Pixel::ChunkGrid _chunkGrid;
+
+        std::vector<Pixel::IPixelSystem*> _pixelSystems;
 
         void init();
 
-        graphics::InputEventType handleEvents();
+        graphics::InputEvent handleEvents();
 
         void update(float deltaTime);
 
@@ -55,6 +67,10 @@ namespace engine
 
         void mainLoop();
 
+        // helper: run a single frame (step) of the game preview; returns whether preview continues
+        void runGamePreview();
         void shutdown();
+
+        bool copyProjectEditorDataToCore();
     };
 } // namespace engine

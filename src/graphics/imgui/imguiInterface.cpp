@@ -51,7 +51,7 @@ namespace graphics {
                 pixel.color = glm::vec3(color[0], color[1], color[2]);
             }
 
-            ::Pixel::PixelEntityID pixelId = grid.getPixel(pixel.position.x, pixel.position.y);
+            ::Pixel::PixelEntityID pixelId = grid.getPixel(pixel.position.x / PIXEL_SIZE, pixel.position.y / PIXEL_SIZE);
 
             std::vector<std::string> availableAttributes;
 

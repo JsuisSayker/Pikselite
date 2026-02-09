@@ -19,3 +19,5 @@ PikseliteEngine.exe
 .env
 
 .github/scripts/*env
+
+*.dat

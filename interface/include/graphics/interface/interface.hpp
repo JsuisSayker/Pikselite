@@ -15,8 +15,9 @@ namespace graphics {
 
             SDL_Window* getWindow() const { return _window; }
             SDL_GLContext getGLContext() const { return _glContext; }
+            uint32_t getWindowID() const { return SDL_GetWindowID(_window); }
 
-            InputEventType pollEvent();
+            InputEvent pollEvent();
             glm::vec2 getMousePosition() const;
 
         private:

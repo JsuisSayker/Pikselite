@@ -13,7 +13,7 @@ namespace editors {
         SpriteEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
         ~SpriteEditor();
 
-        void run(graphics::InputEventType eventType);
+        void run(const graphics::InputEvent& event);
 
     private:
         graphics::ImguiInterface* _imguiInterface;
@@ -30,7 +30,7 @@ namespace editors {
 
         Pixel::DefaultPixelProperties _defaultPixelProperties;
 
-        void handleEvents(graphics::InputEventType eventType);
+        void handleEvents(const graphics::InputEvent& event);
         void mouseLeftClick();
         void mouseLeftDrag();
 
@@ -43,6 +43,8 @@ namespace editors {
 
         bool saveSpriteToFile(const std::string& filename);
         bool loadSpriteFromFile(const std::string& filename);
+
+        void removePixelAttributes(Pixel::PixelEntityID id);
 
         // Imgui state
         graphics::Pixel* _currentPixel = nullptr;
