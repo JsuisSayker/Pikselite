@@ -67,9 +67,11 @@ namespace editors {
 
         if (_showDefaultPropertiesEditor) {
             _imguiInterface->defaultPixelPropertiesEditor(_defaultPixelProperties, "Default Pixel Properties");
+            _showPixelEditor = false;
         }
 
         if (_showPixelEditor) {
+            _showDefaultPropertiesEditor = false;
             if (_currentPixel) {
                 _imguiInterface->pixelEditor(*_currentPixel, _chunkGrid, _pixelAttributes, "Pixel Editor");
             }
@@ -83,6 +85,7 @@ namespace editors {
         graphics::Pixel* pixel = getPixelAt(worldPos);
         if (pixel) {
             _currentPixel = pixel;
+            _showDefaultPropertiesEditor = false;
             _showPixelEditor = true;
             return;
         }

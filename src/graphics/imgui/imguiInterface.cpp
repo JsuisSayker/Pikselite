@@ -213,6 +213,10 @@ namespace graphics {
                     }
                 }
             });
+
+            if (BasicButton("Reset to Defaults")) {
+                defaultProperties = ::Pixel::DefaultPixelProperties();
+            };
         });
     }
 
@@ -233,8 +237,13 @@ namespace graphics {
                 showDefaultPropertiesEditor = true;
             };
 
-            BasicButton("Load Sprite");
-            BasicButton("Save Sprite");
+            if (BasicButton("Load Sprite")) {
+                //
+            };
+
+            if (BasicButton("Save Sprite")) {
+                //
+            };
         });
     }
 
