@@ -122,7 +122,101 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::pixelSpriteHandler()
+    void ImguiInterface::defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label) {
+        static BarConfig sideBarConfig {
+            BarOrientation::Vertical,
+            "Default Pixel Properties",
+            ImVec2(200, 400),
+            true,
+            ImVec2(-1, 0)
+        };
+
+        static Bar sideBar(sideBarConfig);
+
+        sideBar.Draw([&]() {
+            float color[3] = { defaultProperties.color.r, defaultProperties.color.g, defaultProperties.color.b };
+            if (ImGui::ColorPicker3(label, color)) {
+                defaultProperties.color = glm::vec3(color[0], color[1], color[2]);
+            }
+
+            if (defaultProperties.isSolid) {
+                 if (ImGui::CollapsingHeader("Solid")) {
+                    if (ImGui::Button("Remove Attribute")) {
+                        defaultProperties.isSolid = false;
+                    }
+                }
+            }
+
+            if (defaultProperties.isLiquid) {
+                 if (ImGui::CollapsingHeader("Liquid")) {
+                    ImGui::SliderFloat("Viscosity", &defaultProperties.liquidAttributes.viscosity, 0.0f, 1.0f);
+                    if (ImGui::Button("Remove Attribute")) {
+                        defaultProperties.isLiquid = false;
+                    }
+                }
+            }
+
+            if (defaultProperties.isGaseous) {
+                 if (ImGui::CollapsingHeader("Gaseous")) {
+                    ImGui::SliderFloat("Density", &defaultProperties.gaseousAttributes.density, 0.0f, 1.0f);
+                    if (ImGui::Button("Remove Attribute")) {
+                        defaultProperties.isGaseous = false;
+                    }
+                }
+            }
+
+            PopupButton("Add attribute", [&]() {
+                static char search[64] = "";
+                ImGui::InputText("Search", search, IM_ARRAYSIZE(search));
+                std::string query = search;
+                std::transform(query.begin(), query.end(), query.begin(), ::tolower);
+
+                if (!defaultProperties.isSolid) {
+                    std::string attr = "Solid";
+                    std::string lowerAttr = attr;
+                    std::transform(lowerAttr.begin(), lowerAttr.end(), lowerAttr.begin(), ::tolower);
+
+                    if (query.empty() || lowerAttr.find(query) != std::string::npos) {
+                        if (ImGui::Selectable(attr.c_str())) {
+                            defaultProperties.isSolid = true;
+                            query.clear();
+                            search[0] = '\0';
+                        }
+                    }
+                }
+
+                if (!defaultProperties.isLiquid) {
+                    std::string attr = "Liquid";
+                    std::string lowerAttr = attr;
+                    std::transform(lowerAttr.begin(), lowerAttr.end(), lowerAttr.begin(), ::tolower);
+
+                    if (query.empty() || lowerAttr.find(query) != std::string::npos) {
+                        if (ImGui::Selectable(attr.c_str())) {
+                            defaultProperties.isLiquid = true;
+                            query.clear();
+                            search[0] = '\0';
+                        }
+                    }
+                }
+
+                if (!defaultProperties.isGaseous) {
+                    std::string attr = "Gaseous";
+                    std::string lowerAttr = attr;
+                    std::transform(lowerAttr.begin(), lowerAttr.end(), lowerAttr.begin(), ::tolower);
+
+                    if (query.empty() || lowerAttr.find(query) != std::string::npos) {
+                        if (ImGui::Selectable(attr.c_str())) {
+                            defaultProperties.isGaseous = true;
+                            query.clear();
+                            search[0] = '\0';
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor)
     {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -135,7 +229,8 @@ namespace graphics {
         static Bar sideBar(sideBarConfig);
 
         sideBar.Draw([&]() {
-            if (BasicButton("Pixel Parameters")) {    
+            if (BasicButton("Pixel Parameters")) {
+                showDefaultPropertiesEditor = true;
             };
 
             BasicButton("Load Sprite");

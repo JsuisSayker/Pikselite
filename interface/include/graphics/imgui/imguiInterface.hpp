@@ -25,7 +25,9 @@ namespace graphics {
         void pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
-        void ImguiInterface::pixelSpriteHandler();
+        void pixelSpriteHandler(bool &showDefaultPropertiesEditor);
+
+        void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 
         void startFrame();
         void endFrame(SDL_Window* window);

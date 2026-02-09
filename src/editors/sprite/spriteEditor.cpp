@@ -63,7 +63,11 @@ namespace editors {
     void SpriteEditor::imguiHandling() {
         _imguiInterface->showImGuiDemo();
 
-        _imguiInterface->pixelSpriteHandler();
+        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor);
+
+        if (_showDefaultPropertiesEditor) {
+            _imguiInterface->defaultPixelPropertiesEditor(_defaultPixelProperties, "Default Pixel Properties");
+        }
 
         if (_showPixelEditor) {
             if (_currentPixel) {
@@ -155,7 +159,7 @@ namespace editors {
         if (defaultProperties.isGaseous) {
             _pixelAttributes.gaseousAttributes[pixelIdCounter] = defaultProperties.gaseousAttributes;
         }
-        
+
         pixelIdCounter++;
 
         _currentPixel = getPixelAt(worldPos);

@@ -48,5 +48,6 @@ namespace editors {
         graphics::Pixel* _currentPixel = nullptr;
 
         bool _showPixelEditor = false;
+        bool _showDefaultPropertiesEditor = false;
     };
 } // namespace editors
