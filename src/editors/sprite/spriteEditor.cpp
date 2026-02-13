@@ -61,8 +61,17 @@ namespace editors {
     }
 
     void SpriteEditor::imguiHandling() {
-        // _imguiInterface->showImGuiDemo();
+        _imguiInterface->showImGuiDemo();
+
+        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor);
+
+        if (_showDefaultPropertiesEditor) {
+            _imguiInterface->defaultPixelPropertiesEditor(_defaultPixelProperties, "Default Pixel Properties");
+            _showPixelEditor = false;
+        }
+
         if (_showPixelEditor) {
+            _showDefaultPropertiesEditor = false;
             if (_currentPixel) {
                 _imguiInterface->pixelEditor(*_currentPixel, _chunkGrid, _pixelAttributes, "Pixel Editor");
             }
@@ -76,10 +85,11 @@ namespace editors {
         graphics::Pixel* pixel = getPixelAt(worldPos);
         if (pixel) {
             _currentPixel = pixel;
+            _showDefaultPropertiesEditor = false;
             _showPixelEditor = true;
             return;
         }
-        addPixel(worldPos, 1.0f, 0.0f, 0.0f);
+        addPixel(worldPos, _defaultPixelProperties);
     }
 
     void SpriteEditor::mouseLeftDrag() {
@@ -91,7 +101,7 @@ namespace editors {
         
         removePixelAt(worldPos);
         _chunkGrid.removePixel(gridX, gridY);
-        addPixel(worldPos, 1.0f, 0.0f, 0.0f);
+        addPixel(worldPos, _defaultPixelProperties);
     }
 
     glm::vec2 SpriteEditor::screenToWorld(glm::vec2 screenPos) {
@@ -139,8 +149,8 @@ namespace editors {
         return false;
     }
 
-    void SpriteEditor::addPixel(glm::vec2 worldPos, float r, float g, float b) {
-        _renderPixels.push_back({worldPos, {r, g, b}});
+    void SpriteEditor::addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) {
+        _renderPixels.push_back({worldPos, defaultProperties.color});
         
         // Correct: world position → chunk coords
         int cx = (int)std::floor(worldPos.x / (Pixel::CHUNK_SIZE * PIXEL_SIZE));
@@ -151,6 +161,17 @@ namespace editors {
         int lx = (((int)(worldPos.x / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
         int ly = (((int)(worldPos.y / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
         chunk.set(lx, ly, pixelIdCounter);
+
+        if (defaultProperties.isSolid) {
+            _pixelAttributes.solidAttributes[pixelIdCounter] = defaultProperties.solidAttributes;
+        }
+        if (defaultProperties.isLiquid) {
+            _pixelAttributes.liquidAttributes[pixelIdCounter] = defaultProperties.liquidAttributes;
+        }
+        if (defaultProperties.isGaseous) {
+            _pixelAttributes.gaseousAttributes[pixelIdCounter] = defaultProperties.gaseousAttributes;
+        }
+
         _pixelAttributes.renderIndex[pixelIdCounter] = (int)_renderPixels.size() - 1;
         pixelIdCounter++;
 

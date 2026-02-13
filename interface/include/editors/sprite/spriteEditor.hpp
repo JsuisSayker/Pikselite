@@ -28,6 +28,8 @@ namespace editors {
         Pixel::PixelAttributes _pixelAttributes;
         std::vector<graphics::Pixel> _renderPixels;
 
+        Pixel::DefaultPixelProperties _defaultPixelProperties;
+
         void handleEvents(const graphics::InputEvent& event);
         void mouseLeftClick();
         void mouseLeftDrag();
@@ -35,7 +37,7 @@ namespace editors {
         glm::vec2 screenToWorld(glm::vec2 screenPos);
         graphics::Pixel* getPixelAt(glm::vec2 worldPos);
         bool removePixelAt(glm::vec2 worldPos);
-        void addPixel(glm::vec2 worldPos, float r, float g, float b);
+        void addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties);
 
         void imguiHandling();
 
@@ -48,5 +50,6 @@ namespace editors {
         graphics::Pixel* _currentPixel = nullptr;
 
         bool _showPixelEditor = false;
+        bool _showDefaultPropertiesEditor = false;
     };
 } // namespace editors
