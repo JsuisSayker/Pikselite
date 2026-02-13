@@ -220,7 +220,7 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor)
+    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive)
     {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -235,6 +235,10 @@ namespace graphics {
         sideBar.Draw([&]() {
             if (BasicButton("Pixel Parameters")) {
                 showDefaultPropertiesEditor = true;
+            };
+
+            if (BasicButton("Eraser")) {
+                isEraserActive = !isEraserActive;
             };
 
             if (BasicButton("Load Sprite")) {

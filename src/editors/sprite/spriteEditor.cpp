@@ -63,7 +63,7 @@ namespace editors {
     void SpriteEditor::imguiHandling() {
         _imguiInterface->showImGuiDemo();
 
-        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor);
+        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive);
 
         if (_showDefaultPropertiesEditor) {
             _imguiInterface->defaultPixelPropertiesEditor(_defaultPixelProperties, "Default Pixel Properties");
@@ -84,6 +84,10 @@ namespace editors {
 
         graphics::Pixel* pixel = getPixelAt(worldPos);
         if (pixel) {
+            if (_isEraserActive) {
+                removePixelAt(worldPos);
+                return;
+            }
             _currentPixel = pixel;
             _showDefaultPropertiesEditor = false;
             _showPixelEditor = true;
@@ -101,6 +105,11 @@ namespace editors {
         
         removePixelAt(worldPos);
         _chunkGrid.removePixel(gridX, gridY);
+        
+        if (_isEraserActive) {
+            return;
+        }
+        
         addPixel(worldPos, _defaultPixelProperties);
     }
 
