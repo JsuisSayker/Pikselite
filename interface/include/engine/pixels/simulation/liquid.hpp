@@ -2,6 +2,7 @@
 
 #include <engine/pixels/pixelEnum.hpp>
 #include <engine/pixels/chunk.hpp>
+#include <random>
 
 
 namespace Pixel {
@@ -11,10 +12,10 @@ namespace Pixel {
         virtual ~IPixelSystem() = default;
     };
 
-    class WaterSystem : public IPixelSystem {
+    class LiquidSystem : public IPixelSystem {
     public:
-        WaterSystem() = default;
-        WaterSystem(const WaterSystem&) = delete;
+        LiquidSystem() : _rng(std::random_device{}()) {}
+        LiquidSystem(const LiquidSystem&) = delete;
 
         void collectPixels(Pixel::ChunkGrid& grid, Pixel::PixelAttributes& attrs, std::vector<graphics::Pixel>& renderPixels) override {
             activeWater.clear();
@@ -43,27 +44,38 @@ namespace Pixel {
             if (_accumulator < _stepInterval) return;
             _accumulator -= _stepInterval;
 
+            std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+
             // simulate movement logic
             for (auto [x, y] : activeWater) {
                 auto id = grid.getPixel(x, y);
                 if (id == Pixel::EMPTY) continue;
 
-                // Check and move down
+                // Get viscosity (0.0 = water, 1.0 = honey/lava)
+                float viscosity = attrs.liquidAttributes[id].viscosity;
+                
+                // Probability to move this frame (higher viscosity = lower chance)
+                float moveChance = 1.0f - (viscosity * 0.8f); // water=1.0, honey=0.2
+                if (dist(_rng) > moveChance) continue;
+
+                // Try moving down
                 if (grid.getPixel(x, y - 1) == Pixel::EMPTY) {
                     grid.movePixel(x, y, x, y - 1);
                     renderPixels[attrs.renderIndex[id]].position.y -= PIXEL_SIZE;  // Use PIXEL_SIZE for world units
                     continue;
                 }
-                // Check and move left
-                if (grid.getPixel(x - 1, y) == Pixel::EMPTY) {
-                    grid.movePixel(x, y, x - 1, y);
-                    renderPixels[attrs.renderIndex[id]].position.x -= PIXEL_SIZE;
-                    continue;
-                }
-                // Check and move right
-                if (grid.getPixel(x + 1, y) == Pixel::EMPTY) {
-                    grid.movePixel(x, y, x + 1, y);
-                    renderPixels[attrs.renderIndex[id]].position.x += PIXEL_SIZE;
+
+                // Horizontal spread (limited by viscosity)
+                int spreadRange = static_cast<int>(3.0f * (1.0f - viscosity) + 1.0f); // water=3, honey=1
+                int direction = (dist(_rng) < 0.5f) ? -1 : 1; // random left/right
+
+                for (int i = 1; i <= spreadRange; ++i) {
+                    int nx = x + (direction * i);
+                    if (grid.getPixel(nx, y) == Pixel::EMPTY) {
+                        grid.movePixel(x, y, nx, y);
+                        renderPixels[attrs.renderIndex[id]].position.x += direction * i * PIXEL_SIZE;
+                        break;
+                    }
                 }
             }
         }
@@ -71,6 +83,7 @@ namespace Pixel {
     private:
         std::vector<std::pair<int,int>> activeWater;
         float _accumulator = 0.0f;
-        const float _stepInterval = 0.5f; // seconds
+        const float _stepInterval = 0.1f; // check every 0.1s (adjust per viscosity via moveChance)
+        std::mt19937 _rng;
     };
 }

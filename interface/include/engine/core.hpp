@@ -10,7 +10,7 @@
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/systemManager.hpp>
 
-#include <engine/pixels/simulation/water.hpp>
+#include <engine/pixels/simulation/liquid.hpp>
 
 #include <vector>
 #include <iostream>
