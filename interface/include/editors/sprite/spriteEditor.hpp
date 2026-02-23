@@ -51,5 +51,6 @@ namespace editors {
 
         bool _showPixelEditor = false;
         bool _showDefaultPropertiesEditor = false;
+        bool _isEraserActive = false;
     };
 } // namespace editors
