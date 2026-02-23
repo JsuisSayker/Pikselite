@@ -2,6 +2,14 @@
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
+#include <tracy/Tracy.hpp>
+
+#ifndef TRACY_ENABLE
+ // output a warning if profiling is disabled
+    #pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+    #error "Not set"
+#endif
+
 namespace engine
 {
     void Core::init()
@@ -17,6 +25,7 @@ namespace engine
         graphics::InputEvent event;
         while (running)
         {
+            ZoneScopedN("Engine Main Loop");
             timer.tick();
             event = handleEvents();
 
@@ -33,6 +42,7 @@ namespace engine
             {
                 spriteEditor->run(event);
             }
+            FrameMark;
         }
     }
 

@@ -1,4 +1,5 @@
 #define SDL_MAIN_HANDLED
+
 #include <engine/core.hpp>
 
 int main()
