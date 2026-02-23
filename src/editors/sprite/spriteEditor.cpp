@@ -61,8 +61,6 @@ namespace editors {
     }
 
     void SpriteEditor::imguiHandling() {
-        _imguiInterface->showImGuiDemo();
-
         _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor);
 
         if (_showDefaultPropertiesEditor) {
