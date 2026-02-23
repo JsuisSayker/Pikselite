@@ -6,8 +6,6 @@ namespace engine
 {
     void Core::init()
     {
-        _pixelSystems.push_back(std::make_unique<Pixel::LiquidSystem>().release());
-
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
     }
@@ -131,12 +129,7 @@ namespace engine
 
     void Core::update(float deltaTime)
     {
-        for (auto& system : _pixelSystems)
-        {
-            system->collectPixels(_chunkGrid, _pixelAttributes, _renderPixels);
-            system->step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
-        }
-
+        _pixelSimulation.step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
         systemManager.update(deltaTime, componentManager);
     }
 

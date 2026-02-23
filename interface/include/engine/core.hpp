@@ -10,7 +10,7 @@
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/systemManager.hpp>
 
-#include <engine/pixels/simulation/liquid.hpp>
+#include <engine/pixels/simulation/simulation.hpp>
 
 #include <vector>
 #include <iostream>
@@ -54,8 +54,7 @@ namespace engine
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
         Pixel::ChunkGrid _chunkGrid;
-
-        std::vector<Pixel::IPixelSystem*> _pixelSystems;
+        Pixel::PixelSimulation _pixelSimulation;
 
         void init();
 
