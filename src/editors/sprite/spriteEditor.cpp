@@ -102,7 +102,6 @@ namespace editors {
         int gridY = (int)(worldPos.y / PIXEL_SIZE);
         
         removePixelAt(worldPos);
-        _chunkGrid.removePixel(gridX, gridY);
         
         if (_isEraserActive) {
             return;
@@ -139,51 +138,68 @@ namespace editors {
     }
 
     bool SpriteEditor::removePixelAt(glm::vec2 worldPos) {
-        auto it = std::remove_if(_renderPixels.begin(), _renderPixels.end(),
-                                 [&worldPos](const graphics::Pixel& pixel) {
-                                     return pixel.position == worldPos;
-                                 });
-        if (it != _renderPixels.end()) {
-            _renderPixels.erase(it, _renderPixels.end());
-            
-            int gridX = (int)(worldPos.x / PIXEL_SIZE);
-            int gridY = (int)(worldPos.y / PIXEL_SIZE);
-            Pixel::PixelEntityID removedId = _chunkGrid.getPixel(gridX, gridY);
-            _chunkGrid.removePixel(gridX, gridY);
-            removePixelAttributes(removedId);
-            return true;
+        // Find index of pixel to remove
+        int removeIndex = -1;
+        for (int i = 0; i < (int)_renderPixels.size(); ++i) {
+            if (_renderPixels[i].position == worldPos) {
+                removeIndex = i;
+                break;
+            }
         }
-        return false;
+        if (removeIndex == -1) return false;
+
+        // Get grid coords using same formula as getPixel
+        int gridX = (int)std::floor(worldPos.x / PIXEL_SIZE);
+        int gridY = (int)std::floor(worldPos.y / PIXEL_SIZE);
+
+        Pixel::PixelEntityID removedId = _chunkGrid.getPixel(gridX, gridY);
+        _chunkGrid.removePixel(gridX, gridY);
+        removePixelAttributes(removedId);
+
+        // Remove from render list
+        _renderPixels.erase(_renderPixels.begin() + removeIndex);
+
+        // Fix all renderIndex values that shifted due to erase
+        for (auto& [id, index] : _pixelAttributes.renderIndex) {
+            if (index > removeIndex) {
+                index--;
+            }
+        }
+
+        return true;
     }
 
     void SpriteEditor::addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) {
         _renderPixels.push_back({worldPos, defaultProperties.color});
-        
-        // Correct: world position → chunk coords
-        int cx = (int)std::floor(worldPos.x / (Pixel::CHUNK_SIZE * PIXEL_SIZE));
-        int cy = (int)std::floor(worldPos.y / (Pixel::CHUNK_SIZE * PIXEL_SIZE));
-        Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-        
+
+        // Convert world position to grid coords first
+        int gridX = (int)std::floor(worldPos.x / PIXEL_SIZE);
+        int gridY = (int)std::floor(worldPos.y / PIXEL_SIZE);
+
+        // Then convert grid coords to chunk coords (same formula as getPixel/movePixel)
+        int cx = (int)std::floor((float)gridX / Pixel::CHUNK_SIZE);
+        int cy = (int)std::floor((float)gridY / Pixel::CHUNK_SIZE);
+
         // Local coords within chunk (0..31)
-        int lx = (((int)(worldPos.x / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
-        int ly = (((int)(worldPos.y / PIXEL_SIZE) % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        int lx = ((gridX % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        int ly = ((gridY % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+
+        Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
         chunk.set(lx, ly, pixelIdCounter);
 
-        if (defaultProperties.isSolid) {
+        if (defaultProperties.isSolid)
             _pixelAttributes.solidAttributes[pixelIdCounter] = defaultProperties.solidAttributes;
-        }
-        if (defaultProperties.isLiquid) {
+        if (defaultProperties.isLiquid)
             _pixelAttributes.liquidAttributes[pixelIdCounter] = defaultProperties.liquidAttributes;
-        }
-        if (defaultProperties.isGaseous) {
+        if (defaultProperties.isGaseous)
             _pixelAttributes.gaseousAttributes[pixelIdCounter] = defaultProperties.gaseousAttributes;
-        }
 
         _pixelAttributes.renderIndex[pixelIdCounter] = (int)_renderPixels.size() - 1;
         pixelIdCounter++;
 
         _currentPixel = getPixelAt(worldPos);
     }
+
 
     bool SpriteEditor::saveSpriteToFile(const std::string& filename) {
         std::ofstream fout(filename, std::ios::binary);

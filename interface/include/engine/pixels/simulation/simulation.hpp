@@ -22,7 +22,7 @@ namespace Pixel
             std::vector<graphics::Pixel>* _renderPixels = nullptr;
 
             float _elapsedTime = 0.0f;
-            static constexpr float STEP_INTERVAL = 0.05f;
+            static constexpr float STEP_INTERVAL = 0.01f;
             bool _pixelSimulated = true;
 
             void simulateBottomUp();
