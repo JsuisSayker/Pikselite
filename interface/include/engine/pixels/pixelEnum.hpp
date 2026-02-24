@@ -14,6 +14,7 @@ namespace Pixel {
     struct Solid {};
     struct Liquid {
         float viscosity;
+        float timer = 0.0f;
     };
     struct Gaseous {
         float density;

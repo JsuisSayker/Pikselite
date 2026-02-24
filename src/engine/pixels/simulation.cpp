@@ -9,13 +9,7 @@ namespace Pixel
         _attributes = &attributes;
         _renderPixels = &renderPixels;
 
-        static float elapsed = 0.0f;
-        elapsed += deltaTime;
-        
-        if (elapsed >= 1.0f) {
-            simulateBottomUp(elapsed);
-            elapsed = 0.0f;
-        }
+        simulateBottomUp(deltaTime);
 
         // Clear pointers (optional, for safety)
         _grid = nullptr;
@@ -62,6 +56,20 @@ namespace Pixel
 
     void PixelSimulation::liquidSimulation(float deltaTime, int lx, int ly, PixelEntityID id, int cx, int cy)
     {
+        Liquid& liquid = _attributes->liquidAttributes[id];
+        
+        // Accumulate time
+        liquid.timer += deltaTime;
+        
+        // Movement interval based on viscosity (0.0 = fast/water, 1.0 = slow/honey)
+        float moveInterval = 0.05f + (liquid.viscosity * 0.95f); // water: 0.05s, honey: 1.0s
+        
+        if (liquid.timer < moveInterval) {
+            return; // Not enough time accumulated yet
+        }
+        
+        // Reset timer
+        liquid.timer = 0.0f;
         // Convert local chunk coords to world grid coords
         int wx = cx * CHUNK_SIZE + lx;
         int wy = cy * CHUNK_SIZE + ly;
@@ -71,14 +79,20 @@ namespace Pixel
             _grid->movePixel(wx, wy, wx, wy - 1);
             (*_renderPixels)[_attributes->renderIndex[id]].position.y -= PIXEL_SIZE;
         } else {
-            // // Try spread left/right
-            // int direction = (rand() % 2 == 0) ? -1 : 1;
-            // int nx = wx + direction;
+            // Try spread left/right
+            int direction = (rand() % 2 == 0) ? -1 : 1;
+            int nx = wx + direction;
             
-            // if (_grid->getPixel(nx, wy) == Pixel::EMPTY) {
-            //     _grid->movePixel(wx, wy, nx, wy);
-            //     (*_renderPixels)[_attributes->renderIndex[id]].position.x += direction * PIXEL_SIZE;
-            // }
+            if (_grid->getPixel(nx, wy) == Pixel::EMPTY) {
+                _grid->movePixel(wx, wy, nx, wy);
+                (*_renderPixels)[_attributes->renderIndex[id]].position.x += direction * PIXEL_SIZE;
+            } else {
+                nx = wx - direction;
+                if (_grid->getPixel(nx, wy) == Pixel::EMPTY) {
+                    _grid->movePixel(wx, wy, nx, wy);
+                    (*_renderPixels)[_attributes->renderIndex[id]].position.x -= direction * PIXEL_SIZE;
+                }
+            }
         }
     }
 } // namespace Pixel
