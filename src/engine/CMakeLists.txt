@@ -4,6 +4,7 @@ add_library(engine
     time.cpp
     managers/entityManager.cpp
     managers/systemManager.cpp
+    pixels/simulation.cpp
 )
 
 target_include_directories(engine

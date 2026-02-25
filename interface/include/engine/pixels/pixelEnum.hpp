@@ -14,6 +14,7 @@ namespace Pixel {
     struct Solid {};
     struct Liquid {
         float viscosity;
+        bool updateThisFrame = false;
     };
     struct Gaseous {
         float density;
