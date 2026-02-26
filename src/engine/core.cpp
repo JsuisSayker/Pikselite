@@ -168,12 +168,7 @@ namespace engine
         _pixelAttributes = projectEditor->getPixelAttributes();
         _chunkGrid = projectEditor->getChunkGrid();
 
-        std::cout << "[Core] Copied " << _renderPixels.size() << " pixels, "
-                  << _gameObjects.size() << " game objects from Project Editor\n";
-
         loadGameObjectsIntoECS();
-
-        std::cout << "[Core] Loaded game objects into ECS. Total entities: " << entityManager.getEntities().size() << "\n";
 
         return true;
     }
