@@ -11,6 +11,7 @@
 #include <engine/managers/systemManager.hpp>
 
 #include <engine/pixels/simulation/simulation.hpp>
+#include <engine/ecs/components/gameObjectComponent.hpp>
 
 #include <vector>
 #include <iostream>
@@ -59,6 +60,9 @@ namespace engine
         Pixel::ChunkGrid _chunkGrid;
         Pixel::PixelSimulation _pixelSimulation;
 
+        // Mapping from Pixel::GameObjectID to ecs::EntityID
+        std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
+
         void init();
 
         graphics::InputEvent handleEvents();
@@ -74,5 +78,9 @@ namespace engine
         void shutdown();
 
         bool copyProjectEditorDataToCore();
+
+        // Creates an ECS entity for each Pixel::GameObject,
+        // attaching Transform and GameObjectLink components.
+        void loadGameObjectsIntoECS();
     };
 } // namespace engine

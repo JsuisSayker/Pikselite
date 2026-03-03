@@ -1,11 +1,24 @@
 #include <engine/core.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
 namespace engine
 {
     void Core::init()
     {
+        // Register ECS components
+        componentManager.registerComponent<ecs::components::Transform>();
+        componentManager.registerComponent<ecs::components::Velocity>();
+        componentManager.registerComponent<ecs::components::GameObjectLink>();
+
+        // Register ECS systems
+        auto &movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
+        ecs::Signature movementSig;
+        movementSig.set(componentManager.getComponentType<ecs::components::Transform>());
+        movementSig.set(componentManager.getComponentType<ecs::components::Velocity>());
+        systemManager.setSignature<ecs::systems::MovementSystem>(movementSig);
+
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
     }
@@ -163,6 +176,46 @@ namespace engine
         _gameObjects = projectEditor->getGameObjects();
         _pixelAttributes = projectEditor->getPixelAttributes();
         _chunkGrid = projectEditor->getChunkGrid();
+
+        loadGameObjectsIntoECS();
+
         return true;
+    }
+
+    void Core::loadGameObjectsIntoECS()
+    {
+        for (auto &[goId, entityId] : _gameObjectToEntity)
+        {
+            componentManager.entityDestroyed(entityId);
+            systemManager.entityDestroyed(entityId);
+            entityManager.destroyEntity(ecs::Entity(entityId));
+        }
+        _gameObjectToEntity.clear();
+
+        for (const auto &go : _gameObjects)
+        {
+            ecs::Entity entity = entityManager.createEntity();
+            ecs::EntityID eid = entity.id;
+
+            ecs::components::Transform transform{0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f};
+            componentManager.addComponent<ecs::components::Transform>(eid, transform);
+
+            ecs::components::Velocity velocity{20.0f, 0.0f};
+            componentManager.addComponent<ecs::components::Velocity>(eid, velocity);
+
+            ecs::components::GameObjectLink link;
+            link.gameObjectId = go.id;
+            link.pixelEntities = go.pixelEntities;
+            componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
+
+            ecs::Signature sig;
+            sig.set(componentManager.getComponentType<ecs::components::Transform>());
+            sig.set(componentManager.getComponentType<ecs::components::Velocity>());
+            sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
+            entityManager.setSignature(eid, sig);
+            systemManager.entitySignatureChanged(eid, sig);
+
+            _gameObjectToEntity[go.id] = eid;
+        }
     }
 } // namespace engine
