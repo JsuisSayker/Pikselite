@@ -32,6 +32,7 @@ endif()
 find_package(SDL2 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(Stb REQUIRED)
 # find_package(imgui CONFIG REQUIRED)
 
 # -------------------------------------------------

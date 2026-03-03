@@ -45,6 +45,7 @@ namespace engine
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
 
         copyProjectEditorDataToCore();
+        testTexture = renderer.loadTexture("dragon.png");
 
         while (isGamePreviewActive && running)
         {
@@ -79,6 +80,13 @@ namespace engine
 
             renderer.clear();
             renderer.drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
+
+            graphics::Sprite2D sprite;
+            sprite.position = {100.0f, 200.0f};  // World position
+            sprite.size     = {640.0f, 640.0f};    // World size
+            sprite.textureID = testTexture;
+
+            renderer.drawSprite(sprite, _camera);
             renderer.present(gameWindow);
         }
 
@@ -87,6 +95,7 @@ namespace engine
         int w, h;
         SDL_GetWindowSize(sdlInterface.getWindow(), &w, &h);
         glViewport(0, 0, w, h);
+        renderer.unloadTexture(testTexture);
     }
 
     void Core::run()

@@ -31,8 +31,11 @@ namespace engine
 
     private:
         // temp
+        GLuint testTexture;
+
         editors::SpriteEditor *spriteEditor;
         editors::ProjectEditor *projectEditor;
+
         bool isProjectEditorActive = false;
 
         bool running;

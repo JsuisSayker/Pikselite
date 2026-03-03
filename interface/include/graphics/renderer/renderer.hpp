@@ -20,10 +20,20 @@ namespace graphics {
 
         void drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color);
 
+        // Sprite rendering
+        GLuint loadTexture(const std::string& filePath);
+        void drawSprite(const Sprite2D& sprite, const Camera2D& camera);
+        void unloadTexture(GLuint textureID);
+
     private:
         SDL_Window* _window;
         SDL_GLContext _glContext;
+        // Pixel shader
         GLuint _vao, _vbo, _shader;
+
+        // Sprite shader
+        GLuint _spriteVao, _spriteVbo, _spriteShader;
         void initShader();
+        void initSpriteShader();
     };
 }

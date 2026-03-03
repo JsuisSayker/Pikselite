@@ -1,5 +1,8 @@
 #include <graphics/renderer/renderer.hpp>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
+// Pixel shaders
 const char* vertexShaderSrc = R"(
 #version 330 core
 
@@ -38,6 +41,37 @@ void main() {
 }
 )";
 
+// Sprite shaders
+const char* spriteVertexShaderSrc = R"(
+#version 330 core
+
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec2 aTexCoord;
+
+uniform mat4 uVP;
+uniform mat4 uModel;
+
+out vec2 vTexCoord;
+
+void main() {
+    gl_Position = uVP * uModel * vec4(aPos, 0.0, 1.0);
+    vTexCoord = aTexCoord;
+}
+)";
+
+const char* spriteFragmentShaderSrc = R"(
+#version 330 core
+
+in vec2 vTexCoord;
+out vec4 FragColor;
+
+uniform sampler2D uTexture;
+
+void main() {
+    FragColor = texture(uTexture, vTexCoord);
+}
+)";
+
 namespace graphics {
     Renderer::Renderer(SDL_Window* window, SDL_GLContext glContext)
     : _window(window), _glContext(glContext)
@@ -54,14 +88,18 @@ namespace graphics {
         glGenBuffers(1, &_vbo);
 
         initShader();
+        initSpriteShader();
     }
 
 
     Renderer::~Renderer()
     {
         glDeleteProgram(_shader);
+        glDeleteProgram(_spriteShader);
         glDeleteBuffers(1, &_vbo);
+        glDeleteBuffers(1, &_spriteVbo);
         glDeleteVertexArrays(1, &_vao);
+        glDeleteVertexArrays(1, &_spriteVao);
     }
 
     void checkShaderCompile(GLuint shader, const char* name) {
@@ -104,6 +142,63 @@ namespace graphics {
 
         glDeleteShader(vs);
         glDeleteShader(fs);
+    }
+
+    void Renderer::initSpriteShader()
+    {
+        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vs, 1, &spriteVertexShaderSrc, nullptr);
+        glCompileShader(vs);
+        checkShaderCompile(vs, "SpriteVertex");
+
+        GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fs, 1, &spriteFragmentShaderSrc, nullptr);
+        glCompileShader(fs);
+        checkShaderCompile(fs, "SpriteFragment");
+
+        _spriteShader = glCreateProgram();
+        glAttachShader(_spriteShader, vs);
+        glAttachShader(_spriteShader, fs);
+        glLinkProgram(_spriteShader);
+        checkProgramLink(_spriteShader);
+
+        glDeleteShader(vs);
+        glDeleteShader(fs);
+
+        // Setup sprite VAO/VBO (quad: 2 triangles, 4 vertices)
+        // position (vec2) + texcoord (vec2)
+        float quadVertices[] = {
+            // pos      // tex
+            -0.5f,  0.5f,  0.0f, 1.0f,  // top-left
+            -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-left
+             0.5f, -0.5f,  1.0f, 0.0f,  // bottom-right
+             0.5f,  0.5f,  1.0f, 1.0f   // top-right
+        };
+
+        unsigned int indices[] = { 0, 1, 2,  0, 2, 3 };
+
+        GLuint ebo;
+        glGenVertexArrays(1, &_spriteVao);
+        glGenBuffers(1, &_spriteVbo);
+        glGenBuffers(1, &ebo);
+
+        glBindVertexArray(_spriteVao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, _spriteVbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        // position attribute
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        // texcoord attribute
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        glBindVertexArray(0);
     }
 
     void Renderer::clear() {
@@ -255,5 +350,85 @@ namespace graphics {
 
         glDrawArrays(GL_LINES, 0, (GLsizei)vertices.size());
         glBindVertexArray(0);
+    }
+
+    GLuint Renderer::loadTexture(const std::string& filePath)
+    {
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        // Texture wrapping/filtering
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // Pixel-perfect
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        // Load image with stb_image
+        int width, height, channels;
+        stbi_set_flip_vertically_on_load(true); // Flip to match OpenGL Y-up
+        unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &channels, 0);
+
+        if (!data) {
+            std::cerr << "Failed to load texture: " << filePath << std::endl;
+            glDeleteTextures(1, &textureID);
+            return 0;
+        }
+
+        GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        std::cout << "Loaded texture: " << filePath << " (" << width << "x" << height << ", " << channels << " channels)\n";
+        return textureID;
+    }
+
+    void Renderer::drawSprite(const Sprite2D& sprite, const Camera2D& camera)
+    {
+        if (sprite.textureID == 0) return;
+
+        int width, height;
+        SDL_GetWindowSize(_window, &width, &height);
+
+        glUseProgram(_spriteShader);
+
+        // Enable alpha blending for transparent PNGs
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // VP matrix
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_spriteShader, "uVP");
+        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+
+        // Model matrix: translate to position, scale to size
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(sprite.position, 0.0f));
+        model = glm::scale(model, glm::vec3(sprite.size, 1.0f));
+
+        GLint modelLoc = glGetUniformLocation(_spriteShader, "uModel");
+        if (modelLoc != -1) glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+        // Bind texture
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, sprite.textureID);
+        GLint texLoc = glGetUniformLocation(_spriteShader, "uTexture");
+        if (texLoc != -1) glUniform1i(texLoc, 0);
+
+        // Draw quad
+        glBindVertexArray(_spriteVao);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        glDisable(GL_BLEND);
+    }
+
+    void Renderer::unloadTexture(GLuint textureID)
+    {
+        if (textureID != 0)
+            glDeleteTextures(1, &textureID);
     }
 }
