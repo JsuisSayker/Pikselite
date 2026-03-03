@@ -2,7 +2,9 @@
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/ecs/components/gameObjectComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
+#include <engine/ecs/systems/spriteRenderSystem.hpp>
 namespace engine
 {
     void Core::init()
@@ -11,6 +13,7 @@ namespace engine
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
         componentManager.registerComponent<ecs::components::GameObjectLink>();
+        componentManager.registerComponent<ecs::components::Sprite>();
 
         // Register ECS systems
         auto &movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
@@ -18,6 +21,13 @@ namespace engine
         movementSig.set(componentManager.getComponentType<ecs::components::Transform>());
         movementSig.set(componentManager.getComponentType<ecs::components::Velocity>());
         systemManager.setSignature<ecs::systems::MovementSystem>(movementSig);
+
+        // Sprite render system (needs Transform + Sprite)
+        auto &spriteRenderSys = systemManager.addSystem<ecs::systems::SpriteRenderSystem>(&renderer, &_camera);
+        ecs::Signature spriteSig;
+        spriteSig.set(componentManager.getComponentType<ecs::components::Transform>());
+        spriteSig.set(componentManager.getComponentType<ecs::components::Sprite>());
+        systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
@@ -58,7 +68,6 @@ namespace engine
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
 
         copyProjectEditorDataToCore();
-        testTexture = renderer.loadTexture("dragon.png");
 
         while (isGamePreviewActive && running)
         {
@@ -94,12 +103,11 @@ namespace engine
             renderer.clear();
             renderer.drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
 
-            graphics::Sprite2D sprite;
-            sprite.position = {100.0f, 200.0f};  // World position
-            sprite.size     = {640.0f, 640.0f};    // World size
-            sprite.textureID = testTexture;
+            // Render all entities that have a SpriteComponent via the ECS system
+            auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
+            if (spriteSystem)
+                spriteSystem->update(0.0, componentManager);
 
-            renderer.drawSprite(sprite, _camera);
             renderer.present(gameWindow);
         }
 
@@ -108,7 +116,6 @@ namespace engine
         int w, h;
         SDL_GetWindowSize(sdlInterface.getWindow(), &w, &h);
         glViewport(0, 0, w, h);
-        renderer.unloadTexture(testTexture);
     }
 
     void Core::run()
@@ -208,10 +215,15 @@ namespace engine
             link.pixelEntities = go.pixelEntities;
             componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
 
+            // Attach a SpriteComponent (default texture: dragon.png)
+            ecs::components::Sprite spriteComp;
+            componentManager.addComponent<ecs::components::Sprite>(eid, spriteComp);
+
             ecs::Signature sig;
             sig.set(componentManager.getComponentType<ecs::components::Transform>());
             sig.set(componentManager.getComponentType<ecs::components::Velocity>());
             sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
+            sig.set(componentManager.getComponentType<ecs::components::Sprite>());
             entityManager.setSignature(eid, sig);
             systemManager.entitySignatureChanged(eid, sig);
 

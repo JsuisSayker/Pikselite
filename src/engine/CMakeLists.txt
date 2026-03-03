@@ -5,6 +5,7 @@ add_library(engine
     managers/entityManager.cpp
     managers/systemManager.cpp
     pixels/simulation.cpp
+    ecs/systems/spriteSystem.cpp
 )
 
 target_include_directories(engine
