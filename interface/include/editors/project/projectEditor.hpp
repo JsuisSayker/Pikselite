@@ -20,6 +20,7 @@ namespace editors {
         Pixel::PixelAttributes getPixelAttributes() const { return _pixelAttributes; }
         Pixel::ChunkGrid getChunkGrid() const { return _chunkGrid; }
 
+    
     private:
         graphics::ImguiInterface* _imguiInterface;
         graphics::Interface* _graphicsInterface;

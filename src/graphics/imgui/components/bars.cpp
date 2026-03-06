@@ -5,34 +5,43 @@ void graphics::Bar::Draw(const std::function<void()> &contentFunction) {
         return;
     }
 
-    if (config.position.x < 0) {
-        ImGuiIO &io = ImGui::GetIO();
-        float winW = io.DisplaySize.x;
-        ImGui::SetNextWindowPos(ImVec2(
-            winW - config.size.x,
-            config.position.y
-        ));
-    } else {
-        ImGui::SetNextWindowPos(config.position);
+    ImGuiIO &io = ImGui::GetIO();
+
+    float winW = io.DisplaySize.x;
+    float winH = io.DisplaySize.y;
+
+    ImVec2 pos = config.position;
+
+    // Right
+    if (pos.x < 0) {
+        pos.x = winW - config.size.x;
     }
+
+    // Bottom
+    if (pos.y < 0) {
+        pos.y = winH - config.size.y;
+    }
+
+    ImGui::SetNextWindowPos(pos);
 
     if (config.orientation == BarOrientation::Horizontal) {
         ImGui::SetNextWindowSize(ImVec2(
-            ImGui::GetIO().DisplaySize.x,
+            winW,
             config.size.y
         ));
-    } else {
+    } 
+    else {
         ImGui::SetNextWindowSize(ImVec2(
             config.size.x,
-            ImGui::GetIO().DisplaySize.y - config.position.y
+            winH
         ));
     }
 
-    ImGui::Begin(config.label.c_str(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+    ImGui::Begin(config.label.c_str(), nullptr);
 
     if (contentFunction) {
         contentFunction();
     }
-    
+
     ImGui::End();
 }

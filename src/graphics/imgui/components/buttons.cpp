@@ -17,22 +17,30 @@ bool graphics::ToggleButton(const std::string &label, bool &value)
 }
 
 // Draws a button that, when clicked, shows a dropdown menu with the provided options. When an option is clicked, the currentIndex is updated to the selected option.
-void graphics::DropdownButton(const std::string &label, int &currentIndex, const std::vector<std::string> &options)
+bool graphics::DropdownButton(const std::string& label, int& currentIndex, const std::vector<std::string>& options)
 {
     if (options.empty())
-        return;
+        return false;
 
     if (currentIndex < 0 || currentIndex >= (int)options.size())
         currentIndex = 0;
-    
-    if (ImGui::BeginCombo(label.c_str(), options[currentIndex].c_str())) {
-        for (size_t i = 0; i < options.size(); i++) {
-           if ((ImGui::Selectable(options[i].c_str(), currentIndex == i))) {
-               currentIndex = i;
-           }
+
+    bool changed = false;
+
+    if (ImGui::BeginCombo(label.c_str(), options[currentIndex].c_str()))
+    {
+        for (size_t i = 0; i < options.size(); i++)
+        {
+            if (ImGui::Selectable(options[i].c_str(), currentIndex == i))
+            {
+                currentIndex = i;
+                changed = true;
+            }
         }
         ImGui::EndCombo();
     }
+
+    return changed;
 }
 
 // Draws a color button that opens a color picker popup when clicked. The selected color is stored in the provided ImVec4 reference.

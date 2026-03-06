@@ -1,5 +1,8 @@
 #include <graphics/imgui/imguiInterface.hpp>
 #include <algorithm>
+#include <string>
+#include <filesystem>
+#include <vector>
 
 namespace graphics {
     ImguiInterface::ImguiInterface(SDL_Window* window, SDL_GLContext glContext)
@@ -9,6 +12,10 @@ namespace graphics {
         ImGui::StyleColorsDark();
         ImGui_ImplSDL2_InitForOpenGL(_window, _glContext);
         ImGui_ImplOpenGL3_Init("#version 330 core");
+
+        // ImGuiIO& io = ImGui::GetIO();
+        // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     }
 
     ImguiInterface::~ImguiInterface() {
@@ -35,12 +42,15 @@ namespace graphics {
     }
 
     void ImguiInterface::pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label) {
+        ImVec2 desiredPos = GetDesiredPosition("right");
+        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
+
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Pixel Editor",
-            ImVec2(200, 400),
+            ImVec2(200, desiredSize),
             true,
-            ImVec2(-1, 0)
+            desiredPos
         };
 
         static Bar sideBar(sideBarConfig);
@@ -123,12 +133,15 @@ namespace graphics {
     }
 
     void ImguiInterface::defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label) {
+        ImVec2 desiredPos = GetDesiredPosition("right");
+        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
+
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Default Pixel Properties",
-            ImVec2(200, 400),
+            ImVec2(200, desiredSize),
             true,
-            ImVec2(-1, 0)
+            desiredPos
         };
 
         static Bar sideBar(sideBarConfig);
@@ -222,12 +235,15 @@ namespace graphics {
 
     void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive)
     {
+        ImVec2 desiredPos = GetDesiredPosition("left");
+        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
+
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Pixel Sprite Handler",
-            ImVec2(200, 400),
+            ImVec2(200, desiredSize),
             true,
-            ImVec2(0, 0)
+            desiredPos
         };
 
         static Bar sideBar(sideBarConfig);
@@ -258,4 +274,68 @@ namespace graphics {
         }
         return currentColor;
     }
+
+    namespace fs = std::filesystem;
+    std::vector<std::string> spriteFiles;
+    void ScanSprites()
+    {
+        spriteFiles.clear();
+
+        std::string folder = "assets";
+
+        for (const auto& entry : fs::directory_iterator(folder))
+        {
+            if (entry.is_regular_file())
+            {
+                std::filesystem::path p = entry.path();
+                std::string ext = p.extension().string();
+
+                if (ext == ".png" || ext == ".jpg")
+                {
+                    spriteFiles.push_back(p.string());
+                }
+            }
+        }
+    }
+
+    void ImguiInterface::projectNavbar()
+    {
+        ImVec2 desiredPos = GetDesiredPosition("bottom");
+        int desiredSize = GetDesiredSize("full", BarOrientation::Horizontal);
+
+        static BarConfig bottomBarConfig {
+            BarOrientation::Horizontal,
+            "Project Navbar",
+            ImVec2(desiredSize, 100),
+            true,
+            desiredPos
+        };
+
+        static Bar sideBar(bottomBarConfig);
+
+        sideBar.Draw([&]() {
+           float cellSize = 80.0f;
+            float panelWidth = ImGui::GetContentRegionAvail().x;
+
+            int columns = (int)(panelWidth / cellSize);
+            if (columns < 1) columns = 1;
+
+            ImGui::Columns(columns, 0, false);
+
+            for (const auto& sprite : spriteFiles)
+            {
+                std::string name = std::filesystem::path(sprite).filename().string();
+
+                if (BasicButton(name.c_str(), cellSize - 10, cellSize - 10))
+                {
+                    // Load the sprite into the editor
+                }
+
+                ImGui::NextColumn();
+            }
+
+            ImGui::Columns(1);
+        });
+    }
+
 } // namespace graphics

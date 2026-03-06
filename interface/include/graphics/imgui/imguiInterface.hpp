@@ -29,8 +29,11 @@ namespace graphics {
 
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 
+        void projectNavbar();
+
         void startFrame();
         void endFrame(SDL_Window* window);
+
     private:
         SDL_Window* _window;
         SDL_GLContext _glContext;

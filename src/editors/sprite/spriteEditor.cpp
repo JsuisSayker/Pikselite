@@ -62,6 +62,7 @@ namespace editors {
 
     void SpriteEditor::imguiHandling() {
         _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive);
+        _imguiInterface->projectNavbar();
 
         if (_showDefaultPropertiesEditor) {
             _imguiInterface->defaultPixelPropertiesEditor(_defaultPixelProperties, "Default Pixel Properties");
