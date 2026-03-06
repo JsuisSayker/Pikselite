@@ -30,6 +30,7 @@ namespace graphics {
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 
         void projectNavbar();
+        void scanSprites();
 
         void startFrame();
         void endFrame(SDL_Window* window);

@@ -13,9 +13,7 @@ namespace graphics {
         ImGui_ImplSDL2_InitForOpenGL(_window, _glContext);
         ImGui_ImplOpenGL3_Init("#version 330 core");
 
-        // ImGuiIO& io = ImGui::GetIO();
-        // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        scanSprites();
     }
 
     ImguiInterface::~ImguiInterface() {
@@ -277,11 +275,15 @@ namespace graphics {
 
     namespace fs = std::filesystem;
     std::vector<std::string> spriteFiles;
-    void ScanSprites()
+
+    void ImguiInterface::scanSprites()
     {
         spriteFiles.clear();
 
         std::string folder = "assets";
+
+        if (!fs::exists(folder))
+        return;
 
         for (const auto& entry : fs::directory_iterator(folder))
         {
@@ -306,19 +308,28 @@ namespace graphics {
         static BarConfig bottomBarConfig {
             BarOrientation::Horizontal,
             "Project Navbar",
-            ImVec2(desiredSize, 100),
+            ImVec2(desiredSize, 200),
             true,
             desiredPos
         };
 
-        static Bar sideBar(bottomBarConfig);
+        static Bar bottomBar(bottomBarConfig);
 
-        sideBar.Draw([&]() {
-           float cellSize = 80.0f;
+        bottomBar.Draw([&]() {
+
+            if (BasicButton("Refresh")) {
+                scanSprites();
+            }
+
+            float thumbnailSize = 65.0f;
+            float padding = 15.0f;
+            float cellSize = thumbnailSize + padding;
+
             float panelWidth = ImGui::GetContentRegionAvail().x;
 
             int columns = (int)(panelWidth / cellSize);
-            if (columns < 1) columns = 1;
+            if (columns < 1)
+                columns = 1;
 
             ImGui::Columns(columns, 0, false);
 
@@ -326,10 +337,32 @@ namespace graphics {
             {
                 std::string name = std::filesystem::path(sprite).filename().string();
 
-                if (BasicButton(name.c_str(), cellSize - 10, cellSize - 10))
+                ImGui::BeginGroup();
+
+                // Center thumbnail
+                float columnWidth = ImGui::GetColumnWidth();
+                float offset = (columnWidth - thumbnailSize) * 0.5f;
+
+                if (offset > 0)
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+
+                // Placeholder thumbnail button
+                // Replace nullptr with your OpenGL texture later
+                if (ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize)))
                 {
-                    // Load the sprite into the editor
+                    // Load sprite into editor
                 }
+
+                // Center text under thumbnail
+                float textWidth = ImGui::CalcTextSize(name.c_str()).x;
+                float textOffset = (columnWidth - textWidth) * 0.5f;
+
+                if (textOffset > 0)
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textOffset);
+
+                ImGui::TextWrapped("%s", name.c_str());
+
+                ImGui::EndGroup();
 
                 ImGui::NextColumn();
             }
