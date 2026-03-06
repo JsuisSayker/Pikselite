@@ -300,7 +300,7 @@ namespace graphics {
         }
     }
 
-    void ImguiInterface::projectNavbar()
+    void ImguiInterface::projectNavbar(std::string &currentSpriteFilename)
     {
         ImVec2 desiredPos = GetDesiredPosition("bottom");
         int desiredSize = GetDesiredSize("full", BarOrientation::Horizontal);
@@ -350,7 +350,7 @@ namespace graphics {
                 // Replace nullptr with your OpenGL texture later
                 if (ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize)))
                 {
-                    // Load sprite into editor
+                    currentSpriteFilename = sprite;
                 }
 
                 // Center text under thumbnail

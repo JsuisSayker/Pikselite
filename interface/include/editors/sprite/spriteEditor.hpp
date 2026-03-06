@@ -52,5 +52,7 @@ namespace editors {
         bool _showPixelEditor = false;
         bool _showDefaultPropertiesEditor = false;
         bool _isEraserActive = false;
+
+        std::string _currentSpriteFilename;
     };
 } // namespace editors
