@@ -5,6 +5,7 @@
 #include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/ecs/systems/scriptSystem.hpp>
 namespace engine
 {
     void Core::init()
@@ -28,6 +29,15 @@ namespace engine
         spriteSig.set(componentManager.getComponentType<ecs::components::Transform>());
         spriteSig.set(componentManager.getComponentType<ecs::components::Sprite>());
         systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
+
+        // Script system (needs Transform + Velocity) — runs Lua scripts
+        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>();
+        ecs::Signature scriptSig;
+        scriptSig.set(componentManager.getComponentType<ecs::components::Transform>());
+        scriptSig.set(componentManager.getComponentType<ecs::components::Velocity>());
+        systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
+        scriptSys.init();
+        scriptSys.loadScript("scripts/movement.lua");
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);

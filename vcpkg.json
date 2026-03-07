@@ -8,6 +8,8 @@
     "opengl",
     "stb",
     "glm",
+    "lua",
+    "sol2",
     {
       "name": "imgui",
       "features": [
