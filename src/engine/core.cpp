@@ -6,6 +6,7 @@
 #include <engine/ecs/systems/movementSystem.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <engine/ecs/systems/scriptSystem.hpp>
+
 namespace engine
 {
     void Core::init()
