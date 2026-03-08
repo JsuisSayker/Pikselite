@@ -2,6 +2,7 @@
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/ecs/components/gameObjectComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
 #include <tracy/Tracy.hpp>
 
@@ -10,6 +11,8 @@
     #pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
     #error "Not set"
 #endif
+#include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/ecs/systems/scriptSystem.hpp>
 
 namespace engine
 {
@@ -19,6 +22,7 @@ namespace engine
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
         componentManager.registerComponent<ecs::components::GameObjectLink>();
+        componentManager.registerComponent<ecs::components::Sprite>();
 
         // Register ECS systems
         auto &movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
@@ -26,6 +30,22 @@ namespace engine
         movementSig.set(componentManager.getComponentType<ecs::components::Transform>());
         movementSig.set(componentManager.getComponentType<ecs::components::Velocity>());
         systemManager.setSignature<ecs::systems::MovementSystem>(movementSig);
+
+        // Sprite render system (needs Transform + Sprite)
+        auto &spriteRenderSys = systemManager.addSystem<ecs::systems::SpriteRenderSystem>(&renderer, &_camera);
+        ecs::Signature spriteSig;
+        spriteSig.set(componentManager.getComponentType<ecs::components::Transform>());
+        spriteSig.set(componentManager.getComponentType<ecs::components::Sprite>());
+        systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
+
+        // Script system (needs Transform + Velocity) — runs Lua scripts
+        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>();
+        ecs::Signature scriptSig;
+        scriptSig.set(componentManager.getComponentType<ecs::components::Transform>());
+        scriptSig.set(componentManager.getComponentType<ecs::components::Velocity>());
+        systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
+        scriptSys.init();
+        scriptSys.loadScript("scripts/movement.lua");
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
@@ -102,6 +122,12 @@ namespace engine
 
             renderer.clear();
             renderer.drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
+
+            // Render all entities that have a SpriteComponent via the ECS system
+            auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
+            if (spriteSystem)
+                spriteSystem->update(0.0, componentManager);
+
             renderer.present(gameWindow);
         }
 
@@ -209,10 +235,15 @@ namespace engine
             link.pixelEntities = go.pixelEntities;
             componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
 
+            // Attach a SpriteComponent (default texture: dragon.png)
+            ecs::components::Sprite spriteComp;
+            componentManager.addComponent<ecs::components::Sprite>(eid, spriteComp);
+
             ecs::Signature sig;
             sig.set(componentManager.getComponentType<ecs::components::Transform>());
             sig.set(componentManager.getComponentType<ecs::components::Velocity>());
             sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
+            sig.set(componentManager.getComponentType<ecs::components::Sprite>());
             entityManager.setSignature(eid, sig);
             systemManager.entitySignatureChanged(eid, sig);
 

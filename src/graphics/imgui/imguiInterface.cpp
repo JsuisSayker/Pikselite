@@ -102,7 +102,7 @@ namespace graphics {
 
                     if (!query.empty() && lowerAttr.find(query) == std::string::npos)
                         continue;
-                    
+
                     if (ImGui::Selectable(attr.c_str())) {
                         if (attr == "Solid") {
                             pixelAttributes.solidAttributes[pixelId] = ::Pixel::Solid();

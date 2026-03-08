@@ -12,6 +12,7 @@
 
 #include <engine/pixels/simulation/simulation.hpp>
 #include <engine/ecs/components/gameObjectComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
 
 #include <vector>
 #include <iostream>
@@ -31,9 +32,9 @@ namespace engine
         void run();
 
     private:
-        // temp
         editors::SpriteEditor *spriteEditor;
         editors::ProjectEditor *projectEditor;
+
         bool isProjectEditorActive = false;
 
         bool running;

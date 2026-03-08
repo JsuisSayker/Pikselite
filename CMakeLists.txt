@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.20)
 # -------------------------------------------------
 set(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/external/overlay-ports")
 
-
 project(PikseliteEngine)
 
 # Use C++17
@@ -30,6 +29,9 @@ endif()
 find_package(SDL2 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(Stb REQUIRED)
+find_package(Lua REQUIRED)
+find_path(SOL2_INCLUDE_DIRS "sol/sol.hpp")
 # find_package(imgui CONFIG REQUIRED)
 
 # -------------------------------------------------

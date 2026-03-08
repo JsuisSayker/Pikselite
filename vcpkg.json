@@ -6,7 +6,10 @@
     "sdl2",
     "glew",
     "opengl",
+    "stb",
     "glm",
+    "lua",
+    "sol2",
     {
       "name": "tracy",
       "version>=": "0.13.1"

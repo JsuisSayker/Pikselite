@@ -22,6 +22,12 @@ namespace graphics {
         glm::vec3 color;
     };
 
+    struct Sprite2D {
+        glm::vec2 position;
+        glm::vec2 size;
+        GLuint textureID = 0;
+    };
+
     enum InputEventType {
         KEY_W,
         KEY_A,
