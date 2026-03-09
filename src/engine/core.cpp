@@ -56,21 +56,27 @@ namespace engine
         graphics::InputEvent event;
         while (running)
         {
-            ZoneScopedN("Engine Main Loop");
+            ZoneScopedN("Frame");
             timer.tick();
-            event = handleEvents();
+            {
+                ZoneScopedN("Input");
+                event = handleEvents();
+            }
 
             if (isGamePreviewActive)
             {
+                ZoneScopedN("GamePreview");
                 runGamePreview();
             }
 
             if (isProjectEditorActive)
             {
+                ZoneScopedN("ProjectEditor");
                 projectEditor->run(event);
             }
             else
             {
+                ZoneScopedN("SpriteEditor");
                 spriteEditor->run(event);
             }
             FrameMark;
@@ -178,8 +184,16 @@ namespace engine
 
     void Core::update(float deltaTime)
     {
-        _pixelSimulation.step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
-        systemManager.update(deltaTime, componentManager);
+        ZoneScoped;
+
+        {
+            ZoneScopedN("PixelSimulation");
+            _pixelSimulation.step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
+        }
+        {
+            ZoneScopedN("ECS Systems");
+            systemManager.update(deltaTime, componentManager);
+        }
     }
 
     void Core::render()
