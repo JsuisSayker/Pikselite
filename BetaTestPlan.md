@@ -8,7 +8,7 @@ It allows users to create projects, design sprites at the pixel level, assign ph
 The engine provides:
 
 - A sprite editor with per-pixel attributes
-- A Blueprint-based event system (no scripting required)
+- A Scripting-based event system
 - A real-time preview mode
 - A build system to generate playable executables
 
@@ -49,9 +49,9 @@ The following features will be shown and validated during the defense.
 | F15            | Game Editor          | Pixel Simulation   | Simulate pixel interactions                      |
 | F16            | Game Editor          | Game Editing       | Add objects to current scene                     |
 | F17            | Game Editor          | Game Editing       | Configure events using scripting                 |
-| F18            | Game Editor          | Asset Management   | Manage sprites via asset explorer                |
+| F18            | Game Editor          | Asset Management   | Manage game objects via project editor           |
 | F19            | Game Editor          | Asset Management   | Manage scenes via asset explorer                 |
-| F20            | Game Editor          | Asset Management   | Manage objects via asset explorer                |
+| F20            | Game Editor          | Asset Management   | Manage objects via project editor                |
 | F21            | Game Editor          | Game Preview       | Simulate gameplay in real time inside the editor |
 | F22            | Game Editor / Player | Game Build         | Generate a playable executable                   |
 
@@ -78,8 +78,8 @@ The following features will be shown and validated during the defense.
 | F15            | Interaction between different pixels behaves correctly                      | Objects react during preview                                                         | In Progress |
 | F16            | Can add an object to the current scene                                      | Object is correctly added to the current scene without errors                        | In Progress |
 | F17            | An action like the player's movement can be performed by the scripting      | The action scripted and attached to the object is working correctly                  | In Progress |
-| F18            | Can move and modify sprites using the assets explorer                       | Sprites can be modified and moved correctly                                          | In Progress |
+| F18            | Can move and modify game objects using the project editor                   | Game objects can be modified and moved correctly                                     | In Progress |
 | F19            | Can move and modify scenes using the assets explorer                        | Scenes can be modified and moved correctly                                           | In Progress |
-| F20            | Can move and modify objects using the assets explorer                       | Objects can be modified and moved correctly                                          | In Progress |
+| F20            | Can move and modify objects using the project editor                        | Objects can be modified and moved correctly                                          | In Progress |
 | F21            | A preview can be launched from the editor, it should be stable and accurate | A preview is launched and the scenes and objects are displayed and behaves correctly | In Progress |
 | F22            | Build produces a working game                                               | The build produces a working game at the correct location and functions as expected  | In Progress |
