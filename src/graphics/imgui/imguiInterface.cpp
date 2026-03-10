@@ -231,7 +231,7 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive)
+    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath)
     {
         ImVec2 desiredPos = GetDesiredPosition("left");
         int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
@@ -260,8 +260,38 @@ namespace graphics {
             };
 
             if (BasicButton("Save Sprite")) {
-                //
+                ImGui::OpenPopup("NameNewSpritePopup");
             };
+
+           static char spriteName[128] = "";
+
+            if (ImGui::BeginPopupModal("NameNewSpritePopup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Enter sprite name:");
+
+                ImGui::InputText("Name##SpriteInput", spriteName, sizeof(spriteName));
+
+                ImGui::Spacing();
+
+                if (ImGui::Button("Save##SpriteButton", ImVec2(120, 0)))
+                {
+                    std::string path = "assets/" + std::string(spriteName) + ".dat";
+
+                    saveSpritePath = path;
+
+                    spriteName[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SameLine();
+
+                if (ImGui::Button("Cancel##SpriteButton", ImVec2(120, 0)))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
+            }
         });
     }
 
@@ -292,7 +322,7 @@ namespace graphics {
                 std::filesystem::path p = entry.path();
                 std::string ext = p.extension().string();
 
-                if (ext == ".png" || ext == ".jpg")
+                if (ext == ".png" || ext == ".jpg" || ext == ".dat")
                 {
                     spriteFiles.push_back(p.string());
                 }
@@ -333,37 +363,37 @@ namespace graphics {
 
             ImGui::Columns(columns, 0, false);
 
-            for (const auto& sprite : spriteFiles)
+           for (const auto& sprite : spriteFiles)
             {
+                ImGui::PushID(sprite.c_str());   // unique ID per sprite
+            
                 std::string name = std::filesystem::path(sprite).filename().string();
-
+            
                 ImGui::BeginGroup();
-
-                // Center thumbnail
+            
                 float columnWidth = ImGui::GetColumnWidth();
                 float offset = (columnWidth - thumbnailSize) * 0.5f;
-
+            
                 if (offset > 0)
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
-
-                // Placeholder thumbnail button
-                // Replace nullptr with your OpenGL texture later
+            
                 if (ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize)))
                 {
                     currentSpriteFilename = sprite;
                 }
-
-                // Center text under thumbnail
+            
                 float textWidth = ImGui::CalcTextSize(name.c_str()).x;
                 float textOffset = (columnWidth - textWidth) * 0.5f;
-
+            
                 if (textOffset > 0)
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textOffset);
-
+            
                 ImGui::TextWrapped("%s", name.c_str());
-
+            
                 ImGui::EndGroup();
-
+            
+                ImGui::PopID();   // end unique ID scope
+            
                 ImGui::NextColumn();
             }
 

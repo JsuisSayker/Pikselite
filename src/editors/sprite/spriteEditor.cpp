@@ -61,12 +61,15 @@ namespace editors {
     }
 
     void SpriteEditor::imguiHandling() {
-        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive);
+        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive, _newSpritePath);
         _imguiInterface->projectNavbar(_currentSpriteFilename);
         if (!_currentSpriteFilename.empty()) {
-            std::cout << "Loading sprite: " << _currentSpriteFilename << std::endl; ////////////////////////////// debug
             loadSpriteFromFile(_currentSpriteFilename);
             _currentSpriteFilename.clear();
+        }
+        if (!_newSpritePath.empty()) {
+            saveSpriteToFile(_newSpritePath);
+            _newSpritePath.clear();
         }
         
 

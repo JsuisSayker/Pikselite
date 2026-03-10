@@ -54,5 +54,6 @@ namespace editors {
         bool _isEraserActive = false;
 
         std::string _currentSpriteFilename;
+        std::string _newSpritePath;
     };
 } // namespace editors
