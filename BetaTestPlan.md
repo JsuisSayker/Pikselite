@@ -1,4 +1,4 @@
-****# **BETA TEST PLAN – Pikselite Engine**
+# **BETA TEST PLAN – Pikselite Engine**
 
 ## **1. Project Context**
 
