@@ -13,6 +13,8 @@ set "VCPKG_HASH_FILE=%USERPROFILE%\.vcpkg_hash"
 set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
 set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\"
+set "PROFILING_ENABLED=ON"
+set "CONFIG_TYPE=Debug"
 
 
 :: -------------------------------------------------
@@ -215,7 +217,7 @@ if "%INSTALL_DEPS%" equ "1" (
 echo === Setting up build directory ===
 echo === Configuring project ===
 call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-"!CMAKE_EXE!" -B "!BUILD_DIR!" -S . -DCMAKE_TOOLCHAIN_FILE="!VCPKG_ROOT!\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=!TARGET_TRIPLET!
+"!CMAKE_EXE!" -B "!BUILD_DIR!" -S . -DPIKSELITE_ENABLE_PROFILING=ON -DCMAKE_TOOLCHAIN_FILE="!VCPKG_ROOT!\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=!TARGET_TRIPLET!
 if %ERRORLEVEL% neq 0 (
     echo CMake configuration failed!
     exit /b 1
@@ -225,7 +227,7 @@ if %ERRORLEVEL% neq 0 (
 :: BUILD PROJECT
 :: -------------------------------------------------
 echo === Building project ===
-"!CMAKE_EXE!" --build "!BUILD_DIR!" --config Release
+"!CMAKE_EXE!" --build "!BUILD_DIR!" --config "!CONFIG_TYPE!"
 if %ERRORLEVEL% neq 0 (
     echo Build failed!
     exit /b 1

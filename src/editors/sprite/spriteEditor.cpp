@@ -110,13 +110,13 @@ namespace editors {
 
         int gridX = (int)(worldPos.x / PIXEL_SIZE);
         int gridY = (int)(worldPos.y / PIXEL_SIZE);
-        
+
         removePixelAt(worldPos);
-        
+
         if (_isEraserActive) {
             return;
         }
-        
+
         addPixel(worldPos, _defaultPixelProperties);
     }
 
@@ -131,7 +131,7 @@ namespace editors {
 
         glm::mat4 invVP = glm::inverse(_camera.getViewProjection(winW, winH));
         glm::vec4 world4 = invVP * glm::vec4(ndc.x, ndc.y, 0.0f, 1.0f);
-        
+
         float gx = std::round(world4.x / PIXEL_SIZE) * PIXEL_SIZE;
         float gy = std::round(world4.y / PIXEL_SIZE) * PIXEL_SIZE;
 
@@ -214,17 +214,17 @@ namespace editors {
     bool SpriteEditor::saveSpriteToFile(const std::string& filename) {
         std::ofstream fout(filename, std::ios::binary);
         if (!fout) return false;
-    
+
         uint32_t numChunks = static_cast<uint32_t>(_chunkGrid.getChunks().size());
         fout.write(reinterpret_cast<const char*>(&numChunks), sizeof(numChunks));
-        
+
         for (const auto& [coord, chunk] : _chunkGrid.getChunks()) {
             int32_t cx = coord.first;
             int32_t cy = coord.second;
 
             fout.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
             fout.write(reinterpret_cast<const char*>(&cy), sizeof(cy));
-    
+
             for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
                 for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
                     Pixel::PixelEntityID id = chunk.get(x, y);
@@ -245,7 +245,7 @@ namespace editors {
         for (const auto& [id, solid] : _pixelAttributes.solidAttributes) {
             fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
         }
-        
+
         count = static_cast<uint32_t>(_pixelAttributes.liquidAttributes.size());
         fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
         for (const auto& [id, liquid] : _pixelAttributes.liquidAttributes)

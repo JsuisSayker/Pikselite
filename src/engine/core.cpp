@@ -4,7 +4,16 @@
 #include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
+#include <tracy/Tracy.hpp>
+
+#ifndef TRACY_ENABLE
+ // output a warning if profiling is disabled
+    #pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+    #error "Not set"
+#endif
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/ecs/systems/scriptSystem.hpp>
+
 namespace engine
 {
     void Core::init()
@@ -29,6 +38,15 @@ namespace engine
         spriteSig.set(componentManager.getComponentType<ecs::components::Sprite>());
         systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
 
+        // Script system (needs Transform + Velocity) — runs Lua scripts
+        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>();
+        ecs::Signature scriptSig;
+        scriptSig.set(componentManager.getComponentType<ecs::components::Transform>());
+        scriptSig.set(componentManager.getComponentType<ecs::components::Velocity>());
+        systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
+        scriptSys.init();
+        scriptSys.loadScript("scripts/movement.lua");
+
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
     }
@@ -38,22 +56,30 @@ namespace engine
         graphics::InputEvent event;
         while (running)
         {
+            ZoneScopedN("Frame");
             timer.tick();
-            event = handleEvents();
+            {
+                ZoneScopedN("Input");
+                event = handleEvents();
+            }
 
             if (isGamePreviewActive)
             {
+                ZoneScopedN("GamePreview");
                 runGamePreview();
             }
 
             if (isProjectEditorActive)
             {
+                ZoneScopedN("ProjectEditor");
                 projectEditor->run(event);
             }
             else
             {
+                ZoneScopedN("SpriteEditor");
                 spriteEditor->run(event);
             }
+            FrameMark;
         }
     }
 
@@ -158,8 +184,16 @@ namespace engine
 
     void Core::update(float deltaTime)
     {
-        _pixelSimulation.step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
-        systemManager.update(deltaTime, componentManager);
+        ZoneScoped;
+
+        {
+            ZoneScopedN("PixelSimulation");
+            _pixelSimulation.step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
+        }
+        {
+            ZoneScopedN("ECS Systems");
+            systemManager.update(deltaTime, componentManager);
+        }
     }
 
     void Core::render()

@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.20)
 # -------------------------------------------------
 set(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/external/overlay-ports")
 
-
 project(PikseliteEngine)
 
 # Use C++17
@@ -24,8 +23,6 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif()
 endif()
 
-
-
 # -------------------------------------------------
 # Find dependencies
 # -------------------------------------------------
@@ -33,6 +30,8 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(GLEW CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Stb REQUIRED)
+find_package(Lua REQUIRED)
+find_path(SOL2_INCLUDE_DIRS "sol/sol.hpp")
 # find_package(imgui CONFIG REQUIRED)
 
 # -------------------------------------------------
@@ -76,17 +75,38 @@ set_target_properties(imgui_backends PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${VCPKG_INSTALLED_DIR}/imgui;${VCPKG_INSTALLED_DIR}/imgui/backends"
 )
 
+option(PIKSELITE_ENABLE_PROFILING "Enable Tracy profiling" ON)
+
+if(PIKSELITE_ENABLE_PROFILING)
+    message(STATUS "TRACY PROFILING ENABLED")
+    find_package(tracy CONFIG REQUIRED)
+    target_link_libraries(engine PRIVATE Tracy::TracyClient)
+    # -------------------------------------------------
+    # Define the TRACY_ENABLE macro for the entire project to enable Tracy profiling
+    # -------------------------------------------------
+    # target_compile_definitions(${PROJECT_NAME} PRIVATE TRACY_ENABLE)
+    target_compile_definitions(engine PRIVATE
+        $<$<CONFIG:Debug>:TRACY_ENABLE>
+    )
+
+    # Move TracyClient.dll to the Debug folder after build
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:Tracy::TracyClient>"
+            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMENT "Copying TracyClient.dll to output directory"
+    )
+endif()
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        SDL2::SDL2
-        SDL2::SDL2main
-        GLEW::GLEW
-        OpenGL::GL
-        # imgui::imgui
-        imgui_backends
-        pikselite_interface
-        graphics
-        engine
-        editor
+    SDL2::SDL2
+    SDL2::SDL2main
+    GLEW::GLEW
+    OpenGL::GL
+    imgui_backends
+    pikselite_interface
+    graphics
+    engine
+    editor
 )
