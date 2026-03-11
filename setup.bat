@@ -14,7 +14,7 @@ set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
 set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\"
 set "PROFILING_ENABLED=ON"
-set "CONFIG_TYPE=Debug"
+set "CONFIG_TYPE=Release"
 
 
 :: -------------------------------------------------
