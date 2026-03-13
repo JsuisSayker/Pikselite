@@ -10,6 +10,7 @@
     "glm",
     "lua",
     "sol2",
+    "gtest",
     {
       "name": "tracy",
       "version>=": "0.13.1"
