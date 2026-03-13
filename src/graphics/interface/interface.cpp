@@ -8,6 +8,12 @@ namespace graphics {
             throw std::runtime_error("Failed to initialize SDL");
         }
 
+        SDL_DisplayMode displayMode;
+        if (SDL_GetCurrentDisplayMode(0, &displayMode) == 0) {
+            width = displayMode.w;
+            height = displayMode.h;
+        }
+
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -16,7 +22,7 @@ namespace graphics {
             "SDL2 + OpenGL test",
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
             width, height,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
+            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
         );
 
         if (!_window) {
@@ -46,9 +52,13 @@ namespace graphics {
 
     Interface::~Interface()
     {
+        if (_glContext) {
+            SDL_GL_DeleteContext(_glContext);
+        }
         if (_window) {
             SDL_DestroyWindow(_window);
         }
+        SDL_Quit();
     }
 
     InputEvent Interface::pollEvent()
@@ -70,6 +80,9 @@ namespace graphics {
                     result.type = WINDOW_CLOSE;
                     result.windowID = event.window.windowID;
                     return result;
+                }
+                if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                    glViewport(0, 0, event.window.data1, event.window.data2);
                 }
                 break;
             case SDL_KEYDOWN:
