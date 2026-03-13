@@ -3,10 +3,17 @@
 
 namespace editors {
 
-    SpriteEditor::SpriteEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface)
-        : _graphicsInterface(graphicsInterface), _renderer(renderer), _imguiInterface(imguiInterface) {}
+    SpriteEditor::SpriteEditor(
+        graphics::Interface* graphicsInterface,
+        graphics::Renderer* renderer,
+        graphics::ImguiInterface* imguiInterface)
+        : _graphicsInterface(graphicsInterface),
+          _renderer(renderer),
+          _imguiInterface(imguiInterface) {
+    }
 
-    SpriteEditor::~SpriteEditor() {}
+    SpriteEditor::~SpriteEditor() {
+    }
 
     void SpriteEditor::run(const graphics::InputEvent& event) {
         handleEvents(event);
@@ -14,8 +21,23 @@ namespace editors {
         _renderer->clear();
         _imguiInterface->startFrame();
 
-        _renderer->drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
-        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
+        std::vector<graphics::Pixel> framePixels = _renderPixels;
+
+        if (_isPlacingSprite && _pendingSprite.valid) {
+            glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+            glm::vec2 worldPos = screenToWorld(mousePos);
+
+            for (const auto& p : _pendingSprite.previewLocalPixels) {
+                graphics::Pixel ghost = p;
+                ghost.position.x += worldPos.x;
+                ghost.position.y += worldPos.y;
+                ghost.color *= 0.65f;
+                framePixels.push_back(ghost);
+            }
+        }
+
+        _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
 
         imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
@@ -50,7 +72,7 @@ namespace editors {
             _camera.zoomOut(1.1f);
             break;
         case graphics::KEY_L:
-            loadSpriteFromFile("sprite.dat");
+            _isPlacingSprite = loadSpriteForPlacement("assets/water.dat");
             break;
         case graphics::KEY_K:
             saveSpriteToFile("sprite.dat");
@@ -64,7 +86,7 @@ namespace editors {
         _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive, _newSpritePath);
         _imguiInterface->projectNavbar(_currentSpriteFilename);
         if (!_currentSpriteFilename.empty()) {
-            loadSpriteFromFile(_currentSpriteFilename);
+            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
             _currentSpriteFilename.clear();
         }
         if (!_newSpritePath.empty()) {
@@ -90,6 +112,13 @@ namespace editors {
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
 
+        if (_isPlacingSprite && _pendingSprite.valid) {
+            placePendingSpriteAtWorld(worldPos);
+            _isPlacingSprite = false;
+            _pendingSprite = {};
+            return;
+        }
+
         graphics::Pixel* pixel = getPixelAt(worldPos);
         if (pixel) {
             if (_isEraserActive) {
@@ -105,11 +134,12 @@ namespace editors {
     }
 
     void SpriteEditor::mouseLeftDrag() {
+        if (_isPlacingSprite) {
+            return;
+        }
+
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
-
-        int gridX = (int)(worldPos.x / PIXEL_SIZE);
-        int gridY = (int)(worldPos.y / PIXEL_SIZE);
 
         removePixelAt(worldPos);
 
@@ -373,6 +403,171 @@ namespace editors {
         _pixelAttributes.solidAttributes.erase(id);
         _pixelAttributes.liquidAttributes.erase(id);
         _pixelAttributes.gaseousAttributes.erase(id);
+    }
+
+    bool SpriteEditor::loadSpriteForPlacement(const std::string& filename) {
+        std::ifstream fin(filename, std::ios::binary);
+        if (!fin) return false;
+
+        PendingSprite pending{};
+        std::cout << "Loading sprite for placement: " << filename << std::endl;
+
+        uint32_t numChunks = 0;
+        fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
+
+        int minGX = std::numeric_limits<int>::max();
+        int minGY = std::numeric_limits<int>::max();
+
+        for (uint32_t i = 0; i < numChunks; ++i) {
+            int32_t cx = 0;
+            int32_t cy = 0;
+            fin.read(reinterpret_cast<char*>(&cx), sizeof(cx));
+            fin.read(reinterpret_cast<char*>(&cy), sizeof(cy));
+
+            for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
+                for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
+                    Pixel::PixelEntityID id = Pixel::EMPTY;
+                    fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+                    if (id == Pixel::EMPTY) continue;
+
+                    const int gx = cx * Pixel::CHUNK_SIZE + x;
+                    const int gy = cy * Pixel::CHUNK_SIZE + y;
+
+                    minGX = std::min(minGX, gx);
+                    minGY = std::min(minGY, gy);
+
+                    pending.cells.push_back({gx, gy, id});
+                }
+            }
+        }
+
+        uint32_t count = 0;
+
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            int index = 0;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            fin.read(reinterpret_cast<char*>(&index), sizeof(index));
+            pending.oldRenderIndex[id] = index;
+        }
+
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            pending.solids[id] = Pixel::Solid{};
+        }
+
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            float viscosity = 0.0f;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            fin.read(reinterpret_cast<char*>(&viscosity), sizeof(viscosity));
+            pending.liquids[id] = Pixel::Liquid{viscosity};
+        }
+
+        fin.read(reinterpret_cast<char*>(&count), sizeof(count));
+        for (uint32_t i = 0; i < count; ++i) {
+            Pixel::PixelEntityID id = Pixel::EMPTY;
+            float density = 0.0f;
+            fin.read(reinterpret_cast<char*>(&id), sizeof(id));
+            fin.read(reinterpret_cast<char*>(&density), sizeof(density));
+            pending.gases[id] = Pixel::Gaseous{density};
+        }
+
+        uint32_t numPixels = 0;
+        fin.read(reinterpret_cast<char*>(&numPixels), sizeof(numPixels));
+        pending.loadedRenderPixels.reserve(numPixels);
+
+        for (uint32_t i = 0; i < numPixels; ++i) {
+            float px = 0.0f;
+            float py = 0.0f;
+            float r = 0.0f;
+            float g = 0.0f;
+            float b = 0.0f;
+
+            fin.read(reinterpret_cast<char*>(&px), sizeof(px));
+            fin.read(reinterpret_cast<char*>(&py), sizeof(py));
+            fin.read(reinterpret_cast<char*>(&r), sizeof(r));
+            fin.read(reinterpret_cast<char*>(&g), sizeof(g));
+            fin.read(reinterpret_cast<char*>(&b), sizeof(b));
+
+            pending.loadedRenderPixels.push_back({{px, py}, {r, g, b}});
+        }
+
+        for (auto& c : pending.cells) {
+            c.localGX -= minGX;
+            c.localGY -= minGY;
+
+            glm::vec3 color{1.0f, 1.0f, 1.0f};
+            auto it = pending.oldRenderIndex.find(c.oldId);
+            if (it != pending.oldRenderIndex.end()) {
+                const int index = it->second;
+                if (index >= 0 && index < static_cast<int>(pending.loadedRenderPixels.size())) {
+                    color = pending.loadedRenderPixels[index].color;
+                }
+            }
+
+            pending.previewLocalPixels.push_back({
+                {c.localGX * PIXEL_SIZE, c.localGY * PIXEL_SIZE},
+                color
+            });
+        }
+
+        pending.valid = !pending.cells.empty();
+        _pendingSprite = std::move(pending);
+        return _pendingSprite.valid;
+    }
+
+    void SpriteEditor::placePendingSpriteAtWorld(glm::vec2 worldPos) {
+        if (!_pendingSprite.valid) return;
+
+        auto toChunk = [](int g) -> int {
+            return (g >= 0) ? (g / Pixel::CHUNK_SIZE) : ((g - Pixel::CHUNK_SIZE + 1) / Pixel::CHUNK_SIZE);
+        };
+
+        auto toLocal = [](int g) -> int {
+            return ((g % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        };
+
+        const int anchorGX = static_cast<int>(std::floor(worldPos.x / PIXEL_SIZE));
+        const int anchorGY = static_cast<int>(std::floor(worldPos.y / PIXEL_SIZE));
+
+        for (const auto& c : _pendingSprite.cells) {
+            const int gx = anchorGX + c.localGX;
+            const int gy = anchorGY + c.localGY;
+
+            const int cx = toChunk(gx);
+            const int cy = toChunk(gy);
+            const int lx = toLocal(gx);
+            const int ly = toLocal(gy);
+
+            const Pixel::PixelEntityID newId = pixelIdCounter++;
+
+            Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+            chunk.set(lx, ly, newId);
+
+            if (_pendingSprite.solids.count(c.oldId))
+                _pixelAttributes.solidAttributes[newId] = _pendingSprite.solids[c.oldId];
+            if (_pendingSprite.liquids.count(c.oldId))
+                _pixelAttributes.liquidAttributes[newId] = _pendingSprite.liquids[c.oldId];
+            if (_pendingSprite.gases.count(c.oldId))
+                _pixelAttributes.gaseousAttributes[newId] = _pendingSprite.gases[c.oldId];
+
+            glm::vec3 color{1.0f, 1.0f, 1.0f};
+            auto it = _pendingSprite.oldRenderIndex.find(c.oldId);
+            if (it != _pendingSprite.oldRenderIndex.end()) {
+                const int index = it->second;
+                if (index >= 0 && index < static_cast<int>(_pendingSprite.loadedRenderPixels.size())) {
+                    color = _pendingSprite.loadedRenderPixels[index].color;
+                }
+            }
+
+            _renderPixels.push_back({{gx * PIXEL_SIZE, gy * PIXEL_SIZE}, color});
+            _pixelAttributes.renderIndex[newId] = static_cast<int>(_renderPixels.size()) - 1;
+        }
     }
 
 } // namespace editors
