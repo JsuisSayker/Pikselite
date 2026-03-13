@@ -7,7 +7,7 @@ namespace graphics {
     class Camera2D {
         public:
             glm::mat4 getViewProjection(int screenWidth, int screenHeight) const;
-           
+
             void move(glm::vec2 direction);
 
             void zoomIn(float factor) { zoom *= factor; }
