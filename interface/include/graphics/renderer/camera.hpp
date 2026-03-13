@@ -18,6 +18,7 @@ namespace graphics {
 
             glm::vec2 getPosition() const { return glm::vec2(x, y); }
             float getZoom() const { return zoom; }
+            glm::vec2 screenToWorld(const glm::vec2& screenPos, int screenWidth, int screenHeight) const;
 
         private:
             float x = 0.0f, y = 0.0f;  // center (or camera position) in world coords
