@@ -2,12 +2,19 @@ find_package(GTest CONFIG REQUIRED)
 
 add_executable(pikselite_tests
     Vector_test.cpp
+    engine_editor_tests.cpp
 )
+
+target_compile_definitions(pikselite_tests PRIVATE UNIT_TEST)
 
 target_link_libraries(pikselite_tests
     PRIVATE
     GTest::gtest
     GTest::gtest_main
+    pikselite_interface
+    graphics
+    engine
+    editor
 )
 
 include(GoogleTest)
