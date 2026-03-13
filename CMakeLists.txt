@@ -10,6 +10,9 @@ project(PikseliteEngine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable testing
+enable_testing()
+
 # -------------------------------------------------
 # Automatically detect system vcpkg installation
 # -------------------------------------------------
@@ -41,6 +44,7 @@ add_subdirectory(interface)
 add_subdirectory(src/graphics)
 add_subdirectory(src/editors)
 add_subdirectory(src/engine)
+add_subdirectory(tests)
 
 # -------------------------------------------------
 # Build executable
