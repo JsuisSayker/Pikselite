@@ -14,6 +14,13 @@ namespace editors {
 
     class SpriteEditor {
     public:
+#ifdef UNIT_TEST
+        void testAddPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) { addPixel(worldPos, defaultProperties); }
+        bool testRemovePixelAt(glm::vec2 worldPos) { return removePixelAt(worldPos); }
+        graphics::Pixel* testGetPixelAt(glm::vec2 worldPos) { return getPixelAt(worldPos); }
+        bool testSaveSpriteToFile(const std::string& filename) { return saveSpriteToFile(filename); }
+        bool testLoadSpriteFromFile(const std::string& filename) { return loadSpriteFromFile(filename); }
+#endif
         SpriteEditor(
             graphics::Interface* graphicsInterface,
             graphics::Renderer* renderer,
@@ -31,7 +38,7 @@ namespace editors {
 
         uint32_t pixelIdCounter = 1;
         Pixel::ChunkGrid _chunkGrid;
-        
+
         Pixel::PixelAttributes _pixelAttributes;
         std::vector<graphics::Pixel> _renderPixels;
 

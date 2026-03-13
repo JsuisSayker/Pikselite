@@ -13,6 +13,10 @@
 namespace editors {
     class ProjectEditor {
     public:
+#ifdef UNIT_TEST
+        bool testLoadSpriteForPlacement(const std::string& filename) { return loadSpriteForPlacement(filename); }
+        void testPlacePendingSpriteAtGrid(int anchorGX, int anchorGY) { placePendingSpriteAtGrid(anchorGX, anchorGY); }
+#endif
         ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
         ~ProjectEditor();
 
@@ -29,10 +33,10 @@ namespace editors {
         graphics::Renderer* _renderer;
 
         graphics::Camera2D _camera;
-        
+
         uint32_t pixelIdCounter = 1;
         uint32_t gameObjectCounter = 1;
-        
+
         Pixel::PixelAttributes _pixelAttributes;
 
         std::vector<Pixel::GameObject> _gameObjects;
