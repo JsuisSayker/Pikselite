@@ -36,6 +36,7 @@ namespace graphics {
         void scanSprites();
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects);
+        void gameObjectPropertiesBar(::Pixel::GameObject& gameObject);
 
         void startFrame();
         void endFrame(SDL_Window* window);

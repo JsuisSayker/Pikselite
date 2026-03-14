@@ -360,9 +360,7 @@ namespace graphics {
             ImGui::Columns(columns, 0, false);
 
            for (const auto& sprite : spriteFiles)
-            {
-                // ADD: Right-clicking one opens a popup with options like rename, delete, etc.
-                
+            {   
                 ImGui::PushID(sprite.c_str());
             
                 std::string name = std::filesystem::path(sprite).filename().string();
@@ -437,7 +435,6 @@ namespace graphics {
                         ("GameObject " + std::to_string(gameObjects[i].id)) :
                         gameObjects[i].name;
     
-                    // Search filter
                     if (!lowerSearch.empty())
                     {
                         std::string lowerName = objName;
@@ -449,9 +446,13 @@ namespace graphics {
     
                     ImGui::PushID((int)i);
     
-                    if (ImGui::Selectable(objName.c_str(), selectedObject == (int)i))
+                    if (ImGui::Selectable(objName.c_str(), selectedObject == (int)i)) {
                         selectedObject = (int)i;
+
+                        gameObjectPropertiesBar(gameObjects[i]);
+                    }
     
+                    // If right-clicked
                     if (ImGui::BeginPopupContextItem())
                     {
                         if (ImGui::MenuItem("Rename"))
@@ -532,5 +533,31 @@ namespace graphics {
         });
     }
 
+    void ImguiInterface::gameObjectPropertiesBar(::Pixel::GameObject& gameObject)
+    {
+        ImVec2 desiredPos = GetDesiredPosition("right");
+        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
+
+        static BarConfig sideBarConfig {
+            BarOrientation::Vertical,
+            "Pixel Editor",
+            ImVec2(200, desiredSize),
+            true,
+            desiredPos
+        };
+
+        static Bar sideBar(sideBarConfig);
+
+        sideBar.Draw([&]() {
+            // checkbox to see wether the object is visible or not
+            // object's name
+            // list of components
+                // checkbox to enable/disable each component, and name of component
+                // dropdown to show variables of component and edit them
+                // button to remove component
+            // add component button
+                // when clicked, shows a list of available components to add, with a search bar to filter them
+        });
+    }
 
 } // namespace graphics
