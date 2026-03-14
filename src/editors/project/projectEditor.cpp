@@ -15,6 +15,12 @@ namespace editors {
         _renderer->clear();
 
         _imguiInterface->startFrame();
+        _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested, _loadSceneRequested);
+
+        if (!_currentSpriteFilename.empty()) {
+            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
+            _currentSpriteFilename.clear();
+        }
 
         std::vector<graphics::Pixel> framePixels = _renderPixels;
 
@@ -39,6 +45,23 @@ namespace editors {
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
+    }
+
+    void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>& renderPixels,
+                                     const std::vector<Pixel::GameObject>& gameObjects,
+                                     const Pixel::PixelAttributes& pixelAttributes,
+                                     const Pixel::ChunkGrid& chunkGrid,
+                                     uint32_t nextPixelId,
+                                     uint32_t nextGameObjectId) {
+        _renderPixels = renderPixels;
+        _gameObjects = gameObjects;
+        _pixelAttributes = pixelAttributes;
+        _chunkGrid = chunkGrid;
+        pixelIdCounter = nextPixelId;
+        gameObjectCounter = nextGameObjectId;
+        _pendingSprite = {};
+        _isPlacingSprite = false;
+        _leftMouseDownLastFrame = false;
     }
 
     void ProjectEditor::handleEvents(const graphics::InputEvent& event) {

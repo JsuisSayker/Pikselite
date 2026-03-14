@@ -30,6 +30,7 @@ namespace graphics {
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 
         void projectNavbar(::std::string &currentSpriteFilename);
+        void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
 
         void startFrame();

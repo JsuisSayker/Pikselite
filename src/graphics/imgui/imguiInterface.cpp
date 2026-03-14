@@ -332,6 +332,13 @@ namespace graphics {
 
     void ImguiInterface::projectNavbar(std::string &currentSpriteFilename)
     {
+        bool saveSceneRequested = false;
+        bool loadSceneRequested = false;
+        projectNavbar(currentSpriteFilename, saveSceneRequested, loadSceneRequested);
+    }
+
+    void ImguiInterface::projectNavbar(std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested)
+    {
         ImVec2 desiredPos = GetDesiredPosition("bottom");
         int desiredSize = GetDesiredSize("full", BarOrientation::Horizontal);
 
@@ -350,6 +357,18 @@ namespace graphics {
             if (BasicButton("Refresh")) {
                 scanSprites();
             }
+
+            ImGui::SameLine();
+            if (BasicButton("Save Scene")) {
+                saveSceneRequested = true;
+            }
+
+            ImGui::SameLine();
+            if (BasicButton("Load Scene")) {
+                loadSceneRequested = true;
+            }
+
+            ImGui::Separator();
 
             float thumbnailSize = 65.0f;
             float padding = 15.0f;

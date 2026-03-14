@@ -10,6 +10,7 @@
     "glm",
     "lua",
     "sol2",
+    "nlohmann-json",
     {
       "name": "tracy",
       "version>=": "0.13.1"

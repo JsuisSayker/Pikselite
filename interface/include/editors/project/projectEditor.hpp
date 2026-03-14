@@ -22,6 +22,27 @@ namespace editors {
         std::vector<Pixel::GameObject> getGameObjects() const { return _gameObjects; }
         Pixel::PixelAttributes getPixelAttributes() const { return _pixelAttributes; }
         Pixel::ChunkGrid getChunkGrid() const { return _chunkGrid; }
+        uint32_t getPixelIdCounter() const { return pixelIdCounter; }
+        uint32_t getGameObjectCounter() const { return gameObjectCounter; }
+
+        bool consumeSaveSceneRequest() {
+            const bool requested = _saveSceneRequested;
+            _saveSceneRequested = false;
+            return requested;
+        }
+
+        bool consumeLoadSceneRequest() {
+            const bool requested = _loadSceneRequested;
+            _loadSceneRequested = false;
+            return requested;
+        }
+
+        void setSceneData(const std::vector<graphics::Pixel>& renderPixels,
+                          const std::vector<Pixel::GameObject>& gameObjects,
+                          const Pixel::PixelAttributes& pixelAttributes,
+                          const Pixel::ChunkGrid& chunkGrid,
+                          uint32_t nextPixelId,
+                          uint32_t nextGameObjectId);
 
     private:
         graphics::ImguiInterface* _imguiInterface;
@@ -59,6 +80,9 @@ namespace editors {
         PendingSprite _pendingSprite;
         bool _isPlacingSprite = false;
         bool _leftMouseDownLastFrame = false;
+        bool _saveSceneRequested = false;
+        bool _loadSceneRequested = false;
+        std::string _currentSpriteFilename;
 
         void handleEvents(const graphics::InputEvent& event);
         bool loadSpriteFromFile(const std::string& filename); // keep if you still need direct load
