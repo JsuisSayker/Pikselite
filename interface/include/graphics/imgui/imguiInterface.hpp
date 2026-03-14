@@ -28,7 +28,7 @@ namespace graphics {
         void pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
-        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath, std::vector<::Pixel::GameObject>& gameObjects);
+        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath, std::vector<::Pixel::GameObject>* gameObjects = nullptr);
 
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 

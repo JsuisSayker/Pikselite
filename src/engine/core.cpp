@@ -170,6 +170,7 @@ namespace engine
             break;
         }
         case graphics::KEY_TAB:
+            std::cout << "Switching editor mode" << std::endl; //////////////////////// debug
             isProjectEditorActive = !isProjectEditorActive;
             break;
         case graphics::KEY_F5:

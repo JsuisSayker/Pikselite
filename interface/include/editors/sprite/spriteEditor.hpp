@@ -24,8 +24,6 @@ namespace editors {
 
         void run(const graphics::InputEvent& event);
 
-        void updateGameObjects(std::vector<Pixel::GameObject>& gameObjects) { _gameObjects = gameObjects; }
-
     private:
         graphics::ImguiInterface* _imguiInterface;
         graphics::Interface* _graphicsInterface;
@@ -66,9 +64,6 @@ namespace editors {
 
         std::string _currentSpriteFilename;
         std::string _newSpritePath;
-
-        ////////// testing
-        std::vector<Pixel::GameObject> _gameObjects;
 
         struct PendingCell {
             int localGX = 0;

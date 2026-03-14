@@ -209,6 +209,7 @@ namespace editors {
 
         Pixel::GameObject obj;
         obj.id = gameObjectCounter++;
+        obj.name = "GameObject"; ////////////////////////////////// placeholder name
 
         auto toChunk = [](int g) -> int {
             return (g >= 0) ? (g / Pixel::CHUNK_SIZE) : ((g - Pixel::CHUNK_SIZE + 1) / Pixel::CHUNK_SIZE);

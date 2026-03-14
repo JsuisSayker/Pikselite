@@ -83,7 +83,7 @@ namespace editors {
     }
 
     void SpriteEditor::imguiHandling() {
-        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive, _newSpritePath, _gameObjects);
+        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive, _newSpritePath);
         _imguiInterface->projectNavbar(_currentSpriteFilename);
         if (!_currentSpriteFilename.empty()) {
             _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
