@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Enable testing
+option(ENABLE_COVERAGE "Enable coverage reporting" ON)
 enable_testing()
 
 # -------------------------------------------------
