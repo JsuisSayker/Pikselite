@@ -87,6 +87,9 @@ namespace editors {
         void handleEvents(const graphics::InputEvent& event);
         bool loadSpriteFromFile(const std::string& filename); // keep if you still need direct load
 
+        void imguiHandling();
+        std::string _currentSpriteFilename;
+
         bool loadSpriteForPlacement(const std::string& filename);
         void updatePlacementMode();
         void placePendingSpriteAtGrid(int anchorGX, int anchorGY);
