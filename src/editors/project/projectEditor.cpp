@@ -277,13 +277,7 @@ namespace editors {
 
     void ProjectEditor::imguiHandling()
     {
-        _imguiInterface->gameObjectsBar(_gameObjects);
-
-        _imguiInterface->projectNavbar(_currentSpriteFilename);
-        if (!_currentSpriteFilename.empty()) {
-            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
-            _currentSpriteFilename.clear();
-        }
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
     }
 
 } // namespace editors

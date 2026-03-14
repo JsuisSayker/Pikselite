@@ -3,6 +3,7 @@
 #include <string>
 #include <filesystem>
 #include <vector>
+#include <cstring>
 
 namespace graphics {
     ImguiInterface::ImguiInterface(SDL_Window* window, SDL_GLContext glContext)
@@ -418,14 +419,14 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects)
+    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex)
     {
         ImVec2 desiredPos = GetDesiredPosition("left");
         int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
     
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
-            "Pixel Sprite Handler",
+            "Hierarchy",
             ImVec2(200, desiredSize),
             true,
             desiredPos
@@ -437,7 +438,6 @@ namespace graphics {
         
             static char searchBuffer[128] = "";
             static char renameBuffer[128] = "";
-            static int selectedObject = -1;
             static int renameIndex = -1;
             static bool openRenamePopup = false;
             static bool focusRename = true;
@@ -468,8 +468,8 @@ namespace graphics {
     
                     ImGui::PushID((int)i);
     
-                    if (ImGui::Selectable(objName.c_str(), selectedObject == (int)i))
-                        selectedObject = (int)i;
+                    if (ImGui::Selectable(objName.c_str(), selectedGameObjectIndex == (int)i))
+                        selectedGameObjectIndex = (int)i;
     
                     if (ImGui::BeginPopupContextItem())
                     {
@@ -484,10 +484,10 @@ namespace graphics {
     
                         if (ImGui::MenuItem("Delete"))
                         {
-                            if (selectedObject == (int)i)
-                                selectedObject = -1;
-                            else if (selectedObject > (int)i)
-                                selectedObject--;
+                                if (selectedGameObjectIndex == (int)i)
+                                    selectedGameObjectIndex = -1;
+                                else if (selectedGameObjectIndex > (int)i)
+                                    selectedGameObjectIndex--;
     
                             gameObjects.erase(gameObjects.begin() + i);
     
@@ -548,6 +548,48 @@ namespace graphics {
                 ImGui::EndPopup();
             }
     
+        });
+
+        ImVec2 desiredInspectorPos = GetDesiredPosition("right");
+        static BarConfig inspectorBarConfig {
+            BarOrientation::Vertical,
+            "Inspector",
+            ImVec2(260, desiredSize),
+            true,
+            desiredInspectorPos
+        };
+
+        static Bar inspectorBar(inspectorBarConfig);
+        inspectorBar.Draw([&]() {
+            if (selectedGameObjectIndex < 0 || selectedGameObjectIndex >= static_cast<int>(gameObjects.size())) {
+                ImGui::TextDisabled("No GameObject selected");
+                ImGui::Separator();
+                ImGui::TextWrapped("Select a GameObject in the Hierarchy to edit its properties.");
+                return;
+            }
+
+            auto &selected = gameObjects[selectedGameObjectIndex];
+
+            ImGui::Text("GameObject");
+            ImGui::Separator();
+
+            char nameBuffer[128] = {};
+            std::strncpy(nameBuffer, selected.name.c_str(), sizeof(nameBuffer) - 1);
+            if (ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer))) {
+                selected.name = nameBuffer;
+            }
+
+            ImGui::TextDisabled("ID: %u", selected.id);
+            ImGui::TextDisabled("Pixels: %d", static_cast<int>(selected.pixelEntities.size()));
+
+            ImGui::Spacing();
+            ImGui::Text("Inspector");
+            ImGui::Separator();
+            ImGui::TextWrapped("Component editing is temporarily disabled.");
+
+            if (ImGui::Button("Add Component")) {
+                // Intentionally not wired yet (placeholder requested)
+            }
         });
     }
 

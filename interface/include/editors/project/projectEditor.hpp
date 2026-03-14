@@ -83,12 +83,12 @@ namespace editors {
         bool _saveSceneRequested = false;
         bool _loadSceneRequested = false;
         std::string _currentSpriteFilename;
+        int _selectedGameObjectIndex = -1;
 
         void handleEvents(const graphics::InputEvent& event);
         bool loadSpriteFromFile(const std::string& filename); // keep if you still need direct load
 
         void imguiHandling();
-        std::string _currentSpriteFilename;
 
         bool loadSpriteForPlacement(const std::string& filename);
         void updatePlacementMode();

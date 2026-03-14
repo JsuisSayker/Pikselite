@@ -44,6 +44,7 @@ namespace {
 
         return {
             {"id", go.id},
+            {"name", go.name},
             {"pixelEntities", pixelIds}
         };
     }
@@ -52,6 +53,7 @@ namespace {
     {
         Pixel::GameObject go;
         go.id = j.value("id", Pixel::NO_SPRITE);
+        go.name = j.value("name", std::string("GameObject ") + std::to_string(go.id));
 
         if (j.contains("pixelEntities") && j["pixelEntities"].is_array()) {
             for (const auto& pixelId : j["pixelEntities"]) {
@@ -315,8 +317,8 @@ namespace engine
             link.pixelEntities = go.pixelEntities;
             componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
 
-            // Attach a SpriteComponent (default texture: dragon.png)
             ecs::components::Sprite spriteComp;
+            spriteComp.texturePath = "assets/dragon.png";
             componentManager.addComponent<ecs::components::Sprite>(eid, spriteComp);
 
             ecs::Signature sig;
@@ -324,6 +326,7 @@ namespace engine
             sig.set(componentManager.getComponentType<ecs::components::Velocity>());
             sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
             sig.set(componentManager.getComponentType<ecs::components::Sprite>());
+
             entityManager.setSignature(eid, sig);
             systemManager.entitySignatureChanged(eid, sig);
 
