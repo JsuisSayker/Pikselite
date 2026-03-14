@@ -7,7 +7,7 @@ namespace graphics {
     class Camera2D {
         public:
             glm::mat4 getViewProjection(int screenWidth, int screenHeight) const;
-           
+
             void move(glm::vec2 direction);
 
             void zoomIn(float factor) { zoom *= factor; }
@@ -18,6 +18,7 @@ namespace graphics {
 
             glm::vec2 getPosition() const { return glm::vec2(x, y); }
             float getZoom() const { return zoom; }
+            glm::vec2 screenToWorld(const glm::vec2& screenPos, int screenWidth, int screenHeight) const;
 
         private:
             float x = 0.0f, y = 0.0f;  // center (or camera position) in world coords

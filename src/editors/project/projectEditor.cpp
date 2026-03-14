@@ -1,4 +1,5 @@
 #include <editors/project/projectEditor.hpp>
+#include <SDL2/SDL.h>
 
 namespace editors {
 
@@ -9,15 +10,34 @@ namespace editors {
 
     void ProjectEditor::run(const graphics::InputEvent& event) {
         handleEvents(event);
+        updatePlacementMode();
 
         _renderer->clear();
 
-        // ImGui part
         _imguiInterface->startFrame();
-        _renderer->drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
-        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f}); // Draw grid with cell size 16
-        _imguiInterface->endFrame(_graphicsInterface->getWindow());
 
+        std::vector<graphics::Pixel> framePixels = _renderPixels;
+
+        // ghost preview while placing
+        if (_isPlacingSprite && _pendingSprite.valid) {
+            glm::vec2 mouse = _graphicsInterface->getMousePosition();
+            glm::vec2 world = screenToWorld(mouse);
+
+            int anchorGX = static_cast<int>(std::floor(world.x / PIXEL_SIZE));
+            int anchorGY = static_cast<int>(std::floor(world.y / PIXEL_SIZE));
+
+            for (const auto& p : _pendingSprite.previewLocalPixels) {
+                graphics::Pixel ghost = p;
+                ghost.position.x = anchorGX * PIXEL_SIZE + p.position.x;
+                ghost.position.y = anchorGY * PIXEL_SIZE + p.position.y;
+                ghost.color *= 0.65f; // visual ghost
+                framePixels.push_back(ghost);
+            }
+        }
+
+        _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
+        _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
     }
 
@@ -42,31 +62,55 @@ namespace editors {
             _camera.zoomOut(1.1f);
             break;
         case graphics::KEY_L:
-            std::cout << "projectEditor function called" << std::endl; //////////////////////// debug
-            loadSpriteFromFile("sprite.dat");
+            // Start placement mode instead of direct load
+            loadSpriteForPlacement("assets/water.dat");
+            _isPlacingSprite = _pendingSprite.valid;
             break;
         default:
             break;
         }
     }
 
-    bool ProjectEditor::loadSpriteFromFile(const std::string& filename) {
+    glm::vec2 ProjectEditor::screenToWorld(const glm::vec2& screenPos) const {
+        // Adjust this call if your Camera2D API name differs
+        int w = 0, h = 0;
+        SDL_GetWindowSize(_graphicsInterface->getWindow(), &w, &h);
+        return _camera.screenToWorld(screenPos, w, h);
+    }
+
+    void ProjectEditor::updatePlacementMode() {
+        if (!_isPlacingSprite || !_pendingSprite.valid) return;
+
+        const bool leftDown = (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+        if (leftDown && !_leftMouseDownLastFrame) {
+            glm::vec2 mouse = _graphicsInterface->getMousePosition();
+            glm::vec2 world = screenToWorld(mouse);
+
+            int anchorGX = static_cast<int>(std::floor(world.x / PIXEL_SIZE));
+            int anchorGY = static_cast<int>(std::floor(world.y / PIXEL_SIZE));
+
+            placePendingSpriteAtGrid(anchorGX, anchorGY);
+
+            _isPlacingSprite = false;
+            _pendingSprite = {};
+        }
+        _leftMouseDownLastFrame = leftDown;
+    }
+
+    bool ProjectEditor::loadSpriteForPlacement(const std::string& filename) {
         std::ifstream fin(filename, std::ios::binary);
         if (!fin) return false;
-        _renderPixels.clear();
+
+        PendingSprite pending{};
 
         uint32_t numChunks = 0;
-        Pixel::GameObject newSprite;
-        std::unordered_map<Pixel::PixelEntityID, Pixel::PixelEntityID> pixelIds;
-
-        newSprite.id = gameObjectCounter++;
-        newSprite.name = filename.substr(filename.find_last_of("/\\") + 1); // Extract name from filename
         fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
 
-        for (uint32_t i = 0; i < numChunks; ++i)
-        {
-            int32_t cx = 0;
-            int32_t cy = 0;
+        int minGX = std::numeric_limits<int>::max();
+        int minGY = std::numeric_limits<int>::max();
+
+        for (uint32_t i = 0; i < numChunks; ++i) {
+            int32_t cx = 0, cy = 0;
             fin.read(reinterpret_cast<char*>(&cx), sizeof(cx));
             fin.read(reinterpret_cast<char*>(&cy), sizeof(cy));
 
@@ -74,76 +118,136 @@ namespace editors {
                 for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
                     Pixel::PixelEntityID id = Pixel::EMPTY;
                     fin.read(reinterpret_cast<char*>(&id), sizeof(id));
-                    if (id != Pixel::EMPTY) {
-                        pixelIds[id] = pixelIdCounter++;
-                        newSprite.pixelEntities.push_back(pixelIds[id]);
-                        Pixel::Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-                        chunk.set(x, y, pixelIds[id]);
-                    }
+                    if (id == Pixel::EMPTY) continue;
+
+                    const int gx = cx * Pixel::CHUNK_SIZE + x;
+                    const int gy = cy * Pixel::CHUNK_SIZE + y;
+                    minGX = std::min(minGX, gx);
+                    minGY = std::min(minGY, gy);
+
+                    pending.cells.push_back({gx, gy, id}); // temp global, normalized later
                 }
             }
         }
-        _gameObjects.push_back(newSprite);
 
         uint32_t count = 0;
+
         fin.read(reinterpret_cast<char*>(&count), sizeof(count));
         for (uint32_t i = 0; i < count; ++i) {
             Pixel::PixelEntityID id = Pixel::EMPTY;
             int index = 0;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
             fin.read(reinterpret_cast<char*>(&index), sizeof(index));
-            _pixelAttributes.renderIndex[pixelIds[id]] = index;
+            pending.oldRenderIndex[id] = index;
         }
 
-        count = 0;
         fin.read(reinterpret_cast<char*>(&count), sizeof(count));
         for (uint32_t i = 0; i < count; ++i) {
             Pixel::PixelEntityID id = Pixel::EMPTY;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
-            _pixelAttributes.solidAttributes[pixelIds[id]] = Pixel::Solid();
+            pending.solids[id] = Pixel::Solid{};
         }
 
-        count = 0;
         fin.read(reinterpret_cast<char*>(&count), sizeof(count));
         for (uint32_t i = 0; i < count; ++i) {
             Pixel::PixelEntityID id = Pixel::EMPTY;
             float viscosity = 0.0f;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
             fin.read(reinterpret_cast<char*>(&viscosity), sizeof(viscosity));
-            _pixelAttributes.liquidAttributes[pixelIds[id]] = Pixel::Liquid{viscosity};
+            pending.liquids[id] = Pixel::Liquid{viscosity};
         }
 
-        count = 0;
         fin.read(reinterpret_cast<char*>(&count), sizeof(count));
         for (uint32_t i = 0; i < count; ++i) {
             Pixel::PixelEntityID id = Pixel::EMPTY;
             float density = 0.0f;
             fin.read(reinterpret_cast<char*>(&id), sizeof(id));
             fin.read(reinterpret_cast<char*>(&density), sizeof(density));
-            _pixelAttributes.gaseousAttributes[pixelIds[id]] = Pixel::Gaseous{density};
+            pending.gases[id] = Pixel::Gaseous{density};
         }
 
         uint32_t numPixels = 0;
         fin.read(reinterpret_cast<char*>(&numPixels), sizeof(numPixels));
-        for (uint32_t i = 0; i < numPixels; ++i) {
-            float px = 0.0f;
-            float py = 0.0f;
-            float r = 0.0f;
-            float g = 0.0f;
-            float b = 0.0f;
+        pending.loadedRenderPixels.reserve(numPixels);
 
+        for (uint32_t i = 0; i < numPixels; ++i) {
+            float px = 0, py = 0, r = 0, g = 0, b = 0;
             fin.read(reinterpret_cast<char*>(&px), sizeof(px));
             fin.read(reinterpret_cast<char*>(&py), sizeof(py));
             fin.read(reinterpret_cast<char*>(&r), sizeof(r));
             fin.read(reinterpret_cast<char*>(&g), sizeof(g));
             fin.read(reinterpret_cast<char*>(&b), sizeof(b));
-
-            _renderPixels.push_back({{px, py}, {r, g, b}});
+            pending.loadedRenderPixels.push_back({{px, py}, {r, g, b}});
         }
 
-        fin.close();
-        pixelIdCounter = _renderPixels.size() + 1;
-        return true;
+        // normalize cells + build local preview pixels
+        for (auto& c : pending.cells) {
+            c.localGX -= minGX;
+            c.localGY -= minGY;
+
+            glm::vec3 color{1.0f, 1.0f, 1.0f};
+            auto itIdx = pending.oldRenderIndex.find(c.oldId);
+            if (itIdx != pending.oldRenderIndex.end() &&
+                itIdx->second >= 0 &&
+                itIdx->second < static_cast<int>(pending.loadedRenderPixels.size())) {
+                color = pending.loadedRenderPixels[itIdx->second].color;
+            }
+
+            pending.previewLocalPixels.push_back({
+                {c.localGX * PIXEL_SIZE, c.localGY * PIXEL_SIZE},
+                color
+            });
+        }
+
+        pending.valid = !pending.cells.empty();
+        _pendingSprite = std::move(pending);
+        return _pendingSprite.valid;
+    }
+
+    void ProjectEditor::placePendingSpriteAtGrid(int anchorGX, int anchorGY) {
+        if (!_pendingSprite.valid) return;
+
+        Pixel::GameObject obj;
+        obj.id = gameObjectCounter++;
+
+        auto toChunk = [](int g) -> int {
+            return (g >= 0) ? (g / Pixel::CHUNK_SIZE) : ((g - Pixel::CHUNK_SIZE + 1) / Pixel::CHUNK_SIZE);
+        };
+        auto toLocal = [](int g) -> int {
+            return ((g % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+        };
+
+        for (const auto& c : _pendingSprite.cells) {
+            const int gx = anchorGX + c.localGX;
+            const int gy = anchorGY + c.localGY;
+
+            const int cx = toChunk(gx);
+            const int cy = toChunk(gy);
+            const int lx = toLocal(gx);
+            const int ly = toLocal(gy);
+
+            const Pixel::PixelEntityID newId = pixelIdCounter++;
+            _chunkGrid.getOrCreateChunk(cx, cy).set(lx, ly, newId);
+            obj.pixelEntities.push_back(newId);
+
+            // copy material attrs from old id -> new id
+            if (_pendingSprite.solids.count(c.oldId))  _pixelAttributes.solidAttributes[newId] = _pendingSprite.solids[c.oldId];
+            if (_pendingSprite.liquids.count(c.oldId)) _pixelAttributes.liquidAttributes[newId] = _pendingSprite.liquids[c.oldId];
+            if (_pendingSprite.gases.count(c.oldId))   _pixelAttributes.gaseousAttributes[newId] = _pendingSprite.gases[c.oldId];
+
+            glm::vec3 color{1.0f, 1.0f, 1.0f};
+            auto itIdx = _pendingSprite.oldRenderIndex.find(c.oldId);
+            if (itIdx != _pendingSprite.oldRenderIndex.end() &&
+                itIdx->second >= 0 &&
+                itIdx->second < static_cast<int>(_pendingSprite.loadedRenderPixels.size())) {
+                color = _pendingSprite.loadedRenderPixels[itIdx->second].color;
+            }
+
+            _renderPixels.push_back({{gx * PIXEL_SIZE, gy * PIXEL_SIZE}, color});
+            _pixelAttributes.renderIndex[newId] = static_cast<int>(_renderPixels.size()) - 1;
+        }
+
+        _gameObjects.push_back(std::move(obj));
     }
 
 } // namespace editors

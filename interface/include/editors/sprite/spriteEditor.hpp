@@ -8,11 +8,18 @@
 #include <fstream>
 #include <vector>
 #include <engine/ecs/components/gameObjectComponent.hpp>
+#include <limits>
+#include <cmath>
+#include <unordered_map>
 
 namespace editors {
+
     class SpriteEditor {
     public:
-        SpriteEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
+        SpriteEditor(
+            graphics::Interface* graphicsInterface,
+            graphics::Renderer* renderer,
+            graphics::ImguiInterface* imguiInterface);
         ~SpriteEditor();
 
         void run(const graphics::InputEvent& event);
@@ -62,5 +69,28 @@ namespace editors {
 
         ////////// testing
         std::vector<Pixel::GameObject> _gameObjects;
+
+        struct PendingCell {
+            int localGX = 0;
+            int localGY = 0;
+            Pixel::PixelEntityID oldId = Pixel::EMPTY;
+        };
+
+        struct PendingSprite {
+            bool valid = false;
+            std::vector<PendingCell> cells;
+            std::vector<graphics::Pixel> previewLocalPixels;
+            std::unordered_map<Pixel::PixelEntityID, int> oldRenderIndex;
+            std::unordered_map<Pixel::PixelEntityID, Pixel::Solid> solids;
+            std::unordered_map<Pixel::PixelEntityID, Pixel::Liquid> liquids;
+            std::unordered_map<Pixel::PixelEntityID, Pixel::Gaseous> gases;
+            std::vector<graphics::Pixel> loadedRenderPixels;
+        };
+
+        PendingSprite _pendingSprite;
+        bool _isPlacingSprite = false;
+
+        bool loadSpriteForPlacement(const std::string& filename);
+        void placePendingSpriteAtWorld(glm::vec2 worldPos);
     };
 } // namespace editors

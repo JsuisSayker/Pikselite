@@ -23,7 +23,6 @@ namespace ecs::systems
         {
             _lua = std::make_unique<engine::LuaManager>();
             registerBindings();
-            std::cout << "[ScriptSystem] Initialized LuaManager and registered bindings." << std::endl;
         }
 
         /// Load a .lua file (call after init)
@@ -34,12 +33,9 @@ namespace ecs::systems
 
         void update(double dt, engine::ComponentManager &componentManager) override
         {
-            std::cout << "[ScriptSystem] Updating " << entities.size() << " entities with dt = " << dt << std::endl;
             if (!_lua || !_lua->hasFunction("update"))
                 return;
 
-
-            std::cout << "[ScriptSystem] Calling Lua 'update' function for each entity." << std::endl;
             // Snapshot the keyboard state and expose it to Lua each frame
             updateKeyboardState();
 
@@ -78,7 +74,6 @@ namespace ecs::systems
                     transform.scaleY   = ent.get_or<float>("scaleY", transform.scaleY);
                 }
             }
-            std::cout << "[ScriptSystem] Finished updating entities." << std::endl;
         }
 
     private:

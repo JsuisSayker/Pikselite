@@ -23,16 +23,17 @@ function update(dt)
 
     -- Movement
     if is_key_pressed("w") or is_key_pressed("up") then
-        entity.vy = -speed * dt
+        entity.vy = speed * dt
     end
     if is_key_pressed("s") or is_key_pressed("down") then
-        entity.vy = speed * dt
+        entity.vy = -speed * dt
     end
     if is_key_pressed("a") or is_key_pressed("left") then
         entity.vx = -speed * dt
     end
     if is_key_pressed("d") or is_key_pressed("right") then
         entity.vx = speed * dt
+        log("Moving right!")
     end
 
     -- Sprint (shift = double speed)
