@@ -3,6 +3,7 @@
 #include <graphics/graphicsEnum.hpp>
 #include <unordered_map>
 #include <cstdint>
+#include <vector>
 
 namespace Pixel {
     using PixelEntityID = std::uint32_t;

@@ -22,10 +22,10 @@ namespace graphics {
     class Bar {
         public:
             Bar(const BarConfig &config) : config(config) {}
-            
+
             void Draw(const std::function<void()> &contentFunction);
             bool IsVisible() const { return config.visible; }
-        
+
         private:
             BarConfig config;
     };

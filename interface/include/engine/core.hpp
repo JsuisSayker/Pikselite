@@ -50,7 +50,7 @@ namespace engine
 
         uint32_t pixelIdCounter = 1;
         uint32_t gameObjectCounter = 1;
-        
+
         graphics::Camera2D _camera;
         Pixel::PixelAttributes _pixelAttributes;
         std::vector<Pixel::GameObject> _gameObjects;
