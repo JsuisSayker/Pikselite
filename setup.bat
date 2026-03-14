@@ -14,7 +14,8 @@ set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
 set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\"
 set "PROFILING_ENABLED=ON"
-set "CONFIG_TYPE=Release"
+set "CONFIG_TYPE=Debug"
+set "BUILD_COVERAGE=ON"
 
 
 :: -------------------------------------------------
@@ -217,7 +218,12 @@ if "%INSTALL_DEPS%" equ "1" (
 echo === Setting up build directory ===
 echo === Configuring project ===
 call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-"!CMAKE_EXE!" -B "!BUILD_DIR!" -S . -DPIKSELITE_ENABLE_PROFILING=ON -DCMAKE_TOOLCHAIN_FILE="!VCPKG_ROOT!\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=!TARGET_TRIPLET!
+"!CMAKE_EXE!" -B "!BUILD_DIR!" -S . ^
+-DENABLE_COVERAGE=ON ^
+-DPIKSELITE_ENABLE_PROFILING=ON ^
+-DCMAKE_TOOLCHAIN_FILE="!VCPKG_ROOT!\scripts\buildsystems\vcpkg.cmake" ^
+-DVCPKG_TARGET_TRIPLET=!TARGET_TRIPLET!
+
 if %ERRORLEVEL% neq 0 (
     echo CMake configuration failed!
     exit /b 1
