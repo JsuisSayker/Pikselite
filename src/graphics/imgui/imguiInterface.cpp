@@ -231,7 +231,7 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath)
+    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath, std::vector<::Pixel::GameObject>& gameObjects)
     {
         ImVec2 desiredPos = GetDesiredPosition("left");
         int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
@@ -253,10 +253,6 @@ namespace graphics {
 
             if (BasicButton("Eraser")) {
                 isEraserActive = !isEraserActive;
-            };
-
-            if (BasicButton("Load Sprite")) {
-                //
             };
 
             if (BasicButton("Save Sprite")) {
@@ -291,7 +287,87 @@ namespace graphics {
                 }
 
                 ImGui::EndPopup();
+            } 
+
+            ImGui::Separator();
+
+            static char searchBuffer[128] = "";
+
+            ImGui::InputTextWithHint("##SearchObjects", "Search objects...", searchBuffer, sizeof(searchBuffer));
+
+            if (ImGui::BeginChild("GameObjectList", ImVec2(0, 0), true))
+            {
+                for (size_t i = 0; i < gameObjects.size(); ++i)
+                {
+                    const std::string& objName = gameObjects[i].name.empty() ? ("GameObject " + std::to_string(gameObjects[i].id)) : gameObjects[i].name;
+
+                    if (strlen(searchBuffer) > 0)
+                    {
+                        std::string lowerName = objName;
+                        std::string lowerSearch = searchBuffer;
+                
+                        std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+                        std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(), ::tolower);
+                
+                        if (lowerName.find(lowerSearch) == std::string::npos)
+                            continue;
+                    }
+
+                    static int selectedObject = -1;
+                    if (ImGui::Selectable(objName.c_str(), selectedObject == i))
+                    {
+                        selectedObject = i;
+                    }
+
+                    // Right-click menu
+                    if (ImGui::BeginPopupContextItem())
+                    {
+                        if (ImGui::MenuItem("Rename"))
+                        {
+                            ImGui::OpenPopup(("RenameObjectPopup##" + std::to_string(i)).c_str());
+                        }
+
+                        if (ImGui::MenuItem("Delete"))
+                        {
+                            gameObjects.erase(gameObjects.begin() + i);
+                            ImGui::EndPopup();
+                            break;
+                        }
+
+                        ImGui::EndPopup();
+                    }
+
+                    static char renameBuffer[128];
+
+                    std::string popupId = "RenameObjectPopup##" + std::to_string(i);
+
+                    if (ImGui::BeginPopupModal(popupId.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
+                    {
+                        ImGui::Text("Rename Game Object");
+
+                        ImGui::InputText("New Name", renameBuffer, sizeof(renameBuffer));
+
+                        if (ImGui::Button("Save"))
+                        {
+                            gameObjects[i].name = renameBuffer;
+                            renameBuffer[0] = '\0';
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Cancel"))
+                        {
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndPopup();
+                    }
+                }
+
+                ImGui::EndChild();
             }
+
         });
     }
 
@@ -365,7 +441,9 @@ namespace graphics {
 
            for (const auto& sprite : spriteFiles)
             {
-                ImGui::PushID(sprite.c_str());   // unique ID per sprite
+                // ADD: Right-clicking one opens a popup with options like rename, delete, etc.
+                
+                ImGui::PushID(sprite.c_str());
             
                 std::string name = std::filesystem::path(sprite).filename().string();
             
@@ -392,7 +470,7 @@ namespace graphics {
             
                 ImGui::EndGroup();
             
-                ImGui::PopID();   // end unique ID scope
+                ImGui::PopID();
             
                 ImGui::NextColumn();
             }
@@ -400,5 +478,7 @@ namespace graphics {
             ImGui::Columns(1);
         });
     }
+
+
 
 } // namespace graphics

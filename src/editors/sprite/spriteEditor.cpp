@@ -50,6 +50,7 @@ namespace editors {
             _camera.zoomOut(1.1f);
             break;
         case graphics::KEY_L:
+            std::cout << "spriteEditor function called" << std::endl; //////////////////////// debug
             loadSpriteFromFile("sprite.dat");
             break;
         case graphics::KEY_K:
@@ -61,7 +62,7 @@ namespace editors {
     }
 
     void SpriteEditor::imguiHandling() {
-        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive, _newSpritePath);
+        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive, _newSpritePath, _gameObjects);
         _imguiInterface->projectNavbar(_currentSpriteFilename);
         if (!_currentSpriteFilename.empty()) {
             loadSpriteFromFile(_currentSpriteFilename);

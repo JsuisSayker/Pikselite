@@ -14,6 +14,9 @@
 #include <graphics/imgui/components/components.hpp>
 #include <engine/pixels/chunk.hpp>
 
+#include <engine/ecs/components/gameObjectComponent.hpp>
+#include <vector>
+
 namespace graphics {
     class ImguiInterface {
     public:
@@ -25,7 +28,7 @@ namespace graphics {
         void pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
-        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath);
+        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath, std::vector<::Pixel::GameObject>& gameObjects);
 
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 

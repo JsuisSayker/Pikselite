@@ -6,6 +6,8 @@
 #include <engine/pixels/chunk.hpp>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <engine/ecs/components/gameObjectComponent.hpp>
 
 namespace editors {
     class SpriteEditor {
@@ -14,6 +16,8 @@ namespace editors {
         ~SpriteEditor();
 
         void run(const graphics::InputEvent& event);
+
+        void updateGameObjects(std::vector<Pixel::GameObject>& gameObjects) { _gameObjects = gameObjects; }
 
     private:
         graphics::ImguiInterface* _imguiInterface;
@@ -55,5 +59,8 @@ namespace editors {
 
         std::string _currentSpriteFilename;
         std::string _newSpritePath;
+
+        ////////// testing
+        std::vector<Pixel::GameObject> _gameObjects;
     };
 } // namespace editors

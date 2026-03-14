@@ -42,6 +42,7 @@ namespace editors {
             _camera.zoomOut(1.1f);
             break;
         case graphics::KEY_L:
+            std::cout << "projectEditor function called" << std::endl; //////////////////////// debug
             loadSpriteFromFile("sprite.dat");
             break;
         default:
@@ -59,6 +60,7 @@ namespace editors {
         std::unordered_map<Pixel::PixelEntityID, Pixel::PixelEntityID> pixelIds;
 
         newSprite.id = gameObjectCounter++;
+        newSprite.name = filename.substr(filename.find_last_of("/\\") + 1); // Extract name from filename
         fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
 
         for (uint32_t i = 0; i < numChunks; ++i)
