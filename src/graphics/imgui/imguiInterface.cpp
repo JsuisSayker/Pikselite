@@ -231,7 +231,7 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath, std::vector<::Pixel::GameObject> *gameObjects)
+    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath)
     {
         ImVec2 desiredPos = GetDesiredPosition("left");
         int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
@@ -288,93 +288,6 @@ namespace graphics {
 
                 ImGui::EndPopup();
             } 
-
-            if (gameObjects) {
-
-                ImGui::Separator();
-
-                static char searchBuffer[128] = "";
-                static char renameBuffer[128] = "";
-                static int selectedObject = -1;
-
-                ImGui::InputTextWithHint("##SearchObjects", "Search objects...", searchBuffer, sizeof(searchBuffer));
-
-                if (ImGui::BeginChild("GameObjectList", ImVec2(0, 0), true))
-                {
-                    for (size_t i = 0; i < gameObjects->size(); ++i)
-                    {
-                        auto& obj = (*gameObjects)[i];
-                        
-                        const std::string& objName = obj.name.empty() ? ("GameObject " + std::to_string(obj.id)) : obj.name;
-
-                        if (strlen(searchBuffer) > 0)
-                        {
-                            std::string lowerName = objName;
-                            std::string lowerSearch = searchBuffer;
-
-                            std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
-                            std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(), ::tolower);
-
-                            if (lowerName.find(lowerSearch) == std::string::npos)
-                                continue;
-                        }
-
-                        if (ImGui::Selectable(objName.c_str(), selectedObject == (int)i))
-                        {
-                            selectedObject = (int)i;
-                        }
-
-                        // Right-click menu
-                        if (ImGui::BeginPopupContextItem())
-                        {
-                            if (ImGui::MenuItem("Rename"))
-                            {
-                                strncpy(renameBuffer, objName.c_str(), sizeof(renameBuffer));
-                                renameBuffer[sizeof(renameBuffer) - 1] = '\0';
-
-                                ImGui::OpenPopup(("RenameObjectPopup##" + std::to_string(i)).c_str());
-                            }
-
-                            if (ImGui::MenuItem("Delete"))
-                            {
-                                gameObjects->erase(gameObjects->begin() + i);
-                                ImGui::EndPopup();
-                                break;
-                            }
-
-                            ImGui::EndPopup();
-                        }
-
-                        std::string popupId = "RenameObjectPopup##" + std::to_string(i);
-
-                        if (ImGui::BeginPopupModal(popupId.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
-                        {
-                            ImGui::Text("Rename Game Object");
-
-                            ImGui::InputText("New Name", renameBuffer, sizeof(renameBuffer));
-
-                            if (ImGui::Button("Save"))
-                            {
-                                obj.name = renameBuffer;
-                                renameBuffer[0] = '\0';
-                                ImGui::CloseCurrentPopup();
-                            }
-
-                            ImGui::SameLine();
-
-                            if (ImGui::Button("Cancel"))
-                            {
-                                ImGui::CloseCurrentPopup();
-                            }
-
-                            ImGui::EndPopup();
-                        }
-                    }
-
-                    ImGui::EndChild();
-                }
-            }
-
         });
     }
 
@@ -486,6 +399,138 @@ namespace graphics {
         });
     }
 
+    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects)
+    {
+        ImVec2 desiredPos = GetDesiredPosition("left");
+        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
+    
+        static BarConfig sideBarConfig {
+            BarOrientation::Vertical,
+            "Pixel Sprite Handler",
+            ImVec2(200, desiredSize),
+            true,
+            desiredPos
+        };
+    
+        static Bar sideBar(sideBarConfig);
+    
+        sideBar.Draw([&]() {
+        
+            static char searchBuffer[128] = "";
+            static char renameBuffer[128] = "";
+            static int selectedObject = -1;
+            static int renameIndex = -1;
+            static bool openRenamePopup = false;
+            static bool focusRename = true;
+    
+            ImGui::InputTextWithHint("##SearchObjects", "Search objects...", searchBuffer, sizeof(searchBuffer));
+    
+            std::string lowerSearch = searchBuffer;
+            std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(), ::tolower);
+    
+            if (ImGui::BeginChild("GameObjectList", ImVec2(0, 0), true))
+            {
+                for (size_t i = 0; i < gameObjects.size(); ++i)
+                {
+                    const std::string objName =
+                        gameObjects[i].name.empty() ?
+                        ("GameObject " + std::to_string(gameObjects[i].id)) :
+                        gameObjects[i].name;
+    
+                    // Search filter
+                    if (!lowerSearch.empty())
+                    {
+                        std::string lowerName = objName;
+                        std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), ::tolower);
+    
+                        if (lowerName.find(lowerSearch) == std::string::npos)
+                            continue;
+                    }
+    
+                    ImGui::PushID((int)i);
+    
+                    if (ImGui::Selectable(objName.c_str(), selectedObject == (int)i))
+                        selectedObject = (int)i;
+    
+                    if (ImGui::BeginPopupContextItem())
+                    {
+                        if (ImGui::MenuItem("Rename"))
+                        {
+                            strncpy(renameBuffer, objName.c_str(), sizeof(renameBuffer));
+                            renameBuffer[sizeof(renameBuffer) - 1] = '\0';
+    
+                            renameIndex = (int)i;
+                            openRenamePopup = true;
+                        }
+    
+                        if (ImGui::MenuItem("Delete"))
+                        {
+                            if (selectedObject == (int)i)
+                                selectedObject = -1;
+                            else if (selectedObject > (int)i)
+                                selectedObject--;
+    
+                            gameObjects.erase(gameObjects.begin() + i);
+    
+                            ImGui::EndPopup();
+                            ImGui::PopID();
+                            break;
+                        }
+    
+                        ImGui::EndPopup();
+                    }
+    
+                    ImGui::PopID();
+                }
+    
+                ImGui::EndChild();
+            }
+    
+            if (openRenamePopup)
+            {
+                ImGui::OpenPopup("RenameObjectPopup");
+                openRenamePopup = false;
+            }
+    
+            if (ImGui::BeginPopupModal("RenameObjectPopup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("Rename Game Object");
+    
+                if (focusRename)
+                {
+                    ImGui::SetKeyboardFocusHere();
+                    focusRename = false;
+                }
+    
+                ImGui::InputText("New Name", renameBuffer, sizeof(renameBuffer));
+    
+                if (ImGui::Button("Save"))
+                {
+                    if (renameIndex >= 0 && renameIndex < (int)gameObjects.size())
+                        gameObjects[renameIndex].name = renameBuffer;
+    
+                    renameBuffer[0] = '\0';
+                    renameIndex = -1;
+                    focusRename = true;
+    
+                    ImGui::CloseCurrentPopup();
+                }
+    
+                ImGui::SameLine();
+    
+                if (ImGui::Button("Cancel"))
+                {
+                    renameIndex = -1;
+                    focusRename = true;
+    
+                    ImGui::CloseCurrentPopup();
+                }
+    
+                ImGui::EndPopup();
+            }
+    
+        });
+    }
 
 
 } // namespace graphics

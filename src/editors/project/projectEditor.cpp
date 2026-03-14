@@ -37,6 +37,7 @@ namespace editors {
 
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
+        imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
     }
@@ -249,6 +250,17 @@ namespace editors {
         }
 
         _gameObjects.push_back(std::move(obj));
+    }
+
+    void ProjectEditor::imguiHandling()
+    {
+        _imguiInterface->gameObjectsBar(_gameObjects);
+
+        _imguiInterface->projectNavbar(_currentSpriteFilename);
+        if (!_currentSpriteFilename.empty()) {
+            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
+            _currentSpriteFilename.clear();
+        }
     }
 
 } // namespace editors

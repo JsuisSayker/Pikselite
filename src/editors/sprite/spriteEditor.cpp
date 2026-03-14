@@ -92,8 +92,7 @@ namespace editors {
         if (!_newSpritePath.empty()) {
             saveSpriteToFile(_newSpritePath);
             _newSpritePath.clear();
-        }
-        
+        }        
 
         if (_showDefaultPropertiesEditor) {
             _imguiInterface->defaultPixelPropertiesEditor(_defaultPixelProperties, "Default Pixel Properties");
