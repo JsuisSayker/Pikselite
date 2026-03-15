@@ -3,6 +3,7 @@
 #include <graphics/graphicsEnum.hpp>
 #include <unordered_map>
 #include <cstdint>
+#include <string>
 
 namespace Pixel {
     using PixelEntityID = std::uint32_t;
@@ -31,6 +32,7 @@ namespace Pixel {
     struct GameObject {
         GameObjectID id;
         std::vector<PixelEntityID> pixelEntities;
+        std::string name;
     };
 
     struct DefaultPixelProperties {

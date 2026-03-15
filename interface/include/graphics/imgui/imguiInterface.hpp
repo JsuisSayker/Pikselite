@@ -14,6 +14,9 @@
 #include <graphics/imgui/components/components.hpp>
 #include <engine/pixels/chunk.hpp>
 
+#include <engine/ecs/components/gameObjectComponent.hpp>
+#include <vector>
+
 namespace graphics {
     class ImguiInterface {
     public:
@@ -31,6 +34,8 @@ namespace graphics {
 
         void projectNavbar(::std::string &currentSpriteFilename);
         void scanSprites();
+
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects);
 
         void startFrame();
         void endFrame(SDL_Window* window);
