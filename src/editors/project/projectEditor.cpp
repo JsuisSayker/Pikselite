@@ -63,7 +63,7 @@ namespace editors {
             break;
         case graphics::KEY_L:
             // Start placement mode instead of direct load
-            loadSpriteForPlacement("assets/water.dat");
+            loadSpriteForPlacement("assets/gaz.dat");
             _isPlacingSprite = _pendingSprite.valid;
             break;
         default:
