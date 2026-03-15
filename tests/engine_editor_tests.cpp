@@ -11,10 +11,42 @@
 #include <editors/sprite/spriteEditor.hpp>
 #include <engine/pixels/pixelEnum.hpp>
 #include <graphics/imgui/components/bars.hpp>
+#include <graphics/renderer/renderer.hpp>
+#include <graphics/renderer/camera.hpp>
+#include <GL/glew.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 using namespace Pixel;
 
-using namespace Pixel;
+static void InitImGuiForTests(SDL_Window*& window, SDL_GLContext& glContext) {
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+    window = SDL_CreateWindow("test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              128, 128, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+    glContext = SDL_GL_CreateContext(window);
+
+    glewExperimental = GL_TRUE;
+    glewInit();
+
+    ImGui::CreateContext();
+    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
+    ImGui_ImplOpenGL3_Init("#version 330");
+}
+
+static void ShutdownImGuiForTests(SDL_Window* window, SDL_GLContext glContext) {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
+    SDL_GL_DeleteContext(glContext);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
 
 static void writeSimpleSpriteData(const std::string& filename) {
     std::ofstream fout(filename, std::ios::binary);
@@ -222,29 +254,90 @@ TEST(GetDesiredSizeTests, NotFull) {
     EXPECT_EQ(graphics::GetDesiredSize("notfull", graphics::BarOrientation::Vertical), 0);
 }
 
-static void InitImGuiForTests(SDL_Window*& window, SDL_GLContext& glContext) {
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+TEST(GetDesiredSizeTests, FullReturnsDisplaySize) {
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
+    InitImGuiForTests(window, glContext);
 
-    window = SDL_CreateWindow("test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              128, 128, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    glContext = SDL_GL_CreateContext(window);
+    ImGuiIO& io = ImGui::GetIO();
+    io.DisplaySize = ImVec2(640, 480);
 
-    ImGui::CreateContext();
-    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
-    ImGui_ImplOpenGL3_Init("#version 330");
+    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Horizontal), 640);
+    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Vertical), 480);
+
+    ShutdownImGuiForTests(window, glContext);
 }
 
-static void ShutdownImGuiForTests(SDL_Window* window, SDL_GLContext glContext) {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+TEST(BarDrawTests, HorizontalOrientationWithoutOffset) {
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
+    InitImGuiForTests(window, glContext);
 
-    SDL_GL_DeleteContext(glContext);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    ImGui_ImplSDL2_NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui::NewFrame();
+
+    graphics::BarConfig cfg;
+    cfg.visible = true;
+    cfg.label = "test";
+    cfg.size = ImVec2(200, 20);
+    cfg.position = ImVec2(10, 10); // no negative offset
+    cfg.orientation = graphics::BarOrientation::Horizontal;
+
+    graphics::Bar bar(cfg);
+    bool called = false;
+    bar.Draw([&] { called = true; });
+    EXPECT_TRUE(called);
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    ShutdownImGuiForTests(window, glContext);
+}
+
+TEST(RendererTests, BasicDrawPaths) {
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
+    InitImGuiForTests(window, glContext);
+
+    graphics::Renderer renderer(window, glContext);
+
+    // clear/present
+    renderer.clear();
+    renderer.present(window);
+
+    // draw empty doesn't crash
+    graphics::Camera2D camera;
+    renderer.drawPixelsWCamera({}, camera);
+    renderer.drawPixelsOverlay({}, 10.0f);
+
+    // draw one pixel
+    std::vector<graphics::Pixel> pixels{{{0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}}};
+    renderer.drawPixelsOverlay(pixels, 5.0f);
+    renderer.drawPixelsWCamera(pixels, camera, 5.0f);
+
+    // draw grid
+    renderer.drawGrid(camera, 10.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // Create a small PNG 1x1 pixel (white) in a temp file.
+    const std::string tmpPath = (std::filesystem::temp_directory_path() / "test_tex.png").string();
+    unsigned char texPixels[3] = {255, 255, 255};
+    stbi_write_png(tmpPath.c_str(), 1, 1, 3, texPixels, 1 * 3);
+
+    GLuint texId = renderer.loadTexture(tmpPath);
+    EXPECT_NE(texId, 0u);
+
+    graphics::Sprite2D sprite;
+    sprite.position = glm::vec2(0.0f);
+    sprite.size = glm::vec2(1.0f);
+    sprite.textureID = texId;
+
+    renderer.drawSprite(sprite, camera);
+    renderer.unloadTexture(texId);
+
+    std::filesystem::remove(tmpPath);
+
+    ShutdownImGuiForTests(window, glContext);
 }
 
 TEST(BarDrawTests, InvisibleDoesNotRunContent) {
