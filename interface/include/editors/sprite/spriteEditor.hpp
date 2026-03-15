@@ -20,6 +20,15 @@ namespace editors {
         graphics::Pixel* testGetPixelAt(glm::vec2 worldPos) { return getPixelAt(worldPos); }
         bool testSaveSpriteToFile(const std::string& filename) { return saveSpriteToFile(filename); }
         bool testLoadSpriteFromFile(const std::string& filename) { return loadSpriteFromFile(filename); }
+        bool testLoadSpriteForPlacement(const std::string& filename) { return loadSpriteForPlacement(filename); }
+        void testPlacePendingSpriteAtWorld(glm::vec2 worldPos) { placePendingSpriteAtWorld(worldPos); }
+        glm::vec2 testScreenToWorld(glm::vec2 screenPos) { return screenToWorld(screenPos); }
+        void testSetCurrentSpriteFilename(const std::string& filename) { _currentSpriteFilename = filename; }
+        void testSetNewSpritePath(const std::string& filename) { _newSpritePath = filename; }
+        void testSetShowDefaultPropertiesEditor(bool v) { _showDefaultPropertiesEditor = v; }
+        void testSetShowPixelEditor(bool v) { _showPixelEditor = v; }
+        void testSetCurrentPixelIndex(int idx) { if (idx >= 0 && idx < (int)_renderPixels.size()) _currentPixel = &_renderPixels[idx]; }
+        void testSetEraserActive(bool v) { _isEraserActive = v; }
 #endif
         SpriteEditor(
             graphics::Interface* graphicsInterface,
