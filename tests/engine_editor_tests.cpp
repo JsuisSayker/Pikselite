@@ -451,32 +451,3 @@ TEST(BarDrawTests, InvisibleDoesNotRunContent) {
     ShutdownImGuiForTests(window, glContext);
 }
 
-TEST(BarDrawTests, VisibleRunsContentAndSupportsOrientation) {
-    SDL_Window* window = nullptr;
-    SDL_GLContext glContext = nullptr;
-    InitImGuiForTests(window, glContext);
-
-    ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(800, 600);
-
-    ImGui_ImplSDL2_NewFrame();
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui::NewFrame();
-
-    graphics::BarConfig cfg;
-    cfg.visible = true;
-    cfg.label = "test";
-    cfg.size = ImVec2(200, 20);
-    cfg.position = ImVec2(-1, -1);
-    cfg.orientation = graphics::BarOrientation::Vertical;
-
-    graphics::Bar bar(cfg);
-    bool called = false;
-    bar.Draw([&] { called = true; });
-    EXPECT_TRUE(called);
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    ShutdownImGuiForTests(window, glContext);
-}

@@ -3,6 +3,7 @@ find_package(GTest CONFIG REQUIRED)
 add_executable(pikselite_tests
     Vector_test.cpp
     engine_editor_tests.cpp
+    imguiComponents/test_bar_component.cpp
 )
 
 target_compile_definitions(pikselite_tests PRIVATE UNIT_TEST)
