@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <graphics/imgui/components/bars.hpp>
-#include <tests/imgui_setup_for_test.hpp>
+#include <tests/imguiSetupForTest.hpp>
 
 TEST(BarConfigTests, Initialization) {
     graphics::BarConfig config;
