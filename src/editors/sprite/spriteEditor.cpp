@@ -405,6 +405,9 @@ namespace editors {
     }
 
     bool SpriteEditor::loadSpriteForPlacement(const std::string& filename) {
+        _pendingSprite = {};
+        _isPlacingSprite = false;
+
         std::ifstream fin(filename, std::ios::binary);
         if (!fin) return false;
 
@@ -517,6 +520,7 @@ namespace editors {
 
         pending.valid = !pending.cells.empty();
         _pendingSprite = std::move(pending);
+        _isPlacingSprite = _pendingSprite.valid;
         return _pendingSprite.valid;
     }
 

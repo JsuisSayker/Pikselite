@@ -26,7 +26,10 @@ namespace Pixel
             bool _pixelSimulated = true;
 
             void simulateBottomUp();
+            void simulateTopDown();
+
             void liquidSimulation(int lx, int ly, PixelEntityID id, int cx, int cy);
+            void gasSimulation(int lx, int ly, PixelEntityID id, int cx, int cy);
 
             int64_t encodePos(int x, int y) const {
                 return ((int64_t)(uint32_t)x << 32) | (uint32_t)y;
