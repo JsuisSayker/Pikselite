@@ -14,27 +14,41 @@ void graphics::Bar::Draw(const std::function<void()> &contentFunction) {
     ImVec2 finalPos  = config.position;
     ImVec2 finalSize = config.size;
 
+    const bool isTopHorizontal = (config.orientation == BarOrientation::Horizontal && config.position.y >= 0.0f);
+
     if (config.orientation == BarOrientation::Horizontal) {
-        // Bottom bar: full width, fixed height, snapped to bottom
-        finalPos  = ImVec2(0.0f, winH - BOTTOM_H);
-        finalSize = ImVec2(winW,  BOTTOM_H);
+        const bool isBottom = (config.position.y < 0.0f);
+        if (isBottom) {
+            // Bottom bar: full width, fixed height, snapped to bottom
+            finalPos  = ImVec2(0.0f, winH - BOTTOM_H);
+            finalSize = ImVec2(winW,  BOTTOM_H);
+        } else {
+            // Top toolbar: full width
+            finalPos  = ImVec2(0.0f, 0.0f);
+            finalSize = ImVec2(winW, LAYOUT_TOP_H);
+        }
     } else {
         // Vertical sidebar: fixed width, height stops above the bottom bar
-        float sideH = winH - BOTTOM_H;
+        float sideH = winH - BOTTOM_H - LAYOUT_TOP_H;
         if (finalPos.x < 0.0f)
             finalPos.x = winW - finalSize.x; // right side
-        finalPos.y  = 0.0f;
+        finalPos.y  = LAYOUT_TOP_H;
         finalSize.y = sideH;
     }
 
     // ── Window flags: immovable, no resize, no collapse ──────────────────
-    constexpr ImGuiWindowFlags panelFlags =
+    ImGuiWindowFlags panelFlags =
         ImGuiWindowFlags_NoMove               |
         ImGuiWindowFlags_NoResize             |
         ImGuiWindowFlags_NoCollapse           |
         ImGuiWindowFlags_NoBringToFrontOnFocus|
         ImGuiWindowFlags_NoTitleBar           |
         ImGuiWindowFlags_NoSavedSettings;
+
+    // Top toolbars should never scroll.
+    if (isTopHorizontal) {
+        panelFlags |= ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+    }
 
     // ── Unity-inspired dark theme ─────────────────────────────────────────
     ImGui::PushStyleColor(ImGuiCol_WindowBg,       ImVec4(0.16f, 0.16f, 0.16f, 1.00f));
@@ -66,12 +80,14 @@ void graphics::Bar::Draw(const std::function<void()> &contentFunction) {
     // Draw a tab-like header manually since NoTitleBar is set
     ImGui::Begin(config.label.c_str(), nullptr, panelFlags);
 
-    // Panel label as a styled header row
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.00f));
-    ImGui::TextUnformatted(config.label.c_str());
-    ImGui::PopStyleColor();
-    ImGui::Separator();
-    ImGui::Spacing();
+    // Top bars are compact toolbars: no extra header row.
+    if (!isTopHorizontal) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.75f, 1.00f));
+        ImGui::TextUnformatted(config.label.c_str());
+        ImGui::PopStyleColor();
+        ImGui::Separator();
+        ImGui::Spacing();
+    }
 
     if (contentFunction) contentFunction();
 

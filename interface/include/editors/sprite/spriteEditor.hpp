@@ -42,6 +42,7 @@ namespace editors {
         void handleEvents(const graphics::InputEvent& event);
         void mouseLeftClick();
         void mouseLeftDrag();
+        void applyBrushAt(glm::vec2 worldPos, bool erase);
 
         glm::vec2 screenToWorld(glm::vec2 screenPos);
         graphics::Pixel* getPixelAt(glm::vec2 worldPos);
@@ -61,6 +62,8 @@ namespace editors {
         bool _showPixelEditor = false;
         bool _showDefaultPropertiesEditor = false;
         bool _isEraserActive = false;
+        int _selectedTool = 0; // 0 = paint, 1 = eraser
+        int _brushSize = 1;
 
         std::string _currentSpriteFilename;
         std::string _newSpritePath;

@@ -83,6 +83,7 @@ namespace editors {
     }
 
     void SpriteEditor::imguiHandling() {
+        _imguiInterface->spriteTopToolbar(_selectedTool, _brushSize, _isEraserActive);
         _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _isEraserActive, _newSpritePath);
         _imguiInterface->projectNavbar(_currentSpriteFilename);
         if (!_currentSpriteFilename.empty()) {
@@ -118,18 +119,8 @@ namespace editors {
             return;
         }
 
-        graphics::Pixel* pixel = getPixelAt(worldPos);
-        if (pixel) {
-            if (_isEraserActive) {
-                removePixelAt(worldPos);
-                return;
-            }
-            _currentPixel = pixel;
-            _showDefaultPropertiesEditor = false;
-            _showPixelEditor = true;
-            return;
-        }
-        addPixel(worldPos, _defaultPixelProperties);
+        const bool erase = (_selectedTool == 1) || _isEraserActive;
+        applyBrushAt(worldPos, erase);
     }
 
     void SpriteEditor::mouseLeftDrag() {
@@ -139,14 +130,38 @@ namespace editors {
 
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
+        const bool erase = (_selectedTool == 1) || _isEraserActive;
+        applyBrushAt(worldPos, erase);
+    }
 
-        removePixelAt(worldPos);
+    void SpriteEditor::applyBrushAt(glm::vec2 worldPos, bool erase) {
+        const int half = _brushSize / 2;
+        const float centerX = std::round(worldPos.x / PIXEL_SIZE) * PIXEL_SIZE;
+        const float centerY = std::round(worldPos.y / PIXEL_SIZE) * PIXEL_SIZE;
 
-        if (_isEraserActive) {
-            return;
+        for (int ox = -half; ox <= half; ++ox) {
+            for (int oy = -half; oy <= half; ++oy) {
+                glm::vec2 targetPos = {
+                    centerX + (ox * PIXEL_SIZE),
+                    centerY + (oy * PIXEL_SIZE)
+                };
+
+                graphics::Pixel* existing = getPixelAt(targetPos);
+                if (erase) {
+                    if (existing) {
+                        removePixelAt(targetPos);
+                    }
+                    continue;
+                }
+
+                if (existing) {
+                    existing->color = _defaultPixelProperties.color;
+                    continue;
+                }
+
+                addPixel(targetPos, _defaultPixelProperties);
+            }
         }
-
-        addPixel(worldPos, _defaultPixelProperties);
     }
 
     glm::vec2 SpriteEditor::screenToWorld(glm::vec2 screenPos) {

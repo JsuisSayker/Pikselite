@@ -335,6 +335,62 @@ namespace graphics {
         });
     }
 
+    void ImguiInterface::spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive)
+    {
+        static BarConfig topBarConfig {
+            BarOrientation::Horizontal,
+            "Sprite Tools",
+            ImVec2(0.0f, LAYOUT_TOP_H),
+            true,
+            GetDesiredPosition("top")
+        };
+
+        static Bar topBar(topBarConfig);
+
+        topBar.Draw([&]() {
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Tool:");
+            ImGui::SameLine();
+
+            if (ImGui::Selectable("Paint", selectedTool == 0, 0, ImVec2(80, 0))) {
+                selectedTool = 0;
+                isEraserActive = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Selectable("Eraser", selectedTool == 1, 0, ImVec2(80, 0))) {
+                selectedTool = 1;
+                isEraserActive = true;
+            }
+
+            ImGui::SameLine();
+            ImGui::TextUnformatted("|");
+            ImGui::SameLine();
+
+            ImGui::SetNextItemWidth(180.0f);
+            ImGui::SliderInt("Brush Size", &brushSize, 1, 8);
+
+            if (selectedTool == 1) {
+                isEraserActive = true;
+            }
+        });
+    }
+
+    void ImguiInterface::projectTopBarEmpty()
+    {
+        static BarConfig topBarConfig {
+            BarOrientation::Horizontal,
+            "Project Top Bar",
+            ImVec2(0.0f, LAYOUT_TOP_H),
+            true,
+            GetDesiredPosition("top")
+        };
+
+        static Bar topBar(topBarConfig);
+        topBar.Draw([&]() {
+            // Intentionally empty top bar for Project Editor mode.
+        });
+    }
+
     glm::vec3 ImguiInterface::colorSelector(const glm::vec3& currentColor, const char* label) {
         float color[3] = { currentColor.r, currentColor.g, currentColor.b };
         if (ImGui::ColorPicker3(label, color)) {
@@ -628,80 +684,4 @@ namespace graphics {
             }
         });
     }
-
-    void ImguiInterface::drawEditorTabs(EditorMode &currentMode)
-    {
-        ImGuiIO &io = ImGui::GetIO();
-        const float winW = io.DisplaySize.x;
-
-        const ImVec2 tabPos(0.0f, 0.0f);
-        const ImVec2 tabSize(winW, LAYOUT_TOP_H);
-
-        constexpr ImGuiWindowFlags tabFlags =
-            ImGuiWindowFlags_NoMove               |
-            ImGuiWindowFlags_NoResize             |
-            ImGuiWindowFlags_NoCollapse           |
-            ImGuiWindowFlags_NoBringToFrontOnFocus|
-            ImGuiWindowFlags_NoSavedSettings;
-
-        // Style for tab bar
-        ImGui::PushStyleColor(ImGuiCol_WindowBg,        ImVec4(0.12f, 0.12f, 0.12f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   ImVec4(0.30f, 0.30f, 0.30f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive,    ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
-        ImGui::PushStyleColor(ImGuiCol_Border,          ImVec4(0.05f, 0.05f, 0.05f, 1.00f));
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,  0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,   ImVec2(8.0f, 6.0f));
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,     ImVec2(4.0f, 6.0f));
-
-        ImGui::SetNextWindowPos(tabPos,  ImGuiCond_Always);
-        ImGui::SetNextWindowSize(tabSize, ImGuiCond_Always);
-
-        ImGui::Begin("##EditorTabs", nullptr, tabFlags);
-
-        // Sprite Editor Tab
-        bool spriteActive = (currentMode == EditorMode::SpriteEditor);
-        if (spriteActive) {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.60f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 0.80f));
-        }
-
-        if (ImGui::Button("Sprite Editor##Tab", ImVec2(140, 0))) {
-            if (currentMode != EditorMode::SpriteEditor) {
-                currentMode = EditorMode::SpriteEditor;
-            }
-        }
-
-        if (spriteActive) {
-            ImGui::PopStyleColor(2);
-        }
-
-        ImGui::SameLine(0.0f, 2.0f);
-
-        // Project Editor Tab
-        bool projectActive = (currentMode == EditorMode::ProjectEditor);
-        if (projectActive) {
-            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.60f));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 0.80f));
-        }
-
-        if (ImGui::Button("Project Editor##Tab", ImVec2(140, 0))) {
-            if (currentMode != EditorMode::ProjectEditor) {
-                currentMode = EditorMode::ProjectEditor;
-            }
-        }
-
-        if (projectActive) {
-            ImGui::PopStyleColor(2);
-        }
-
-        ImGui::End();
-
-        ImGui::PopStyleVar(4);
-        ImGui::PopStyleColor(5);
-    }
-
-
 } // namespace graphics

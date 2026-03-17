@@ -29,6 +29,8 @@ namespace graphics {
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath);
+        void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
+        void projectTopBarEmpty();
 
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 
@@ -37,8 +39,6 @@ namespace graphics {
         void scanSprites();
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
-
-        void drawEditorTabs(EditorMode &currentMode);
 
         void startFrame();
         void endFrame(SDL_Window* window);
