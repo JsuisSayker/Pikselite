@@ -1,10 +1,6 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 
-#include <SDL2/SDL.h>
-#include <backends/imgui_impl_sdl2.h>
-#include <backends/imgui_impl_opengl3.h>
-
 #include <engine/pixels/chunk.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
 #include <editors/project/projectEditor.hpp>
@@ -13,40 +9,40 @@
 #include <graphics/imgui/components/bars.hpp>
 #include <graphics/renderer/renderer.hpp>
 #include <graphics/renderer/camera.hpp>
-#include <GL/glew.h>
+#include <tests/imgui_setup_for_test.hpp>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
 using namespace Pixel;
 
-static void InitImGuiForTests(SDL_Window*& window, SDL_GLContext& glContext) {
-    SDL_Init(SDL_INIT_VIDEO);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+// static void InitImGuiForTests(SDL_Window*& window, SDL_GLContext& glContext) {
+//     SDL_Init(SDL_INIT_VIDEO);
+//     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+//     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+//     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-    window = SDL_CreateWindow("test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              128, 128, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-    glContext = SDL_GL_CreateContext(window);
+//     window = SDL_CreateWindow("test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+//                               128, 128, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+//     glContext = SDL_GL_CreateContext(window);
 
-    glewExperimental = GL_TRUE;
-    glewInit();
+//     glewExperimental = GL_TRUE;
+//     glewInit();
 
-    ImGui::CreateContext();
-    ImGui_ImplSDL2_InitForOpenGL(window, glContext);
-    ImGui_ImplOpenGL3_Init("#version 330");
-}
+//     ImGui::CreateContext();
+//     ImGui_ImplSDL2_InitForOpenGL(window, glContext);
+//     ImGui_ImplOpenGL3_Init("#version 330");
+// }
 
-static void ShutdownImGuiForTests(SDL_Window* window, SDL_GLContext glContext) {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+// static void ShutdownImGuiForTests(SDL_Window* window, SDL_GLContext glContext) {
+//     ImGui_ImplOpenGL3_Shutdown();
+//     ImGui_ImplSDL2_Shutdown();
+//     ImGui::DestroyContext();
 
-    SDL_GL_DeleteContext(glContext);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-}
+//     SDL_GL_DeleteContext(glContext);
+//     SDL_DestroyWindow(window);
+//     SDL_Quit();
+// }
 
 static void writeSimpleSpriteData(const std::string& filename) {
     std::ofstream fout(filename, std::ios::binary);
@@ -301,7 +297,8 @@ TEST(GetDesiredSizeTests, NotFull) {
 TEST(GetDesiredSizeTests, FullReturnsDisplaySize) {
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
-    InitImGuiForTests(window, glContext);
+    imguiTest::ImGuiTestCommon testCommon;
+    testCommon.InitImGuiForTests(window, glContext);
 
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(640, 480);
@@ -309,13 +306,14 @@ TEST(GetDesiredSizeTests, FullReturnsDisplaySize) {
     EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Horizontal), 640);
     EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Vertical), 480);
 
-    ShutdownImGuiForTests(window, glContext);
+    testCommon.ShutdownImGuiForTests(window, glContext);
 }
 
 TEST(RendererTests, BasicDrawPaths) {
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
-    InitImGuiForTests(window, glContext);
+    imguiTest::ImGuiTestCommon testCommon;
+    testCommon.InitImGuiForTests(window, glContext);
 
     graphics::Renderer renderer(window, glContext);
 
@@ -354,5 +352,5 @@ TEST(RendererTests, BasicDrawPaths) {
 
     std::filesystem::remove(tmpPath);
 
-    ShutdownImGuiForTests(window, glContext);
+    testCommon.ShutdownImGuiForTests(window, glContext);
 }
