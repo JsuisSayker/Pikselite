@@ -11,6 +11,58 @@ namespace graphics {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
+
+        // ── Global Unity-like style overrides ─────────────────────────────────
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.WindowRounding    = 0.0f;
+        style.ChildRounding     = 4.0f;
+        style.FrameRounding     = 3.0f;
+        style.GrabRounding      = 3.0f;
+        style.PopupRounding     = 4.0f;
+        style.ScrollbarRounding = 3.0f;
+        style.TabRounding       = 4.0f;
+        style.WindowBorderSize  = 1.0f;
+        style.FrameBorderSize   = 0.0f;
+        style.WindowPadding     = ImVec2(8.0f, 8.0f);
+        style.FramePadding      = ImVec2(6.0f, 4.0f);
+        style.ItemSpacing       = ImVec2(6.0f, 5.0f);
+        style.ScrollbarSize     = 12.0f;
+        style.GrabMinSize       = 8.0f;
+
+        ImVec4* c = style.Colors;
+        c[ImGuiCol_Text]                 = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
+        c[ImGuiCol_TextDisabled]         = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+        c[ImGuiCol_WindowBg]             = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+        c[ImGuiCol_ChildBg]              = ImVec4(0.13f, 0.13f, 0.13f, 1.00f);
+        c[ImGuiCol_PopupBg]              = ImVec4(0.14f, 0.14f, 0.14f, 0.98f);
+        c[ImGuiCol_Border]               = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
+        c[ImGuiCol_FrameBg]              = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_FrameBgHovered]       = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+        c[ImGuiCol_FrameBgActive]        = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
+        c[ImGuiCol_TitleBg]              = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_TitleBgActive]        = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+        c[ImGuiCol_TitleBgCollapsed]     = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_ScrollbarBg]          = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_ScrollbarGrab]        = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+        c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);
+        c[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+        c[ImGuiCol_CheckMark]            = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        c[ImGuiCol_SliderGrab]           = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+        c[ImGuiCol_SliderGrabActive]     = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        c[ImGuiCol_Button]               = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
+        c[ImGuiCol_ButtonHovered]        = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+        c[ImGuiCol_ButtonActive]         = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+        c[ImGuiCol_Header]               = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
+        c[ImGuiCol_HeaderHovered]        = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
+        c[ImGuiCol_HeaderActive]         = ImVec4(0.26f, 0.59f, 0.98f, 0.85f);
+        c[ImGuiCol_Separator]            = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+        c[ImGuiCol_ResizeGrip]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        c[ImGuiCol_Tab]                  = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+        c[ImGuiCol_TabHovered]           = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
+        c[ImGuiCol_TabActive]            = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+        c[ImGuiCol_PlotLines]            = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+        c[ImGuiCol_PlotHistogram]        = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
+
         ImGui_ImplSDL2_InitForOpenGL(_window, _glContext);
         ImGui_ImplOpenGL3_Init("#version 330 core");
 
@@ -41,15 +93,12 @@ namespace graphics {
     }
 
     void ImguiInterface::pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label) {
-        ImVec2 desiredPos = GetDesiredPosition("right");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Pixel Editor",
-            ImVec2(200, desiredSize),
+            ImVec2(LAYOUT_RIGHT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("right")
         };
 
         static Bar sideBar(sideBarConfig);
@@ -132,15 +181,12 @@ namespace graphics {
     }
 
     void ImguiInterface::defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label) {
-        ImVec2 desiredPos = GetDesiredPosition("right");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Default Pixel Properties",
-            ImVec2(200, desiredSize),
+            ImVec2(LAYOUT_RIGHT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("right")
         };
 
         static Bar sideBar(sideBarConfig);
@@ -234,15 +280,12 @@ namespace graphics {
 
     void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath)
     {
-        ImVec2 desiredPos = GetDesiredPosition("left");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Pixel Sprite Handler",
-            ImVec2(200, desiredSize),
+            ImVec2(LAYOUT_LEFT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("left")
         };
 
         static Bar sideBar(sideBarConfig);
@@ -336,15 +379,12 @@ namespace graphics {
 
     void ImguiInterface::projectNavbar(std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested)
     {
-        ImVec2 desiredPos = GetDesiredPosition("bottom");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Horizontal);
-
         static BarConfig bottomBarConfig {
             BarOrientation::Horizontal,
             "Project Navbar",
-            ImVec2(desiredSize, 200),
+            ImVec2(0.0f, LAYOUT_BOTTOM_H),
             true,
-            desiredPos
+            GetDesiredPosition("bottom")
         };
 
         static Bar bottomBar(bottomBarConfig);
@@ -421,15 +461,12 @@ namespace graphics {
 
     void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex)
     {
-        ImVec2 desiredPos = GetDesiredPosition("left");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-    
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Hierarchy",
-            ImVec2(200, desiredSize),
+            ImVec2(LAYOUT_LEFT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("left")
         };
     
         static Bar sideBar(sideBarConfig);
@@ -550,13 +587,12 @@ namespace graphics {
     
         });
 
-        ImVec2 desiredInspectorPos = GetDesiredPosition("right");
         static BarConfig inspectorBarConfig {
             BarOrientation::Vertical,
             "Inspector",
-            ImVec2(260, desiredSize),
+            ImVec2(LAYOUT_RIGHT_W, 0.0f),
             true,
-            desiredInspectorPos
+            GetDesiredPosition("right")
         };
 
         static Bar inspectorBar(inspectorBarConfig);
@@ -591,6 +627,80 @@ namespace graphics {
                 // Intentionally not wired yet (placeholder requested)
             }
         });
+    }
+
+    void ImguiInterface::drawEditorTabs(EditorMode &currentMode)
+    {
+        ImGuiIO &io = ImGui::GetIO();
+        const float winW = io.DisplaySize.x;
+
+        const ImVec2 tabPos(0.0f, 0.0f);
+        const ImVec2 tabSize(winW, LAYOUT_TOP_H);
+
+        constexpr ImGuiWindowFlags tabFlags =
+            ImGuiWindowFlags_NoMove               |
+            ImGuiWindowFlags_NoResize             |
+            ImGuiWindowFlags_NoCollapse           |
+            ImGuiWindowFlags_NoBringToFrontOnFocus|
+            ImGuiWindowFlags_NoSavedSettings;
+
+        // Style for tab bar
+        ImGui::PushStyleColor(ImGuiCol_WindowBg,        ImVec4(0.12f, 0.12f, 0.12f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   ImVec4(0.30f, 0.30f, 0.30f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,    ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_Border,          ImVec4(0.05f, 0.05f, 0.05f, 1.00f));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,  0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,   ImVec2(8.0f, 6.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,     ImVec2(4.0f, 6.0f));
+
+        ImGui::SetNextWindowPos(tabPos,  ImGuiCond_Always);
+        ImGui::SetNextWindowSize(tabSize, ImGuiCond_Always);
+
+        ImGui::Begin("##EditorTabs", nullptr, tabFlags);
+
+        // Sprite Editor Tab
+        bool spriteActive = (currentMode == EditorMode::SpriteEditor);
+        if (spriteActive) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.60f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 0.80f));
+        }
+
+        if (ImGui::Button("Sprite Editor##Tab", ImVec2(140, 0))) {
+            if (currentMode != EditorMode::SpriteEditor) {
+                currentMode = EditorMode::SpriteEditor;
+            }
+        }
+
+        if (spriteActive) {
+            ImGui::PopStyleColor(2);
+        }
+
+        ImGui::SameLine(0.0f, 2.0f);
+
+        // Project Editor Tab
+        bool projectActive = (currentMode == EditorMode::ProjectEditor);
+        if (projectActive) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.60f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 0.80f));
+        }
+
+        if (ImGui::Button("Project Editor##Tab", ImVec2(140, 0))) {
+            if (currentMode != EditorMode::ProjectEditor) {
+                currentMode = EditorMode::ProjectEditor;
+            }
+        }
+
+        if (projectActive) {
+            ImGui::PopStyleColor(2);
+        }
+
+        ImGui::End();
+
+        ImGui::PopStyleVar(4);
+        ImGui::PopStyleColor(5);
     }
 
 

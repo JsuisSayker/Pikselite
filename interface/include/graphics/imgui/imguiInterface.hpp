@@ -38,6 +38,8 @@ namespace graphics {
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
 
+        void drawEditorTabs(EditorMode &currentMode);
+
         void startFrame();
         void endFrame(SDL_Window* window);
 
