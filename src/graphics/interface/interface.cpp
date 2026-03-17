@@ -31,7 +31,6 @@ namespace graphics {
             throw std::runtime_error("Failed to create window");
         }
 
-        // put Icon here if you want: SDL_SetWindowIcon(_window, ...);
         SDL_SetWindowIcon(_window, SDL_LoadBMP("assets/icon.bmp"));
 
         _glContext = SDL_GL_CreateContext(_window);
