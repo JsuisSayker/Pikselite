@@ -3,6 +3,7 @@
 #include <string>
 #include <filesystem>
 #include <vector>
+#include <cstring>
 
 namespace graphics {
     ImguiInterface::ImguiInterface(SDL_Window* window, SDL_GLContext glContext)
@@ -10,6 +11,58 @@ namespace graphics {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
+
+        // ── Global Unity-like style overrides ─────────────────────────────────
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.WindowRounding    = 0.0f;
+        style.ChildRounding     = 4.0f;
+        style.FrameRounding     = 3.0f;
+        style.GrabRounding      = 3.0f;
+        style.PopupRounding     = 4.0f;
+        style.ScrollbarRounding = 3.0f;
+        style.TabRounding       = 4.0f;
+        style.WindowBorderSize  = 1.0f;
+        style.FrameBorderSize   = 0.0f;
+        style.WindowPadding     = ImVec2(8.0f, 8.0f);
+        style.FramePadding      = ImVec2(6.0f, 4.0f);
+        style.ItemSpacing       = ImVec2(6.0f, 5.0f);
+        style.ScrollbarSize     = 12.0f;
+        style.GrabMinSize       = 8.0f;
+
+        ImVec4* c = style.Colors;
+        c[ImGuiCol_Text]                 = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
+        c[ImGuiCol_TextDisabled]         = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+        c[ImGuiCol_WindowBg]             = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+        c[ImGuiCol_ChildBg]              = ImVec4(0.13f, 0.13f, 0.13f, 1.00f);
+        c[ImGuiCol_PopupBg]              = ImVec4(0.14f, 0.14f, 0.14f, 0.98f);
+        c[ImGuiCol_Border]               = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
+        c[ImGuiCol_FrameBg]              = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_FrameBgHovered]       = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+        c[ImGuiCol_FrameBgActive]        = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
+        c[ImGuiCol_TitleBg]              = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_TitleBgActive]        = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+        c[ImGuiCol_TitleBgCollapsed]     = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_ScrollbarBg]          = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_ScrollbarGrab]        = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+        c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);
+        c[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+        c[ImGuiCol_CheckMark]            = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        c[ImGuiCol_SliderGrab]           = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+        c[ImGuiCol_SliderGrabActive]     = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        c[ImGuiCol_Button]               = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
+        c[ImGuiCol_ButtonHovered]        = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+        c[ImGuiCol_ButtonActive]         = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+        c[ImGuiCol_Header]               = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
+        c[ImGuiCol_HeaderHovered]        = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
+        c[ImGuiCol_HeaderActive]         = ImVec4(0.26f, 0.59f, 0.98f, 0.85f);
+        c[ImGuiCol_Separator]            = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+        c[ImGuiCol_ResizeGrip]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        c[ImGuiCol_Tab]                  = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+        c[ImGuiCol_TabHovered]           = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
+        c[ImGuiCol_TabActive]            = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+        c[ImGuiCol_PlotLines]            = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+        c[ImGuiCol_PlotHistogram]        = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
+
         ImGui_ImplSDL2_InitForOpenGL(_window, _glContext);
         ImGui_ImplOpenGL3_Init("#version 330 core");
 
@@ -40,15 +93,12 @@ namespace graphics {
     }
 
     void ImguiInterface::pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label) {
-        ImVec2 desiredPos = GetDesiredPosition("right");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Pixel Editor",
-            ImVec2(200, desiredSize),
+            ImVec2(LAYOUT_RIGHT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("right")
         };
 
         static Bar sideBar(sideBarConfig);
@@ -131,15 +181,12 @@ namespace graphics {
     }
 
     void ImguiInterface::defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label) {
-        ImVec2 desiredPos = GetDesiredPosition("right");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Default Pixel Properties",
-            ImVec2(200, desiredSize),
+            ImVec2(LAYOUT_RIGHT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("right")
         };
 
         static Bar sideBar(sideBarConfig);
@@ -233,15 +280,12 @@ namespace graphics {
 
     void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath)
     {
-        ImVec2 desiredPos = GetDesiredPosition("left");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
             "Pixel Sprite Handler",
-            ImVec2(200, desiredSize),
+            ImVec2(LAYOUT_LEFT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("left")
         };
 
         static Bar sideBar(sideBarConfig);
@@ -328,15 +372,19 @@ namespace graphics {
 
     void ImguiInterface::projectNavbar(std::string &currentSpriteFilename)
     {
-        ImVec2 desiredPos = GetDesiredPosition("bottom");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Horizontal);
+        bool saveSceneRequested = false;
+        bool loadSceneRequested = false;
+        projectNavbar(currentSpriteFilename, saveSceneRequested, loadSceneRequested);
+    }
 
+    void ImguiInterface::projectNavbar(std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested)
+    {
         static BarConfig bottomBarConfig {
             BarOrientation::Horizontal,
             "Project Navbar",
-            ImVec2(desiredSize, 200),
+            ImVec2(0.0f, LAYOUT_BOTTOM_H),
             true,
-            desiredPos
+            GetDesiredPosition("bottom")
         };
 
         static Bar bottomBar(bottomBarConfig);
@@ -346,6 +394,18 @@ namespace graphics {
             if (BasicButton("Refresh")) {
                 scanSprites();
             }
+
+            ImGui::SameLine();
+            if (BasicButton("Save Scene")) {
+                saveSceneRequested = true;
+            }
+
+            ImGui::SameLine();
+            if (BasicButton("Load Scene")) {
+                loadSceneRequested = true;
+            }
+
+            ImGui::Separator();
 
             float thumbnailSize = 65.0f;
             float padding = 15.0f;
@@ -397,17 +457,14 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects)
+    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex)
     {
-        ImVec2 desiredPos = GetDesiredPosition("left");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-    
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
-            "Pixel Sprite Handler",
-            ImVec2(200, desiredSize),
+            "Hierarchy",
+            ImVec2(LAYOUT_LEFT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("left")
         };
     
         static Bar sideBar(sideBarConfig);
@@ -416,7 +473,6 @@ namespace graphics {
         
             static char searchBuffer[128] = "";
             static char renameBuffer[128] = "";
-            static int selectedObject = -1;
             static int renameIndex = -1;
             static bool openRenamePopup = false;
             static bool focusRename = true;
@@ -446,11 +502,8 @@ namespace graphics {
     
                     ImGui::PushID((int)i);
     
-                    if (ImGui::Selectable(objName.c_str(), selectedObject == (int)i)) {
-                        selectedObject = (int)i;
-
-                        gameObjectPropertiesBar(gameObjects[i]);
-                    }
+                    if (ImGui::Selectable(objName.c_str(), selectedGameObjectIndex == (int)i))
+                        selectedGameObjectIndex = (int)i;
     
                     // If right-clicked
                     if (ImGui::BeginPopupContextItem())
@@ -466,10 +519,10 @@ namespace graphics {
     
                         if (ImGui::MenuItem("Delete"))
                         {
-                            if (selectedObject == (int)i)
-                                selectedObject = -1;
-                            else if (selectedObject > (int)i)
-                                selectedObject--;
+                                if (selectedGameObjectIndex == (int)i)
+                                    selectedGameObjectIndex = -1;
+                                else if (selectedGameObjectIndex > (int)i)
+                                    selectedGameObjectIndex--;
     
                             gameObjects.erase(gameObjects.begin() + i);
     
@@ -531,33 +584,122 @@ namespace graphics {
             }
     
         });
-    }
 
-    void ImguiInterface::gameObjectPropertiesBar(::Pixel::GameObject& gameObject)
-    {
-        ImVec2 desiredPos = GetDesiredPosition("right");
-        int desiredSize = GetDesiredSize("full", BarOrientation::Vertical);
-
-        static BarConfig sideBarConfig {
+        static BarConfig inspectorBarConfig {
             BarOrientation::Vertical,
-            "Pixel Editor",
-            ImVec2(200, desiredSize),
+            "Inspector",
+            ImVec2(LAYOUT_RIGHT_W, 0.0f),
             true,
-            desiredPos
+            GetDesiredPosition("right")
         };
 
-        static Bar sideBar(sideBarConfig);
+        static Bar inspectorBar(inspectorBarConfig);
+        inspectorBar.Draw([&]() {
+            if (selectedGameObjectIndex < 0 || selectedGameObjectIndex >= static_cast<int>(gameObjects.size())) {
+                ImGui::TextDisabled("No GameObject selected");
+                ImGui::Separator();
+                ImGui::TextWrapped("Select a GameObject in the Hierarchy to edit its properties.");
+                return;
+            }
 
-        sideBar.Draw([&]() {
-            // checkbox to see wether the object is visible or not
-            // object's name
-            // list of components
-                // checkbox to enable/disable each component, and name of component
-                // dropdown to show variables of component and edit them
-                // button to remove component
-            // add component button
-                // when clicked, shows a list of available components to add, with a search bar to filter them
+            auto &selected = gameObjects[selectedGameObjectIndex];
+
+            ImGui::Text("GameObject");
+            ImGui::Separator();
+
+            char nameBuffer[128] = {};
+            std::strncpy(nameBuffer, selected.name.c_str(), sizeof(nameBuffer) - 1);
+            if (ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer))) {
+                selected.name = nameBuffer;
+            }
+
+            ImGui::TextDisabled("ID: %u", selected.id);
+            ImGui::TextDisabled("Pixels: %d", static_cast<int>(selected.pixelEntities.size()));
+
+            ImGui::Spacing();
+            ImGui::Text("Inspector");
+            ImGui::Separator();
+            ImGui::TextWrapped("Component editing is temporarily disabled.");
+
+            if (ImGui::Button("Add Component")) {
+                // Intentionally not wired yet (placeholder requested)
+            }
         });
     }
+
+    void ImguiInterface::drawEditorTabs(EditorMode &currentMode)
+    {
+        ImGuiIO &io = ImGui::GetIO();
+        const float winW = io.DisplaySize.x;
+
+        const ImVec2 tabPos(0.0f, 0.0f);
+        const ImVec2 tabSize(winW, LAYOUT_TOP_H);
+
+        constexpr ImGuiWindowFlags tabFlags =
+            ImGuiWindowFlags_NoMove               |
+            ImGuiWindowFlags_NoResize             |
+            ImGuiWindowFlags_NoCollapse           |
+            ImGuiWindowFlags_NoBringToFrontOnFocus|
+            ImGuiWindowFlags_NoSavedSettings;
+
+        // Style for tab bar
+        ImGui::PushStyleColor(ImGuiCol_WindowBg,        ImVec4(0.12f, 0.12f, 0.12f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_Button,          ImVec4(0.20f, 0.20f, 0.20f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,   ImVec4(0.30f, 0.30f, 0.30f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,    ImVec4(0.26f, 0.59f, 0.98f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_Border,          ImVec4(0.05f, 0.05f, 0.05f, 1.00f));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,  0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding,   ImVec2(8.0f, 6.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,     ImVec2(4.0f, 6.0f));
+
+        ImGui::SetNextWindowPos(tabPos,  ImGuiCond_Always);
+        ImGui::SetNextWindowSize(tabSize, ImGuiCond_Always);
+
+        ImGui::Begin("##EditorTabs", nullptr, tabFlags);
+
+        // Sprite Editor Tab
+        bool spriteActive = (currentMode == EditorMode::SpriteEditor);
+        if (spriteActive) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.60f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 0.80f));
+        }
+
+        if (ImGui::Button("Sprite Editor##Tab", ImVec2(140, 0))) {
+            if (currentMode != EditorMode::SpriteEditor) {
+                currentMode = EditorMode::SpriteEditor;
+            }
+        }
+
+        if (spriteActive) {
+            ImGui::PopStyleColor(2);
+        }
+
+        ImGui::SameLine(0.0f, 2.0f);
+
+        // Project Editor Tab
+        bool projectActive = (currentMode == EditorMode::ProjectEditor);
+        if (projectActive) {
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.26f, 0.59f, 0.98f, 0.60f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.59f, 0.98f, 0.80f));
+        }
+
+        if (ImGui::Button("Project Editor##Tab", ImVec2(140, 0))) {
+            if (currentMode != EditorMode::ProjectEditor) {
+                currentMode = EditorMode::ProjectEditor;
+            }
+        }
+
+        if (projectActive) {
+            ImGui::PopStyleColor(2);
+        }
+
+        ImGui::End();
+
+        ImGui::PopStyleVar(4);
+        ImGui::PopStyleColor(5);
+    }
+
 
 } // namespace graphics

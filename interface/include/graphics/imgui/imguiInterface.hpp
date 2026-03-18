@@ -33,10 +33,12 @@ namespace graphics {
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 
         void projectNavbar(::std::string &currentSpriteFilename);
+        void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects);
-        void gameObjectPropertiesBar(::Pixel::GameObject& gameObject);
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
+
+        void drawEditorTabs(EditorMode &currentMode);
 
         void startFrame();
         void endFrame(SDL_Window* window);

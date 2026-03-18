@@ -19,6 +19,7 @@ namespace Pixel {
     };
     struct Gaseous {
         float density;
+        bool updateThisFrame = false;
     };
 
     struct PixelAttributes {

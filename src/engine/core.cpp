@@ -7,12 +7,63 @@
 #include <tracy/Tracy.hpp>
 
 #ifndef TRACY_ENABLE
- // output a warning if profiling is disabled
-    #pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
-    #error "Not set"
+// output a warning if profiling is disabled
+#pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
 #endif
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <engine/ecs/systems/scriptSystem.hpp>
+#include <fstream>
+#include <filesystem>
+
+namespace {
+    json pixelToJson(const graphics::Pixel& pixel)
+    {
+        return {
+            {"x", pixel.position.x},
+            {"y", pixel.position.y},
+            {"r", pixel.color.r},
+            {"g", pixel.color.g},
+            {"b", pixel.color.b}
+        };
+    }
+
+    graphics::Pixel pixelFromJson(const json& j)
+    {
+        return {
+            {j.value("x", 0.0f), j.value("y", 0.0f)},
+            {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}
+        };
+    }
+
+    json gameObjectToJson(const Pixel::GameObject& go)
+    {
+        json pixelIds = json::array();
+        for (const auto pixelId : go.pixelEntities)
+            pixelIds.push_back(pixelId);
+
+        return {
+            {"id", go.id},
+            {"name", go.name},
+            {"pixelEntities", pixelIds}
+        };
+    }
+
+    Pixel::GameObject gameObjectFromJson(const json& j)
+    {
+        Pixel::GameObject go;
+        go.id = j.value("id", Pixel::NO_SPRITE);
+        go.name = j.value("name", std::string("GameObject ") + std::to_string(go.id));
+
+        if (j.contains("pixelEntities") && j["pixelEntities"].is_array()) {
+            for (const auto& pixelId : j["pixelEntities"]) {
+                go.pixelEntities.push_back(pixelId.get<Pixel::PixelEntityID>());
+            }
+        }
+
+        return go;
+    }
+}
 
 namespace engine
 {
@@ -73,6 +124,17 @@ namespace engine
             {
                 ZoneScopedN("ProjectEditor");
                 projectEditor->run(event);
+
+                if (projectEditor->consumeSaveSceneRequest()) {
+                    copyProjectEditorDataToCore();
+                    saveScene(_sceneFilename);
+                }
+
+                if (projectEditor->consumeLoadSceneRequest()) {
+                    if (loadScene(_sceneFilename)) {
+                        projectEditor->setSceneData(_renderPixels, _gameObjects, _pixelAttributes, _chunkGrid, pixelIdCounter, gameObjectCounter);
+                    }
+                }
             }
             else
             {
@@ -205,6 +267,10 @@ namespace engine
 
     void Core::shutdown()
     {
+        if (projectEditor) {
+            copyProjectEditorDataToCore();
+            saveScene(_sceneFilename);
+        }
         SDL_Quit();
     }
 
@@ -217,6 +283,8 @@ namespace engine
         _gameObjects = projectEditor->getGameObjects();
         _pixelAttributes = projectEditor->getPixelAttributes();
         _chunkGrid = projectEditor->getChunkGrid();
+        pixelIdCounter = projectEditor->getPixelIdCounter();
+        gameObjectCounter = projectEditor->getGameObjectCounter();
 
         loadGameObjectsIntoECS();
 
@@ -249,8 +317,8 @@ namespace engine
             link.pixelEntities = go.pixelEntities;
             componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
 
-            // Attach a SpriteComponent (default texture: dragon.png)
             ecs::components::Sprite spriteComp;
+            spriteComp.texturePath = "assets/dragon.png";
             componentManager.addComponent<ecs::components::Sprite>(eid, spriteComp);
 
             ecs::Signature sig;
@@ -258,10 +326,183 @@ namespace engine
             sig.set(componentManager.getComponentType<ecs::components::Velocity>());
             sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
             sig.set(componentManager.getComponentType<ecs::components::Sprite>());
+
             entityManager.setSignature(eid, sig);
             systemManager.entitySignatureChanged(eid, sig);
 
             _gameObjectToEntity[go.id] = eid;
         }
     }
+
+    void Core::saveScene(const std::string &filename)
+    {
+        json scene;
+        scene["version"] = 1;
+        scene["pixelIdCounter"] = pixelIdCounter;
+        scene["gameObjectCounter"] = gameObjectCounter;
+
+        scene["renderPixels"] = json::array();
+        for (const auto& pixel : _renderPixels) {
+            scene["renderPixels"].push_back(pixelToJson(pixel));
+        }
+
+        scene["gameObjects"] = json::array();
+        for (const auto& gameObject : _gameObjects) {
+            scene["gameObjects"].push_back(gameObjectToJson(gameObject));
+        }
+
+        scene["pixelAttributes"]["renderIndex"] = json::array();
+        for (const auto& [id, index] : _pixelAttributes.renderIndex) {
+            scene["pixelAttributes"]["renderIndex"].push_back({
+                {"id", id},
+                {"index", index}
+            });
+        }
+
+        scene["pixelAttributes"]["solidAttributes"] = json::array();
+        for (const auto& [id, solid] : _pixelAttributes.solidAttributes) {
+            (void)solid;
+            scene["pixelAttributes"]["solidAttributes"].push_back({{"id", id}});
+        }
+
+        scene["pixelAttributes"]["liquidAttributes"] = json::array();
+        for (const auto& [id, liquid] : _pixelAttributes.liquidAttributes) {
+            scene["pixelAttributes"]["liquidAttributes"].push_back({
+                {"id", id},
+                {"viscosity", liquid.viscosity},
+                {"updateThisFrame", liquid.updateThisFrame}
+            });
+        }
+
+        scene["pixelAttributes"]["gaseousAttributes"] = json::array();
+        for (const auto& [id, gaseous] : _pixelAttributes.gaseousAttributes) {
+            scene["pixelAttributes"]["gaseousAttributes"].push_back({
+                {"id", id},
+                {"density", gaseous.density}
+            });
+        }
+
+        scene["chunkGrid"] = json::array();
+        for (const auto& [coord, chunk] : _chunkGrid.getChunks()) {
+            json cells = json::array();
+            for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
+                for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
+                    const auto id = chunk.get(x, y);
+                    if (id == Pixel::EMPTY)
+                        continue;
+
+                    cells.push_back({
+                        {"x", x},
+                        {"y", y},
+                        {"id", id}
+                    });
+                }
+            }
+
+            scene["chunkGrid"].push_back({
+                {"cx", coord.first},
+                {"cy", coord.second},
+                {"cells", cells}
+            });
+        }
+
+        std::filesystem::path path(filename);
+        if (path.has_parent_path()) {
+            std::filesystem::create_directories(path.parent_path());
+        }
+
+        std::ofstream file(filename);
+        if (file.is_open()) {
+            file << scene.dump(4);
+        }
+    }
+
+    bool Core::loadScene(const std::string &filename)
+    {
+        std::ifstream file(filename);
+        if (!file.is_open())
+            return false;
+
+        json scene;
+        try {
+            file >> scene;
+        } catch (...) {
+            return false;
+        }
+
+        _renderPixels.clear();
+        _gameObjects.clear();
+        _pixelAttributes = {};
+        _chunkGrid = Pixel::ChunkGrid();
+        _gameObjectToEntity.clear();
+
+        pixelIdCounter = scene.value("pixelIdCounter", 1u);
+        gameObjectCounter = scene.value("gameObjectCounter", 1u);
+
+        if (scene.contains("renderPixels") && scene["renderPixels"].is_array()) {
+            for (const auto& pixel : scene["renderPixels"]) {
+                _renderPixels.push_back(pixelFromJson(pixel));
+            }
+        }
+
+        if (scene.contains("gameObjects") && scene["gameObjects"].is_array()) {
+            for (const auto& gameObject : scene["gameObjects"]) {
+                _gameObjects.push_back(gameObjectFromJson(gameObject));
+            }
+        }
+
+        if (scene.contains("pixelAttributes")) {
+            const auto& pixelAttributes = scene["pixelAttributes"];
+
+            if (pixelAttributes.contains("renderIndex")) {
+                for (const auto& entry : pixelAttributes["renderIndex"]) {
+                    _pixelAttributes.renderIndex[entry.at("id").get<Pixel::PixelEntityID>()] = entry.at("index").get<int>();
+                }
+            }
+
+            if (pixelAttributes.contains("solidAttributes")) {
+                for (const auto& entry : pixelAttributes["solidAttributes"]) {
+                    _pixelAttributes.solidAttributes[entry.at("id").get<Pixel::PixelEntityID>()] = Pixel::Solid{};
+                }
+            }
+
+            if (pixelAttributes.contains("liquidAttributes")) {
+                for (const auto& entry : pixelAttributes["liquidAttributes"]) {
+                    Pixel::Liquid liquid{};
+                    liquid.viscosity = entry.value("viscosity", 0.5f);
+                    liquid.updateThisFrame = entry.value("updateThisFrame", false);
+                    _pixelAttributes.liquidAttributes[entry.at("id").get<Pixel::PixelEntityID>()] = liquid;
+                }
+            }
+
+            if (pixelAttributes.contains("gaseousAttributes")) {
+                for (const auto& entry : pixelAttributes["gaseousAttributes"]) {
+                    Pixel::Gaseous gaseous{};
+                    gaseous.density = entry.value("density", 0.5f);
+                    _pixelAttributes.gaseousAttributes[entry.at("id").get<Pixel::PixelEntityID>()] = gaseous;
+                }
+            }
+        }
+
+        if (scene.contains("chunkGrid") && scene["chunkGrid"].is_array()) {
+            for (const auto& chunkEntry : scene["chunkGrid"]) {
+                const int cx = chunkEntry.value("cx", 0);
+                const int cy = chunkEntry.value("cy", 0);
+                auto& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+
+                if (!chunkEntry.contains("cells") || !chunkEntry["cells"].is_array())
+                    continue;
+
+                for (const auto& cell : chunkEntry["cells"]) {
+                    const int x = cell.value("x", 0);
+                    const int y = cell.value("y", 0);
+                    const auto id = cell.value("id", Pixel::EMPTY);
+                    chunk.set(x, y, id);
+                }
+            }
+        }
+
+        return true;
+    }
+
 } // namespace engine

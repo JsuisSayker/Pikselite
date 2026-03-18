@@ -32,6 +32,7 @@ find_package(OpenGL REQUIRED)
 find_package(Stb REQUIRED)
 find_package(Lua REQUIRED)
 find_path(SOL2_INCLUDE_DIRS "sol/sol.hpp")
+find_package(nlohmann_json CONFIG REQUIRED)
 # find_package(imgui CONFIG REQUIRED)
 
 # -------------------------------------------------
@@ -109,4 +110,5 @@ target_link_libraries(${PROJECT_NAME}
     graphics
     engine
     editor
+    nlohmann_json::nlohmann_json
 )

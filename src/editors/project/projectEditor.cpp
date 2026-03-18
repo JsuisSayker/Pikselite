@@ -15,6 +15,12 @@ namespace editors {
         _renderer->clear();
 
         _imguiInterface->startFrame();
+        _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested, _loadSceneRequested);
+
+        if (!_currentSpriteFilename.empty()) {
+            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
+            _currentSpriteFilename.clear();
+        }
 
         std::vector<graphics::Pixel> framePixels = _renderPixels;
 
@@ -42,6 +48,23 @@ namespace editors {
         _renderer->present(_graphicsInterface->getWindow());
     }
 
+    void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>& renderPixels,
+                                     const std::vector<Pixel::GameObject>& gameObjects,
+                                     const Pixel::PixelAttributes& pixelAttributes,
+                                     const Pixel::ChunkGrid& chunkGrid,
+                                     uint32_t nextPixelId,
+                                     uint32_t nextGameObjectId) {
+        _renderPixels = renderPixels;
+        _gameObjects = gameObjects;
+        _pixelAttributes = pixelAttributes;
+        _chunkGrid = chunkGrid;
+        pixelIdCounter = nextPixelId;
+        gameObjectCounter = nextGameObjectId;
+        _pendingSprite = {};
+        _isPlacingSprite = false;
+        _leftMouseDownLastFrame = false;
+    }
+
     void ProjectEditor::handleEvents(const graphics::InputEvent& event) {
         switch (event.type) {
         case graphics::KEY_W:
@@ -64,7 +87,7 @@ namespace editors {
             break;
         case graphics::KEY_L:
             // Start placement mode instead of direct load
-            loadSpriteForPlacement("assets/water.dat");
+            loadSpriteForPlacement("assets/gaz.dat");
             _isPlacingSprite = _pendingSprite.valid;
             break;
         default:
@@ -254,13 +277,7 @@ namespace editors {
 
     void ProjectEditor::imguiHandling()
     {
-        _imguiInterface->gameObjectsBar(_gameObjects);
-
-        _imguiInterface->projectNavbar(_currentSpriteFilename);
-        if (!_currentSpriteFilename.empty()) {
-            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
-            _currentSpriteFilename.clear();
-        }
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
     }
 
 } // namespace editors

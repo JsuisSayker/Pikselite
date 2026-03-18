@@ -13,6 +13,7 @@ namespace Pixel
         _renderPixels = &renderPixels;
 
         simulateBottomUp();
+        simulateTopDown();
         _pixelSimulated = !_pixelSimulated;
 
         _grid = nullptr;
@@ -59,6 +60,45 @@ namespace Pixel
         }
     }
 
+    void PixelSimulation::simulateTopDown()
+    {
+        struct ChunkSnapshot {
+            int cx, cy;
+            PixelEntityID cells[CHUNK_SIZE][CHUNK_SIZE];
+        };
+
+        std::vector<ChunkSnapshot> snapshots;
+        snapshots.reserve(_grid->getChunks().size());
+
+        for (const auto& kv : _grid->getChunks()) {
+            ChunkSnapshot snap;
+            snap.cx = kv.first.first;
+            snap.cy = kv.first.second;
+            for (int ly = 0; ly < CHUNK_SIZE; ++ly)
+                for (int lx = 0; lx < CHUNK_SIZE; ++lx)
+                    snap.cells[lx][ly] = kv.second.get(lx, ly);
+            snapshots.push_back(snap);
+        }
+
+        std::sort(snapshots.begin(), snapshots.end(),
+                  [](const auto& a, const auto& b) {
+                      return a.cy > b.cy;
+                  });
+
+        for (const auto& snap : snapshots) {
+            for (int ly = CHUNK_SIZE - 1; ly >= 0; --ly) {
+                for (int lx = 0; lx < CHUNK_SIZE; ++lx) {
+                    PixelEntityID id = snap.cells[lx][ly];
+                    if (id == Pixel::EMPTY) continue;
+
+                    if (_attributes->gaseousAttributes.count(id) > 0) {
+                        gasSimulation(lx, ly, id, snap.cx, snap.cy);
+                    }
+                }
+            }
+        }
+    }
+
     void PixelSimulation::liquidSimulation(int lx, int ly, PixelEntityID id, int cx, int cy)
     {
         Liquid& liquid = _attributes->liquidAttributes[id];
@@ -77,6 +117,40 @@ namespace Pixel
         if (_grid->getPixel(wx, wy - 1) == Pixel::EMPTY) {
             _grid->movePixel(wx, wy, wx, wy - 1);
             (*_renderPixels)[_attributes->renderIndex[id]].position.y -= PIXEL_SIZE;
+            return;
+        }
+
+        // Try spread left/right (random direction first)
+        int dir = (rand() % 2 == 0) ? -1 : 1;
+        if (_grid->getPixel(wx + dir, wy) == Pixel::EMPTY) {
+            _grid->movePixel(wx, wy, wx + dir, wy);
+            (*_renderPixels)[_attributes->renderIndex[id]].position.x += dir * PIXEL_SIZE;
+            return;
+        }
+        if (_grid->getPixel(wx - dir, wy) == Pixel::EMPTY) {
+            _grid->movePixel(wx, wy, wx - dir, wy);
+            (*_renderPixels)[_attributes->renderIndex[id]].position.x -= dir * PIXEL_SIZE;
+        }
+    }
+
+    void PixelSimulation::gasSimulation(int lx, int ly, PixelEntityID id, int cx, int cy)
+    {
+        Gaseous& gas = _attributes->gaseousAttributes[id];
+
+        // Try move up
+        int wx = cx * CHUNK_SIZE + lx;
+        int wy = cy * CHUNK_SIZE + ly;
+
+        // Skip if already processed this frame
+        if (gas.updateThisFrame == _pixelSimulated) return;
+        gas.updateThisFrame = !gas.updateThisFrame;
+
+        // Verify pixel is still at this position (may have moved already)
+        if (_grid->getPixel(wx, wy) != id) return;
+
+        if (_grid->getPixel(wx, wy + 1) == Pixel::EMPTY) {
+            _grid->movePixel(wx, wy, wx, wy + 1);
+            (*_renderPixels)[_attributes->renderIndex[id]].position.y += PIXEL_SIZE;
             return;
         }
 
