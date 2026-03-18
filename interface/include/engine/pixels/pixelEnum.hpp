@@ -30,6 +30,8 @@ namespace Pixel {
     };
 
     struct GameObject {
+        bool isVisible = true;
+        
         GameObjectID id;
         std::string name;
         std::vector<PixelEntityID> pixelEntities;

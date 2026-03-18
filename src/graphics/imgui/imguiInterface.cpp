@@ -608,34 +608,32 @@ namespace graphics {
             ImGui::Text("GameObject");
             ImGui::Separator();
 
-            // Add visibility toggle (checkbox) //
+            ImGui::Checkbox("Visible", &selected.isVisible);
 
             char nameBuffer[128] = {};
-            std::strncpy(nameBuffer, selected.name.c_str(), sizeof(nameBuffer) - 1);
-            if (ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer))) {
-                selected.name = nameBuffer;
+            if (ImGui::IsWindowAppearing())
+            {
+                std::strncpy(nameBuffer, selected.name.c_str(), sizeof(nameBuffer));
             }
 
             ImGui::TextDisabled("ID: %u", selected.id);
+            ImGui::SameLine();
             ImGui::TextDisabled("Pixels: %d", static_cast<int>(selected.pixelEntities.size()));
 
-            ImGui::Spacing();
-            ImGui::Text("Inspector");
             ImGui::Separator();
-            ImGui::TextWrapped("Component editing is temporarily disabled.");
 
             std::vector<std::string> availableComponents;
 
             if (!componentManager->hasComponent<ecs::components::Sprite>(selected.id)) {
                 availableComponents.push_back("Sprite");
             }  else {
-                bool open = ImGui::CollapsingHeader("Sprite Component");
 
                 auto& s = componentManager->getComponent<ecs::components::Sprite>(selected.id);
 
-                ImGui::SameLine(ImGui::GetContentRegionAvail().x);
 
                 ImGui::Checkbox("##enabledSprite", &s.enabled);
+                ImGui::SameLine();
+                bool open = ImGui::CollapsingHeader("Sprite Component");
                 
                 if (open) {
                     ImGui::BeginDisabled(!s.enabled);
@@ -647,7 +645,12 @@ namespace graphics {
                         s.height = 640.0f;
                     }
 
-                    ImGui::InputText("Sprite Texture Path", (char*)s.texturePath.c_str(), sizeof(s.texturePath));
+                    static char textureBuffer[256];
+                    std::strncpy(textureBuffer, s.texturePath.c_str(), sizeof(textureBuffer));
+                    if (ImGui::InputText("Sprite Texture Path", textureBuffer, sizeof(textureBuffer)))
+                    {
+                        s.texturePath = textureBuffer;
+                    }
                     ImGui::DragFloat2("Width", &s.width, 640.0f);
                     ImGui::DragFloat2("Height", &s.height, 640.0f);
 
@@ -663,13 +666,11 @@ namespace graphics {
             if (!componentManager->hasComponent<ecs::components::Transform>(selected.id)) {
                 availableComponents.push_back("Transform");
             } else {
-                bool open = ImGui::CollapsingHeader("Transform Component");
                 
                 auto& t = componentManager->getComponent<ecs::components::Transform>(selected.id);
-                
-                ImGui::SameLine(ImGui::GetContentRegionAvail().x);
-
                 ImGui::Checkbox("##enabledTransform", &t.enabled);
+                ImGui::SameLine();
+                bool open = ImGui::CollapsingHeader("Transform Component");
 
                 if (open) {
                     ImGui::BeginDisabled(!t.enabled);
@@ -700,13 +701,11 @@ namespace graphics {
             if (!componentManager->hasComponent<ecs::components::Velocity>(selected.id)) {
                 availableComponents.push_back("Velocity");
             } else {
-                bool open = ImGui::CollapsingHeader("Velocity Component");
-                
                 auto& v = componentManager->getComponent<ecs::components::Velocity>(selected.id);
-                
-                ImGui::SameLine(ImGui::GetContentRegionAvail().x);
-                
+
                 ImGui::Checkbox("##enabledVelocity", &v.enabled);
+                ImGui::SameLine();
+                bool open = ImGui::CollapsingHeader("Velocity Component");
 
                 if (open) {
                     ImGui::BeginDisabled(!v.enabled);
@@ -730,6 +729,10 @@ namespace graphics {
             
             PopupButton("Add Component", [&]() {
                 static char search[64] = "";
+                if (ImGui::IsWindowAppearing())
+                {
+                    search[0] = '\0';
+                }
                 ImGui::InputText("Search", search, IM_ARRAYSIZE(search));
                 std::string query = search;
                 std::transform(query.begin(), query.end(), query.begin(), ::tolower);
