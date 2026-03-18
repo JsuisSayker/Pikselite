@@ -6,8 +6,10 @@ add_executable(pikselite_tests
     imguiComponents/testGetDesiredPos.cpp
     renderer/testSpriteEditor.cpp
     renderer/testProjectEditor.cpp
-    engine/testChunk.cpp
     renderer/testDrawOnEditor.cpp
+    engine/testChunk.cpp
+    engine/testPixelAttributes.cpp
+    graphics/testWindowSize.cpp
 )
 
 target_compile_definitions(pikselite_tests PRIVATE UNIT_TEST)

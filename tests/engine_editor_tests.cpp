@@ -13,15 +13,15 @@
 
 using namespace Pixel;
 
-TEST(PixelAttributesTests, DefaultPropertyBehavior) {
-    Pixel::DefaultPixelProperties props;
-    EXPECT_EQ(props.color, glm::vec3(1.0f, 0.0f, 0.0f));
-    EXPECT_FALSE(props.isSolid);
+// TEST(PixelAttributesTests, DefaultPropertyBehavior) {
+//     Pixel::DefaultPixelProperties props;
+//     EXPECT_EQ(props.color, glm::vec3(1.0f, 0.0f, 0.0f));
+//     EXPECT_FALSE(props.isSolid);
 
-    props.isSolid = true;
-    props.solidAttributes = Pixel::Solid();
-    EXPECT_TRUE(props.isSolid);
-}
+//     props.isSolid = true;
+//     props.solidAttributes = Pixel::Solid();
+//     EXPECT_TRUE(props.isSolid);
+// }
 
 TEST(PixelSimulationTests, LiquidfallsDown) {
     ChunkGrid grid;
@@ -41,24 +41,4 @@ TEST(PixelSimulationTests, LiquidfallsDown) {
     EXPECT_EQ(grid.getPixel(0, 0), 1);
     EXPECT_EQ(grid.getPixel(0, 1), EMPTY);
     EXPECT_NEAR(renderPixels[0].position.y, -9.0f, 0.01f); // PIXEL_SIZE=10.0f
-}
-
-TEST(GetDesiredSizeTests, NotFull) {
-    EXPECT_EQ(graphics::GetDesiredSize("notfull", graphics::BarOrientation::Horizontal), 0);
-    EXPECT_EQ(graphics::GetDesiredSize("notfull", graphics::BarOrientation::Vertical), 0);
-}
-
-TEST(GetDesiredSizeTests, FullReturnsDisplaySize) {
-    SDL_Window* window = nullptr;
-    SDL_GLContext glContext = nullptr;
-    imguiTest::ImGuiTestCommon testCommon;
-    testCommon.InitImGuiForTests(window, glContext);
-
-    ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(640, 480);
-
-    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Horizontal), 640);
-    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Vertical), 480);
-
-    testCommon.ShutdownImGuiForTests(window, glContext);
 }
