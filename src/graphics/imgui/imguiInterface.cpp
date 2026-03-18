@@ -632,7 +632,7 @@ namespace graphics {
 
                 ImGui::Checkbox("##enabledSprite", &s.enabled);
                 ImGui::SameLine();
-                bool open = ImGui::CollapsingHeader("Sprite Component");
+                bool open = ImGui::CollapsingHeader("Sprite Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
                 
                 if (open) {
                     ImGui::BeginDisabled(!s.enabled);
@@ -669,7 +669,7 @@ namespace graphics {
                 auto& t = componentManager->getComponent<ecs::components::Transform>(selected.id);
                 ImGui::Checkbox("##enabledTransform", &t.enabled);
                 ImGui::SameLine();
-                bool open = ImGui::CollapsingHeader("Transform Component");
+                bool open = ImGui::CollapsingHeader("Transform Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
 
                 if (open) {
                     ImGui::BeginDisabled(!t.enabled);
@@ -704,7 +704,7 @@ namespace graphics {
 
                 ImGui::Checkbox("##enabledVelocity", &v.enabled);
                 ImGui::SameLine();
-                bool open = ImGui::CollapsingHeader("Velocity Component");
+                bool open = ImGui::CollapsingHeader("Velocity Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
 
                 if (open) {
                     ImGui::BeginDisabled(!v.enabled);
