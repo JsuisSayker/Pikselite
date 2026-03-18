@@ -15,7 +15,8 @@
 #include <engine/pixels/chunk.hpp>
 
 #include <engine/ecs/components/gameObjectComponent.hpp>
-#include <vector>
+
+#include <engine/managers/componentManager.hpp>
 
 namespace graphics {
     class ImguiInterface {
@@ -36,7 +37,7 @@ namespace graphics {
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager);
 
         void drawEditorTabs(EditorMode &currentMode);
 

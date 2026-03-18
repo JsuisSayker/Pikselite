@@ -3,8 +3,8 @@
 
 namespace editors {
 
-    ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface)
-        : _graphicsInterface(graphicsInterface), _renderer(renderer), _imguiInterface(imguiInterface) {}
+    ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface, engine::ComponentManager* componentManager)
+        : _graphicsInterface(graphicsInterface), _renderer(renderer), _imguiInterface(imguiInterface), _componentManager(componentManager) {}
 
     ProjectEditor::~ProjectEditor() {}
 
@@ -277,7 +277,7 @@ namespace editors {
 
     void ProjectEditor::imguiHandling()
     {
-        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _componentManager);
     }
 
 } // namespace editors
