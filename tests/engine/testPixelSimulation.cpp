@@ -1,15 +1,6 @@
 #include <gtest/gtest.h>
-#include <filesystem>
 
-#include <engine/pixels/chunk.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
-#include <editors/project/projectEditor.hpp>
-#include <editors/sprite/spriteEditor.hpp>
-#include <engine/pixels/pixelEnum.hpp>
-#include <graphics/imgui/components/bars.hpp>
-#include <graphics/renderer/renderer.hpp>
-#include <graphics/renderer/camera.hpp>
-#include <tests/imguiSetupForTest.hpp>
 
 using namespace Pixel;
 

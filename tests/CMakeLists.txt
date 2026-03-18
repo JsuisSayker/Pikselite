@@ -1,7 +1,6 @@
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(pikselite_tests
-    engine_editor_tests.cpp
     imguiComponents/testBarComponent.cpp
     imguiComponents/testGetDesiredPos.cpp
     renderer/testSpriteEditor.cpp
@@ -9,6 +8,7 @@ add_executable(pikselite_tests
     renderer/testDrawOnEditor.cpp
     engine/testChunk.cpp
     engine/testPixelAttributes.cpp
+    engine/testPixelSimulation.cpp
     graphics/testWindowSize.cpp
 )
 
