@@ -88,7 +88,6 @@ namespace editors {
         int _selectedGameObjectIndex = -1;
 
         void handleEvents(const graphics::InputEvent& event);
-        bool loadSpriteFromFile(const std::string& filename); // keep if you still need direct load
 
         void imguiHandling();
 

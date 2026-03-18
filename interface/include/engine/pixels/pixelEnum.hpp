@@ -30,7 +30,7 @@ namespace Pixel {
     };
 
     struct GameObject {
-        bool isVisible = true;
+        bool isActive = true;
         
         GameObjectID id;
         std::string name;

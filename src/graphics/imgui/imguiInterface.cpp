@@ -605,16 +605,15 @@ namespace graphics {
 
             auto &selected = gameObjects[selectedGameObjectIndex];
 
-            ImGui::Text("GameObject");
             ImGui::Separator();
 
-            ImGui::Checkbox("Visible", &selected.isVisible);
+            ImGui::Checkbox("Active", &selected.isActive);
 
-            char nameBuffer[128] = {};
-            if (ImGui::IsWindowAppearing())
-            {
-                std::strncpy(nameBuffer, selected.name.c_str(), sizeof(nameBuffer));
-            }
+            ImGui::SameLine();
+
+            ImGui::Text("%s", selected.name.empty() ? ("GameObject " + std::to_string(selected.id)).c_str() : selected.name.c_str());
+
+            ImGui::Separator();
 
             ImGui::TextDisabled("ID: %u", selected.id);
             ImGui::SameLine();
