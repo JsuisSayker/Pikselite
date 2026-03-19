@@ -15,6 +15,7 @@ namespace editors {
         _renderer->clear();
 
         _imguiInterface->startFrame();
+        _imguiInterface->projectTopBarEmpty();
         _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested, _loadSceneRequested);
 
         if (!_currentSpriteFilename.empty()) {

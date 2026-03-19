@@ -14,7 +14,7 @@ namespace graphics {
 
     // ── Layout constants ──────────────────────────────────────────────────────────
     //  Used by Bar::Draw and optionally by OpenGL viewport code.
-    static constexpr float LAYOUT_TOP_H     = 40.0f;  // Tab bar height
+    static constexpr float LAYOUT_TOP_H     = 40.0f;  // Top toolbar height
     static constexpr float LAYOUT_BOTTOM_H  = 180.0f;
     static constexpr float LAYOUT_LEFT_W    = 220.0f;
     static constexpr float LAYOUT_RIGHT_W   = 260.0f;
