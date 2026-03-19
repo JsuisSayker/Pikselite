@@ -3,6 +3,10 @@
 #include <vector>
 #include <engine/pixels/pixelEnum.hpp>
 
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
+
 namespace ecs::components
 {
     // Links an ECS entity back to a Pixel::GameObject
@@ -11,4 +15,6 @@ namespace ecs::components
         Pixel::GameObjectID gameObjectId = Pixel::NO_SPRITE;
         std::vector<Pixel::PixelEntityID> pixelEntities;
     };
+
+    
 } // namespace ecs::components

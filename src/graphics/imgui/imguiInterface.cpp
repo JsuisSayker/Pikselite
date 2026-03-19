@@ -3,6 +3,7 @@
 #include <string>
 #include <filesystem>
 #include <vector>
+#include <string>
 #include <cstring>
 
 namespace graphics {
@@ -116,7 +117,7 @@ namespace graphics {
             auto s = pixelAttributes.solidAttributes.find(pixelId);
             if (s != pixelAttributes.solidAttributes.end()) {
                 if (ImGui::CollapsingHeader("Solid")) {
-                    if (ImGui::Button("Remove Attribute")) {
+                    if (ImGui::Button("Remove Attribute##Solid")) {
                         pixelAttributes.solidAttributes.erase(s);
                     }
                 }
@@ -128,7 +129,7 @@ namespace graphics {
             if (l != pixelAttributes.liquidAttributes.end()) {
                 if (ImGui::CollapsingHeader("Liquid")) {
                     ImGui::SliderFloat("Viscosity", &l->second.viscosity, 0.0f, 1.0f);
-                    if (ImGui::Button("Remove Attribute")) {
+                    if (ImGui::Button("Remove Attribute##Liquid")) {
                         pixelAttributes.liquidAttributes.erase(l);
                     }
                 }
@@ -140,7 +141,7 @@ namespace graphics {
             if (g != pixelAttributes.gaseousAttributes.end()) {
                 if (ImGui::CollapsingHeader("Gaseous")) {
                     ImGui::SliderFloat("Density", &g->second.density, 0.0f, 1.0f);
-                    if (ImGui::Button("Remove Attribute")) {
+                    if (ImGui::Button("Remove Attribute##Gaseous")) {
                         pixelAttributes.gaseousAttributes.erase(g);
                     }
                 }
@@ -476,9 +477,7 @@ namespace graphics {
             ImGui::Columns(columns, 0, false);
 
            for (const auto& sprite : spriteFiles)
-            {
-                // ADD: Right-clicking one opens a popup with options like rename, delete, etc.
-                
+            {   
                 ImGui::PushID(sprite.c_str());
             
                 std::string name = std::filesystem::path(sprite).filename().string();
@@ -515,7 +514,7 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex)
+    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager)
     {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -549,7 +548,6 @@ namespace graphics {
                         ("GameObject " + std::to_string(gameObjects[i].id)) :
                         gameObjects[i].name;
     
-                    // Search filter
                     if (!lowerSearch.empty())
                     {
                         std::string lowerName = objName;
@@ -564,6 +562,7 @@ namespace graphics {
                     if (ImGui::Selectable(objName.c_str(), selectedGameObjectIndex == (int)i))
                         selectedGameObjectIndex = (int)i;
     
+                    // If right-clicked
                     if (ImGui::BeginPopupContextItem())
                     {
                         if (ImGui::MenuItem("Rename"))
@@ -662,26 +661,160 @@ namespace graphics {
 
             auto &selected = gameObjects[selectedGameObjectIndex];
 
-            ImGui::Text("GameObject");
             ImGui::Separator();
 
-            char nameBuffer[128] = {};
-            std::strncpy(nameBuffer, selected.name.c_str(), sizeof(nameBuffer) - 1);
-            if (ImGui::InputText("Name", nameBuffer, sizeof(nameBuffer))) {
-                selected.name = nameBuffer;
-            }
+            ImGui::Checkbox("Active", &selected.isActive);
+
+            ImGui::SameLine();
+
+            ImGui::Text("%s", selected.name.empty() ? ("GameObject " + std::to_string(selected.id)).c_str() : selected.name.c_str());
+
+            ImGui::Separator();
 
             ImGui::TextDisabled("ID: %u", selected.id);
+            ImGui::SameLine();
             ImGui::TextDisabled("Pixels: %d", static_cast<int>(selected.pixelEntities.size()));
 
-            ImGui::Spacing();
-            ImGui::Text("Inspector");
             ImGui::Separator();
-            ImGui::TextWrapped("Component editing is temporarily disabled.");
 
-            if (ImGui::Button("Add Component")) {
-                // Intentionally not wired yet (placeholder requested)
+            std::vector<std::string> availableComponents;
+
+            if (!componentManager->hasComponent<ecs::components::Sprite>(selected.id)) {
+                availableComponents.push_back("Sprite");
+            }  else {
+
+                auto& s = componentManager->getComponent<ecs::components::Sprite>(selected.id);
+
+
+                ImGui::Checkbox("##enabledSprite", &s.enabled);
+                ImGui::SameLine();
+                bool open = ImGui::CollapsingHeader("Sprite Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
+                
+                if (open) {
+                    ImGui::BeginDisabled(!s.enabled);
+
+                    if (ImGui::Button("Reset##Sprite"))
+                    {
+                        // s.texturePath = "";
+                        s.width = 640.0f;
+                        s.height = 640.0f;
+                    }
+
+                    static char textureBuffer[256];
+                    std::strncpy(textureBuffer, s.texturePath.c_str(), sizeof(textureBuffer));
+                    if (ImGui::InputText("Sprite Texture Path", textureBuffer, sizeof(textureBuffer)))
+                    {
+                        s.texturePath = textureBuffer;
+                    }
+                    ImGui::DragFloat2("Width", &s.width, 640.0f);
+                    ImGui::DragFloat2("Height", &s.height, 640.0f);
+
+                    ImGui::EndDisabled();
+
+                    if (ImGui::Button("Remove##Sprite"))
+                    {
+                        componentManager->removeComponent<ecs::components::Sprite>(selected.id);
+                    }
+                }
             }
+
+            if (!componentManager->hasComponent<ecs::components::Transform>(selected.id)) {
+                availableComponents.push_back("Transform");
+            } else {
+                
+                auto& t = componentManager->getComponent<ecs::components::Transform>(selected.id);
+                ImGui::Checkbox("##enabledTransform", &t.enabled);
+                ImGui::SameLine();
+                bool open = ImGui::CollapsingHeader("Transform Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
+
+                if (open) {
+                    ImGui::BeginDisabled(!t.enabled);
+
+                    if (ImGui::Button("Reset##Transform"))
+                    {
+                        t.x =0.0f;
+                        t.y = 0.0f;
+                        t.rotation = 0.0f;
+                        t.scaleX = 1.0f;
+                        t.scaleY = 1.0f;
+                    }
+
+                    ImGui::DragFloat2("Position", &t.x, 0.1f);
+                    ImGui::DragFloat("Rotation", &t.rotation, 0.1f);
+                    ImGui::DragFloat2("Scale", &t.scaleX, 0.1f);
+
+                    ImGui::EndDisabled();
+            
+                    if (ImGui::Button("Remove##Transform"))
+                    {
+                        componentManager->removeComponent<ecs::components::Transform>(selected.id);
+                    }
+                }
+                
+            }
+
+            if (!componentManager->hasComponent<ecs::components::Velocity>(selected.id)) {
+                availableComponents.push_back("Velocity");
+            } else {
+                auto& v = componentManager->getComponent<ecs::components::Velocity>(selected.id);
+
+                ImGui::Checkbox("##enabledVelocity", &v.enabled);
+                ImGui::SameLine();
+                bool open = ImGui::CollapsingHeader("Velocity Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
+
+                if (open) {
+                    ImGui::BeginDisabled(!v.enabled);
+
+                    if (ImGui::Button("Reset##Velocity"))
+                    {
+                        v.vx = 0.0f;
+                        v.vy = 0.0f;
+                    }
+                
+                    ImGui::DragFloat2("Velocity", &v.vx, 0.1f);
+                    
+                    ImGui::EndDisabled();
+        
+                    if (ImGui::Button("Remove##Velocity"))
+                    {
+                        componentManager->removeComponent<ecs::components::Velocity>(selected.id);
+                    }
+                }
+            }
+            
+            PopupButton("Add Component", [&]() {
+                static char search[64] = "";
+                if (ImGui::IsWindowAppearing())
+                {
+                    search[0] = '\0';
+                }
+                ImGui::InputText("Search", search, IM_ARRAYSIZE(search));
+                std::string query = search;
+                std::transform(query.begin(), query.end(), query.begin(), ::tolower);
+
+                for (const auto& comp : availableComponents) {
+                    std::string lowerComp = comp;
+                    std::transform(lowerComp.begin(), lowerComp.end(), lowerComp.begin(), ::tolower);
+
+                    if (!query.empty() && lowerComp.find(query) == std::string::npos)
+                        continue;
+
+                    if (ImGui::Selectable(comp.c_str())) {
+                        if (comp == "Sprite") {
+                            componentManager->addComponent(selected.id, ecs::components::Sprite{});
+                            availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "Sprite"), availableComponents.end());
+                        } else if (comp == "Transform") {
+                            componentManager->addComponent(selected.id, ecs::components::Transform{});
+                            availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "Transform"), availableComponents.end());
+                        } else if (comp == "Velocity") {
+                            componentManager->addComponent(selected.id, ecs::components::Velocity{});
+                            availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "Velocity"), availableComponents.end());
+                        }
+                        query.clear();
+                        search[0] = '\0';
+                    }
+                }
+            });
         });
     }
 } // namespace graphics

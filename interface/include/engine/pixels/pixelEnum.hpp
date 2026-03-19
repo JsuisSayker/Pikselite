@@ -30,9 +30,11 @@ namespace Pixel {
     };
 
     struct GameObject {
+        bool isActive = true;
+        
         GameObjectID id;
-        std::vector<PixelEntityID> pixelEntities;
         std::string name;
+        std::vector<PixelEntityID> pixelEntities;
     };
 
     struct DefaultPixelProperties {

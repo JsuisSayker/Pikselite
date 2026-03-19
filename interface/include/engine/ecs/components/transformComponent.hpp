@@ -3,6 +3,8 @@
 namespace ecs::components
 {
     struct Transform {
+        bool enabled = true;
+        
         float x, y;
         float rotation;
         float scaleX, scaleY;

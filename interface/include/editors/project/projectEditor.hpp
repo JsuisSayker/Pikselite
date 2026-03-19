@@ -3,6 +3,7 @@
 #include <graphics/renderer/renderer.hpp>
 #include <graphics/interface/interface.hpp>
 #include <graphics/imgui/imguiInterface.hpp>
+#include <engine/managers/componentManager.hpp>
 #include <engine/pixels/chunk.hpp>
 #include <iostream>
 #include <fstream>
@@ -13,7 +14,7 @@
 namespace editors {
     class ProjectEditor {
     public:
-        ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
+        ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface, engine::ComponentManager* componentManager);
         ~ProjectEditor();
 
         void run(const graphics::InputEvent& event);
@@ -48,6 +49,7 @@ namespace editors {
         graphics::ImguiInterface* _imguiInterface;
         graphics::Interface* _graphicsInterface;
         graphics::Renderer* _renderer;
+        engine::ComponentManager* _componentManager;
 
         graphics::Camera2D _camera;
         
@@ -86,7 +88,6 @@ namespace editors {
         int _selectedGameObjectIndex = -1;
 
         void handleEvents(const graphics::InputEvent& event);
-        bool loadSpriteFromFile(const std::string& filename); // keep if you still need direct load
 
         void imguiHandling();
 

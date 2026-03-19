@@ -99,7 +99,7 @@ namespace engine
         scriptSys.loadScript("scripts/movement.lua");
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
-        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface);
+        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface, &componentManager);
     }
 
     void Core::mainLoop()

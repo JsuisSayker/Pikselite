@@ -3,8 +3,8 @@
 
 namespace editors {
 
-    ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface)
-        : _graphicsInterface(graphicsInterface), _renderer(renderer), _imguiInterface(imguiInterface) {}
+    ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface, engine::ComponentManager* componentManager)
+        : _graphicsInterface(graphicsInterface), _renderer(renderer), _imguiInterface(imguiInterface), _componentManager(componentManager) {}
 
     ProjectEditor::~ProjectEditor() {}
 
@@ -234,7 +234,7 @@ namespace editors {
 
         Pixel::GameObject obj;
         obj.id = gameObjectCounter++;
-        obj.name = "GameObject"; ////////////////////////////////// placeholder name
+        obj.name = "GameObject";
 
         auto toChunk = [](int g) -> int {
             return (g >= 0) ? (g / Pixel::CHUNK_SIZE) : ((g - Pixel::CHUNK_SIZE + 1) / Pixel::CHUNK_SIZE);
@@ -278,7 +278,7 @@ namespace editors {
 
     void ProjectEditor::imguiHandling()
     {
-        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _componentManager);
     }
 
 } // namespace editors

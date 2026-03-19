@@ -66,6 +66,12 @@ namespace engine
             return getComponentArray<T>()->getData(entity);
         }
 
+        template <typename T>
+        bool hasComponent(ecs::EntityID entity)
+        {
+            return getComponentArray<T>()->has(entity);
+        }
+
         void entityDestroyed(ecs::EntityID entity)
         {
             for (auto &pair : componentArrays)
