@@ -46,7 +46,7 @@ jobs:
                 doxygen -g
               fi
               # Update Doxyfile settings
-              sed -i 's/^PROJECT_NAME.*/PROJECT_NAME = "R-Type"/' Doxyfile
+              sed -i 's/^PROJECT_NAME.*/PROJECT_NAME = "Pikselite"/' Doxyfile
               sed -i 's/^OUTPUT_DIRECTORY.*/OUTPUT_DIRECTORY = docs/' Doxyfile
               sed -i 's/^GENERATE_LATEX.*/GENERATE_LATEX = NO/' Doxyfile
               sed -i 's/^RECURSIVE.*/RECURSIVE = YES/' Doxyfile
