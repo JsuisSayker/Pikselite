@@ -60,6 +60,7 @@ jobs:
           - name: Deploy to Cloudflare Pages
             run: |
                 npm install -g wrangler
+                wrangler whoami
                 wrangler pages deploy docs/html --project-name pikselitedocs
             env:
               CLOUDFLARE_API_TOKEN : ${{ secrets.CLOUDFLARE_API_PAGES_TOKEN }}
