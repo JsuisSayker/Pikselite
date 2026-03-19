@@ -14,7 +14,13 @@ set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
 set "CMAKE_LOCATION=%USERPROFILE%\cmake\cmake-3.30.0-windows-x86_64\bin\"
 set "PROFILING_ENABLED=ON"
-set "CONFIG_TYPE=Debug"
+:: Get the shell second parameter and set CONFIG_TYPE to it if it exists, otherwise set it to Release
+if "%~1" neq "" (
+    set "CONFIG_TYPE=%~1"
+) else (
+    set "CONFIG_TYPE=Release"
+)
+@REM set "CONFIG_TYPE=Debug"
 set "BUILD_COVERAGE=ON"
 
 
