@@ -1,12 +1,17 @@
+/** 
+ * @file imguiInterface.cpp
+ * @brief Implementation of the ImGui interface for the Pixel Engine.
+ * This file contains the implementation for initializing and managing the ImGui interface within the application.
+ */
+
 #include <graphics/imgui/imguiInterface.hpp>
-#include <algorithm>
-#include <string>
-#include <filesystem>
-#include <vector>
-#include <string>
-#include <cstring>
 
 namespace graphics {
+    /** 
+     * @brief Constructs an instance of the ImguiInterface.
+     * @param window The SDL window to associate with the ImGui interface.
+     * @param glContext The OpenGL context for rendering.
+     */
     ImguiInterface::ImguiInterface(SDL_Window* window, SDL_GLContext glContext)
         : _window(window), _glContext(glContext) {
         IMGUI_CHECKVERSION();
@@ -70,29 +75,50 @@ namespace graphics {
         scanSprites();
     }
 
+    /** 
+     * @brief Destructor for the ImguiInterface class. Shuts down the ImGui context and cleans up resources.
+     */
     ImguiInterface::~ImguiInterface() {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplSDL2_Shutdown();
         ImGui::DestroyContext();
     }
 
+    /** 
+     * @brief Starts a new ImGui frame. This should be called at the beginning of each frame before any ImGui rendering calls.
+     */
     void ImguiInterface::startFrame() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
     }
 
+    /** 
+    * @brief Ends the current ImGui frame and renders the ImGui draw data. This should be called at the end of each frame after all ImGui rendering calls.
+    * @param window The SDL window to render to.
+    */
     void ImguiInterface::endFrame(SDL_Window* window) {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
+    /** 
+     * @brief Displays the ImGui demo window. This is a built-in ImGui feature that showcases various ImGui components and their usage.
+     */
     void ImguiInterface::showImGuiDemo() {
         ImGui::Begin("Hello, ImGui!");
         ImGui::Text("This is a simple ImGui window.");
         ImGui::End();
     }
 
+    /** 
+     * @brief Displays the pixel editor sidebar for a given pixel, allowing users to modify its color and attributes. The sidebar includes options for adding or removing solid, liquid, and gaseous attributes, as well as a color picker for changing the pixel's color.
+     * @param pixel The pixel to be edited.
+     * @param grid The chunk grid containing the pixel.
+     * @param pixelAttributes The attributes of the pixel.
+     * @param label The label for the color picker.
+
+     */
     void ImguiInterface::pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label) {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -181,6 +207,11 @@ namespace graphics {
         });
     }
 
+    /** 
+     * @brief Displays the default pixel properties editor in a sidebar, allowing users to modify the default color and attributes for new pixels. The editor includes options for adding or removing solid, liquid, and gaseous attributes, as well as a color picker for changing the default pixel color.
+     * @param defaultProperties The default pixel properties to be edited.
+     * @param label The label for the color picker.
+     */
     void ImguiInterface::defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label) {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -279,7 +310,12 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath)
+    /** 
+     * @brief Displays the pixel sprite handler sidebar, which provides options for editing pixel parameters and saving the current sprite. The sidebar includes a popup for entering the name of the sprite when saving.
+     * @param showDefaultPropertiesEditor A reference to a boolean that indicates whether to show the default properties editor.
+     * @param saveSpritePath A reference to a string that will hold the path where the sprite should be saved.
+     */
+    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, std::string &saveSpritePath)
     {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -294,10 +330,6 @@ namespace graphics {
         sideBar.Draw([&]() {
             if (BasicButton("Pixel Parameters")) {
                 showDefaultPropertiesEditor = true;
-            };
-
-            if (BasicButton("Eraser")) {
-                isEraserActive = !isEraserActive;
             };
 
             if (BasicButton("Save Sprite")) {
@@ -336,6 +368,12 @@ namespace graphics {
         });
     }
 
+    /** 
+     * @brief Displays the top toolbar for the sprite editor, which includes options for selecting tools (paint or eraser) and adjusting brush size. The toolbar also manages the state of the selected tool and whether the eraser is active.
+     * @param selectedTool A reference to an integer that indicates the currently selected tool (0 for paint, 1 for eraser).
+     * @param brushSize A reference to an integer that represents the current brush size.
+     * @param isEraserActive A reference to a boolean that indicates whether the eraser tool is currently active.
+     */
     void ImguiInterface::spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive)
     {
         static BarConfig topBarConfig {
@@ -376,6 +414,9 @@ namespace graphics {
         });
     }
 
+    /** 
+     * @brief Displays an empty top toolbar for the project editor.
+     */
     void ImguiInterface::projectTopBarEmpty()
     {
         static BarConfig topBarConfig {
@@ -392,6 +433,12 @@ namespace graphics {
         });
     }
 
+    /** 
+     * @brief Displays a color selector widget in the ImGui interface, allowing users to pick a color. The function takes the current color as input and returns the selected color if it has been changed, or the original color if no change was made.
+     * @param currentColor The current color to be displayed in the color picker.
+     * @param label The label for the color picker widget.
+     * @return The new color selected by the user, or the original color if no change was made.
+     */
     glm::vec3 ImguiInterface::colorSelector(const glm::vec3& currentColor, const char* label) {
         float color[3] = { currentColor.r, currentColor.g, currentColor.b };
         if (ImGui::ColorPicker3(label, color)) {
@@ -403,6 +450,9 @@ namespace graphics {
     namespace fs = std::filesystem;
     std::vector<std::string> spriteFiles;
 
+    /** 
+     * @brief Scans the "assets" directory for sprite files (PNG, JPG, DAT) and updates the list of available sprites. This function is called when the user clicks the "Refresh" button in the project navbar to ensure that any new or removed sprite files are reflected in the interface.
+     */
     void ImguiInterface::scanSprites()
     {
         spriteFiles.clear();
@@ -427,6 +477,10 @@ namespace graphics {
         }
     }
 
+    /** 
+     * @brief Displays the project navbar, which includes a refresh button to scan for new sprites, buttons to save and load scenes, and a grid of available sprite thumbnails. When a sprite thumbnail is clicked, the current sprite filename is updated to reflect the selected sprite.
+     * @param currentSpriteFilename A reference to a string that will hold the filename of the currently selected sprite.
+     */
     void ImguiInterface::projectNavbar(std::string &currentSpriteFilename)
     {
         bool saveSceneRequested = false;
@@ -434,6 +488,12 @@ namespace graphics {
         projectNavbar(currentSpriteFilename, saveSceneRequested, loadSceneRequested);
     }
 
+    /** 
+     * @brief Displays the project navbar with parameters for handling save and load scene requests. This function is an overload of the previous projectNavbar function, allowing the caller to also manage the state of save and load scene requests through boolean references.
+     * @param currentSpriteFilename A reference to a string that will hold the filename of the currently selected sprite.
+     * @param saveSceneRequested A reference to a boolean that indicates whether a save scene request has been made.
+     * @param loadSceneRequested A reference to a boolean that indicates whether a load scene request has been made.
+     */
     void ImguiInterface::projectNavbar(std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested)
     {
         static BarConfig bottomBarConfig {
@@ -514,6 +574,12 @@ namespace graphics {
         });
     }
 
+    /** 
+     * @brief Displays the game objects bar, which consists of a hierarchy view of all game objects and an inspector for the selected game object. The hierarchy allows users to select, rename, and delete game objects, while the inspector displays properties of the selected game object and allows users to edit them.
+     * @param gameObjects A reference to a vector of game objects to be displayed in the hierarchy.
+     * @param selectedGameObjectIndex A reference to an integer that indicates the index of the currently selected game object in the hierarchy.
+     * @param componentManager A pointer to the component manager that manages the components associated with the game objects, used for displaying and editing component properties in the inspector.
+     */
     void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager)
     {
         static BarConfig sideBarConfig {

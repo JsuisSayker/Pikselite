@@ -1,3 +1,9 @@
+/** 
+ * @file imguiInterface.hpp
+ * @brief Declaration of the ImGui interface for the Pixel Engine.
+ * This file contains the declaration for the ImguiInterface class, which provides a wrapper around the ImGui library for use within the application.
+ */
+
 #pragma once
 
 #include <GL/glew.h>
@@ -18,6 +24,13 @@
 
 #include <engine/managers/componentManager.hpp>
 
+#include <algorithm>
+#include <string>
+#include <filesystem>
+#include <vector>
+#include <string>
+#include <cstring>
+
 namespace graphics {
     class ImguiInterface {
     public:
@@ -29,7 +42,7 @@ namespace graphics {
         void pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
-        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath);
+        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, std::string &saveSpritePath);
         void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
         void projectTopBarEmpty();
 
