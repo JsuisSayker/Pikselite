@@ -6,11 +6,13 @@ on:
             - dev
             - main
             - doxygen
+            - architecture_implementation
     pull_request:
         branches:
             - dev
             - main
             - doxygen
+            - architecture_implementation
 
 jobs:
     generate_docs:
