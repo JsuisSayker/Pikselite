@@ -100,38 +100,8 @@ namespace editors {
         std::vector<graphics::Pixel> _renderPixels;
         Pixel::ChunkGrid _chunkGrid;
 
-        /**
-         * @brief Structs for managing pending sprite placement, including the cells that will be affected by the sprite, the original pixel entity IDs and attributes of those cells, and a preview of the pixels that will be placed. This allows for a preview mode when placing sprites, where the user can see which pixels will be affected and what the new pixels will look like before confirming the placement.
-         */
-        struct PendingCell {
-            int localGX = 0;
-            int localGY = 0;
-            Pixel::PixelEntityID oldId = Pixel::EMPTY;
-        };
-
-        /**
-         * @brief Struct for managing the state of a sprite that is pending placement in the scene.
-         * valid: Indicates whether there is a valid pending sprite ready for placement.
-         * cells: A vector of PendingCell structs representing the cells that will be affected by the sprite placement, including their local grid coordinates and original pixel entity IDs.
-         * previewLocalPixels: A vector of graphics::Pixel structs representing the preview of the pixels that will be placed by the sprite, in local world units (based on PIXEL_SIZE).
-         * oldRenderIndex: A mapping of PixelEntityIDs to their original render index in the _renderPixels vector, allowing for restoration of the original pixels if the sprite placement is canceled.
-         * solids, liquids, gases: Mappings of PixelEntityIDs to their original solid, liquid, and gaseous attributes, allowing for restoration of the original pixel attributes if the sprite placement is canceled.
-         * loadedRenderPixels: A vector of graphics::Pixel structs representing the pixels that will be
-         * rendered for the sprite, loaded from the sprite file and transformed to world coordinates based on the anchor point during placement.
-         */
-        struct PendingSprite {
-            bool valid = false;
-            std::vector<PendingCell> cells;
-            std::vector<graphics::Pixel> previewLocalPixels; // local world units (PIXEL_SIZE-based)
-            std::unordered_map<Pixel::PixelEntityID, int> oldRenderIndex;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Solid> solids;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Liquid> liquids;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Gaseous> gases;
-            std::vector<graphics::Pixel> loadedRenderPixels;
-        };
-
         // State for managing pending sprite placement, including the cells affected, original attributes, and preview pixels.
-        PendingSprite _pendingSprite;
+        Pixel::PendingSprite _pendingSprite;
         bool _isPlacingSprite = false;
 
         // State for tracking mouse input and scene saving/loading requests.

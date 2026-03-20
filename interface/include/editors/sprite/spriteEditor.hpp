@@ -171,27 +171,15 @@ namespace editors {
         std::string _newSpritePath;
 
 		/**
-		 * @brief Struct for managing the state of a sprite that is pending placement in the scene.
-		 * valid: Indicates whether there is a valid pending sprite ready for placement.
+		 * @brief Structs for managing pending sprite placement, including the cells that will be affected by the sprite, the original pixel entity IDs and attributes of those cells, and a preview of the pixels that will be placed. This allows for a preview mode when placing sprites, where the user can see which pixels will be affected and what the new pixels will look like before confirming the placement.
 		 */
 		struct PendingCell {
-            int localGX = 0;
-            int localGY = 0;
-            Pixel::PixelEntityID oldId = Pixel::EMPTY;
-        };
+			int localGX = 0;
+			int localGY = 0;
+			Pixel::PixelEntityID oldId = Pixel::EMPTY;
+		};
 
-        struct PendingSprite {
-            bool valid = false;
-            std::vector<PendingCell> cells;
-            std::vector<graphics::Pixel> previewLocalPixels;
-            std::unordered_map<Pixel::PixelEntityID, int> oldRenderIndex;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Solid> solids;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Liquid> liquids;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Gaseous> gases;
-            std::vector<graphics::Pixel> loadedRenderPixels;
-        };
-
-        PendingSprite _pendingSprite;
+        Pixel::PendingSprite _pendingSprite;
         bool _isPlacingSprite = false;
 
 		/**

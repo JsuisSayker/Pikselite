@@ -126,7 +126,7 @@ namespace editors {
         std::ifstream fin(filename, std::ios::binary);
         if (!fin) return false;
 
-        PendingSprite pending{};
+        Pixel::PendingSprite pending{};
 
         uint32_t numChunks = 0;
         fin.read(reinterpret_cast<char*>(&numChunks), sizeof(numChunks));
