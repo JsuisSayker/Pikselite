@@ -426,7 +426,7 @@ namespace editors {
         std::ifstream fin(filename, std::ios::binary);
         if (!fin) return false;
 
-        PendingSprite pending{};
+        Pixel::PendingSprite pending{};
         std::cout << "Loading sprite for placement: " << filename << std::endl;
 
         uint32_t numChunks = 0;

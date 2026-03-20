@@ -163,28 +163,7 @@ namespace editors {
 			Pixel::PixelEntityID oldId = Pixel::EMPTY;
 		};
 
-		/**
-		 * @brief Struct for managing the state of a sprite that is pending placement in the scene.
-		 * valid: Indicates whether there is a valid pending sprite ready for placement.
-		 */
-		struct PendingCell {
-            int localGX = 0;
-            int localGY = 0;
-            Pixel::PixelEntityID oldId = Pixel::EMPTY;
-        };
-
-        struct PendingSprite {
-            bool valid = false;
-            std::vector<PendingCell> cells;
-            std::vector<graphics::Pixel> previewLocalPixels;
-            std::unordered_map<Pixel::PixelEntityID, int> oldRenderIndex;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Solid> solids;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Liquid> liquids;
-            std::unordered_map<Pixel::PixelEntityID, Pixel::Gaseous> gases;
-            std::vector<graphics::Pixel> loadedRenderPixels;
-        }; 
-
-        PendingSprite _pendingSprite;
+        Pixel::PendingSprite _pendingSprite;
         bool _isPlacingSprite = false;
 
 		/**
@@ -193,11 +172,7 @@ namespace editors {
 		 * @return A boolean indicating whether the sprite was successfully loaded (true) or if there was an error loading the sprite (false).
 		 */
 		bool loadSpriteForPlacement(const std::string& filename);
-		/**
-		 * @brief Places the pending sprite at the specified world coordinates, updating the chunk grid, pixel attributes, render pixels, and game object associations accordingly. This method will apply the changes to the scene based on the pending sprite's data, including setting the new pixel entity IDs in the chunk grid, updating the render pixels for rendering, and associating the new pixels with the selected game object if applicable. After placement, the pending sprite state will be reset to allow for new placements.
-		 * @param worldPos A glm::vec2 containing the x and y coordinates in world space where the anchor point of the sprite should be placed. The method will calculate the corresponding grid coordinates for placement based on the sprite's dimensions and local pixel coordinates, and apply the changes to the editor's data structures accordingly.
-		 */
-		bool loadSpriteForPlacement(const std::string& filename);
+
         /**
 		 * @brief Places the pending sprite at the specified world coordinates, updating the chunk grid, pixel attributes, render pixels, and game object associations accordingly. This method will apply the changes to the scene based on the pending sprite's data, including setting the new pixel entity IDs in the chunk grid, updating the render pixels for rendering, and associating the new pixels with the selected game object if applicable. After placement, the pending sprite state will be reset to allow for new placements.
 		 * @param worldPos A glm::vec2 containing the x and y coordinates in world space where the anchor point of the sprite should be placed. The method will calculate the corresponding grid coordinates for placement based on the sprite's dimensions and local pixel coordinates, and apply the changes to the editor's data structures accordingly.
