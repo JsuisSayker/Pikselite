@@ -1,0 +1,22 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1234567..abcdef0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -150,8 +150,14 @@ target_include_directories(imgui
+     PUBLIC
+-        ${CMAKE_CURRENT_SOURCE_DIR}
+-        ${CMAKE_CURRENT_SOURCE_DIR}/backends
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/backends>
++        $<INSTALL_INTERFACE:include>
++        $<INSTALL_INTERFACE:include/backends>
+ )
+
++install(DIRECTORY . DESTINATION include
++    FILES_MATCHING PATTERN "*.h" PATTERN "backends/*.h"
++)
++
+ install(TARGETS imgui
+     EXPORT imguiTargets
+     ARCHIVE DESTINATION lib
+ )

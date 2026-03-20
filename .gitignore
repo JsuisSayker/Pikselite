@@ -8,3 +8,16 @@ pikselite
 
 *.png
 *.json
+
+*.vs
+
+vcpkg_installed/
+build/
+
+PikseliteEngine.exe
+
+.env
+
+.github/scripts/*env
+
+*.dat
