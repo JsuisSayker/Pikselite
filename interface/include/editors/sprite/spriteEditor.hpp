@@ -92,7 +92,7 @@ namespace editors {
         void handleEvents(const graphics::InputEvent& event);
 		void mouseLeftClick();
         void mouseLeftDrag();
-        void applyBrushAt(glm::vec2 worldPos, bool erase);
+        void applyBrushAt(glm::vec2 worldPos, bool erase, bool drag = false);
 
 		/**
 		 * @brief Converts screen coordinates to world coordinates based on the current camera view and zoom level. This method is used to determine the corresponding world position for a given screen position, allowing for accurate placement and editing of pixels in the sprite editor based on user input.

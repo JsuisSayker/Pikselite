@@ -131,10 +131,11 @@ namespace editors {
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
         const bool erase = (_selectedTool == 1) || _isEraserActive;
-        applyBrushAt(worldPos, erase);
+        const bool drag = true;
+        applyBrushAt(worldPos, erase, drag);
     }
 
-    void SpriteEditor::applyBrushAt(glm::vec2 worldPos, bool erase) {
+    void SpriteEditor::applyBrushAt(glm::vec2 worldPos, bool erase, bool drag) {
         const int half = _brushSize / 2;
         const float centerX = std::round(worldPos.x / PIXEL_SIZE) * PIXEL_SIZE;
         const float centerY = std::round(worldPos.y / PIXEL_SIZE) * PIXEL_SIZE;
@@ -155,7 +156,14 @@ namespace editors {
                 }
 
                 if (existing) {
-                    existing->color = _defaultPixelProperties.color;
+                    if (drag) {
+                        existing->color = _defaultPixelProperties.color;
+                        _showPixelEditor = false;
+                    } else {
+                        _currentPixel = existing;
+                        _showDefaultPropertiesEditor = false;
+                        _showPixelEditor = true;
+                    }
                     continue;
                 }
 
