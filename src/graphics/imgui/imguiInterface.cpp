@@ -143,7 +143,7 @@ namespace graphics {
             auto s = pixelAttributes.solidAttributes.find(pixelId);
             if (s != pixelAttributes.solidAttributes.end()) {
                 if (ImGui::CollapsingHeader("Solid")) {
-                    if (ImGui::Button("Remove Attribute##Solid")) {
+                    if (ImGui::Button("Remove##Solid")) {
                         pixelAttributes.solidAttributes.erase(s);
                     }
                 }
@@ -155,7 +155,7 @@ namespace graphics {
             if (l != pixelAttributes.liquidAttributes.end()) {
                 if (ImGui::CollapsingHeader("Liquid")) {
                     ImGui::SliderFloat("Viscosity", &l->second.viscosity, 0.0f, 1.0f);
-                    if (ImGui::Button("Remove Attribute##Liquid")) {
+                    if (ImGui::Button("Remove##Liquid")) {
                         pixelAttributes.liquidAttributes.erase(l);
                     }
                 }
@@ -167,7 +167,7 @@ namespace graphics {
             if (g != pixelAttributes.gaseousAttributes.end()) {
                 if (ImGui::CollapsingHeader("Gaseous")) {
                     ImGui::SliderFloat("Density", &g->second.density, 0.0f, 1.0f);
-                    if (ImGui::Button("Remove Attribute##Gaseous")) {
+                    if (ImGui::Button("Remove##Gaseous")) {
                         pixelAttributes.gaseousAttributes.erase(g);
                     }
                 }
@@ -231,7 +231,7 @@ namespace graphics {
 
             if (defaultProperties.isSolid) {
                  if (ImGui::CollapsingHeader("Solid")) {
-                    if (ImGui::Button("Remove Attribute")) {
+                    if (ImGui::Button("Remove##SolidDefault")) {
                         defaultProperties.isSolid = false;
                     }
                 }
@@ -240,7 +240,7 @@ namespace graphics {
             if (defaultProperties.isLiquid) {
                  if (ImGui::CollapsingHeader("Liquid")) {
                     ImGui::SliderFloat("Viscosity", &defaultProperties.liquidAttributes.viscosity, 0.0f, 1.0f);
-                    if (ImGui::Button("Remove Attribute")) {
+                    if (ImGui::Button("Remove##LiquidDefault")) {
                         defaultProperties.isLiquid = false;
                     }
                 }
@@ -249,7 +249,7 @@ namespace graphics {
             if (defaultProperties.isGaseous) {
                  if (ImGui::CollapsingHeader("Gaseous")) {
                     ImGui::SliderFloat("Density", &defaultProperties.gaseousAttributes.density, 0.0f, 1.0f);
-                    if (ImGui::Button("Remove Attribute")) {
+                    if (ImGui::Button("Remove##GaseousDefault")) {
                         defaultProperties.isGaseous = false;
                     }
                 }
