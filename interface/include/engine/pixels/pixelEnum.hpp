@@ -23,16 +23,25 @@ namespace Pixel {
     static constexpr PixelEntityID EMPTY = 0;
     static constexpr GameObjectID NO_SPRITE = 0;
 
+
     /**
-     * Solid: Does not move, blocks movement.
-     * Liquid: Moves down if possible, otherwise spreads left/right. Has viscosity affecting flow speed.
-     * Gas: Moves up if possible, otherwise spreads left/right. Has density affecting flow speed
+     * @brief Struct representing solid properties of a pixel entity. This struct is used for managing solid pixel entities in the simulation, allowing for easy storage and manipulation of their physical properties during updates and interactions.
      */
     struct Solid {};
+    /**
+     * @brief Struct representing liquid properties of a pixel entity, including viscosity and a flag to indicate if it should be updated in the current frame. This struct is used for managing liquid pixel entities in the simulation, allowing for easy storage and manipulation of their physical properties during updates and interactions.
+     * viscosity: A float representing the viscosity of the liquid pixel entity, which can be used to determine how it flows and interacts with other entities in the simulation.
+     * updateThisFrame: A boolean flag indicating whether the liquid pixel entity should be updated during the current simulation frame. This can be used to optimize updates by only processing entities that are active or have changed state.
+     */
     struct Liquid {
         float viscosity;
         bool updateThisFrame = false;
     };
+    /**
+     * @brief Struct representing gaseous properties of a pixel entity, including density and a flag to indicate if it should be updated in the current frame. This struct is used for managing gaseous pixel entities in the simulation, allowing for easy storage and manipulation of their physical properties during updates and interactions.
+     * density: A float representing the density of the gaseous pixel entity, which can be used to determine how it interacts with other entities and how it behaves in the simulation.
+     * updateThisFrame: A boolean flag indicating whether the gaseous pixel entity should be updated during the current simulation frame. This can be used to optimize updates by only processing entities that are active or have changed state.
+     */
     struct Gaseous {
         float density;
         bool updateThisFrame = false;
