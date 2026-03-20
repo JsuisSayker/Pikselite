@@ -3,8 +3,8 @@
 
 namespace editors {
 
-    ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface)
-        : _graphicsInterface(graphicsInterface), _renderer(renderer), _imguiInterface(imguiInterface) {}
+    ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface, engine::ComponentManager* componentManager)
+        : _graphicsInterface(graphicsInterface), _renderer(renderer), _imguiInterface(imguiInterface), _componentManager(componentManager) {}
 
     ProjectEditor::~ProjectEditor() {}
 
@@ -15,6 +15,13 @@ namespace editors {
         _renderer->clear();
 
         _imguiInterface->startFrame();
+        _imguiInterface->projectTopBarEmpty();
+        _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested, _loadSceneRequested);
+
+        if (!_currentSpriteFilename.empty()) {
+            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
+            _currentSpriteFilename.clear();
+        }
 
         std::vector<graphics::Pixel> framePixels = _renderPixels;
 
@@ -37,8 +44,26 @@ namespace editors {
 
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
+        imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
+    }
+
+    void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>& renderPixels,
+                                     const std::vector<Pixel::GameObject>& gameObjects,
+                                     const Pixel::PixelAttributes& pixelAttributes,
+                                     const Pixel::ChunkGrid& chunkGrid,
+                                     uint32_t nextPixelId,
+                                     uint32_t nextGameObjectId) {
+        _renderPixels = renderPixels;
+        _gameObjects = gameObjects;
+        _pixelAttributes = pixelAttributes;
+        _chunkGrid = chunkGrid;
+        pixelIdCounter = nextPixelId;
+        gameObjectCounter = nextGameObjectId;
+        _pendingSprite = {};
+        _isPlacingSprite = false;
+        _leftMouseDownLastFrame = false;
     }
 
     void ProjectEditor::handleEvents(const graphics::InputEvent& event) {
@@ -63,7 +88,7 @@ namespace editors {
             break;
         case graphics::KEY_L:
             // Start placement mode instead of direct load
-            loadSpriteForPlacement("assets/water.dat");
+            loadSpriteForPlacement("assets/gaz.dat");
             _isPlacingSprite = _pendingSprite.valid;
             break;
         default:
@@ -209,6 +234,7 @@ namespace editors {
 
         Pixel::GameObject obj;
         obj.id = gameObjectCounter++;
+        obj.name = "GameObject";
 
         auto toChunk = [](int g) -> int {
             return (g >= 0) ? (g / Pixel::CHUNK_SIZE) : ((g - Pixel::CHUNK_SIZE + 1) / Pixel::CHUNK_SIZE);
@@ -248,6 +274,11 @@ namespace editors {
         }
 
         _gameObjects.push_back(std::move(obj));
+    }
+
+    void ProjectEditor::imguiHandling()
+    {
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _componentManager);
     }
 
 } // namespace editors

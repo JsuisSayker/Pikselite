@@ -11,6 +11,7 @@
     "lua",
     "sol2",
     "gtest",
+    "nlohmann-json",
     {
       "name": "tracy",
       "version>=": "0.13.1"

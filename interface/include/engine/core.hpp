@@ -16,7 +16,11 @@
 
 #include <vector>
 #include <iostream>
+#include <string>
 #include <SDL2/SDL.h>
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 namespace engine
 {
@@ -60,6 +64,7 @@ namespace engine
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
+        std::string _sceneFilename = "assets/scene.json";
 
         void init();
 
@@ -80,5 +85,9 @@ namespace engine
         // Creates an ECS entity for each Pixel::GameObject,
         // attaching Transform and GameObjectLink components.
         void loadGameObjectsIntoECS();
+
+        // save scene and load scene functions for project editor
+        void saveScene(const std::string& filename);
+        bool loadScene(const std::string& filename);
     };
 } // namespace engine

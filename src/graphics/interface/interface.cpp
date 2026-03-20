@@ -19,7 +19,7 @@ namespace graphics {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
         _window = SDL_CreateWindow(
-            "SDL2 + OpenGL test",
+            "Pikselite Engine",
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
             width, height,
             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
@@ -30,6 +30,8 @@ namespace graphics {
             SDL_Quit();
             throw std::runtime_error("Failed to create window");
         }
+
+        SDL_SetWindowIcon(_window, SDL_LoadBMP("assets/icon.bmp"));
 
         _glContext = SDL_GL_CreateContext(_window);
         if (!_glContext) {

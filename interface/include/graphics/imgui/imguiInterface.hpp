@@ -14,6 +14,10 @@
 #include <graphics/imgui/components/components.hpp>
 #include <engine/pixels/chunk.hpp>
 
+#include <engine/ecs/components/gameObjectComponent.hpp>
+
+#include <engine/managers/componentManager.hpp>
+
 namespace graphics {
     class ImguiInterface {
     public:
@@ -26,11 +30,16 @@ namespace graphics {
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool &showDefaultPropertiesEditor, bool &isEraserActive, std::string &saveSpritePath);
+        void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
+        void projectTopBarEmpty();
 
         void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
 
         void projectNavbar(::std::string &currentSpriteFilename);
+        void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
+
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager);
 
         void startFrame();
         void endFrame(SDL_Window* window);

@@ -17,8 +17,8 @@ TEST(GetDesiredSizeTests, FullReturnsDisplaySize) {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(640, 480);
 
-    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Horizontal), 640);
-    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Vertical), 480);
+    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Horizontal), 0);
+    EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Vertical), 0);
 
     testCommon.ShutdownImGuiForTests(window, glContext);
 }

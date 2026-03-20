@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <fstream>
 
-#include <editors/project/ProjectEditor.hpp>
+#include <editors/project/projectEditor.hpp>
 #include <engine/pixels/chunk.hpp>
 #include <engine/pixels/pixelEnum.hpp>
 
@@ -64,7 +65,7 @@ TEST(ProjectEditorTests, LoadPlacementAndPlacePendingSprite) {
     std::filesystem::path tmp = std::filesystem::temp_directory_path() / "project_editor_test_sprite.dat";
     writeSimpleSpriteData(tmp.string());
 
-    editors::ProjectEditor editor(nullptr, nullptr, nullptr);
+    editors::ProjectEditor editor(nullptr, nullptr, nullptr, nullptr);
     EXPECT_TRUE(editor.testLoadSpriteForPlacement(tmp.string()));
     editor.testPlacePendingSpriteAtGrid(0, 0);
 
