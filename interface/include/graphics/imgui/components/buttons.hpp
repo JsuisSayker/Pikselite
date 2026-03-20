@@ -1,3 +1,7 @@
+/**
+ * @file buttons.hpp
+ * @brief Declaration of button components for the ImGui interface.
+ */
 # pragma once
 
 #include <imgui.h>

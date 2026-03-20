@@ -1,8 +1,17 @@
+/**
+    * @file bars.cpp
+    * @brief Implementation of the Bar class for rendering customizable UI bars (toolbars and sidebars) using ImGui.
+    * This file defines the Draw method of the Bar class, which handles the layout, styling, and rendering of the bars based on their configuration. The bars can be positioned at the top, bottom, left, or right of the window, and will automatically adjust their size and position to avoid overlapping with each other. The styling is inspired by Unity's dark theme, providing a consistent and visually appealing interface for the Pixel Engine application.
+ */
+
 #include <graphics/imgui/components/bars.hpp>
 
 // ── Layout constants (shared with interface.cpp via bars.hpp) ──────────────
 static constexpr float BOTTOM_H = 180.0f;
 
+/**
+    * @brief Draws the bar using ImGui, applying the appropriate layout and styling based on the bar's configuration. The method computes the final position and size of the bar to ensure it does not overlap with other UI elements, and applies a consistent dark theme for visual appeal. The contentFunction parameter allows for custom content to be rendered within the bar, such as buttons, sliders, or other UI controls.
+ */
 void graphics::Bar::Draw(const std::function<void()> &contentFunction) {
     if (!config.visible) return;
 
