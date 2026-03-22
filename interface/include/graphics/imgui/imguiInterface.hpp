@@ -42,11 +42,13 @@ namespace graphics {
         void pixelEditor(Pixel& pixel, ChunkGrid grid, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
-        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, std::string &saveSpritePath);
+        void pixelSpriteHandler(bool &showDefaultPropertiesEditor,
+                                std::string &saveSpritePath,
+                                Element::ElementType& selectedElementType); // updated signature
         void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
         void projectTopBarEmpty();
 
-        void defaultPixelPropertiesEditor(const char* label);
+        void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
         void projectNavbar(::std::string &currentSpriteFilename);
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);

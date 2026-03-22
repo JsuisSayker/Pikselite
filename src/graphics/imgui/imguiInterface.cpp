@@ -128,8 +128,33 @@ namespace graphics {
      * @param defaultProperties The default pixel properties to be edited.
      * @param label The label for the color picker.
      */
-    void ImguiInterface::defaultPixelPropertiesEditor(const char* label) {
-        // TODO
+    void ImguiInterface::defaultPixelElementEditor(Element::ElementType& elementType, const char* label) {
+        const char* comboLabel = (label && label[0] != '\0') ? label : "Element Type";
+        int current = static_cast<int>(elementType);
+
+        auto currentName = [&]() -> const char* {
+            if (current >= 0 && current < 256 && !g_elements[current].name.empty()) {
+                return g_elements[current].name.c_str();
+            }
+            return "Unknown";
+        };
+
+        if (ImGui::BeginCombo(comboLabel, currentName())) {
+            for (int i = 0; i < 256; ++i) {
+                if (g_elements[i].name.empty()) continue; // only show registered elements
+
+                const bool isSelected = (i == current);
+                if (ImGui::Selectable(g_elements[i].name.c_str(), isSelected)) {
+                    current = i;
+                    elementType = static_cast<Element::ElementType>(i);
+                }
+
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
     }
 
     /** 
@@ -137,57 +162,54 @@ namespace graphics {
      * @param showDefaultPropertiesEditor A reference to a boolean that indicates whether to show the default properties editor.
      * @param saveSpritePath A reference to a string that will hold the path where the sprite should be saved.
      */
-    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor, std::string &saveSpritePath)
-    {
-        static BarConfig sideBarConfig {
-            BarOrientation::Vertical,
-            "Pixel Sprite Handler",
-            ImVec2(LAYOUT_LEFT_W, 0.0f),
-            true,
-            GetDesiredPosition("left")
+    void ImguiInterface::pixelSpriteHandler(bool &showDefaultPropertiesEditor,
+                                        std::string &saveSpritePath,
+                                        Element::ElementType& selectedElementType)
+{
+    static BarConfig sideBarConfig {
+        BarOrientation::Vertical,
+        "Pixel Sprite Handler",
+        ImVec2(LAYOUT_LEFT_W, 0.0f),
+        true,
+        GetDesiredPosition("left")
+    };
+
+    static Bar sideBar(sideBarConfig);
+
+    sideBar.Draw([&]() {
+        // Element dropdown directly in handler
+        defaultPixelElementEditor(selectedElementType, "Element Type");
+
+        if (BasicButton("Save Sprite")) {
+            ImGui::OpenPopup("NameNewSpritePopup");
         };
 
-        static Bar sideBar(sideBarConfig);
+        static char spriteName[128] = "";
 
-        sideBar.Draw([&]() {
-            if (BasicButton("Pixel Parameters")) {
-                showDefaultPropertiesEditor = true;
-            };
+        if (ImGui::BeginPopupModal("NameNewSpritePopup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("Enter sprite name:");
+            ImGui::InputText("Name##SpriteInput", spriteName, sizeof(spriteName));
+            ImGui::Spacing();
 
-            if (BasicButton("Save Sprite")) {
-                ImGui::OpenPopup("NameNewSpritePopup");
-            };
-
-           static char spriteName[128] = "";
-
-            if (ImGui::BeginPopupModal("NameNewSpritePopup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            if (ImGui::Button("Save##SpriteButton", ImVec2(120, 0)))
             {
-                ImGui::Text("Enter sprite name:");
+                std::string path = "assets/" + std::string(spriteName) + ".dat";
+                saveSpritePath = path;
+                spriteName[0] = '\0';
+                ImGui::CloseCurrentPopup();
+            }
 
-                ImGui::InputText("Name##SpriteInput", spriteName, sizeof(spriteName));
+            ImGui::SameLine();
 
-                ImGui::Spacing();
+            if (ImGui::Button("Cancel##SpriteButton", ImVec2(120, 0)))
+            {
+                ImGui::CloseCurrentPopup();
+            }
 
-                if (ImGui::Button("Save##SpriteButton", ImVec2(120, 0)))
-                {
-                    std::string path = "assets/" + std::string(spriteName) + ".dat";
-
-                    saveSpritePath = path;
-
-                    spriteName[0] = '\0';
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::SameLine();
-
-                if (ImGui::Button("Cancel##SpriteButton", ImVec2(120, 0)))
-                {
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::EndPopup();
-            } 
-        });
+            ImGui::EndPopup();
+        }
+    });
     }
 
     /** 

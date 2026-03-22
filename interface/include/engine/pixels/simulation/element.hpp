@@ -13,6 +13,7 @@ enum ElementState : uint8_t {
 };
 
 struct ElementDefinition {
+    std::string name;
     uint8_t color[3];
     uint8_t density;
     ElementState state;

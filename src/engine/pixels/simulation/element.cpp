@@ -62,11 +62,11 @@ void updateStone(ChunkGrid& grid, int x, int y)
 
 void Simulation::initElements()
 {
-    g_elements[Element::EMPTY] = {{0,0,0}, 0, SOLID, nullptr, -1};
-    g_elements[Element::SAND] = {{194,178,128}, 5, SOLID, updateSand, -1};
-    g_elements[Element::WATER] = {{0,0,255}, 2, LIQUID, updateWater, -1};
-    g_elements[Element::FIRE] = {{255,100,0}, 1, GAS, updateFire, -1};
-    g_elements[Element::STONE] = {{100,100,100}, 255, SOLID, updateStone, -1};
+    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID, nullptr, -1};
+    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID, updateSand, -1};
+    g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, updateWater, -1};
+    g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, updateFire, -1};
+    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, updateStone, -1};
 }
 
 void Simulation::update()

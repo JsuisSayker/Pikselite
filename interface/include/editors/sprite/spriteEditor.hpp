@@ -56,6 +56,7 @@ private:
     int _selectedTool = 0;
     int _brushSize = 1;
     std::string _newSpritePath;
+	Element::ElementType _currentElementType = Element::ElementType::SAND;
 
     /**
 		 * @brief Handles user input events, updating the editor's state based on the type of event received. This includes managing mouse input for pixel placement and attribute editing, keyboard input for camera movement and zooming, and other input events relevant to the sprite editing process.
@@ -102,13 +103,7 @@ private:
 		 * @param filename The file path to the sprite image to be loaded for placement. The
 		 */
         bool saveSpriteToFile(const std::string& filename);
-		/**
-		 * @brief Loads a sprite from the specified file path, updating the pending sprite state with the preview pixels and affected cells based on the sprite's dimensions and the current anchor point for placement. This method will read the sprite image file, extract the pixel data, and prepare it for placement in the scene, allowing for a user-friendly interface for placing sprites in the scene with visual feedback.
-		 * @param filename The file path to the sprite image to be loaded. The image should
-		 * be in a format supported by the graphics::Renderer's texture loading capabilities. If the sprite is successfully loaded, the pending sprite state will be updated with the preview pixels and affected cells based on the sprite's dimensions and the current anchor point for placement.
-		 * @return A boolean indicating whether the sprite was successfully loaded (true) or if there
-		 */
-        bool loadSpriteFromFile(const std::string& filename);
+
 
 		/**
 		 * @brief Updates the placement mode for the pending sprite based on user input, such as mouse movement and clicks. This method will update the preview of the sprite placement, including which cells will be affected and what the new pixels will look like, as the user moves the mouse around the scene. If the user confirms the placement (e.g., by clicking), this method will trigger the actual placement of the sprite in the scene.
@@ -117,6 +112,7 @@ private:
 		void updatePlacementMode();
 
         void placePendingSpriteAtWorld(glm::vec2 worldPos);
+        Element::ElementType getElementTypeAt(glm::vec2 worldPos);
 };
 
 } // namespace editors

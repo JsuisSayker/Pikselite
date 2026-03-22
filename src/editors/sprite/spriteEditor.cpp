@@ -64,28 +64,30 @@ namespace editors {
 
     void SpriteEditor::imguiHandling() {
         _imguiInterface->spriteTopToolbar(_selectedTool, _brushSize, _isEraserActive);
-        _imguiInterface->pixelSpriteHandler(_showDefaultPropertiesEditor, _newSpritePath);
+
+        // Default properties panel removed
+        bool unusedDefaultPropertiesEditor = false;
+        _imguiInterface->pixelSpriteHandler(unusedDefaultPropertiesEditor, _newSpritePath, _currentElementType);
+
         _imguiInterface->projectNavbar(_currentSpriteFilename);
+
         if (!_currentSpriteFilename.empty()) {
             _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
             _currentSpriteFilename.clear();
         }
+
         if (!_newSpritePath.empty()) {
             saveSpriteToFile(_newSpritePath);
             _newSpritePath.clear();
-        }        
-
-        if (_showDefaultPropertiesEditor) {
-            _imguiInterface->defaultPixelPropertiesEditor("Default Pixel Properties");
-            _showPixelEditor = false;
         }
 
-        if (_showPixelEditor) {
-            // _showDefaultPropertiesEditor = false;
-            // if (_currentPixel) {
-                // _imguiInterface->pixelEditor(*_currentPixel, _chunkGrid, _pixelAttributes, "Pixel Editor");
-            // }
-        }
+        // Removed _showDefaultPropertiesEditor / _showPixelEditor blocks
+    }
+
+    Element::ElementType SpriteEditor::getElementTypeAt(glm::vec2 worldPos) {
+        const int gridX = static_cast<int>(std::floor(worldPos.x / PIXEL_SIZE));
+        const int gridY = static_cast<int>(std::floor(worldPos.y / PIXEL_SIZE));
+        return _chunkGrid.getPixel(gridX, gridY).type;
     }
 
     void SpriteEditor::mouseLeftClick() {
@@ -100,6 +102,7 @@ namespace editors {
         }
 
         const bool erase = (_selectedTool == 1) || _isEraserActive;
+
         applyBrushAt(worldPos, erase);
     }
 
@@ -128,25 +131,16 @@ namespace editors {
                 };
 
                 graphics::Pixel* existing = getPixelAt(targetPos);
-                if (erase) {
-                    if (existing) {
-                        removePixelAt(targetPos);
-                    }
-                    continue;
-                }
 
-                if (existing) {
-                    if (drag) {
-                        _showPixelEditor = false;
-                    } else {
-                        _currentPixel = existing;
-                        _showDefaultPropertiesEditor = false;
-                        _showPixelEditor = true;
-                    }
+                if (erase) {
+                    if (existing) removePixelAt(targetPos);
                     continue;
                 }
 
                 addPixel(targetPos);
+
+                // Removed editor panel toggles
+                (void)drag;
             }
         }
     }
@@ -186,7 +180,7 @@ namespace editors {
         int ly = ((gridY % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
 
         Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-        chunk.set(lx, ly, Element::Pixel{Element::ElementType::SAND}); // TODO: use actual PixelEntityID and attributes
+        chunk.set(lx, ly, Element::Pixel{_currentElementType}); // use selected element
 
 
         _currentPixel = getPixelAt(worldPos);
@@ -219,37 +213,6 @@ namespace editors {
         }
 
         std::cout << "Saved sprite to: " << filename << std::endl;
-        return true;
-    }
-
-    bool SpriteEditor::loadSpriteFromFile(const std::string& filename) {
-        std::ifstream fin(filename, std::ios::binary);
-        if (!fin) {
-            std::cerr << "Failed to open file for loading: " << filename << std::endl;
-            return false;
-        }
-
-        _chunkGrid.chunks.clear();
-
-        uint32_t nbChunks = 0;
-        fin.read(reinterpret_cast<char*>(&nbChunks), sizeof(nbChunks));
-
-        for (uint32_t i = 0; i < nbChunks; ++i) {
-            int32_t cx = 0, cy = 0;
-            fin.read(reinterpret_cast<char*>(&cx), sizeof(cx));
-            fin.read(reinterpret_cast<char*>(&cy), sizeof(cy));
-
-            Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-
-            for (int j = 0; j < CHUNK_SIZE * CHUNK_SIZE; ++j) {
-                Element::ElementType type = Element::EMPTY;
-                fin.read(reinterpret_cast<char*>(&type), sizeof(type));
-                chunk.pixels[j].type = type;
-                chunk.pixels[j].updatedThisFrame = false;
-            }
-        }
-
-        std::cout << "Loaded sprite from: " << filename << std::endl;
         return true;
     }
 
