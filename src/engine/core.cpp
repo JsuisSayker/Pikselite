@@ -171,7 +171,11 @@ namespace engine
             update(deltaTime);
 
             renderer.clear();
-            renderer.drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
+
+            std::vector<graphics::Pixel> framePixels = buildRenderPixels();
+            _renderPixels = framePixels; // cache for potential editing after preview
+
+            renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
             // Render all entities that have a SpriteComponent via the ECS system
             auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
@@ -230,9 +234,23 @@ namespace engine
     {
         ZoneScoped;
 
+        accumulator += deltaTime;
+
+        if (accumulator > 0.25f)
+            accumulator = 0.25f;
+
+        while (accumulator >= fixedDt)
         {
-            ZoneScopedN("PixelSimulation");
+            {
+                ZoneScopedN("PixelSimulation");
+                _pixelsSimulation.update(); // NO deltaTime here
+                _previewChunkGrid = _pixelsSimulation.getGrid(); // cache current chunk grid state for rendering and potential editing after preview
+            }
+
+            accumulator -= fixedDt;
         }
+
+        // ECS can stay variable
         {
             ZoneScopedN("ECS Systems");
             systemManager.update(deltaTime, componentManager);
@@ -263,6 +281,7 @@ namespace engine
         _renderPixels = projectEditor->getPixels();
         _gameObjects = projectEditor->getGameObjects();
         _chunkGrid = projectEditor->getChunkGrid();
+        _pixelsSimulation.setGrid(_chunkGrid);
         gameObjectCounter = projectEditor->getGameObjectCounter();
 
         loadGameObjectsIntoECS();
@@ -311,6 +330,51 @@ namespace engine
 
             _gameObjectToEntity[go.id] = eid;
         }
+    }
+
+    std::vector<graphics::Pixel> Core::buildRenderPixels()
+    {
+        std::vector<graphics::Pixel> result;
+        result.reserve(10000);
+
+        for (const auto& [key, chunk] : _previewChunkGrid.chunks)
+        {
+            // Correct signed decode from packed int64 key
+            const int cx = static_cast<int32_t>(key >> 32);
+            const int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
+
+            for (int y = 0; y < CHUNK_SIZE; ++y)
+            {
+                for (int x = 0; x < CHUNK_SIZE; ++x)
+                {
+                    const Element::Pixel& simPixel = chunk.pixels[y * CHUNK_SIZE + x];
+                    if (simPixel.type == Element::EMPTY) continue;
+
+                    const auto& def = g_elements[simPixel.type];
+
+                    graphics::Pixel renderPixel;
+
+                    // grid -> world (apply chunk offset + pixel size)
+                    const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
+                    const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
+
+                    renderPixel.position = glm::vec2(
+                        gx * PIXEL_SIZE,
+                        gy * PIXEL_SIZE
+                    );
+
+                    renderPixel.color = glm::vec3(
+                        def.color[0] / 255.0f,
+                        def.color[1] / 255.0f,
+                        def.color[2] / 255.0f
+                    );
+
+                    result.push_back(renderPixel);
+                }
+            }
+        }
+
+        return result;
     }
 
     void Core::saveScene(const std::string &filename)

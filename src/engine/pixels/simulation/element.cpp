@@ -40,17 +40,17 @@ void updateWater(ChunkGrid& grid, int x, int y)
 
 void updateSand(ChunkGrid& grid, int x, int y)
 {
-    if (tryMove(grid, x, y, x, y + 1)) return;
+    if (tryMove(grid, x, y, x, y + GRAVITY_DIR)) return;
 
     if (rand() % 2)
     {
-        if (tryMove(grid, x, y, x - 1, y + 1)) return;
-        if (tryMove(grid, x, y, x + 1, y + 1)) return;
+        if (tryMove(grid, x, y, x - 1, y + GRAVITY_DIR)) return;
+        if (tryMove(grid, x, y, x + 1, y + GRAVITY_DIR)) return;
     }
     else
     {
-        if (tryMove(grid, x, y, x + 1, y + 1)) return;
-        if (tryMove(grid, x, y, x - 1, y + 1)) return;
+        if (tryMove(grid, x, y, x + 1, y + GRAVITY_DIR)) return;
+        if (tryMove(grid, x, y, x - 1, y + GRAVITY_DIR)) return;
     }
 }
 void updateFire(ChunkGrid& grid, int x, int y)

@@ -64,6 +64,10 @@ namespace engine
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
         ChunkGrid _chunkGrid;
+        ChunkGrid _previewChunkGrid; // for caching the chunk grid state when entering game preview, to restore it after exiting preview
+
+        float accumulator = 0.0f;
+        const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
         Pixel::PixelSimulation _pixelSimulation;
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID
@@ -89,6 +93,8 @@ namespace engine
         // Creates an ECS entity for each Pixel::GameObject,
         // attaching Transform and GameObjectLink components.
         void loadGameObjectsIntoECS();
+
+        std::vector<graphics::Pixel> buildRenderPixels();
 
         // save scene and load scene functions for project editor
         void saveScene(const std::string& filename);

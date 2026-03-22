@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 
+constexpr int GRAVITY_DIR = -1;
 
 enum ElementState : uint8_t {
     SOLID = 0,
@@ -40,7 +41,9 @@ class Simulation {
         void initElements();
         void update();
         void resetUpdatedFlags();
-    
+        void setGrid(ChunkGrid &newGrid) { grid = newGrid; }
+        ChunkGrid& getGrid() { return grid; }
+
     private:
         ChunkGrid &grid;
 };
