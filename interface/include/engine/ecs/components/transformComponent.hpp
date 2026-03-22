@@ -2,6 +2,10 @@
 
 namespace ecs::components
 {
+    /**
+     * @brief The Transform component represents the position, rotation, and scale of an entity in 2D space.
+     * It contains properties for the x and y coordinates, rotation angle, and scale factors for both axes.
+     */
     struct Transform {
         bool enabled = true;
         

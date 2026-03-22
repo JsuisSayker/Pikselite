@@ -22,10 +22,18 @@ namespace ecs::systems
 
         void init() override {}
 
+        /**
+         * @brief Updates the sprite render system.
+         * @param dt The delta time since the last update.
+         * @param componentManager The component manager.
+         */
         void update(double dt, engine::ComponentManager &componentManager) override;
 
     private:
+        // The renderer is needed to draw sprites on the screen
         graphics::Renderer  *_renderer = nullptr;
+
+        // The camera is needed to convert world coordinates to screen coordinates for rendering
         graphics::Camera2D  *_camera   = nullptr;
     };
 

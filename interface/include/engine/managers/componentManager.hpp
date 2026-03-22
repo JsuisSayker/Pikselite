@@ -14,12 +14,21 @@ namespace engine
     using ComponentType = std::uint8_t;
     constexpr ComponentType MAX_COMPONENTS = 32;
 
+    /**
+     * @brief The ComponentManager class is responsible for managing the storage and access of components in the ECS architecture.
+     * 
+     */
     class ComponentManager
     {
     public:
         ComponentManager() = default;
         ~ComponentManager() = default;
 
+        /**
+         * @brief Registers a component type with the manager.
+         * 
+         * @tparam T 
+         */
         template <typename T>
         void registerComponent()
         {
@@ -35,6 +44,12 @@ namespace engine
             componentArrays.emplace(key, std::move(array));
         }
 
+        /**
+         * @brief Gets the type of a component.
+         * 
+         * @tparam T 
+         * @return ComponentType 
+         */
         template <typename T>
         ComponentType getComponentType()
         {
@@ -48,30 +63,63 @@ namespace engine
             return it->second;
         }
 
+        /**
+         * @brief Adds a component to an entity.
+         * 
+         * @tparam T 
+         * @param entity 
+         * @param component 
+         */
         template <typename T>
         void addComponent(ecs::EntityID entity, const T &component)
         {
             getComponentArray<T>()->insertData(entity, component);
         }
 
+        /**
+         * @brief Removes a component from an entity.
+         * 
+         * @tparam T 
+         * @param entity 
+         */
         template <typename T>
         void removeComponent(ecs::EntityID entity)
         {
             getComponentArray<T>()->removeData(entity);
         }
 
+        /**
+         * @brief Gets a reference to a component of an entity.
+         * 
+         * @tparam T 
+         * @param entity 
+         * @return T& 
+         */
         template <typename T>
         T &getComponent(ecs::EntityID entity)
         {
             return getComponentArray<T>()->getData(entity);
         }
 
+        /**
+         * @brief Checks if an entity has a component of a specific type.
+         * 
+         * @tparam T 
+         * @param entity 
+         * @return true 
+         * @return false 
+         */
         template <typename T>
         bool hasComponent(ecs::EntityID entity)
         {
             return getComponentArray<T>()->has(entity);
         }
 
+        /**
+         * @brief Notifies the component manager that an entity has been destroyed, so it can remove any associated components.
+         * 
+         * @param entity 
+         */
         void entityDestroyed(ecs::EntityID entity)
         {
             for (auto &pair : componentArrays)
@@ -81,10 +129,22 @@ namespace engine
         }
 
     private:
+        // Map of component type to component array
         std::unordered_map<std::type_index, ComponentType> componentTypes;
+
+        // Map of component type to component array instance
         std::unordered_map<std::type_index, std::unique_ptr<ecs::IComponentArray>> componentArrays;
+
+        // Incremental component type ID generator
         ComponentType nextComponentType = 0;
 
+
+        /**
+         * @brief Gets the component array for a specific component type.
+         * 
+         * @tparam T 
+         * @return ecs::ComponentArray<T>* 
+         */
         template <typename T>
         ecs::ComponentArray<T> *getComponentArray()
         {

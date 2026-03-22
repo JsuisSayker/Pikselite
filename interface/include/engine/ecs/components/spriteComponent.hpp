@@ -5,6 +5,10 @@
 
 namespace ecs::components
 {
+    /**
+     * @brief The Sprite component represents a 2D image that can be rendered on the screen.
+     * It contains properties such as the texture path, texture ID, dimensions, and an enabled flag.
+     */
     struct Sprite {
         bool enabled = true;
         
