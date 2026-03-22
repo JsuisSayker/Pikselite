@@ -1,6 +1,7 @@
 add_library(editor
     sprite/spriteEditor.cpp
     project/projectEditor.cpp
+    aEditor.cpp
 )
 
 target_include_directories(editor
