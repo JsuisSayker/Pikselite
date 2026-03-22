@@ -95,8 +95,13 @@ namespace engine
         }
 
     private:
+        // List of all systems managed by the SystemManager
         std::vector<std::unique_ptr<ecs::ISystem>> systems;
+
+        // Mapping from system type to system instance for quick access
         std::unordered_map<std::type_index, ecs::ISystem *> systemsMap;
+
+        // Mapping from system type to its required component signature
         std::unordered_map<std::type_index, ecs::Signature> systemSignatures;
     };
 } // namespace engine
