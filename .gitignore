@@ -12,20 +12,6 @@ pikselite
 *.vs
 
 vcpkg_installed/
-build/
-
-PikseliteEngine.exe
-
-.env
-
-.github/scripts/*env
-
-*.dat
-
-*.vs
-
-vcpkg_installed/
-build/
 
 PikseliteEngine.exe
 
