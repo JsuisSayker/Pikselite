@@ -4,24 +4,24 @@
 #include <iostream>
 #include <unordered_map>
 
-constexpr int CHUNKS_SIZE = 32;
+constexpr int CHUNK_SIZE = 32;
 
 struct Chunk {
-    simulation::Pixel pixels[CHUNKS_SIZE * CHUNKS_SIZE];
+    Element::Pixel pixels[CHUNK_SIZE * CHUNK_SIZE];
 
     Chunk() {
-        for (int i = 0; i < CHUNKS_SIZE * CHUNKS_SIZE; ++i)
-            pixels[i].type = simulation::EMPTY;
+        for (int i = 0; i < CHUNK_SIZE * CHUNK_SIZE; ++i)
+            pixels[i].type = Element::EMPTY;
     }
 
-    inline simulation::Pixel& get(int x, int y)
+    inline Element::Pixel& get(int x, int y)
     {
-        return pixels[y * CHUNKS_SIZE + x];
+        return pixels[y * CHUNK_SIZE + x];
     }
 
-    inline void set(int x, int y, simulation::Pixel p)
+    inline void set(int x, int y, Element::Pixel p)
     {
-        pixels[y * CHUNKS_SIZE + x] = p;
+        pixels[y * CHUNK_SIZE + x] = p;
     }
 };
 
@@ -36,12 +36,12 @@ struct ChunkGrid {
 
     inline int floorDiv(int v)
     {
-        return (v >= 0) ? v / CHUNKS_SIZE : (v - CHUNKS_SIZE + 1) / CHUNKS_SIZE;
+        return (v >= 0) ? v / CHUNK_SIZE : (v - CHUNK_SIZE + 1) / CHUNK_SIZE;
     }
 
     inline int mod(int v)
     {
-        return (v % CHUNKS_SIZE + CHUNKS_SIZE) % CHUNKS_SIZE;
+        return (v % CHUNK_SIZE + CHUNK_SIZE) % CHUNK_SIZE;
     }
 
     Chunk* getChunkIfExists(int cx, int cy)
@@ -57,7 +57,7 @@ struct ChunkGrid {
     }
 
 
-    simulation::Pixel getPixel(int x, int y)
+    Element::Pixel getPixel(int x, int y)
     {
         int cx = floorDiv(x);
         int cy = floorDiv(y);
@@ -67,13 +67,13 @@ struct ChunkGrid {
 
         Chunk* chunk = getChunkIfExists(cx, cy);
         if (!chunk) {
-            return simulation::Pixel{simulation::EMPTY};
+            return Element::Pixel{Element::EMPTY};
         }
 
         return chunk->get(lx, ly);
     }
 
-    simulation::Pixel& getPixelRef(int x, int y)
+    Element::Pixel& getPixelRef(int x, int y)
     {
         int cx = floorDiv(x);
         int cy = floorDiv(y);
@@ -85,7 +85,7 @@ struct ChunkGrid {
         return chunk.get(lx, ly);
     }
 
-    inline void setPixel(int x, int y, simulation::Pixel p)
+    inline void setPixel(int x, int y, Element::Pixel p)
     {
         int cx = floorDiv(x);
         int cy = floorDiv(y);

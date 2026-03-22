@@ -14,6 +14,8 @@
 #include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 
+#include <engine/pixels/simulation/element/element.hpp>
+
 #include <vector>
 #include <iostream>
 #include <string>
@@ -31,13 +33,17 @@ namespace engine
             : running(true),
               sdlInterface(width, height),
               renderer(sdlInterface.getWindow(), sdlInterface.getGLContext()),
-              imguiInterface(sdlInterface.getWindow(), sdlInterface.getGLContext()) {}
+              imguiInterface(sdlInterface.getWindow(), sdlInterface.getGLContext()),
+              _pixelsSimulation(_chunksGrid) {}
 
         void run();
 
     private:
         editors::SpriteEditor *spriteEditor;
         editors::ProjectEditor *projectEditor;
+
+        Simulation _pixelsSimulation;
+        ChunkGrid _chunksGrid;
 
         bool isProjectEditorActive = false;
 

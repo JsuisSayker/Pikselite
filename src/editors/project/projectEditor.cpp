@@ -139,14 +139,14 @@ namespace editors {
             fin.read(reinterpret_cast<char*>(&cx), sizeof(cx));
             fin.read(reinterpret_cast<char*>(&cy), sizeof(cy));
 
-            for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
-                for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
+            for (int x = 0; x < Pixel::CHUNKS_SIZE; ++x) {
+                for (int y = 0; y < Pixel::CHUNKS_SIZE; ++y) {
                     Pixel::PixelEntityID id = Pixel::EMPTY;
                     fin.read(reinterpret_cast<char*>(&id), sizeof(id));
                     if (id == Pixel::EMPTY) continue;
 
-                    const int gx = cx * Pixel::CHUNK_SIZE + x;
-                    const int gy = cy * Pixel::CHUNK_SIZE + y;
+                    const int gx = cx * Pixel::CHUNKS_SIZE + x;
+                    const int gy = cy * Pixel::CHUNKS_SIZE + y;
                     minGX = std::min(minGX, gx);
                     minGY = std::min(minGY, gy);
 
@@ -237,10 +237,10 @@ namespace editors {
         obj.name = "GameObject";
 
         auto toChunk = [](int g) -> int {
-            return (g >= 0) ? (g / Pixel::CHUNK_SIZE) : ((g - Pixel::CHUNK_SIZE + 1) / Pixel::CHUNK_SIZE);
+            return (g >= 0) ? (g / Pixel::CHUNKS_SIZE) : ((g - Pixel::CHUNKS_SIZE + 1) / Pixel::CHUNKS_SIZE);
         };
         auto toLocal = [](int g) -> int {
-            return ((g % Pixel::CHUNK_SIZE) + Pixel::CHUNK_SIZE) % Pixel::CHUNK_SIZE;
+            return ((g % Pixel::CHUNKS_SIZE) + Pixel::CHUNKS_SIZE) % Pixel::CHUNKS_SIZE;
         };
 
         for (const auto& c : _pendingSprite.cells) {

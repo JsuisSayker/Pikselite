@@ -20,8 +20,8 @@ static void writeSimpleSpriteData(const std::string& filename) {
     fout.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
     fout.write(reinterpret_cast<const char*>(&cy), sizeof(cy));
 
-    for (int x = 0; x < CHUNK_SIZE; ++x) {
-        for (int y = 0; y < CHUNK_SIZE; ++y) {
+    for (int x = 0; x < CHUNKS_SIZE; ++x) {
+        for (int y = 0; y < CHUNKS_SIZE; ++y) {
             PixelEntityID id = (x == 0 && y == 0) ? 1 : EMPTY;
             fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
         }

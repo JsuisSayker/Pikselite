@@ -8,7 +8,6 @@
 #include <graphics/renderer/renderer.hpp>
 #include <graphics/interface/interface.hpp>
 #include <graphics/imgui/imguiInterface.hpp>
-#include <engine/pixels/chunk.hpp>
 #include <engine/pixels/simulation/element/element.hpp>
 #include <engine/pixels/simulation/element/chunk.hpp>
 #include <iostream>
@@ -71,19 +70,11 @@ namespace editors {
         graphics::Interface* _graphicsInterface;
         graphics::Renderer* _renderer;
 
-		// Camera for managing the view and zoom level during sprite editing, allowing for panning and zooming effects in the editing interface.
-        graphics::Camera2D _camera;
-
-		// Counter for generating unique PixelEntityIDs for new pixels created during sprite editing. This counter will be incremented each time a new pixel is added, ensuring that each pixel has a unique identifier.
-        uint32_t pixelIdCounter = 1;
-		// Data structures for managing pixel attributes, render pixels, and the chunk grid during sprite editing. The pixel attributes include mappings of PixelEntityIDs to their solid, liquid, and gaseous properties, allowing for detailed management of pixel behavior in the sprite editor. The render pixels vector contains the pixels that will be rendered in the editing interface, while the chunk grid manages the spatial organization of pixels in the world.
-		Pixel::ChunkGrid _chunkGrid;
-
-		// The default properties for new pixels created in the sprite editor, including color and physical properties. This struct allows for easy management of default pixel attributes when adding new pixels to the sprite, ensuring consistency and providing a convenient way to set default values for new pixels.
-        Pixel::PixelAttributes _pixelAttributes;
-        Pixel::DefaultPixelProperties _defaultPixelProperties;
-		// The list of pixels to be rendered in the sprite editor, each containing a position and color. This vector will be updated as the user adds, modifies, or removes pixels in the sprite editor, and will be used for rendering the current state of the sprite being edited.
         std::vector<graphics::Pixel> _renderPixels;
+        graphics::Camera2D _camera;
+		ChunkGrid _chunkGrid;
+
+        Pixel::DefaultPixelProperties _defaultPixelProperties;
 
 
 		/**
@@ -197,5 +188,8 @@ namespace editors {
 		 * @return A boolean indicating whether the sprite was successfully placed (true) or if there
 		 */
 		void placePendingSpriteAtWorld(glm::vec2 worldPos);
+
+
+		std::vector<graphics::Pixel> buildRenderPixels();
     };
 } // namespace editors

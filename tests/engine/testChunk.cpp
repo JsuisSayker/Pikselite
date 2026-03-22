@@ -6,7 +6,7 @@ using namespace Pixel;
 TEST(ChunkTests, SetGetBoundary) {
     Chunk c;
     EXPECT_EQ(c.get(0, 0), EMPTY);
-    EXPECT_EQ(c.get(CHUNK_SIZE, 0), EMPTY);
+    EXPECT_EQ(c.get(CHUNKS_SIZE, 0), EMPTY);
 
     c.set(5, 5, 123);
     EXPECT_EQ(c.get(5, 5), 123);

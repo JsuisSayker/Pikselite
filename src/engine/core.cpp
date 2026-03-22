@@ -385,8 +385,8 @@ namespace engine
         scene["chunkGrid"] = json::array();
         for (const auto& [coord, chunk] : _chunkGrid.getChunks()) {
             json cells = json::array();
-            for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
-                for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
+            for (int x = 0; x < Pixel::CHUNKS_SIZE; ++x) {
+                for (int y = 0; y < Pixel::CHUNKS_SIZE; ++y) {
                     const auto id = chunk.get(x, y);
                     if (id == Pixel::EMPTY)
                         continue;

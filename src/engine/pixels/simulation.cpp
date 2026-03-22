@@ -25,7 +25,7 @@ namespace Pixel
     {
         struct ChunkSnapshot {
             int cx, cy;
-            PixelEntityID cells[CHUNK_SIZE][CHUNK_SIZE];
+            PixelEntityID cells[CHUNKS_SIZE][CHUNKS_SIZE];
         };
 
         std::vector<ChunkSnapshot> snapshots;
@@ -35,8 +35,8 @@ namespace Pixel
             ChunkSnapshot snap;
             snap.cx = kv.first.first;
             snap.cy = kv.first.second;
-            for (int ly = 0; ly < CHUNK_SIZE; ++ly)
-                for (int lx = 0; lx < CHUNK_SIZE; ++lx)
+            for (int ly = 0; ly < CHUNKS_SIZE; ++ly)
+                for (int lx = 0; lx < CHUNKS_SIZE; ++lx)
                     snap.cells[lx][ly] = kv.second.get(lx, ly);
             snapshots.push_back(snap);
         }
@@ -47,8 +47,8 @@ namespace Pixel
                   });
 
         for (const auto& snap : snapshots) {
-            for (int ly = 0; ly < CHUNK_SIZE; ++ly) {
-                for (int lx = 0; lx < CHUNK_SIZE; ++lx) {
+            for (int ly = 0; ly < CHUNKS_SIZE; ++ly) {
+                for (int lx = 0; lx < CHUNKS_SIZE; ++lx) {
                     PixelEntityID id = snap.cells[lx][ly];
                     if (id == Pixel::EMPTY) continue;
 
@@ -64,7 +64,7 @@ namespace Pixel
     {
         struct ChunkSnapshot {
             int cx, cy;
-            PixelEntityID cells[CHUNK_SIZE][CHUNK_SIZE];
+            PixelEntityID cells[CHUNKS_SIZE][CHUNKS_SIZE];
         };
 
         std::vector<ChunkSnapshot> snapshots;
@@ -74,8 +74,8 @@ namespace Pixel
             ChunkSnapshot snap;
             snap.cx = kv.first.first;
             snap.cy = kv.first.second;
-            for (int ly = 0; ly < CHUNK_SIZE; ++ly)
-                for (int lx = 0; lx < CHUNK_SIZE; ++lx)
+            for (int ly = 0; ly < CHUNKS_SIZE; ++ly)
+                for (int lx = 0; lx < CHUNKS_SIZE; ++lx)
                     snap.cells[lx][ly] = kv.second.get(lx, ly);
             snapshots.push_back(snap);
         }
@@ -86,8 +86,8 @@ namespace Pixel
                   });
 
         for (const auto& snap : snapshots) {
-            for (int ly = CHUNK_SIZE - 1; ly >= 0; --ly) {
-                for (int lx = 0; lx < CHUNK_SIZE; ++lx) {
+            for (int ly = CHUNKS_SIZE - 1; ly >= 0; --ly) {
+                for (int lx = 0; lx < CHUNKS_SIZE; ++lx) {
                     PixelEntityID id = snap.cells[lx][ly];
                     if (id == Pixel::EMPTY) continue;
 
@@ -107,8 +107,8 @@ namespace Pixel
         if (liquid.updateThisFrame == _pixelSimulated) return;
         liquid.updateThisFrame = !liquid.updateThisFrame;
 
-        int wx = cx * CHUNK_SIZE + lx;
-        int wy = cy * CHUNK_SIZE + ly;
+        int wx = cx * CHUNKS_SIZE + lx;
+        int wy = cy * CHUNKS_SIZE + ly;
 
         // Verify pixel is still at this position (may have moved already)
         if (_grid->getPixel(wx, wy) != id) return;
@@ -138,8 +138,8 @@ namespace Pixel
         Gaseous& gas = _attributes->gaseousAttributes[id];
 
         // Try move up
-        int wx = cx * CHUNK_SIZE + lx;
-        int wy = cy * CHUNK_SIZE + ly;
+        int wx = cx * CHUNKS_SIZE + lx;
+        int wy = cy * CHUNKS_SIZE + ly;
 
         // Skip if already processed this frame
         if (gas.updateThisFrame == _pixelSimulated) return;
