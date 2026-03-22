@@ -739,7 +739,7 @@ namespace graphics {
 
             ImGui::TextDisabled("ID: %u", selected.id);
             ImGui::SameLine();
-            ImGui::TextDisabled("Pixels: %d", static_cast<int>(selected.pixelEntities.size()));
+            ImGui::TextDisabled("Pixels: %d", static_cast<int>(selected.pixels.size()));
 
             ImGui::Separator();
 

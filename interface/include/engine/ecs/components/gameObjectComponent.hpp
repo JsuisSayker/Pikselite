@@ -4,6 +4,7 @@
 #include <engine/pixels/pixelEnum.hpp>
 
 #include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/pixels/simulation/element/pixel.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
 
@@ -13,7 +14,7 @@ namespace ecs::components
     struct GameObjectLink
     {
         Pixel::GameObjectID gameObjectId = Pixel::NO_SPRITE;
-        std::vector<Pixel::PixelEntityID> pixelEntities;
+        std::vector<Element::Pixel> pixelEntities;
     };
 
     

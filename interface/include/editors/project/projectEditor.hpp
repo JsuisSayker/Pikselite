@@ -139,7 +139,7 @@ namespace editors {
 		 * @param worldPos A glm::vec2 containing the x and y coordinates in world space where the anchor point of the sprite should be placed. The method will calculate the corresponding grid coordinates for placement based on the sprite's dimensions and local pixel coordinates, and apply the changes to the editor's data structures accordingly.
 		 * @return A boolean indicating whether the sprite was successfully placed (true) or if there
 		 */
-		void placePendingSpriteAtWorld(glm::vec2 worldPos);
+		void placePendingSpriteAtWorldInGameObject(glm::vec2 worldPos);
 
 		std::vector<graphics::Pixel> addPendingSpriteToRenderPixels();
 

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <graphics/graphicsEnum.hpp>
+#include <engine/pixels/simulation/element/pixel.hpp>
 #include <unordered_map>
 #include <cstdint>
 #include <vector>
@@ -66,7 +67,7 @@ namespace Pixel {
 
         GameObjectID id;
         std::string name;
-        std::vector<PixelEntityID> pixelEntities;
+        std::vector<Element::Pixel> pixels;
     };
 
     /**

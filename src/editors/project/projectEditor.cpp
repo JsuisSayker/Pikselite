@@ -164,8 +164,12 @@ namespace editors {
         return _pendingSprite.valid;
     }
 
-    void ProjectEditor::placePendingSpriteAtWorld(glm::vec2 worldPos) {
+    void ProjectEditor::placePendingSpriteAtWorldInGameObject(glm::vec2 worldPos) {
         if (!_pendingSprite.valid) return;
+
+        Pixel::GameObject newObject;
+        newObject.id = gameObjectCounter++;
+        newObject.name = "GameObject_" + std::to_string(newObject.id);
 
         // Convert world position to grid coords
         int anchorGX = (int)std::floor(worldPos.x / PIXEL_SIZE);
@@ -179,6 +183,8 @@ namespace editors {
             return ((g % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
         };
 
+        std::vector<Element::Pixel> objectPixels;
+
         // Place each cell relative to anchor
         for (const auto& cell : _pendingSprite.cells) {
             int targetGX = anchorGX + cell.localGX;
@@ -191,8 +197,11 @@ namespace editors {
 
             Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
             chunk.set(lx, ly, Element::Pixel{cell.type});
+            objectPixels.push_back(Element::Pixel{cell.type});
         }
 
+        newObject.pixels = std::move(objectPixels);
+        _gameObjects.push_back(std::move(newObject));
         std::cout << "Placed sprite at grid: (" << anchorGX << ", " << anchorGY << ")" << std::endl;
     }
 
@@ -288,7 +297,7 @@ namespace editors {
         glm::vec2 worldPos = screenToWorld(mousePos);
 
         if (_isPlacingSprite) {
-            placePendingSpriteAtWorld(worldPos);
+            placePendingSpriteAtWorldInGameObject(worldPos);
             _isPlacingSprite = false;
             _pendingSprite = {};
         } else {

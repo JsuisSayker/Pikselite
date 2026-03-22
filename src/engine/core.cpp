@@ -38,30 +38,12 @@ namespace {
 
     json gameObjectToJson(const Pixel::GameObject& go)
     {
-        json pixelIds = json::array();
-        for (const auto pixelId : go.pixelEntities)
-            pixelIds.push_back(pixelId);
-
-        return {
-            {"id", go.id},
-            {"name", go.name},
-            {"pixelEntities", pixelIds}
-        };
+        // TODO
     }
 
     Pixel::GameObject gameObjectFromJson(const json& j)
     {
-        Pixel::GameObject go;
-        go.id = j.value("id", Pixel::NO_SPRITE);
-        go.name = j.value("name", std::string("GameObject ") + std::to_string(go.id));
-
-        if (j.contains("pixelEntities") && j["pixelEntities"].is_array()) {
-            for (const auto& pixelId : j["pixelEntities"]) {
-                go.pixelEntities.push_back(pixelId.get<Pixel::PixelEntityID>());
-            }
-        }
-
-        return go;
+        // TODO
     }
 }
 
@@ -311,7 +293,7 @@ namespace engine
 
             ecs::components::GameObjectLink link;
             link.gameObjectId = go.id;
-            link.pixelEntities = go.pixelEntities;
+            link.pixelEntities = go.pixels;
             componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
 
             ecs::components::Sprite spriteComp;
