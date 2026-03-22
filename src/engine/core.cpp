@@ -243,8 +243,8 @@ namespace engine
         {
             {
                 ZoneScopedN("PixelSimulation");
-                _pixelsSimulation.update(); // NO deltaTime here
-                _previewChunkGrid = _pixelsSimulation.getGrid(); // cache current chunk grid state for rendering and potential editing after preview
+                _pixelSimulation.update(); // NO deltaTime here
+                _previewChunkGrid = _pixelSimulation.getGrid(); // cache current chunk grid state for rendering and potential editing after preview
             }
 
             accumulator -= fixedDt;
@@ -281,7 +281,7 @@ namespace engine
         _renderPixels = projectEditor->getPixels();
         _gameObjects = projectEditor->getGameObjects();
         _chunkGrid = projectEditor->getChunkGrid();
-        _pixelsSimulation.setGrid(_chunkGrid);
+        _pixelSimulation.setGrid(_chunkGrid);
         gameObjectCounter = projectEditor->getGameObjectCounter();
 
         loadGameObjectsIntoECS();

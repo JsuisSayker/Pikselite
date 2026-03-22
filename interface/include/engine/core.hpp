@@ -10,7 +10,6 @@
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/systemManager.hpp>
 
-#include <engine/pixels/simulation/simulation.hpp>
 #include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 
@@ -34,7 +33,7 @@ namespace engine
               sdlInterface(width, height),
               renderer(sdlInterface.getWindow(), sdlInterface.getGLContext()),
               imguiInterface(sdlInterface.getWindow(), sdlInterface.getGLContext()),
-              _pixelsSimulation(_chunksGrid) {}
+              _pixelSimulation(_chunkGrid) {}
 
         void run();
 
@@ -42,11 +41,9 @@ namespace engine
         editors::SpriteEditor *spriteEditor;
         editors::ProjectEditor *projectEditor;
 
-        Simulation _pixelsSimulation;
-        ChunkGrid _chunksGrid;
-
+        
         bool isProjectEditorActive = false;
-
+        
         bool running;
         bool isGamePreviewActive = false;
         graphics::Interface sdlInterface;
@@ -57,18 +54,18 @@ namespace engine
         engine::EntityManager entityManager;
         engine::ComponentManager componentManager;
         engine::SystemManager systemManager;
-
+        
         uint32_t gameObjectCounter = 1;
-
+        
         graphics::Camera2D _camera;
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
+        Simulation _pixelSimulation;
         ChunkGrid _chunkGrid;
         ChunkGrid _previewChunkGrid; // for caching the chunk grid state when entering game preview, to restore it after exiting preview
 
         float accumulator = 0.0f;
         const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
-        Pixel::PixelSimulation _pixelSimulation;
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;

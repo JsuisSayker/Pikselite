@@ -27,7 +27,6 @@ namespace editors {
     class SpriteEditor {
     public:
 #ifdef UNIT_TEST
-        void testAddPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) { addPixel(worldPos, defaultProperties); }
         bool testRemovePixelAt(glm::vec2 worldPos) { return removePixelAt(worldPos); }
         graphics::Pixel* testGetPixelAt(glm::vec2 worldPos) { return getPixelAt(worldPos); }
         bool testSaveSpriteToFile(const std::string& filename) { return saveSpriteToFile(filename); }
@@ -74,9 +73,6 @@ namespace editors {
         graphics::Camera2D _camera;
 		ChunkGrid _chunkGrid;
 
-        Pixel::DefaultPixelProperties _defaultPixelProperties;
-
-
 		/**
 		 * @brief Handles user input events, updating the editor's state based on the type of event received. This includes managing mouse input for pixel placement and attribute editing, keyboard input for camera movement and zooming, and other input events relevant to the sprite editing process.
 		 * @param event A graphics::InputEvent representing the latest user input event to be processed
@@ -116,7 +112,7 @@ namespace editors {
 		 * new pixel, including color and physical properties. These properties will be applied to the new pixel being added, allowing for consistent default attributes for new pixels created in the sprite editor.
 		 * @return A boolean indicating whether the pixel was successfully added (true) or if there
 		 */
-        void addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties);
+        void addPixel(glm::vec2 worldPos);
 
 		/**
 		 * @brief Handles ImGui user interface interactions, updating the editor's state based on user input in the ImGui interface. This includes managing UI elements for selecting sprites, creating and managing game objects, and triggering scene saving/loading requests.
@@ -142,14 +138,6 @@ namespace editors {
 		 * Note: This method should be called during the editor's run loop after handling input events, to ensure that the placement preview is updated in response to user interactions.
 		 */
 		void updatePlacementMode();
-		/**
-		 * @brief Places the pending sprite at the specified grid coordinates, updating the chunk grid, pixel attributes, render pixels, and game object associations accordingly. This method will apply the changes to the scene based on the pending sprite's data, including setting the new pixel entity IDs in the chunk grid, updating the render pixels for rendering, and associating the new pixels with the selected game object if applicable. After placement, the pending sprite state will be reset to allow for new placements.
-		 * @param anchorGX The grid x-coordinate of the anchor point for the sprite placement.
-		 * This coordinate will be used as the reference point for placing the sprite's pixels in the world, based on their local coordinates in the sprite image.
-		 * @param anchorGY The grid y-coordinate of the anchor point for the sprite placement.
-		 * This coordinate will be used as the reference point for placing the sprite's pixels in the world, based on their local coordinates in the sprite image.
-		 */
-		void removePixelAttributes(Pixel::PixelEntityID id);
 
         // Imgui state
         graphics::Pixel* _currentPixel = nullptr;

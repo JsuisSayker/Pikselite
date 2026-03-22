@@ -86,7 +86,7 @@ namespace editors {
         }        
 
         if (_showDefaultPropertiesEditor) {
-            _imguiInterface->defaultPixelPropertiesEditor(_defaultPixelProperties, "Default Pixel Properties");
+            _imguiInterface->defaultPixelPropertiesEditor("Default Pixel Properties");
             _showPixelEditor = false;
         }
 
@@ -147,7 +147,6 @@ namespace editors {
 
                 if (existing) {
                     if (drag) {
-                        existing->color = _defaultPixelProperties.color;
                         _showPixelEditor = false;
                     } else {
                         _currentPixel = existing;
@@ -157,7 +156,7 @@ namespace editors {
                     continue;
                 }
 
-                addPixel(targetPos, _defaultPixelProperties);
+                addPixel(targetPos);
             }
         }
     }
@@ -200,7 +199,7 @@ namespace editors {
         return true;
     }
 
-    void SpriteEditor::addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) {
+    void SpriteEditor::addPixel(glm::vec2 worldPos) {
         
         // Convert world position to grid coords first
         int gridX = (int)std::floor(worldPos.x / PIXEL_SIZE);

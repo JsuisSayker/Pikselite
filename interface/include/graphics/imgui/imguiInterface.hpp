@@ -18,10 +18,10 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include <graphics/imgui/components/components.hpp>
-#include <engine/pixels/chunk.hpp>
 
 #include <engine/ecs/components/gameObjectComponent.hpp>
-
+#include <engine/pixels/simulation/element/element.hpp>
+#include <engine/pixels/simulation/element/chunk.hpp>
 #include <engine/managers/componentManager.hpp>
 
 #include <algorithm>
@@ -39,14 +39,14 @@ namespace graphics {
 
         void showImGuiDemo();
 
-        void pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label);
+        void pixelEditor(Pixel& pixel, ChunkGrid grid, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool &showDefaultPropertiesEditor, std::string &saveSpritePath);
         void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
         void projectTopBarEmpty();
 
-        void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
+        void defaultPixelPropertiesEditor(const char* label);
 
         void projectNavbar(::std::string &currentSpriteFilename);
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);

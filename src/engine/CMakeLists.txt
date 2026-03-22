@@ -5,7 +5,6 @@ add_library(engine
     managers/entityManager.cpp
     managers/systemManager.cpp
     managers/luaManager.cpp
-    pixels/simulation.cpp
     pixels/simulation/element.cpp
     ecs/systems/spriteSystem.cpp
 )
