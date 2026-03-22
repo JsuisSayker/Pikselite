@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include <editors/project/projectEditor.hpp>
-#include <engine/pixels/simulation/element/chunk.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
 #include <engine/pixels/pixelEnum.hpp>
 
 using namespace Pixel;

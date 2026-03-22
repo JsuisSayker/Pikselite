@@ -1,5 +1,5 @@
-#include <engine/pixels/simulation/element/element.hpp>
-
+#include <engine/pixels/simulation/element.hpp>
+#include <engine/pixels/simulation/simulation.hpp>
 
 ElementDefinition g_elements[256] = {};
 

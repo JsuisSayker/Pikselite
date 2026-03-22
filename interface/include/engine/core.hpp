@@ -13,8 +13,8 @@
 #include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 
-#include <engine/pixels/simulation/element/element.hpp>
-
+#include <engine/pixels/simulation/simulation.hpp>
+#include <engine/pixels/simulation/element.hpp>
 #include <vector>
 #include <iostream>
 #include <string>

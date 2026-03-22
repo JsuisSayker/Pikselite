@@ -1,6 +1,6 @@
 #pragma once
 
-#include <engine/pixels/simulation/element/chunk.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
 #include <cstdint>
 #include <cstdlib>
 
@@ -31,19 +31,3 @@ void updateWater(ChunkGrid& grid, int x, int y);
 void updateSand(ChunkGrid& grid, int x, int y);
 void updateFire(ChunkGrid& grid, int x, int y);
 void updateStone(ChunkGrid& grid, int x, int y);
-
-class Simulation {
-    public:
-        Simulation(ChunkGrid &grid) : grid(grid) {
-            initElements();
-        }
-
-        void initElements();
-        void update();
-        void resetUpdatedFlags();
-        void setGrid(ChunkGrid &newGrid) { grid = newGrid; }
-        ChunkGrid& getGrid() { return grid; }
-
-    private:
-        ChunkGrid &grid;
-};

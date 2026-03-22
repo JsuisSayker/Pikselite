@@ -20,8 +20,8 @@
 #include <graphics/imgui/components/components.hpp>
 
 #include <engine/ecs/components/gameObjectComponent.hpp>
-#include <engine/pixels/simulation/element/element.hpp>
-#include <engine/pixels/simulation/element/chunk.hpp>
+#include <engine/pixels/simulation/element.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
 #include <engine/managers/componentManager.hpp>
 
 #include <algorithm>

@@ -7,7 +7,7 @@
 #pragma once
 
 #include <graphics/graphicsEnum.hpp>
-#include <engine/pixels/simulation/element/pixel.hpp>
+#include <engine/pixels/simulation/pixel.hpp>
 #include <unordered_map>
 #include <cstdint>
 #include <vector>

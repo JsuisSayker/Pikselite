@@ -8,8 +8,8 @@
 #include <graphics/renderer/renderer.hpp>
 #include <graphics/interface/interface.hpp>
 #include <graphics/imgui/imguiInterface.hpp>
-#include <engine/pixels/simulation/element/element.hpp>
-#include <engine/pixels/simulation/element/chunk.hpp>
+#include <engine/pixels/simulation/element.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
 #include <iostream>
 #include <fstream>
 #include <vector>

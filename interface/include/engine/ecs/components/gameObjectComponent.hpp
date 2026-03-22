@@ -4,7 +4,7 @@
 #include <engine/pixels/pixelEnum.hpp>
 
 #include <engine/ecs/components/spriteComponent.hpp>
-#include <engine/pixels/simulation/element/pixel.hpp>
+#include <engine/pixels/simulation/pixel.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
 
