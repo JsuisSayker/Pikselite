@@ -62,7 +62,6 @@ namespace engine
         std::vector<graphics::Pixel> _renderPixels;
         Simulation _pixelSimulation;
         ChunkGrid _chunkGrid;
-        ChunkGrid _previewChunkGrid; // for caching the chunk grid state when entering game preview, to restore it after exiting preview
 
         float accumulator = 0.0f;
         const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
@@ -91,7 +90,7 @@ namespace engine
         // attaching Transform and GameObjectLink components.
         void loadGameObjectsIntoECS();
 
-        std::vector<graphics::Pixel> buildRenderPixels();
+        std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
 
         // save scene and load scene functions for project editor
         void saveScene(const std::string& filename);
