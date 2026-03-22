@@ -58,14 +58,12 @@ namespace engine
         engine::ComponentManager componentManager;
         engine::SystemManager systemManager;
 
-        uint32_t pixelIdCounter = 1;
         uint32_t gameObjectCounter = 1;
 
         graphics::Camera2D _camera;
-        Pixel::PixelAttributes _pixelAttributes;
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
-        Pixel::ChunkGrid _chunkGrid;
+        ChunkGrid _chunkGrid;
         Pixel::PixelSimulation _pixelSimulation;
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID

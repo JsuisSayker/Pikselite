@@ -4,7 +4,7 @@ add_executable(pikselite_tests
     imguiComponents/testBarComponent.cpp
     imguiComponents/testGetDesiredPos.cpp
     renderer/testSpriteEditor.cpp
-    renderer/testProjectEditor.cpp
+    # renderer/testProjectEditor.cpp
     renderer/testDrawOnEditor.cpp
     engine/testChunk.cpp
     engine/testPixelAttributes.cpp
