@@ -22,19 +22,9 @@ namespace editors {
         _imguiInterface->startFrame();
 
         std::vector<graphics::Pixel> framePixels = buildRenderPixels();
-
-        if (_isPlacingSprite && _pendingSprite.valid) {
-            glm::vec2 mousePos = _graphicsInterface->getMousePosition();
-            glm::vec2 worldPos = screenToWorld(mousePos);
-
-            for (const auto& p : _pendingSprite.previewLocalPixels) {
-                graphics::Pixel ghost = p;
-                ghost.position.x += worldPos.x;
-                ghost.position.y += worldPos.y;
-                ghost.color *= 0.65f;
-                framePixels.push_back(ghost);
-            }
-        }
+        std::vector<graphics::Pixel> pendingSpritePixels = addPendingSpriteToRenderPixels();
+        framePixels.insert(framePixels.end(), pendingSpritePixels.begin(), pendingSpritePixels.end());
+        _renderPixels = framePixels; // cache for editing
 
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
@@ -200,16 +190,6 @@ namespace editors {
     }
 
     bool SpriteEditor::removePixelAt(glm::vec2 worldPos) {
-        // Find index of pixel to remove
-        int removeIndex = -1;
-        for (int i = 0; i < (int)_renderPixels.size(); ++i) {
-            if (_renderPixels[i].position == worldPos) {
-                removeIndex = i;
-                break;
-            }
-        }
-        if (removeIndex == -1) return false;
-
         // Get grid coords using same formula as getPixel
         int gridX = (int)std::floor(worldPos.x / PIXEL_SIZE);
         int gridY = (int)std::floor(worldPos.y / PIXEL_SIZE);
@@ -221,8 +201,7 @@ namespace editors {
     }
 
     void SpriteEditor::addPixel(glm::vec2 worldPos, Pixel::DefaultPixelProperties defaultProperties) {
-        _renderPixels.push_back({worldPos, defaultProperties.color});
-
+        
         // Convert world position to grid coords first
         int gridX = (int)std::floor(worldPos.x / PIXEL_SIZE);
         int gridY = (int)std::floor(worldPos.y / PIXEL_SIZE);
@@ -236,7 +215,7 @@ namespace editors {
         int ly = ((gridY % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
 
         Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-        chunk.set(lx, ly, Element::Pixel{Element::ElementType::EMPTY}); // TODO: use actual PixelEntityID and attributes
+        chunk.set(lx, ly, Element::Pixel{Element::ElementType::SAND}); // TODO: use actual PixelEntityID and attributes
 
 
         _currentPixel = getPixelAt(worldPos);
@@ -244,54 +223,242 @@ namespace editors {
 
 
     bool SpriteEditor::saveSpriteToFile(const std::string& filename) {
-        // TODO
+        std::ofstream fout(filename, std::ios::binary);
+        if (!fout) {
+            std::cerr << "Failed to open file for saving: " << filename << std::endl;
+            return false;
+        }
+
+        uint32_t nbChunks = _chunkGrid.chunks.size();
+        fout.write(reinterpret_cast<const char*>(&nbChunks), sizeof(nbChunks));
+
+        for (const auto& [key, chunk] : _chunkGrid.chunks) {
+            // Decode chunk coords from key
+            const int32_t cx = static_cast<int32_t>(key >> 32);
+            const int32_t cy = static_cast<int32_t>(key & 0xFFFFFFFF);
+
+            // Save coords
+            fout.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
+            fout.write(reinterpret_cast<const char*>(&cy), sizeof(cy));
+
+            // Save only the pixels, NOT updatedThisFrame
+            for (int i = 0; i < CHUNK_SIZE * CHUNK_SIZE; ++i) {
+                fout.write(reinterpret_cast<const char*>(&chunk.pixels[i].type), sizeof(Element::ElementType));
+            }
+        }
+
+        std::cout << "Saved sprite to: " << filename << std::endl;
         return true;
     }
 
     bool SpriteEditor::loadSpriteFromFile(const std::string& filename) {
-        // TODO
+        std::ifstream fin(filename, std::ios::binary);
+        if (!fin) {
+            std::cerr << "Failed to open file for loading: " << filename << std::endl;
+            return false;
+        }
+
+        _chunkGrid.chunks.clear();
+
+        uint32_t nbChunks = 0;
+        fin.read(reinterpret_cast<char*>(&nbChunks), sizeof(nbChunks));
+
+        for (uint32_t i = 0; i < nbChunks; ++i) {
+            int32_t cx = 0, cy = 0;
+            fin.read(reinterpret_cast<char*>(&cx), sizeof(cx));
+            fin.read(reinterpret_cast<char*>(&cy), sizeof(cy));
+
+            Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+
+            for (int j = 0; j < CHUNK_SIZE * CHUNK_SIZE; ++j) {
+                Element::ElementType type = Element::EMPTY;
+                fin.read(reinterpret_cast<char*>(&type), sizeof(type));
+                chunk.pixels[j].type = type;
+                chunk.pixels[j].updatedThisFrame = false;
+            }
+        }
+
+        std::cout << "Loaded sprite from: " << filename << std::endl;
         return true;
     }
 
     bool SpriteEditor::loadSpriteForPlacement(const std::string& filename) {
-        // TODO
+        _pendingSprite = {};
+        _isPlacingSprite = false;
+        
+        std::ifstream fin(filename, std::ios::binary);
+        if (!fin) {
+            std::cerr << "Failed to open file for loading: " << filename << std::endl;
+            return false;
+        }
+
+        PendingSprite pending{};
+        int minGX = std::numeric_limits<int>::max();
+        int minGY = std::numeric_limits<int>::max();
+        std::vector<std::pair<std::pair<int32_t, int32_t>, std::vector<std::pair<int, Element::ElementType>>>> allChunks;
+
+        uint32_t nbChunks = 0;
+        fin.read(reinterpret_cast<char*>(&nbChunks), sizeof(nbChunks));
+
+        // First pass: load and find min coords
+        for (uint32_t i = 0; i < nbChunks; ++i) {
+            int32_t cx = 0, cy = 0;
+            fin.read(reinterpret_cast<char*>(&cx), sizeof(cx));
+            fin.read(reinterpret_cast<char*>(&cy), sizeof(cy));
+
+            std::vector<std::pair<int, Element::ElementType>> pixelsInChunk;
+
+            for (int j = 0; j < CHUNK_SIZE * CHUNK_SIZE; ++j) {
+                Element::ElementType type = Element::EMPTY;
+                fin.read(reinterpret_cast<char*>(&type), sizeof(type));
+                
+                if (type != Element::ElementType::EMPTY) {
+                    int lx = j % CHUNK_SIZE;
+                    int ly = j / CHUNK_SIZE;
+                    int gx = cx * CHUNK_SIZE + lx;
+                    int gy = cy * CHUNK_SIZE + ly;
+
+                    minGX = std::min(minGX, gx);
+                    minGY = std::min(minGY, gy);
+
+                    pixelsInChunk.push_back({j, type});
+                }
+            }
+
+            allChunks.push_back({{cx, cy}, pixelsInChunk});
+        }
+
+        if (allChunks.empty()) {
+            std::cerr << "No pixels in sprite file: " << filename << std::endl;
+            return false;
+        }
+
+        // Second pass: normalize to local coords
+        for (const auto& [coords, pixelsInChunk] : allChunks) {
+            int32_t cx = coords.first;
+            int32_t cy = coords.second;
+
+            for (const auto& [j, type] : pixelsInChunk) {
+                int lx = j % CHUNK_SIZE;
+                int ly = j / CHUNK_SIZE;
+                int gx = cx * CHUNK_SIZE + lx;
+                int gy = cy * CHUNK_SIZE + ly;
+
+                // Normalize to local coords relative to min
+                int localGX = gx - minGX;
+                int localGY = gy - minGY;
+
+                pending.cells.push_back({localGX, localGY, type});
+            }
+        }
+
+        pending.valid = !pending.cells.empty();
+        _pendingSprite = std::move(pending);
+
+        std::cout << "Loaded sprite for placement: " << filename << " (" << _pendingSprite.cells.size() << " pixels)" << std::endl;
         return _pendingSprite.valid;
     }
 
     void SpriteEditor::placePendingSpriteAtWorld(glm::vec2 worldPos) {
-        // TODO
+        if (!_pendingSprite.valid) return;
+
+        // Convert world position to grid coords
+        int anchorGX = (int)std::floor(worldPos.x / PIXEL_SIZE);
+        int anchorGY = (int)std::floor(worldPos.y / PIXEL_SIZE);
+
+        auto toChunk = [](int g) -> int {
+            return (g >= 0) ? (g / CHUNK_SIZE) : ((g - CHUNK_SIZE + 1) / CHUNK_SIZE);
+        };
+
+        auto toLocal = [](int g) -> int {
+            return ((g % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
+        };
+
+        // Place each cell relative to anchor
+        for (const auto& cell : _pendingSprite.cells) {
+            int targetGX = anchorGX + cell.localGX;
+            int targetGY = anchorGY + cell.localGY;
+
+            int cx = toChunk(targetGX);
+            int cy = toChunk(targetGY);
+            int lx = toLocal(targetGX);
+            int ly = toLocal(targetGY);
+
+            Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+            chunk.set(lx, ly, Element::Pixel{cell.type});
+        }
+
+        std::cout << "Placed sprite at grid: (" << anchorGX << ", " << anchorGY << ")" << std::endl;
+    }
+
+    std::vector<graphics::Pixel> SpriteEditor::addPendingSpriteToRenderPixels() {
+        std::vector<graphics::Pixel> pendingSpritePixels;
+
+        if (!_pendingSprite.valid) return pendingSpritePixels;
+
+        // Get current mouse position in world coords
+        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+        glm::vec2 worldPos = screenToWorld(mousePos);
+
+        // Convert to grid coords
+        int anchorGX = (int)std::floor(worldPos.x / PIXEL_SIZE);
+        int anchorGY = (int)std::floor(worldPos.y / PIXEL_SIZE);
+
+        for (const auto& cell : _pendingSprite.cells) {
+            // Apply anchor offset to each cell
+            int targetGX = anchorGX + cell.localGX;
+            int targetGY = anchorGY + cell.localGY;
+
+            float worldX = targetGX * PIXEL_SIZE;
+            float worldY = targetGY * PIXEL_SIZE;
+
+            graphics::Pixel renderPixel;
+            renderPixel.position = glm::vec2(worldX, worldY);
+
+            const auto& def = g_elements[cell.type];
+            renderPixel.color = glm::vec3(
+                def.color[0] / 255.0f,
+                def.color[1] / 255.0f,
+                def.color[2] / 255.0f
+            );
+            renderPixel.color *= 0.65f; // Ghost effect
+
+            pendingSpritePixels.push_back(renderPixel);
+        }
+        return pendingSpritePixels;
     }
 
     std::vector<graphics::Pixel> SpriteEditor::buildRenderPixels()
     {
         std::vector<graphics::Pixel> result;
-        result.reserve(10000); // avoid realloc (tune later)
+        result.reserve(10000);
 
         for (const auto& [key, chunk] : _chunkGrid.chunks)
         {
-            int cx = key >> 32;
-            int cy = key & 0xFFFFFFFF;
+            // Correct signed decode from packed int64 key
+            const int cx = static_cast<int32_t>(key >> 32);
+            const int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
 
             for (int y = 0; y < CHUNK_SIZE; ++y)
             {
                 for (int x = 0; x < CHUNK_SIZE; ++x)
                 {
                     const Element::Pixel& simPixel = chunk.pixels[y * CHUNK_SIZE + x];
-
-                    if (simPixel.type == Element::EMPTY)
-                        continue;
+                    if (simPixel.type == Element::EMPTY) continue;
 
                     const auto& def = g_elements[simPixel.type];
 
                     graphics::Pixel renderPixel;
 
-                    // WORLD POSITION
+                    // grid -> world (apply chunk offset + pixel size)
+                    const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
+                    const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
+
                     renderPixel.position = glm::vec2(
-                        cx * CHUNK_SIZE + x,
-                        cy * CHUNK_SIZE + y
+                        gx * PIXEL_SIZE,
+                        gy * PIXEL_SIZE
                     );
 
-                    // COLOR (normalized 0–1)
                     renderPixel.color = glm::vec3(
                         def.color[0] / 255.0f,
                         def.color[1] / 255.0f,

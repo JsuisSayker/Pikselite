@@ -169,10 +169,15 @@ namespace editors {
 		struct PendingCell {
 			int localGX = 0;
 			int localGY = 0;
-			Pixel::PixelEntityID oldId = Pixel::EMPTY;
+			Element::ElementType type = Element::ElementType::EMPTY;
 		};
 
-        Pixel::PendingSprite _pendingSprite;
+		struct PendingSprite {
+			bool valid = false;
+			std::vector<PendingCell> cells;
+		};
+
+        PendingSprite _pendingSprite;
         bool _isPlacingSprite = false;
 
 		/**
@@ -188,6 +193,8 @@ namespace editors {
 		 * @return A boolean indicating whether the sprite was successfully placed (true) or if there
 		 */
 		void placePendingSpriteAtWorld(glm::vec2 worldPos);
+
+		std::vector<graphics::Pixel> addPendingSpriteToRenderPixels();
 
 
 		std::vector<graphics::Pixel> buildRenderPixels();
