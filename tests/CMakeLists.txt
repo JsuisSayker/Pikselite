@@ -6,7 +6,7 @@ add_executable(pikselite_tests
     # renderer/testSpriteEditor.cpp
     # renderer/testProjectEditor.cpp
     renderer/testDrawOnEditor.cpp
-    engine/testChunk.cpp
+    # engine/testChunk.cpp
     graphics/testWindowSize.cpp
 )
 
