@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace simulation {
+namespace Element {
     enum ElementType : uint16_t {
         EMPTY = 0,
         SAND,
