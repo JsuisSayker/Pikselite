@@ -1,0 +1,6 @@
+install OpenCppCoverage if not found
+Build in debug mode
+go in the build folder and run the tests using ctest
+
+to get the report, run the following command:
+"C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" --sources src --sources interface --excluded_sources build --excluded_sources tests --excluded_sources "C:\Program Files" --excluded_sources "C:\Program Files (x86)" --excluded_sources "D:\a\_work" --export_type html:coverage -- build/tests/Debug/pikselite_tests.exe
