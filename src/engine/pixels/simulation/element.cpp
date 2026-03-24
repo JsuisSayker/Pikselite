@@ -5,8 +5,8 @@ ElementDefinition g_elements[256] = {};
 
 bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 {
-    Element::Pixel src = grid.getPixel(x, y);
-    Element::Pixel dst = grid.getPixel(nx, ny);
+    Element::Pixel& src = grid.getPixelRef(x, y);
+    Element::Pixel& dst = grid.getPixelRef(nx, ny);
 
     if (src.type == Element::EMPTY) return false;
 
@@ -15,19 +15,18 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
     if (dst.type == Element::EMPTY)
     {
-        grid.setPixel(nx, ny, src);
-        grid.getPixelRef(nx, ny).updatedThisFrame = true;
+        dst = src;
+        dst.updatedThisFrame = true;
 
-        grid.setPixel(x, y, Element::Pixel{Element::EMPTY});
+        src = Element::Pixel{Element::EMPTY};
         return true;
     }
 
     if (srcDef.density > dstDef.density)
     {
-        grid.setPixel(nx, ny, src);
-        grid.getPixelRef(nx, ny).updatedThisFrame = true;
+        std::swap(src, dst);
 
-        grid.setPixel(x, y, dst);
+        dst.updatedThisFrame = true;
         return true;
     }
 
@@ -71,15 +70,24 @@ void Simulation::initElements()
 
 void Simulation::update()
 {
+    frame++;
     resetUpdatedFlags();
-    for (auto& [key, chunk] : grid.chunks)
-    {
-        int cx = key >> 32;
-        int cy = key & 0xFFFFFFFF;
+    orderChunksForUpdate();
 
-        for (int y = CHUNK_SIZE - 1; y >= 0; --y)
+    for (auto& entry : orderedChunks)
+    {
+        int cx = entry.cx;
+        int cy = entry.cy;
+        Chunk& chunk = *entry.chunk;
+
+        bool flip = ((frame + cy) % 2 == 0);
+
+        // bottom -> top for GRAVITY_DIR = -1
+        for (int y = 0; y < CHUNK_SIZE; ++y)
         {
-            for (int x = 0; x < CHUNK_SIZE; ++x)
+            for (int x = flip ? 0 : CHUNK_SIZE - 1;
+                 flip ? x < CHUNK_SIZE : x >= 0;
+                 flip ? ++x : --x)
             {
                 Element::Pixel& p = chunk.get(x, y);
 
@@ -105,4 +113,24 @@ void Simulation::resetUpdatedFlags()
             chunk.pixels[i].updatedThisFrame = false;
         }
     }
+}
+
+void Simulation::orderChunksForUpdate()
+{
+    orderedChunks.clear();
+    for (auto& [key, chunk] : grid.chunks)
+    {
+        int cx = static_cast<int32_t>(key >> 32);
+        int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
+
+        orderedChunks.push_back({cx, cy, &chunk});
+    }
+
+    std::sort(orderedChunks.begin(), orderedChunks.end(),
+        [](const ChunkEntry& a, const ChunkEntry& b)
+        {
+            if (a.cy != b.cy)
+                return a.cy < b.cy; // bottom -> top for GRAVITY_DIR = -1
+            return a.cx < b.cx;     // left -> right
+        });
 }
