@@ -36,6 +36,8 @@ namespace engine
               _pixelSimulation(_chunkGrid) {}
 
         void run();
+        void setCameraPosition(float x, float y) { _camera.setPosition(x, y); }
+        void setCameraZoom(float zoom) { _camera.setZoom(zoom); }
 
     private:
         editors::SpriteEditor *spriteEditor;

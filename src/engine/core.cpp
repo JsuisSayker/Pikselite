@@ -221,8 +221,12 @@ namespace engine
             isProjectEditorActive = !isProjectEditorActive;
             break;
         case graphics::KEY_F5:
-            if (!isGamePreviewActive)
+            if (!isGamePreviewActive) {
                 isGamePreviewActive = true;
+                graphics::Camera2D editorCamera = projectEditor->getCamera();
+                setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
+                setCameraZoom(editorCamera.getZoom());
+            }
             break;
         default:
             break;
