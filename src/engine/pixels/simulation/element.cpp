@@ -35,6 +35,31 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
 void updateWater(ChunkGrid& grid, int x, int y)
 {
+    auto& def = g_elements[Element::WATER];
+
+    if (tryMove(grid, x, y, x, y + GRAVITY_DIR)) return;
+
+    int maxDisp = def.dispersionRate;
+
+    int dir = (rand() % 2) ? -1 : 1;
+
+    for (int d = 0; d < 2; ++d)
+    {
+        int dx = (d == 0) ? dir : -dir;
+        for (int i = 1; i <= maxDisp; ++i)
+        {
+            int nx = x + dx * i;
+            Element::Pixel& mid = grid.getPixelRef(x + dx * (i - 1), y);
+            if (mid.type != Element::EMPTY && mid.type != Element::WATER)
+                break;
+
+            if (tryMove(grid, x, y, nx, y))
+                return;
+
+            if (tryMove(grid, x, y, nx, y + GRAVITY_DIR))
+                return;
+        }
+    }
 }
 
 void updateSand(ChunkGrid& grid, int x, int y)
@@ -61,11 +86,11 @@ void updateStone(ChunkGrid& grid, int x, int y)
 
 void Simulation::initElements()
 {
-    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID, nullptr, -1};
-    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID, updateSand, -1};
-    g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, updateWater, -1};
-    g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, updateFire, -1};
-    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, updateStone, -1};
+    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID, 0, nullptr, -1};
+    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID, 1, updateSand, -1};
+    g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, 5, updateWater, -1};
+    g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, 1, updateFire, -1};
+    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, 0, updateStone, -1};
 }
 
 void Simulation::update()

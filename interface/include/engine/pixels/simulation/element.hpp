@@ -17,6 +17,8 @@ struct ElementDefinition {
     uint8_t color[3];
     uint8_t density;
     ElementState state;
+
+    uint8_t dispersionRate;
     
     
     void (*update)(ChunkGrid& grid, int x, int y);
