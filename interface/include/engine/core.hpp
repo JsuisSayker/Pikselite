@@ -36,6 +36,8 @@ namespace engine
               _pixelSimulation(_chunkGrid) {}
 
         void run();
+        void setCameraPosition(float x, float y) { _camera.setPosition(x, y); }
+        void setCameraZoom(float zoom) { _camera.setZoom(zoom); }
 
     private:
         editors::SpriteEditor *spriteEditor;
@@ -62,7 +64,6 @@ namespace engine
         std::vector<graphics::Pixel> _renderPixels;
         Simulation _pixelSimulation;
         ChunkGrid _chunkGrid;
-        ChunkGrid _previewChunkGrid; // for caching the chunk grid state when entering game preview, to restore it after exiting preview
 
         float accumulator = 0.0f;
         const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
@@ -94,8 +95,7 @@ namespace engine
         // Rebuild and propagate ECS signature from actual component presence.
         void refreshEntitySignature(ecs::EntityID entityId);
 
-        
-        std::vector<graphics::Pixel> buildRenderPixels() const;
+        std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
 
         // save scene and load scene functions for project editor
         void saveScene(const std::string& filename);

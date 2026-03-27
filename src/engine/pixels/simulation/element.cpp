@@ -5,8 +5,8 @@ ElementDefinition g_elements[256] = {};
 
 bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 {
-    Element::Pixel src = grid.getPixel(x, y);
-    Element::Pixel dst = grid.getPixel(nx, ny);
+    Element::Pixel& src = grid.getPixelRef(x, y);
+    Element::Pixel& dst = grid.getPixelRef(nx, ny);
 
     if (src.type == Element::EMPTY) return false;
 
@@ -15,19 +15,18 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
     if (dst.type == Element::EMPTY)
     {
-        grid.setPixel(nx, ny, src);
-        grid.getPixelRef(nx, ny).updatedThisFrame = true;
+        dst = src;
+        dst.updatedThisFrame = true;
 
-        grid.setPixel(x, y, Element::Pixel{Element::EMPTY});
+        src = Element::Pixel{Element::EMPTY};
         return true;
     }
 
     if (srcDef.density > dstDef.density)
     {
-        grid.setPixel(nx, ny, src);
-        grid.getPixelRef(nx, ny).updatedThisFrame = true;
+        std::swap(src, dst);
 
-        grid.setPixel(x, y, dst);
+        dst.updatedThisFrame = true;
         return true;
     }
 
@@ -36,6 +35,31 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
 void updateWater(ChunkGrid& grid, int x, int y)
 {
+    auto& def = g_elements[Element::WATER];
+
+    if (tryMove(grid, x, y, x, y + GRAVITY_DIR)) return;
+
+    int maxDisp = def.dispersionRate;
+
+    int dir = (rand() % 2) ? -1 : 1;
+
+    for (int d = 0; d < 2; ++d)
+    {
+        int dx = (d == 0) ? dir : -dir;
+        for (int i = 1; i <= maxDisp; ++i)
+        {
+            int nx = x + dx * i;
+            Element::Pixel& mid = grid.getPixelRef(x + dx * (i - 1), y);
+            if (mid.type != Element::EMPTY && mid.type != Element::WATER)
+                break;
+
+            if (tryMove(grid, x, y, nx, y))
+                return;
+
+            if (tryMove(grid, x, y, nx, y + GRAVITY_DIR))
+                return;
+        }
+    }
 }
 
 void updateSand(ChunkGrid& grid, int x, int y)
@@ -62,24 +86,33 @@ void updateStone(ChunkGrid& grid, int x, int y)
 
 void Simulation::initElements()
 {
-    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID, nullptr, -1};
-    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID, updateSand, -1};
-    g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, updateWater, -1};
-    g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, updateFire, -1};
-    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, updateStone, -1};
+    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID, 0, nullptr, -1};
+    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID, 1, updateSand, -1};
+    g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, 5, updateWater, -1};
+    g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, 1, updateFire, -1};
+    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, 0, updateStone, -1};
 }
 
 void Simulation::update()
 {
+    frame++;
     resetUpdatedFlags();
-    for (auto& [key, chunk] : grid.chunks)
-    {
-        int cx = key >> 32;
-        int cy = key & 0xFFFFFFFF;
+    orderChunksForUpdate();
 
-        for (int y = CHUNK_SIZE - 1; y >= 0; --y)
+    for (auto& entry : orderedChunks)
+    {
+        int cx = entry.cx;
+        int cy = entry.cy;
+        Chunk& chunk = *entry.chunk;
+
+        bool flip = ((frame + cy) % 2 == 0);
+
+        // bottom -> top for GRAVITY_DIR = -1
+        for (int y = 0; y < CHUNK_SIZE; ++y)
         {
-            for (int x = 0; x < CHUNK_SIZE; ++x)
+            for (int x = flip ? 0 : CHUNK_SIZE - 1;
+                 flip ? x < CHUNK_SIZE : x >= 0;
+                 flip ? ++x : --x)
             {
                 Element::Pixel& p = chunk.get(x, y);
 
@@ -105,4 +138,24 @@ void Simulation::resetUpdatedFlags()
             chunk.pixels[i].updatedThisFrame = false;
         }
     }
+}
+
+void Simulation::orderChunksForUpdate()
+{
+    orderedChunks.clear();
+    for (auto& [key, chunk] : grid.chunks)
+    {
+        int cx = static_cast<int32_t>(key >> 32);
+        int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
+
+        orderedChunks.push_back({cx, cy, &chunk});
+    }
+
+    std::sort(orderedChunks.begin(), orderedChunks.end(),
+        [](const ChunkEntry& a, const ChunkEntry& b)
+        {
+            if (a.cy != b.cy)
+                return a.cy < b.cy; // bottom -> top for GRAVITY_DIR = -1
+            return a.cx < b.cx;     // left -> right
+        });
 }

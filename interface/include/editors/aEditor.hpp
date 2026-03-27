@@ -18,7 +18,8 @@ class AbstractEditor {
 public:
     virtual ~AbstractEditor() = default;
     virtual void run(const graphics::InputEvent& event) = 0;
-
+    graphics::Camera2D getCamera() const { return _camera; }
+    
 protected:
     struct PendingCell {
         int localGX = 0;

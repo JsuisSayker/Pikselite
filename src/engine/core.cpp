@@ -179,7 +179,7 @@ namespace engine
 
             renderer.clear();
 
-            std::vector<graphics::Pixel> framePixels = buildRenderPixels();
+            std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
             _renderPixels = framePixels; // cache for potential editing after preview
 
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
@@ -228,8 +228,12 @@ namespace engine
             isProjectEditorActive = !isProjectEditorActive;
             break;
         case graphics::KEY_F5:
-            if (!isGamePreviewActive)
+            if (!isGamePreviewActive) {
                 isGamePreviewActive = true;
+                graphics::Camera2D editorCamera = projectEditor->getCamera();
+                setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
+                setCameraZoom(editorCamera.getZoom());
+            }
             break;
         default:
             break;
@@ -250,8 +254,7 @@ namespace engine
         {
             {
                 ZoneScopedN("PixelSimulation");
-                _pixelSimulation.update(); // NO deltaTime here
-                _previewChunkGrid = _pixelSimulation.getGrid(); // cache current chunk grid state for rendering and potential editing after preview
+                _pixelSimulation.update();
             }
 
             accumulator -= fixedDt;
@@ -360,12 +363,12 @@ namespace engine
         systemManager.entitySignatureChanged(entityId, sig);
     }
 
-    std::vector<graphics::Pixel> Core::buildRenderPixels() const
+    std::vector<graphics::Pixel> Core::buildRenderPixels(ChunkGrid grid) const
     {
         std::vector<graphics::Pixel> result;
         result.reserve(10000);
 
-        for (const auto& [key, chunk] : _previewChunkGrid.chunks)
+        for (const auto& [key, chunk] : grid.chunks)
         {
             // Correct signed decode from packed int64 key
             const int cx = static_cast<int32_t>(key >> 32);
