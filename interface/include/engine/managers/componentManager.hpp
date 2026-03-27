@@ -5,6 +5,7 @@
 #include <typeindex>
 #include <stdexcept>
 #include <iostream>
+#include <functional>
 
 #include "engine/ecs/IComponentArray.hpp"
 #include "engine/ecs/componentArray.hpp"
@@ -23,6 +24,16 @@ namespace engine
     public:
         ComponentManager() = default;
         ~ComponentManager() = default;
+
+        /**
+         * @brief Create a Entity object
+         * 
+         * @return ecs::Entity 
+         */
+        void setEntityMutationCallback(std::function<void(ecs::EntityID)> callback)
+        {
+            onEntityMutated = std::move(callback);
+        }
 
         /**
          * @brief Registers a component type with the manager.
@@ -74,6 +85,7 @@ namespace engine
         void addComponent(ecs::EntityID entity, const T &component)
         {
             getComponentArray<T>()->insertData(entity, component);
+            notifyEntityMutated(entity);
         }
 
         /**
@@ -86,6 +98,7 @@ namespace engine
         void removeComponent(ecs::EntityID entity)
         {
             getComponentArray<T>()->removeData(entity);
+            notifyEntityMutated(entity);
         }
 
         /**
@@ -137,6 +150,15 @@ namespace engine
 
         // Incremental component type ID generator
         ComponentType nextComponentType = 0;
+        std::function<void(ecs::EntityID)> onEntityMutated;
+
+        void notifyEntityMutated(ecs::EntityID entity)
+        {
+            if (onEntityMutated)
+            {
+                onEntityMutated(entity);
+            }
+        }
 
 
         /**

@@ -1,3 +1,4 @@
+
 find_package(GTest CONFIG REQUIRED)
 
 add_executable(pikselite_tests
@@ -6,6 +7,7 @@ add_executable(pikselite_tests
     # renderer/testSpriteEditor.cpp
     # renderer/testProjectEditor.cpp
     renderer/testDrawOnEditor.cpp
+    engine/testEcs.cpp
     # engine/testChunk.cpp
     graphics/testWindowSize.cpp
 )

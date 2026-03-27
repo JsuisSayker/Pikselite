@@ -77,6 +77,13 @@ namespace engine
         scriptSig.set(componentManager.getComponentType<ecs::components::Transform>());
         scriptSig.set(componentManager.getComponentType<ecs::components::Velocity>());
         systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
+
+        // Centralized signature sync: any component add/remove updates system membership.
+        componentManager.setEntityMutationCallback([this](ecs::EntityID entityId)
+        {
+            refreshEntitySignature(entityId);
+        });
+
         scriptSys.init();
         scriptSys.loadScript("scripts/movement.lua");
 
@@ -319,20 +326,41 @@ namespace engine
             spriteComp.texturePath = "assets/dragon.png";
             componentManager.addComponent<ecs::components::Sprite>(eid, spriteComp);
 
-            ecs::Signature sig;
-            sig.set(componentManager.getComponentType<ecs::components::Transform>());
-            sig.set(componentManager.getComponentType<ecs::components::Velocity>());
-            sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
-            sig.set(componentManager.getComponentType<ecs::components::Sprite>());
-
-            entityManager.setSignature(eid, sig);
-            systemManager.entitySignatureChanged(eid, sig);
-
             _gameObjectToEntity[go.id] = eid;
         }
     }
 
-    std::vector<graphics::Pixel> Core::buildRenderPixels()
+    void Core::refreshEntitySignature(ecs::EntityID entityId)
+    {
+        if (!entityManager.hasEntity(entityId))
+        {
+            return;
+        }
+
+        ecs::Signature sig{};
+
+        if (componentManager.hasComponent<ecs::components::Transform>(entityId))
+        {
+            sig.set(componentManager.getComponentType<ecs::components::Transform>());
+        }
+        if (componentManager.hasComponent<ecs::components::Velocity>(entityId))
+        {
+            sig.set(componentManager.getComponentType<ecs::components::Velocity>());
+        }
+        if (componentManager.hasComponent<ecs::components::GameObjectLink>(entityId))
+        {
+            sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
+        }
+        if (componentManager.hasComponent<ecs::components::Sprite>(entityId))
+        {
+            sig.set(componentManager.getComponentType<ecs::components::Sprite>());
+        }
+
+        entityManager.setSignature(entityId, sig);
+        systemManager.entitySignatureChanged(entityId, sig);
+    }
+
+    std::vector<graphics::Pixel> Core::buildRenderPixels() const
     {
         std::vector<graphics::Pixel> result;
         result.reserve(10000);

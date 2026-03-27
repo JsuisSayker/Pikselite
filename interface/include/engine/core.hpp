@@ -91,7 +91,11 @@ namespace engine
         // attaching Transform and GameObjectLink components.
         void loadGameObjectsIntoECS();
 
-        std::vector<graphics::Pixel> buildRenderPixels();
+        // Rebuild and propagate ECS signature from actual component presence.
+        void refreshEntitySignature(ecs::EntityID entityId);
+
+        
+        std::vector<graphics::Pixel> buildRenderPixels() const;
 
         // save scene and load scene functions for project editor
         void saveScene(const std::string& filename);

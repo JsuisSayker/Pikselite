@@ -30,9 +30,18 @@ namespace engine
          * 
          * @param entity 
          */
-        void destroyEntity(ecs::Entity entity);
-        
+         void destroyEntity(ecs::Entity entity);
+
         /**
+         * @brief Checks if a given entity exists.
+         * 
+         * @param entity 
+         * @return true 
+         * @return false 
+         */
+         bool hasEntity(ecs::EntityID entity) const;
+
+         /**
          * @brief Gets a const reference to the list of active entities.
          * 
          * @return const std::vector<std::unique_ptr<ecs::Entity>>& 

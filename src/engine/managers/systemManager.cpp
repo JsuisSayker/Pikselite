@@ -14,7 +14,15 @@ namespace engine
     {
         for (auto &[type, system] : systemsMap)
         {
-            const auto &sysSig = systemSignatures[type];
+            const auto sigIt = systemSignatures.find(type);
+            if (sigIt == systemSignatures.end())
+            {
+                // No declared signature: keep entity out of this system.
+                system->entities.erase(entity);
+                continue;
+            }
+
+            const auto &sysSig = sigIt->second;
 
             if ((entitySignature & sysSig) == sysSig)
             {
