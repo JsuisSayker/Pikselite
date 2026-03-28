@@ -16,32 +16,31 @@
 #include <fstream>
 #include <filesystem>
 
-namespace {
-    json pixelToJson(const graphics::Pixel& pixel)
+namespace
+{
+    json pixelToJson(const graphics::Pixel &pixel)
     {
         return {
             {"x", pixel.position.x},
             {"y", pixel.position.y},
             {"r", pixel.color.r},
             {"g", pixel.color.g},
-            {"b", pixel.color.b}
-        };
+            {"b", pixel.color.b}};
     }
 
-    graphics::Pixel pixelFromJson(const json& j)
+    graphics::Pixel pixelFromJson(const json &j)
     {
         return {
             {j.value("x", 0.0f), j.value("y", 0.0f)},
-            {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}
-        };
+            {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}};
     }
 
-    json gameObjectToJson(const Pixel::GameObject& go)
+    json gameObjectToJson(const Pixel::GameObject &go)
     {
         // TODO
     }
 
-    Pixel::GameObject gameObjectFromJson(const json& j)
+    Pixel::GameObject gameObjectFromJson(const json &j)
     {
         // TODO
     }
@@ -80,9 +79,7 @@ namespace engine
 
         // Centralized signature sync: any component add/remove updates system membership.
         componentManager.setEntityMutationCallback([this](ecs::EntityID entityId)
-        {
-            refreshEntitySignature(entityId);
-        });
+                                                   { refreshEntitySignature(entityId); });
 
         scriptSys.init();
         scriptSys.loadScript("scripts/movement.lua");
@@ -114,13 +111,16 @@ namespace engine
                 ZoneScopedN("ProjectEditor");
                 projectEditor->run(event);
 
-                if (projectEditor->consumeSaveSceneRequest()) {
+                if (projectEditor->consumeSaveSceneRequest())
+                {
                     copyProjectEditorDataToCore();
                     saveScene(_sceneFilename);
                 }
 
-                if (projectEditor->consumeLoadSceneRequest()) {
-                    if (loadScene(_sceneFilename)) {
+                if (projectEditor->consumeLoadSceneRequest())
+                {
+                    if (loadScene(_sceneFilename))
+                    {
                         projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid, gameObjectCounter);
                     }
                 }
@@ -228,7 +228,8 @@ namespace engine
             isProjectEditorActive = !isProjectEditorActive;
             break;
         case graphics::KEY_F5:
-            if (!isGamePreviewActive) {
+            if (!isGamePreviewActive)
+            {
                 isGamePreviewActive = true;
                 graphics::Camera2D editorCamera = projectEditor->getCamera();
                 setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
@@ -276,7 +277,8 @@ namespace engine
 
     void Core::shutdown()
     {
-        if (projectEditor) {
+        if (projectEditor)
+        {
             copyProjectEditorDataToCore();
             saveScene(_sceneFilename);
         }
@@ -336,28 +338,9 @@ namespace engine
     void Core::refreshEntitySignature(ecs::EntityID entityId)
     {
         if (!entityManager.hasEntity(entityId))
-        {
             return;
-        }
 
-        ecs::Signature sig{};
-
-        if (componentManager.hasComponent<ecs::components::Transform>(entityId))
-        {
-            sig.set(componentManager.getComponentType<ecs::components::Transform>());
-        }
-        if (componentManager.hasComponent<ecs::components::Velocity>(entityId))
-        {
-            sig.set(componentManager.getComponentType<ecs::components::Velocity>());
-        }
-        if (componentManager.hasComponent<ecs::components::GameObjectLink>(entityId))
-        {
-            sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
-        }
-        if (componentManager.hasComponent<ecs::components::Sprite>(entityId))
-        {
-            sig.set(componentManager.getComponentType<ecs::components::Sprite>());
-        }
+        ecs::Signature sig = componentManager.getEntitySignature(entityId);
 
         entityManager.setSignature(entityId, sig);
         systemManager.entitySignatureChanged(entityId, sig);
@@ -368,7 +351,7 @@ namespace engine
         std::vector<graphics::Pixel> result;
         result.reserve(10000);
 
-        for (const auto& [key, chunk] : grid.chunks)
+        for (const auto &[key, chunk] : grid.chunks)
         {
             // Correct signed decode from packed int64 key
             const int cx = static_cast<int32_t>(key >> 32);
@@ -378,10 +361,11 @@ namespace engine
             {
                 for (int x = 0; x < CHUNK_SIZE; ++x)
                 {
-                    const Element::Pixel& simPixel = chunk.pixels[y * CHUNK_SIZE + x];
-                    if (simPixel.type == Element::EMPTY) continue;
+                    const Element::Pixel &simPixel = chunk.pixels[y * CHUNK_SIZE + x];
+                    if (simPixel.type == Element::EMPTY)
+                        continue;
 
-                    const auto& def = g_elements[simPixel.type];
+                    const auto &def = g_elements[simPixel.type];
 
                     graphics::Pixel renderPixel;
 
@@ -391,14 +375,12 @@ namespace engine
 
                     renderPixel.position = glm::vec2(
                         gx * PIXEL_SIZE,
-                        gy * PIXEL_SIZE
-                    );
+                        gy * PIXEL_SIZE);
 
                     renderPixel.color = glm::vec3(
                         def.color[0] / 255.0f,
                         def.color[1] / 255.0f,
-                        def.color[2] / 255.0f
-                    );
+                        def.color[2] / 255.0f);
 
                     result.push_back(renderPixel);
                 }

@@ -9,11 +9,13 @@
 
 #include "engine/ecs/IComponentArray.hpp"
 #include "engine/ecs/componentArray.hpp"
+#include "engine/ecs/signature.hpp"
 
 namespace engine
 {
     using ComponentType = std::uint8_t;
-    constexpr ComponentType MAX_COMPONENTS = 32;
+    // Reuse the ECS-level limit to avoid divergence with Signature bit width.
+    constexpr std::size_t MAX_COMPONENT_TYPES = ecs::MAX_COMPONENT_TYPES;
 
     /**
      * @brief The ComponentManager class is responsible for managing the storage and access of components in the ECS architecture.
@@ -49,6 +51,8 @@ namespace engine
                 std::cerr << "Registering component type more than once: " << key.name() << std::endl;
                 return;
             }
+
+            checkComponentCapacity();
 
             componentTypes.emplace(key, nextComponentType++);
             auto array = std::make_unique<ecs::ComponentArray<T>>();
@@ -141,6 +145,31 @@ namespace engine
             }
         }
 
+        /**
+         * @brief Builds the signature for an entity by checking all registered component types.
+         * This automatically discovers which components the entity has.
+         * 
+         * @param entityId 
+         * @return ecs::Signature 
+         */
+        ecs::Signature getEntitySignature(ecs::EntityID entityId) const
+        {
+            ecs::Signature sig{};
+            for (const auto& [typeIdx, componentType] : componentTypes)
+            {
+                auto arrayIt = componentArrays.find(typeIdx);
+                if (arrayIt != componentArrays.end() && arrayIt->second)
+                {
+                    // Check if this entity has this component type
+                    if (arrayIt->second->hasEntityData(entityId))
+                    {
+                        sig.set(static_cast<std::size_t>(componentType));
+                    }
+                }
+            }
+            return sig;
+        }
+
     private:
         // Map of component type to component array
         std::unordered_map<std::type_index, ComponentType> componentTypes;
@@ -151,6 +180,15 @@ namespace engine
         // Incremental component type ID generator
         ComponentType nextComponentType = 0;
         std::function<void(ecs::EntityID)> onEntityMutated;
+
+        // Guard: prevent registration overflow
+        void checkComponentCapacity()
+        {
+            if (nextComponentType >= MAX_COMPONENT_TYPES)
+            {
+                throw std::runtime_error("Maximum number of component types exceeded");
+            }
+        }
 
         void notifyEntityMutated(ecs::EntityID entity)
         {

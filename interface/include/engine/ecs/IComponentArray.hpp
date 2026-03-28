@@ -11,5 +11,14 @@ namespace ecs
     {
         virtual ~IComponentArray() = default;
         virtual void entityDestroyed(ecs::EntityID id) = 0;
+        
+        /**
+         * @brief Checks if an entity has a component in this array.
+         * Used for dynamic signature discovery.
+         * 
+         * @param id Entity ID to check
+         * @return true if entity has this component type
+         */
+        virtual bool hasEntityData(ecs::EntityID id) const = 0;
     };
 } // namespace ecs
