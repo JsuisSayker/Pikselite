@@ -422,9 +422,8 @@ namespace graphics {
      * @brief Displays the game objects bar, which consists of a hierarchy view of all game objects and an inspector for the selected game object. The hierarchy allows users to select, rename, and delete game objects, while the inspector displays properties of the selected game object and allows users to edit them.
      * @param gameObjects A reference to a vector of game objects to be displayed in the hierarchy.
      * @param selectedGameObjectIndex A reference to an integer that indicates the index of the currently selected game object in the hierarchy.
-     * @param componentManager A pointer to the component manager that manages the components associated with the game objects, used for displaying and editing component properties in the inspector.
      */
-    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager)
+    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex)
     {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
