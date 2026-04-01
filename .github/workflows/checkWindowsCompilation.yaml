@@ -1,0 +1,38 @@
+name: Check Windows Compilation
+run-name: check-windows-compilation
+
+on:
+    push:
+        branches:
+            - main
+            - dev
+            - ci_cd
+    pull_request:
+        branches:
+            - main
+            - dev
+            - ci_cd
+permissions:
+    contents: read
+
+jobs:
+    check_windows_compilation:
+        name: Check Windows Compilation
+        runs-on: self-hosted
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v3
+              with:
+                    fetch-depth: 0
+
+            - name: Check Windows Compilation
+              run: |
+                echo "Checking Windows compilation..."
+                // Run build.bat at the root of the repository and check for errors
+                cmd /c "build.bat"
+                if %ERRORLEVEL% NEQ 0 (
+                    echo "Windows compilation failed with error code %ERRORLEVEL%"
+                    exit /b %ERRORLEVEL%
+                ) else (
+                    echo "Windows compilation succeeded!"
+                )
