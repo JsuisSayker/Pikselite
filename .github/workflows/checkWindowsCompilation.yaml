@@ -26,11 +26,12 @@ jobs:
                     fetch-depth: 0
 
             - name: Check Windows Compilation
+              shell: cmd
               run: |
                 echo "Checking Windows compilation..."
-                // Run build.bat at the root of the repository and check for errors
-                cmd /c "build.bat"
-                if %ERRORLEVEL% NEQ 0 (
+                REM Run build.bat at the root of the repository and check for errors
+                call build.bat
+                if errorlevel 1 (
                     echo "Windows compilation failed with error code %ERRORLEVEL%"
                     exit /b %ERRORLEVEL%
                 ) else (
