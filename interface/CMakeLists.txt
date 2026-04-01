@@ -29,5 +29,5 @@ target_include_directories(pikselite_interface
 
 target_link_libraries(pikselite_interface
   INTERFACE
-    imgui_backends
+    imgui::imgui_backends
 )
