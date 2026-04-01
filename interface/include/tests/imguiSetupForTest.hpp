@@ -1,7 +1,7 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include <backends/imgui_impl_sdl2.h>
-#include <backends/imgui_impl_opengl3.h>
+#include <imgui/backends/imgui_impl_sdl2.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
 
 
 namespace imguiTest {

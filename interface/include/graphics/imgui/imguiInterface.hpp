@@ -1,4 +1,4 @@
-/** 
+/**
  * @file imguiInterface.hpp
  * @brief Declaration of the ImGui interface for the Pixel Engine.
  * This file contains the declaration for the ImguiInterface class, which provides a wrapper around the ImGui library for use within the application.
@@ -14,8 +14,8 @@
 #include <graphics/renderer/renderer.hpp>
 
 #include <imgui.h>
-#include <backends/imgui_impl_sdl2.h>
-#include <backends/imgui_impl_opengl3.h>
+#include <imgui/backends/imgui_impl_sdl2.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
 
 #include <graphics/imgui/components/components.hpp>
 #include <engine/pixels/chunk.hpp>
