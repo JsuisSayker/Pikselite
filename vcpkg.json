@@ -17,7 +17,7 @@
       "version>=": "0.13.1"
     },
     {
-      "name": "imgui",
+      "name": "imgui-backends",
       "features": [
         "opengl3-binding",
         "sdl2-binding"
