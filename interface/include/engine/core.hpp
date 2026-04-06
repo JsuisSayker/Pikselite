@@ -44,10 +44,11 @@ namespace engine
         editors::ProjectEditor *projectEditor;
 
         
-        bool isProjectEditorActive = false;
-        
-        bool running;
+        bool isProjectsListPageActive = true; ////////////////////////
         bool isGamePreviewActive = false;
+        bool isProjectEditorActive = false;
+        bool isSpriteEditorActive = false;
+        bool running;
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
         graphics::ImguiInterface imguiInterface;
@@ -85,6 +86,8 @@ namespace engine
         // helper: run a single frame (step) of the game preview; returns whether preview continues
         void runGamePreview();
         void shutdown();
+
+        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface); ///////////////////////////
 
         bool copyProjectEditorDataToCore();
 

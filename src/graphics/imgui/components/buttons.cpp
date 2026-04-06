@@ -40,30 +40,34 @@ bool graphics::ToggleButton(const std::string &label, bool &value)
  * @param options A vector of strings representing the available options.
  * @return true if the selected option was changed, false otherwise.
  */
-bool graphics::DropdownButton(const std::string& label, int& currentIndex, const std::vector<std::string>& options)
+bool graphics::DropdownButton(const std::string& label, int& selectedIndex, const std::vector<std::string>& options)
 {
     if (options.empty())
         return false;
 
-    if (currentIndex < 0 || currentIndex >= (int)options.size())
-        currentIndex = 0;
+    selectedIndex = -1;
 
-    bool changed = false;
+    std::string popupId = label + "##dropdown";
 
-    if (ImGui::BeginCombo(label.c_str(), options[currentIndex].c_str()))
+    if (ImGui::Button(label.c_str()))
     {
-        for (size_t i = 0; i < options.size(); i++)
-        {
-            if (ImGui::Selectable(options[i].c_str(), currentIndex == i))
-            {
-                currentIndex = i;
-                changed = true;
-            }
-        }
-        ImGui::EndCombo();
+        ImGui::OpenPopup(popupId.c_str());
     }
 
-    return changed;
+    if (ImGui::BeginPopup(popupId.c_str()))
+    {
+        for (int i = 0; i < (int)options.size(); i++)
+        {
+            if (ImGui::Selectable(options[i].c_str()))
+            {
+                selectedIndex = i;
+                ImGui::CloseCurrentPopup(); // closes after click
+            }
+        }
+        ImGui::EndPopup();
+    }
+
+    return selectedIndex != -1;
 }
 
 /** 

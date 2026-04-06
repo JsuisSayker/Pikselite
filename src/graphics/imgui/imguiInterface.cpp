@@ -727,4 +727,60 @@ namespace graphics {
             });
         });
     }
+
+    void ImguiInterface::fileToolBar()
+    {
+        static BarConfig topBarConfig {
+            BarOrientation::Horizontal,
+            "File Toolbar",
+            ImVec2(0.0f, LAYOUT_TOP_H),
+            true,
+            GetDesiredPosition("top")
+        };
+
+        static Bar topBar(topBarConfig);
+
+        topBar.Draw([&]() {
+
+            static int fileIndex = 0;
+            std::vector<std::string> fileOptions = {"Save", "Exit"};
+            if (DropdownButton("File", fileIndex, fileOptions))
+            {
+                switch (fileIndex)
+                {
+                    case 0:
+                        // Save
+                        break;
+                    case 1:
+                        // Exit
+                        break;
+                }
+            }
+
+            ImGui::SameLine();
+
+            static int editIndex = 0;
+            std::vector<std::string> editOptions = {"Placeholder1", "Placeholder2"};
+            if (DropdownButton("Edit", editIndex, editOptions))
+            {
+                switch (editIndex)
+                {
+                    case 0:
+                        // Placeholder1
+                        break;
+                    case 1:
+                        // Placeholder2
+                        break;
+                }
+            }
+
+            ImGui::SameLine();
+
+            if (BasicButton("Help"))
+            {
+                // TODO
+            }
+        });
+    }
+
 } // namespace graphics

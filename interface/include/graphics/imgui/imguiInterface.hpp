@@ -56,6 +56,12 @@ namespace graphics {
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager);
 
+        //////////////////////////
+        void fileToolBar();
+        void projectOptionsBar();
+        void recentProjectsDisplay();
+        /////////////////////////
+
         void startFrame();
         void endFrame(SDL_Window* window);
 

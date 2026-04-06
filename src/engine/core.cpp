@@ -104,9 +104,10 @@ namespace engine
             {
                 ZoneScopedN("GamePreview");
                 runGamePreview();
-            }
-
-            if (isProjectEditorActive)
+            } else if (isProjectsListPageActive) { //////////////////////////
+                ZoneScopedN("ProjectsListPage");
+                runProjectsListPage(sdlInterface, renderer, imguiInterface);
+            } else if (isProjectEditorActive)
             {
                 ZoneScopedN("ProjectEditor");
                 projectEditor->run(event);
@@ -124,8 +125,7 @@ namespace engine
                         projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid, gameObjectCounter);
                     }
                 }
-            }
-            else
+            } else if (isSpriteEditorActive)
             {
                 ZoneScopedN("SpriteEditor");
                 spriteEditor->run(event);
@@ -199,6 +199,26 @@ namespace engine
         glViewport(0, 0, w, h);
     }
 
+    void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface) ///////////////////////////
+    {
+        renderer.clear();
+        imguiInterface.startFrame();
+
+        imguiInterface.fileToolBar();
+
+        // Top bar with: File dropdown b, Edit dropdown b, Help b
+
+        // Horizontal bar with: Get strated text, seperator line, New b, Import b, Open b, Tutorial b
+
+        // Section (horizontal) with: Recent projects text, 2 formatting options b, List of the last 2 projects opened
+        // The project display will show: thumbnail, Title of project, path to project, Date of last opened
+        // Clicking on a project will: make isProjectEditorActive = false, isProjectEditorActive = true, and load the project data into the core
+        
+        //ImGui::End();
+        imguiInterface.endFrame(sdlInterface.getWindow());
+        renderer.present(sdlInterface.getWindow());
+    }
+
     void Core::run()
     {
         init();
@@ -225,7 +245,11 @@ namespace engine
             break;
         }
         case graphics::KEY_TAB:
-            isProjectEditorActive = !isProjectEditorActive;
+            if (!isProjectsListPageActive)
+            {
+                isProjectEditorActive = !isProjectEditorActive;
+                isSpriteEditorActive = !isSpriteEditorActive;
+            }
             break;
         case graphics::KEY_F5:
             if (!isGamePreviewActive)
