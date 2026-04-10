@@ -7,6 +7,7 @@ add_library(engine
     managers/luaManager.cpp
     pixels/simulation/element.cpp
     ecs/systems/spriteSystem.cpp
+    physics/boxWorld.cpp
 )
 
 target_include_directories(engine
@@ -22,6 +23,7 @@ target_link_libraries(engine
     ${GLEW_LIBRARIES}
     OpenGL::GL
     ${LUA_LIBRARIES}
+    box2d::box2d
 )
 
 target_include_directories(engine

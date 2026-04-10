@@ -6,6 +6,9 @@
 #include <engine/ecs/systems/movementSystem.hpp>
 #include <tracy/Tracy.hpp>
 
+#include <cmath>
+#include <random>
+
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
 #pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
@@ -136,6 +139,37 @@ namespace engine
 
     void Core::runGamePreview()
     {
+        enum class DemoShapeType
+        {
+            Box,
+            Circle,
+        };
+
+        struct DemoShape
+        {
+            b2BodyId bodyId = b2_nullBodyId;
+            DemoShapeType type = DemoShapeType::Box;
+            glm::vec2 size = {50.0f, 50.0f};
+            float radius = 25.0f;
+            glm::vec3 color = {1.0f, 0.0f, 0.0f};
+        };
+
+        const auto buildCirclePixels = [](glm::vec2 center, float radius, glm::vec3 color)
+        {
+            std::vector<graphics::Pixel> pixels;
+            for (float y = -radius + PIXEL_SIZE * 0.5f; y < radius; y += PIXEL_SIZE)
+            {
+                for (float x = -radius + PIXEL_SIZE * 0.5f; x < radius; x += PIXEL_SIZE)
+                {
+                    if ((x * x + y * y) <= (radius * radius))
+                    {
+                        pixels.push_back({center + glm::vec2(x, y), color});
+                    }
+                }
+            }
+            return pixels;
+        };
+
         SDL_Window *gameWindow = SDL_CreateWindow(
             "Game Preview",
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -143,13 +177,84 @@ namespace engine
             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
+        _boxWorld.shutdown();
+        _boxWorld.init({0.0f, -2500.0f});
+        b2WorldId worldId = _boxWorld.getWorldId();
 
-        copyProjectEditorDataToCore();
+        const glm::vec2 cameraCenter = _camera.getPosition();
+        const float cameraZoom = _camera.getZoom() > 0.0f ? _camera.getZoom() : 1.0f;
+        const float previewHalfWidth = (WINDOW_WIDTH * 0.5f) / cameraZoom;
+        const float previewHalfHeight = (WINDOW_HEIGHT * 0.5f) / cameraZoom;
+        const float groundHalfThickness = 5.0f;
+        const float groundCenterY = cameraCenter.y - previewHalfHeight + groundHalfThickness;
+
+        b2BodyDef groundDef = b2DefaultBodyDef();
+        groundDef.type = b2_staticBody;
+        groundDef.position = {cameraCenter.x, groundCenterY};
+        _groundBody = b2CreateBody(worldId, &groundDef);
+
+        b2ShapeDef groundShapeDef = b2DefaultShapeDef();
+        groundShapeDef.density = 0.0f;
+        groundShapeDef.material.friction = 0.6f;
+        const b2Polygon groundBox = b2MakeBox(previewHalfWidth, groundHalfThickness);
+        b2CreatePolygonShape(_groundBody, &groundShapeDef, &groundBox);
+
+        std::mt19937 rng(std::random_device{}());
+        std::uniform_real_distribution<float> xDist(cameraCenter.x - previewHalfWidth * 0.75f, cameraCenter.x + previewHalfWidth * 0.75f);
+        std::uniform_real_distribution<float> boxHalfExtentDist(14.0f, 28.0f);
+        std::uniform_real_distribution<float> circleRadiusDist(12.0f, 24.0f);
+        std::uniform_real_distribution<float> rotationDist(-0.9f, 0.9f);
+        std::uniform_real_distribution<float> angularVelocityDist(-1.5f, 1.5f);
+        std::uniform_real_distribution<float> colorDist(0.2f, 1.0f);
+        std::uniform_int_distribution<int> shapeTypeDist(0, 1);
+
+        std::vector<DemoShape> demoShapes;
+        demoShapes.reserve(15);
+
+        for (int index = 0; index < 15; ++index)
+        {
+            DemoShape shape;
+            shape.type = shapeTypeDist(rng) == 0 ? DemoShapeType::Box : DemoShapeType::Circle;
+            shape.color = {colorDist(rng), colorDist(rng), colorDist(rng)};
+
+            b2BodyDef bodyDef = b2DefaultBodyDef();
+            bodyDef.type = b2_dynamicBody;
+            bodyDef.position = {xDist(rng), cameraCenter.y + previewHalfHeight + 80.0f + static_cast<float>(index) * 70.0f};
+            bodyDef.rotation = b2MakeRot(rotationDist(rng));
+            bodyDef.angularVelocity = angularVelocityDist(rng);
+            bodyDef.fixedRotation = false;
+            shape.bodyId = b2CreateBody(worldId, &bodyDef);
+
+            b2ShapeDef shapeDef = b2DefaultShapeDef();
+            shapeDef.density = 1.0f;
+            shapeDef.material.friction = 0.4f;
+            shapeDef.material.restitution = 0.1f;
+
+            if (shape.type == DemoShapeType::Box)
+            {
+                const float halfW = boxHalfExtentDist(rng);
+                const float halfH = boxHalfExtentDist(rng);
+                shape.size = {halfW * 2.0f, halfH * 2.0f};
+
+                const b2Polygon box = b2MakeBox(halfW, halfH);
+                b2CreatePolygonShape(shape.bodyId, &shapeDef, &box);
+            }
+            else
+            {
+                shape.radius = circleRadiusDist(rng);
+
+                b2Circle circle;
+                circle.center = {0.0f, 0.0f};
+                circle.radius = shape.radius;
+                b2CreateCircleShape(shape.bodyId, &shapeDef, &circle);
+            }
+
+            demoShapes.push_back(shape);
+        }
 
         while (isGamePreviewActive && running)
         {
             timer.tick();
-            float deltaTime = timer.getDeltaTime();
             graphics::InputEvent gameEvent = handleEvents();
 
             if (gameEvent.type == graphics::WINDOW_CLOSE)
@@ -175,22 +280,54 @@ namespace engine
                 break;
             }
 
-            update(deltaTime);
+            _pixelSimulation.update();
+            _boxWorld.step(1.0f / 60.0f, 4);
 
             renderer.clear();
 
             std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
-            _renderPixels = framePixels; // cache for potential editing after preview
 
+            for (const DemoShape& shape : demoShapes)
+            {
+                const b2Transform bodyTransform = b2Body_GetTransform(shape.bodyId);
+                const b2Vec2 bodyPosition = bodyTransform.p;
+                const float bodyRotation = b2Rot_GetAngle(bodyTransform.q);
+
+                if (shape.type == DemoShapeType::Box)
+                {
+                    std::vector<graphics::Pixel> shapePixels = buildRotatedSquarePixels(
+                        {bodyPosition.x, bodyPosition.y},
+                        glm::max(shape.size.x, shape.size.y),
+                        bodyRotation,
+                        shape.color);
+                    framePixels.insert(framePixels.end(), shapePixels.begin(), shapePixels.end());
+                }
+                else
+                {
+                    std::vector<graphics::Pixel> shapePixels = buildCirclePixels(
+                        {bodyPosition.x, bodyPosition.y},
+                        shape.radius,
+                        shape.color);
+                    framePixels.insert(framePixels.end(), shapePixels.begin(), shapePixels.end());
+                }
+            }
+
+            std::vector<graphics::Pixel> groundPixels = buildRectanglePixels(
+                {cameraCenter.x, groundCenterY},
+                previewHalfWidth * 2.0f,
+                groundHalfThickness * 2.0f,
+                {0.2f, 0.2f, 0.2f});
+            framePixels.insert(framePixels.end(), groundPixels.begin(), groundPixels.end());
+
+            _renderPixels = framePixels;
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
-
-            // Render all entities that have a SpriteComponent via the ECS system
-            auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
-            if (spriteSystem)
-                spriteSystem->update(0.0, componentManager);
 
             renderer.present(gameWindow);
         }
+
+        _boxWorld.shutdown();
+        _cubeBody = b2_nullBodyId;
+        _groundBody = b2_nullBodyId;
 
         SDL_DestroyWindow(gameWindow);
         SDL_GL_MakeCurrent(sdlInterface.getWindow(), sdlInterface.getGLContext());
@@ -204,6 +341,59 @@ namespace engine
         init();
         mainLoop();
         shutdown();
+    }
+
+    std::vector<graphics::Pixel> Core::buildSquarePixels(glm::vec2 center, float size, glm::vec3 color) const
+    {
+        std::vector<graphics::Pixel> pixels;
+        const float halfSize = size * 0.5f;
+
+        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
+        {
+            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
+            {
+                pixels.push_back({center + glm::vec2(x, y), color});
+            }
+        }
+
+        return pixels;
+    }
+
+    std::vector<graphics::Pixel> Core::buildRotatedSquarePixels(glm::vec2 center, float size, float rotation, glm::vec3 color) const
+    {
+        std::vector<graphics::Pixel> pixels;
+        const float halfSize = size * 0.5f;
+        const float cosine = std::cos(rotation);
+        const float sine = std::sin(rotation);
+
+        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
+        {
+            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
+            {
+                const float rotatedX = x * cosine - y * sine;
+                const float rotatedY = x * sine + y * cosine;
+                pixels.push_back({center + glm::vec2(rotatedX, rotatedY), color});
+            }
+        }
+
+        return pixels;
+    }
+
+    std::vector<graphics::Pixel> Core::buildRectanglePixels(glm::vec2 center, float width, float height, glm::vec3 color) const
+    {
+        std::vector<graphics::Pixel> pixels;
+        const float halfWidth = width * 0.5f;
+        const float halfHeight = height * 0.5f;
+
+        for (float y = -halfHeight + PIXEL_SIZE * 0.5f; y < halfHeight; y += PIXEL_SIZE)
+        {
+            for (float x = -halfWidth + PIXEL_SIZE * 0.5f; x < halfWidth; x += PIXEL_SIZE)
+            {
+                pixels.push_back({center + glm::vec2(x, y), color});
+            }
+        }
+
+        return pixels;
     }
 
     graphics::InputEvent Core::handleEvents()
@@ -230,6 +420,8 @@ namespace engine
         case graphics::KEY_F5:
             if (!isGamePreviewActive)
             {
+                // Ensure preview reads the latest pixels/chunks from the editor state.
+                copyProjectEditorDataToCore();
                 isGamePreviewActive = true;
                 graphics::Camera2D editorCamera = projectEditor->getCamera();
                 setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
