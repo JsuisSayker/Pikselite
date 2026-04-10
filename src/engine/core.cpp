@@ -204,6 +204,26 @@ namespace engine
 
             renderer.drawSegments(edgeVertices, _camera);
 
+            std::vector<graphics::LineVertex> triVertices;
+            for (const auto& region : _pixelSimulation.getDetectedRegions())
+            {
+                for (const auto& tri : region.triangles)
+                {
+                    graphics::LineVertex a{glm::vec2(tri.a.x * PIXEL_SIZE, tri.a.y * PIXEL_SIZE), glm::vec3(0.0f, 0.8f, 0.2f)};
+                    graphics::LineVertex b{glm::vec2(tri.b.x * PIXEL_SIZE, tri.b.y * PIXEL_SIZE), glm::vec3(0.0f, 0.8f, 0.2f)};
+                    graphics::LineVertex c{glm::vec2(tri.c.x * PIXEL_SIZE, tri.c.y * PIXEL_SIZE), glm::vec3(0.0f, 0.8f, 0.2f)};
+
+                    triVertices.push_back(a);
+                    triVertices.push_back(b);
+                    triVertices.push_back(b);
+                    triVertices.push_back(c);
+                    triVertices.push_back(c);
+                    triVertices.push_back(a);
+                }
+            }
+
+            renderer.drawSegments(triVertices, _camera);
+
             // Render all entities that have a SpriteComponent via the ECS system
             auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
             if (spriteSystem)

@@ -24,6 +24,7 @@ class Simulation {
         }
         void buildRegionContoursMS(Element::Region& region);
         void simplifyRegionContours(Element::Region& region, float epsilon);
+        void triangulateRegion(Element::Region& region);
         const std::vector<Element::Region>& getDetectedRegions() const { return detectedRegions; }
 
     private:

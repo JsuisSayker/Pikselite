@@ -229,8 +229,9 @@ void Simulation::detectRegions()
                 if (visitedForRegions.count(makeVisitedKey(globalX, globalY))) continue;
 
                 Element::Region region = regionFloodFill(globalX, globalY, p.type);
-                buildRegionContoursMS(region); // build edges here
-                simplifyRegionContours(region, 0.25f);
+                buildRegionContoursMS(region);
+                simplifyRegionContours(region, 0.6f);
+                triangulateRegion(region);
                 detectedRegions.push_back(std::move(region));
             }
         }
@@ -383,6 +384,7 @@ namespace {
 
 void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
 {
+    region.polygons.clear();
     if (region.edges.empty()) return;
 
     struct Node {
@@ -473,6 +475,8 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
         auto simplified = rdpOpen(loop, epsilon);
         if (simplified.size() < 2) continue;
 
+        region.polygons.push_back(simplified);
+
         simplified.push_back(simplified.front());
         for (size_t i = 0; i + 1 < simplified.size(); ++i) {
             simplifiedEdges.push_back({simplified[i], simplified[i + 1]});
@@ -481,5 +485,119 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
 
     if (!simplifiedEdges.empty()) {
         region.edges = std::move(simplifiedEdges);
+    }
+}
+
+namespace {
+    float polygonArea(const std::vector<Element::Vec2f>& poly) {
+        float area = 0.0f;
+        for (size_t i = 0; i < poly.size(); ++i) {
+            const auto& a = poly[i];
+            const auto& b = poly[(i + 1) % poly.size()];
+            area += a.x * b.y - b.x * a.y;
+        }
+        return area * 0.5f;
+    }
+
+    bool isPointInTri(const Element::Vec2f& p, const Element::Vec2f& a, const Element::Vec2f& b, const Element::Vec2f& c) {
+        auto cross = [](const Element::Vec2f& u, const Element::Vec2f& v) {
+            return u.x * v.y - u.y * v.x;
+        };
+
+        Element::Vec2f v0{c.x - a.x, c.y - a.y};
+        Element::Vec2f v1{b.x - a.x, b.y - a.y};
+        Element::Vec2f v2{p.x - a.x, p.y - a.y};
+
+        float den = cross(v1, v0);
+        if (std::fabs(den) < 1e-6f) return false;
+
+        float u = cross(v2, v0) / den;
+        float v = cross(v1, v2) / den;
+        return (u >= 0.0f) && (v >= 0.0f) && (u + v <= 1.0f);
+    }
+
+    bool isConvex(const Element::Vec2f& prev, const Element::Vec2f& curr, const Element::Vec2f& next) {
+        float cross = (curr.x - prev.x) * (next.y - curr.y) - (curr.y - prev.y) * (next.x - curr.x);
+        return cross > 0.0f;
+    }
+
+    std::vector<Element::Vec2f> pruneCollinear(const std::vector<Element::Vec2f>& poly, float eps)
+    {
+        if (poly.size() < 3) return poly;
+
+        std::vector<Element::Vec2f> out;
+        out.reserve(poly.size());
+
+        auto area2 = [](const Element::Vec2f& a, const Element::Vec2f& b, const Element::Vec2f& c) {
+            return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+        };
+
+        const size_t n = poly.size();
+        for (size_t i = 0; i < n; ++i) {
+            const Element::Vec2f& prev = poly[(i + n - 1) % n];
+            const Element::Vec2f& curr = poly[i];
+            const Element::Vec2f& next = poly[(i + 1) % n];
+
+            float a2 = std::fabs(area2(prev, curr, next));
+            if (a2 <= eps) continue;
+            out.push_back(curr);
+        }
+
+        return out;
+    }
+}
+
+void Simulation::triangulateRegion(Element::Region& region)
+{
+    region.triangles.clear();
+    if (region.polygons.empty()) return;
+
+    for (auto poly : region.polygons) {
+        if (poly.size() < 3) continue;
+
+        poly = pruneCollinear(poly, 1e-4f);
+        if (poly.size() < 3) continue;
+
+        if (polygonArea(poly) < 0.0f) {
+            std::reverse(poly.begin(), poly.end());
+        }
+
+        std::vector<int> idx(poly.size());
+        for (size_t i = 0; i < poly.size(); ++i) idx[i] = static_cast<int>(i);
+
+        int guard = 0;
+        while (idx.size() > 2 && guard++ < 10000) {
+            bool earFound = false;
+            for (size_t i = 0; i < idx.size(); ++i) {
+                int i0 = idx[(i + idx.size() - 1) % idx.size()];
+                int i1 = idx[i];
+                int i2 = idx[(i + 1) % idx.size()];
+
+                const auto& a = poly[i0];
+                const auto& b = poly[i1];
+                const auto& c = poly[i2];
+
+                if (!isConvex(a, b, c)) continue;
+
+                bool anyInside = false;
+                for (size_t j = 0; j < idx.size(); ++j) {
+                    int v = idx[j];
+                    if (v == i0 || v == i1 || v == i2) continue;
+                    if (isPointInTri(poly[v], a, b, c)) {
+                        anyInside = true;
+                        break;
+                    }
+                }
+
+                if (anyInside) continue;
+
+                region.triangles.push_back({a, b, c});
+                idx.erase(idx.begin() + static_cast<int>(i));
+                earFound = true;
+                break;
+            }
+
+            if (!earFound) break;
+        }
     }
 }

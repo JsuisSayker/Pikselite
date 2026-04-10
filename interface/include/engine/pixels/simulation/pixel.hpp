@@ -24,8 +24,14 @@ namespace Element {
         Vec2f a, b;
     };
 
+    struct Triangle {
+        Vec2f a, b, c;
+    };
+
     struct Region {
         std::vector<Vec2i> pixels;
         std::vector<Segment> edges; // marching-squares output
+        std::vector<std::vector<Vec2f>> polygons; // simplified loops
+        std::vector<Triangle> triangles; // triangulation output
     };
 }
