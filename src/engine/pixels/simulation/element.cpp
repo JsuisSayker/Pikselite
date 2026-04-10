@@ -1,5 +1,9 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
+#include <cmath>
+#include <unordered_map>
+#include <unordered_set>
+#include <limits>
 
 ElementDefinition g_elements[256] = {};
 
@@ -226,9 +230,7 @@ void Simulation::detectRegions()
 
                 Element::Region region = regionFloodFill(globalX, globalY, p.type);
                 buildRegionContoursMS(region); // build edges here
-                std::cout << "Detected region of type " << g_elements[p.type].name
-                          << " with " << region.pixels.size() << " pixels and "
-                          << region.edges.size() << " edges.\n";
+                simplifyRegionContours(region, 0.25f);
                 detectedRegions.push_back(std::move(region));
             }
         }
@@ -293,5 +295,191 @@ void Simulation::buildRegionContoursMS(Element::Region& region)
                 default: break;
             }
         }
+    }
+}
+
+namespace {
+    struct IPoint {
+        int x;
+        int y;
+    };
+
+    int64_t makePointKey(int x, int y) {
+        return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y);
+    }
+
+    float distPointToSegment(const Element::Vec2f& p, const Element::Vec2f& a, const Element::Vec2f& b) {
+        const float vx = b.x - a.x;
+        const float vy = b.y - a.y;
+        const float wx = p.x - a.x;
+        const float wy = p.y - a.y;
+
+        const float c1 = vx * wx + vy * wy;
+        if (c1 <= 0.0f) {
+            const float dx = p.x - a.x;
+            const float dy = p.y - a.y;
+            return std::sqrt(dx * dx + dy * dy);
+        }
+
+        const float c2 = vx * vx + vy * vy;
+        if (c2 <= c1) {
+            const float dx = p.x - b.x;
+            const float dy = p.y - b.y;
+            return std::sqrt(dx * dx + dy * dy);
+        }
+
+        const float t = c1 / c2;
+        const float projx = a.x + t * vx;
+        const float projy = a.y + t * vy;
+        const float dx = p.x - projx;
+        const float dy = p.y - projy;
+        return std::sqrt(dx * dx + dy * dy);
+    }
+
+    void rdpRecursive(const std::vector<Element::Vec2f>& pts, int start, int end, float eps, std::vector<bool>& keep) {
+        if (end <= start + 1) return;
+
+        float maxDist = -1.0f;
+        int idx = -1;
+        const Element::Vec2f& a = pts[start];
+        const Element::Vec2f& b = pts[end];
+
+        for (int i = start + 1; i < end; ++i) {
+            float d = distPointToSegment(pts[i], a, b);
+            if (d > maxDist) {
+                maxDist = d;
+                idx = i;
+            }
+        }
+
+        if (maxDist > eps && idx != -1) {
+            keep[idx] = true;
+            rdpRecursive(pts, start, idx, eps, keep);
+            rdpRecursive(pts, idx, end, eps, keep);
+        }
+    }
+
+    std::vector<Element::Vec2f> rdpOpen(const std::vector<Element::Vec2f>& pts, float eps) {
+        if (pts.size() <= 2) return pts;
+
+        std::vector<bool> keep(pts.size(), false);
+        keep.front() = true;
+        keep.back() = true;
+
+        rdpRecursive(pts, 0, static_cast<int>(pts.size() - 1), eps, keep);
+
+        std::vector<Element::Vec2f> out;
+        out.reserve(pts.size());
+        for (size_t i = 0; i < pts.size(); ++i) {
+            if (keep[i]) out.push_back(pts[i]);
+        }
+        return out;
+    }
+
+    bool samePoint(const Element::Vec2f& a, const Element::Vec2f& b) {
+        return a.x == b.x && a.y == b.y;
+    }
+}
+
+void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
+{
+    if (region.edges.empty()) return;
+
+    struct Node {
+        Element::Vec2f p;
+        std::vector<int64_t> neighbors;
+    };
+
+    std::unordered_map<int64_t, Node> nodes;
+    nodes.reserve(region.edges.size() * 2);
+
+    auto quantize = [](const Element::Vec2f& p) -> IPoint {
+        return {static_cast<int>(std::lround(p.x * 2.0f)), static_cast<int>(std::lround(p.y * 2.0f))};
+    };
+
+    auto toVec = [](const IPoint& ip) -> Element::Vec2f {
+        return Element::Vec2f{ip.x / 2.0f, ip.y / 2.0f};
+    };
+
+    auto addNeighbor = [&](int64_t from, int64_t to) {
+        nodes[from].neighbors.push_back(to);
+    };
+
+    for (const auto& seg : region.edges) {
+        IPoint a = quantize(seg.a);
+        IPoint b = quantize(seg.b);
+        int64_t ka = makePointKey(a.x, a.y);
+        int64_t kb = makePointKey(b.x, b.y);
+
+        nodes[ka].p = toVec(a);
+        nodes[kb].p = toVec(b);
+        addNeighbor(ka, kb);
+        addNeighbor(kb, ka);
+    }
+
+    std::unordered_set<uint64_t> visitedEdges;
+    auto edgeKey = [](int64_t a, int64_t b) -> uint64_t {
+        uint64_t ua = static_cast<uint64_t>(a);
+        uint64_t ub = static_cast<uint64_t>(b);
+        return (ua < ub) ? (ua << 32) ^ ub : (ub << 32) ^ ua;
+    };
+
+    std::vector<std::vector<Element::Vec2f>> loops;
+
+    for (const auto& [startKey, node] : nodes) {
+        for (int64_t nextKey : node.neighbors) {
+            uint64_t ek = edgeKey(startKey, nextKey);
+            if (visitedEdges.count(ek)) continue;
+
+            std::vector<Element::Vec2f> loop;
+            int64_t prev = startKey;
+            int64_t curr = nextKey;
+
+            loop.push_back(nodes[startKey].p);
+
+            while (true) {
+                visitedEdges.insert(edgeKey(prev, curr));
+                loop.push_back(nodes[curr].p);
+
+                if (curr == startKey) break;
+
+                const auto& neigh = nodes[curr].neighbors;
+                if (neigh.empty()) break;
+
+                int64_t candidate = neigh.front();
+                if (candidate == prev && neigh.size() > 1) candidate = neigh[1];
+
+                prev = curr;
+                curr = candidate;
+
+                if (loop.size() > nodes.size() + 4) break;
+            }
+
+            if (loop.size() >= 4 && samePoint(loop.front(), loop.back())) {
+                loops.push_back(std::move(loop));
+            }
+        }
+    }
+
+    std::vector<Element::Segment> simplifiedEdges;
+
+    for (auto& loop : loops) {
+        if (loop.size() < 4) continue;
+
+        if (samePoint(loop.front(), loop.back())) {
+            loop.pop_back();
+        }
+
+        auto simplified = rdpOpen(loop, epsilon);
+        if (simplified.size() < 2) continue;
+
+        simplified.push_back(simplified.front());
+        for (size_t i = 0; i + 1 < simplified.size(); ++i) {
+            simplifiedEdges.push_back({simplified[i], simplified[i + 1]});
+        }
+    }
+
+    if (!simplifiedEdges.empty()) {
+        region.edges = std::move(simplifiedEdges);
     }
 }

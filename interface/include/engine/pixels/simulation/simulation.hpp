@@ -23,6 +23,8 @@ class Simulation {
             return (static_cast<int64_t>(x) << 32) | (static_cast<uint32_t>(y));
         }
         void buildRegionContoursMS(Element::Region& region);
+        void simplifyRegionContours(Element::Region& region, float epsilon);
+        const std::vector<Element::Region>& getDetectedRegions() const { return detectedRegions; }
 
     private:
         uint64_t frame = 0;

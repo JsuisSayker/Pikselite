@@ -184,6 +184,26 @@ namespace engine
 
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
+            std::vector<graphics::LineVertex> edgeVertices;
+            for (const auto& region : _pixelSimulation.getDetectedRegions())
+            {
+                for (const auto& seg : region.edges)
+                {
+                    graphics::LineVertex a;
+                    a.position = glm::vec2(seg.a.x * PIXEL_SIZE, seg.a.y * PIXEL_SIZE);
+                    a.color = glm::vec3(1.0f, 0.0f, 0.0f);
+
+                    graphics::LineVertex b;
+                    b.position = glm::vec2(seg.b.x * PIXEL_SIZE, seg.b.y * PIXEL_SIZE);
+                    b.color = glm::vec3(1.0f, 0.0f, 0.0f);
+
+                    edgeVertices.push_back(a);
+                    edgeVertices.push_back(b);
+                }
+            }
+
+            renderer.drawSegments(edgeVertices, _camera);
+
             // Render all entities that have a SpriteComponent via the ECS system
             auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
             if (spriteSystem)

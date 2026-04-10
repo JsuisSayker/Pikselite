@@ -68,6 +68,7 @@ namespace graphics {
          * Note: This method applies the camera's view-projection transformation to the grid lines, allowing for panning and zooming effects. The grid will be drawn as a series of lines spaced according to the cell size, and will cover the visible area of the screen based on the camera's view.
          */
         void drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color);
+        void drawSegments(const std::vector<LineVertex>& segments, const Camera2D& camera);
 
         /**
          * @brief Loads a texture from the specified file path and returns its OpenGL texture ID.

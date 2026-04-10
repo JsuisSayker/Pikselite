@@ -352,6 +352,35 @@ namespace graphics {
         glBindVertexArray(0);
     }
 
+    void Renderer::drawSegments(const std::vector<LineVertex>& segments, const Camera2D& camera) {
+        if (segments.empty()) return;
+
+        int width, height;
+        SDL_GetWindowSize(_window, &width, &height);
+
+        glUseProgram(_shader);
+
+        GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
+        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_TRUE);
+
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
+        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+
+        glBindVertexArray(_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+        glBufferData(GL_ARRAY_BUFFER, segments.size() * sizeof(LineVertex), segments.data(), GL_DYNAMIC_DRAW);
+
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, position));
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, color));
+        glEnableVertexAttribArray(1);
+
+        glDrawArrays(GL_LINES, 0, (GLsizei)segments.size());
+        glBindVertexArray(0);
+    }
+
     GLuint Renderer::loadTexture(const std::string& filePath)
     {
         GLuint textureID;
