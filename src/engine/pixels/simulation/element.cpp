@@ -216,7 +216,7 @@ void Simulation::detectRegions()
                 Element::Pixel p = chunk.get(x, y);
                 if (p.type == Element::EMPTY) continue;
 
-                // only for stone for now
+                // for demo, only detect stone regions. can be extended to other types or all types
                 if (p.type != Element::STONE) continue;
 
                 int globalX = cx * CHUNK_SIZE + x;
@@ -225,7 +225,72 @@ void Simulation::detectRegions()
                 if (visitedForRegions.count(makeVisitedKey(globalX, globalY))) continue;
 
                 Element::Region region = regionFloodFill(globalX, globalY, p.type);
+                buildRegionContoursMS(region); // build edges here
+                std::cout << "Detected region of type " << g_elements[p.type].name
+                          << " with " << region.pixels.size() << " pixels and "
+                          << region.edges.size() << " edges.\n";
                 detectedRegions.push_back(std::move(region));
+            }
+        }
+    }
+}
+
+void Simulation::buildRegionContoursMS(Element::Region& region)
+{
+    region.edges.clear();
+    if (region.pixels.empty()) return;
+
+    int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
+
+    std::unordered_set<int64_t> occ;
+    auto key = [](int x, int y) -> int64_t {
+        return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y);
+    };
+
+    for (const auto& p : region.pixels) {
+        minX = std::min(minX, p.x); minY = std::min(minY, p.y);
+        maxX = std::max(maxX, p.x); maxY = std::max(maxY, p.y);
+        occ.insert(key(p.x, p.y));
+    }
+
+    auto filled = [&](int x, int y) { return occ.count(key(x, y)) > 0; };
+    auto P = [&](float x, float y) { return Element::Vec2f{x, y}; };
+
+    for (int y = minY - 1; y <= maxY; ++y) {
+        for (int x = minX - 1; x <= maxX; ++x) {
+            bool bl = filled(x, y);
+            bool br = filled(x + 1, y);
+            bool tr = filled(x + 1, y + 1);
+            bool tl = filled(x, y + 1);
+
+            int c = (bl ? 1 : 0) | (br ? 2 : 0) | (tr ? 4 : 0) | (tl ? 8 : 0);
+            if (c == 0 || c == 15) continue;
+
+            Element::Vec2f L = P(x,       y + 0.5f);
+            Element::Vec2f R = P(x + 1.0f,y + 0.5f);
+            Element::Vec2f B = P(x + 0.5f,y);
+            Element::Vec2f T = P(x + 0.5f,y + 1.0f);
+
+            auto add = [&](Element::Vec2f a, Element::Vec2f b) {
+                region.edges.push_back({a, b});
+            };
+
+            switch (c) {
+                case 1:  add(L, B); break;
+                case 2:  add(B, R); break;
+                case 3:  add(L, R); break;
+                case 4:  add(R, T); break;
+                case 5:  add(L, T); add(B, R); break;
+                case 6:  add(B, T); break;
+                case 7:  add(L, T); break;
+                case 8:  add(T, L); break;
+                case 9:  add(T, B); break;
+                case 10: add(T, R); add(L, B); break;
+                case 11: add(T, R); break;
+                case 12: add(R, L); break;
+                case 13: add(B, R); break;
+                case 14: add(L, B); break;
+                default: break;
             }
         }
     }

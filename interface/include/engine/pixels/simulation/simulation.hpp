@@ -22,6 +22,7 @@ class Simulation {
         int64_t makeVisitedKey(int x, int y) {
             return (static_cast<int64_t>(x) << 32) | (static_cast<uint32_t>(y));
         }
+        void buildRegionContoursMS(Element::Region& region);
 
     private:
         uint64_t frame = 0;

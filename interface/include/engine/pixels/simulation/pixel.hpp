@@ -17,11 +17,15 @@ namespace Element {
         bool updatedThisFrame = false;
     };
 
-    struct Vec2i {
-        int x, y;
+    struct Vec2i { int x, y; };
+    struct Vec2f { float x, y; };
+
+    struct Segment {
+        Vec2f a, b;
     };
 
     struct Region {
         std::vector<Vec2i> pixels;
+        std::vector<Segment> edges; // marching-squares output
     };
 }
