@@ -104,7 +104,7 @@ namespace engine
             {
                 ZoneScopedN("GamePreview");
                 runGamePreview();
-            } else if (isProjectsListPageActive) { //////////////////////////
+            } else if (isProjectsListPageActive) {
                 ZoneScopedN("ProjectsListPage");
                 runProjectsListPage(sdlInterface, renderer, imguiInterface);
             } else if (isProjectEditorActive)
@@ -206,17 +206,36 @@ namespace engine
 
         imguiInterface.fileToolBar();
 
-        // Top bar with: File dropdown b, Edit dropdown b, Help b
+        float toolbarHeight = 40.0f;
+        
+        ImGuiIO& io = ImGui::GetIO();
+        ImGui::SetNextWindowPos(ImVec2(0, toolbarHeight));
+        ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - toolbarHeight));
 
-        // Horizontal bar with: Get strated text, seperator line, New b, Import b, Open b, Tutorial b
+        ImGuiWindowFlags flags =
+            ImGuiWindowFlags_NoDecoration |
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoSavedSettings;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::Begin("MainWindow", nullptr, flags);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 100));
+        ImGui::BeginChild("projectOptions", ImVec2(0, 0), true);
+        imguiInterface.projectOptionsBar();
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+
+        ImGui::End();
+        ImGui::PopStyleVar();
+        
+        imguiInterface.endFrame(sdlInterface.getWindow());
+        renderer.present(sdlInterface.getWindow());
 
         // Section (horizontal) with: Recent projects text, 2 formatting options b, List of the last 2 projects opened
         // The project display will show: thumbnail, Title of project, path to project, Date of last opened
         // Clicking on a project will: make isProjectEditorActive = false, isProjectEditorActive = true, and load the project data into the core
-        
-        //ImGui::End();
-        imguiInterface.endFrame(sdlInterface.getWindow());
-        renderer.present(sdlInterface.getWindow());
     }
 
     void Core::run()

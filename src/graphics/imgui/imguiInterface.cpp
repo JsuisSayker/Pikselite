@@ -783,4 +783,36 @@ namespace graphics {
         });
     }
 
+    void ImguiInterface::projectOptionsBar()
+    {
+        
+        float height = 25.0f;
+        float width = 80.0f;
+
+        ImGui::Text("Get Started");
+        ImGui::Separator();
+        if (BasicButton("New", height, width))
+        {
+            // TODO
+        }
+        ImGui::SameLine();
+        if (BasicButton("Open", height, width))
+        {
+            // TODO
+        }
+        ImGui::SameLine();
+        if (BasicButton("Import", height, width))
+        {
+            // TODO
+        }
+        
+        float windowWidth = ImGui::GetContentRegionAvail().x;
+
+        ImGui::SameLine(windowWidth - width);
+        if (BasicButton("Tutorial", height, width))
+        {
+            // TODO
+        }
+    }
+
 } // namespace graphics
