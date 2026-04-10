@@ -84,6 +84,10 @@ void updateStone(ChunkGrid& grid, int x, int y)
 {
 }
 
+void updateDebug(ChunkGrid& grid, int x, int y)
+{
+}
+
 void Simulation::initElements()
 {
     g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID, 0, nullptr, -1};
@@ -91,6 +95,7 @@ void Simulation::initElements()
     g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, 5, updateWater, -1};
     g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, 1, updateFire, -1};
     g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, 0, updateStone, -1};
+    g_elements[Element::DEBUG] = { "Debug", {255,0,255}, 1, SOLID, 0, updateDebug, -1};
 }
 
 void Simulation::update()
@@ -98,6 +103,7 @@ void Simulation::update()
     frame++;
     resetUpdatedFlags();
     orderChunksForUpdate();
+    detectRegions();
 
     for (auto& entry : orderedChunks)
     {
@@ -158,4 +164,69 @@ void Simulation::orderChunksForUpdate()
                 return a.cy < b.cy; // bottom -> top for GRAVITY_DIR = -1
             return a.cx < b.cx;     // left -> right
         });
+}
+
+Element::Region Simulation::regionFloodFill(int x, int y, Element::ElementType type)
+{
+    Element::Region region;
+
+    std::queue<Element::Vec2i> q;
+    q.push({x, y});
+
+    while (!q.empty())
+    {
+        auto [cx, cy] = q.front();
+        q.pop();
+
+        int64_t key = makeVisitedKey(cx, cy);
+        if (visitedForRegions.count(key)) continue;
+        visitedForRegions.insert(key);
+
+        Element::Pixel p = grid.getPixel(cx, cy);
+        if (p.type != type) continue;
+
+        // set the pixels to debug for visualization
+        // grid.setPixel(cx, cy, {Element::DEBUG, false});
+
+        region.pixels.push_back({cx, cy});
+
+        q.push({cx + 1, cy});
+        q.push({cx - 1, cy});
+        q.push({cx, cy + 1});
+        q.push({cx, cy - 1});
+    }
+
+    return region;
+}
+
+void Simulation::detectRegions()
+{
+    visitedForRegions.clear();
+    detectedRegions.clear();
+
+    for (auto& [key, chunk] : grid.chunks)
+    {
+        int cx = static_cast<int32_t>(key >> 32);
+        int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
+
+        for (int y = 0; y < CHUNK_SIZE; ++y)
+        {
+            for (int x = 0; x < CHUNK_SIZE; ++x)
+            {
+                Element::Pixel p = chunk.get(x, y);
+                if (p.type == Element::EMPTY) continue;
+
+                // only for stone for now
+                if (p.type != Element::STONE) continue;
+
+                int globalX = cx * CHUNK_SIZE + x;
+                int globalY = cy * CHUNK_SIZE + y;
+
+                if (visitedForRegions.count(makeVisitedKey(globalX, globalY))) continue;
+
+                Element::Region region = regionFloodFill(globalX, globalY, p.type);
+                detectedRegions.push_back(std::move(region));
+            }
+        }
+    }
 }

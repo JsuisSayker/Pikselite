@@ -34,3 +34,4 @@ void updateWater(ChunkGrid& grid, int x, int y);
 void updateSand(ChunkGrid& grid, int x, int y);
 void updateFire(ChunkGrid& grid, int x, int y);
 void updateStone(ChunkGrid& grid, int x, int y);
+void updateDebug(ChunkGrid& grid, int x, int y);
