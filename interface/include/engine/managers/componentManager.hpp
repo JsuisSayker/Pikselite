@@ -37,6 +37,11 @@ namespace engine
             onEntityMutated = std::move(callback);
         }
 
+        void setComponentRemovalCallback(std::function<void(ecs::EntityID, const std::type_index&)> callback)
+        {
+            onComponentRemoved = std::move(callback);
+        }
+
         /**
          * @brief Registers a component type with the manager.
          * 
@@ -101,7 +106,9 @@ namespace engine
         template <typename T>
         void removeComponent(ecs::EntityID entity)
         {
+            const std::type_index key = std::type_index(typeid(T));
             getComponentArray<T>()->removeData(entity);
+            notifyComponentRemoved(entity, key);
             notifyEntityMutated(entity);
         }
 
@@ -180,6 +187,7 @@ namespace engine
         // Incremental component type ID generator
         ComponentType nextComponentType = 0;
         std::function<void(ecs::EntityID)> onEntityMutated;
+        std::function<void(ecs::EntityID, const std::type_index&)> onComponentRemoved;
 
         // Guard: prevent registration overflow
         void checkComponentCapacity()
@@ -195,6 +203,14 @@ namespace engine
             if (onEntityMutated)
             {
                 onEntityMutated(entity);
+            }
+        }
+
+        void notifyComponentRemoved(ecs::EntityID entity, const std::type_index& componentType)
+        {
+            if (onComponentRemoved)
+            {
+                onComponentRemoved(entity, componentType);
             }
         }
 

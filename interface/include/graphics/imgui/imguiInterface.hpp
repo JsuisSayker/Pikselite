@@ -20,6 +20,7 @@
 #include <graphics/imgui/components/components.hpp>
 
 #include <engine/ecs/components/gameObjectComponent.hpp>
+#include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/chunk.hpp>
 

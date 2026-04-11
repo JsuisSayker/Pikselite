@@ -39,6 +39,7 @@ namespace engine
     {
         for (const auto &system : systems)
         {
+            system->entityDestroyed(entity);
             system->entities.erase(entity);
         }
     }
