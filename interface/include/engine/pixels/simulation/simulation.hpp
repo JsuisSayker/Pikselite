@@ -19,6 +19,8 @@ class Simulation {
         struct RegionBodyBinding {
             b2BodyId bodyId;
             std::vector<BodyPixelBinding> pixels;
+            Element::ElementType fillType = Element::STONE;
+            std::vector<Element::Vec2i> occupiedCells;
         };
 
         Simulation(ChunkGrid &grid) : grid(grid) {

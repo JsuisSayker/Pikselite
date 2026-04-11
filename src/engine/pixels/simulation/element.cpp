@@ -218,7 +218,7 @@ void Simulation::rebuildRegionColliders()
 
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
-        bodyDef.gravityScale = 15.0f;
+        bodyDef.gravityScale = 1.0f;
         bodyDef.position = centroid;
 
         b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
@@ -260,6 +260,7 @@ void Simulation::rebuildRegionColliders()
                 pixelBinding.gridY = rp.y;
 
                 binding.pixels.push_back(pixelBinding);
+                binding.fillType = source.type;
                 grid.setPixel(rp.x, rp.y, {Element::EMPTY, false});
             }
 
@@ -277,118 +278,98 @@ void Simulation::syncBodyPixelsToGrid()
 {
     if (!b2World_IsValid(physicsWorld)) return;
 
+    auto cellKey = [](int x, int y) -> int64_t
+    {
+        return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y);
+    };
+
+    auto pointInTriangle = [](float px, float py, const b2Vec2& a, const b2Vec2& b, const b2Vec2& c) -> bool
+    {
+        const float v0x = c.x - a.x;
+        const float v0y = c.y - a.y;
+        const float v1x = b.x - a.x;
+        const float v1y = b.y - a.y;
+        const float v2x = px - a.x;
+        const float v2y = py - a.y;
+
+        const float den = v1x * v0y - v1y * v0x;
+        if (std::fabs(den) < 1e-6f) return false;
+
+        const float u = (v2x * v0y - v2y * v0x) / den;
+        const float v = (v1x * v2y - v1y * v2x) / den;
+        const float eps = 1e-4f;
+        return u >= -eps && v >= -eps && (u + v) <= 1.0f + eps;
+    };
+
     for (auto& bodyBinding : regionBodyBindings)
     {
-        for (auto& pixel : bodyBinding.pixels)
+        for (const auto& cell : bodyBinding.occupiedCells)
         {
-            grid.setPixel(pixel.gridX, pixel.gridY, {Element::EMPTY, false});
+            grid.setPixel(cell.x, cell.y, {Element::EMPTY, false});
         }
+        bodyBinding.occupiedCells.clear();
     }
 
     for (auto& bodyBinding : regionBodyBindings)
     {
         if (!b2Body_IsValid(bodyBinding.bodyId)) continue;
-        b2Transform xf = b2Body_GetTransform(bodyBinding.bodyId);
 
-        const size_t pixelCount = bodyBinding.pixels.size();
-        if (pixelCount == 0) continue;
+        const int shapeCount = b2Body_GetShapeCount(bodyBinding.bodyId);
+        if (shapeCount <= 0) continue;
 
-        struct PlacementCandidate
+        std::vector<b2ShapeId> shapes(shapeCount);
+        const int actualCount = b2Body_GetShapes(bodyBinding.bodyId, shapes.data(), shapeCount);
+        const b2Transform xf = b2Body_GetTransform(bodyBinding.bodyId);
+
+        std::unordered_set<int64_t> filledCells;
+        filledCells.reserve(bodyBinding.pixels.size() * 2 + 16);
+
+        for (int i = 0; i < actualCount; ++i)
         {
-            int targetX;
-            int targetY;
-            float error;
-        };
+            const b2ShapeId shapeId = shapes[i];
+            if (!b2Shape_IsValid(shapeId)) continue;
+            if (b2Shape_GetType(shapeId) != b2_polygonShape) continue;
 
-        std::vector<PlacementCandidate> desired(pixelCount);
-        std::vector<bool> isPlaced(pixelCount, false);
-        std::unordered_map<int64_t, size_t> chosen;
-        chosen.reserve(pixelCount);
+            const b2Polygon localPoly = b2Shape_GetPolygon(shapeId);
+            if (localPoly.count < 3) continue;
 
-        auto key = [](int x, int y) -> int64_t
-        {
-            return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y);
-        };
+            const b2Polygon worldPoly = b2TransformPolygon(xf, &localPoly);
+            const b2Vec2 a = worldPoly.vertices[0];
 
-        for (size_t i = 0; i < pixelCount; ++i)
-        {
-            auto& pixel = bodyBinding.pixels[i];
-            b2Vec2 localPoint = {pixel.localUV.x, pixel.localUV.y};
-            b2Vec2 worldPoint = b2TransformPoint(xf, localPoint);
-
-            const int gx = static_cast<int>(std::round(worldPoint.x - 0.5f));
-            const int gy = static_cast<int>(std::round(worldPoint.y - 0.5f));
-
-            const float centerX = static_cast<float>(gx) + 0.5f;
-            const float centerY = static_cast<float>(gy) + 0.5f;
-            const float dx = worldPoint.x - centerX;
-            const float dy = worldPoint.y - centerY;
-            const float err = dx * dx + dy * dy;
-
-            desired[i] = {gx, gy, err};
-
-            const int64_t k = key(gx, gy);
-            auto it = chosen.find(k);
-            if (it == chosen.end())
+            for (int t = 1; t + 1 < worldPoly.count; ++t)
             {
-                chosen.emplace(k, i);
-                isPlaced[i] = true;
-            }
-            else
-            {
-                const size_t other = it->second;
-                if (err < desired[other].error)
+                const b2Vec2 b = worldPoly.vertices[t];
+                const b2Vec2 c = worldPoly.vertices[t + 1];
+
+                const float minX = std::min(a.x, std::min(b.x, c.x));
+                const float maxX = std::max(a.x, std::max(b.x, c.x));
+                const float minY = std::min(a.y, std::min(b.y, c.y));
+                const float maxY = std::max(a.y, std::max(b.y, c.y));
+
+                const int xStart = static_cast<int>(std::floor(minX - 0.5f));
+                const int xEnd = static_cast<int>(std::floor(maxX - 0.5f));
+                const int yStart = static_cast<int>(std::floor(minY - 0.5f));
+                const int yEnd = static_cast<int>(std::floor(maxY - 0.5f));
+
+                for (int gy = yStart; gy <= yEnd; ++gy)
                 {
-                    isPlaced[other] = false;
-                    it->second = i;
-                    isPlaced[i] = true;
-                }
-            }
-        }
-
-        auto isCellAvailable = [&](int x, int y) -> bool
-        {
-            if (chosen.find(key(x, y)) != chosen.end()) return false;
-            return grid.getPixel(x, y).type == Element::EMPTY;
-        };
-
-        for (size_t i = 0; i < pixelCount; ++i)
-        {
-            if (isPlaced[i]) continue;
-
-            const int baseX = desired[i].targetX;
-            const int baseY = desired[i].targetY;
-            bool assigned = false;
-
-            for (int radius = 1; radius <= 2 && !assigned; ++radius)
-            {
-                for (int oy = -radius; oy <= radius && !assigned; ++oy)
-                {
-                    for (int ox = -radius; ox <= radius && !assigned; ++ox)
+                    for (int gx = xStart; gx <= xEnd; ++gx)
                     {
-                        const int nx = baseX + ox;
-                        const int ny = baseY + oy;
-                        if (!isCellAvailable(nx, ny)) continue;
-
-                        chosen.emplace(key(nx, ny), i);
-                        isPlaced[i] = true;
-                        desired[i].targetX = nx;
-                        desired[i].targetY = ny;
-                        assigned = true;
+                        const float px = static_cast<float>(gx) + 0.5f;
+                        const float py = static_cast<float>(gy) + 0.5f;
+                        if (!pointInTriangle(px, py, a, b, c)) continue;
+                        filledCells.insert(cellKey(gx, gy));
                     }
                 }
             }
         }
 
-        for (const auto& [cellKey, pixelIndex] : chosen)
+        for (int64_t key : filledCells)
         {
-            int gx = static_cast<int32_t>(cellKey >> 32);
-            int gy = static_cast<int32_t>(cellKey & 0xFFFFFFFF);
-            auto& pixel = bodyBinding.pixels[pixelIndex];
-
-            grid.setPixel(gx, gy, {pixel.type, false});
-            pixel.gridX = gx;
-            pixel.gridY = gy;
+            const int gx = static_cast<int32_t>(key >> 32);
+            const int gy = static_cast<int32_t>(key & 0xFFFFFFFF);
+            grid.setPixel(gx, gy, {bodyBinding.fillType, false});
+            bodyBinding.occupiedCells.push_back({gx, gy});
         }
     }
 }
