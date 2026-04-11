@@ -114,7 +114,7 @@ namespace editors {
 
     void ProjectEditor::imguiHandling()
     {
-        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _componentManager);
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
     }
 
     void ProjectEditor::mouseLeftClick() {

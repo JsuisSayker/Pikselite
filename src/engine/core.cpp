@@ -356,20 +356,25 @@ namespace engine
             ecs::Entity entity = entityManager.createEntity();
             ecs::EntityID eid = entity.id;
 
-            ecs::components::Transform transform{0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f};
-            componentManager.addComponent<ecs::components::Transform>(eid, transform);
-
-            ecs::components::Velocity velocity{20.0f, 0.0f};
-            componentManager.addComponent<ecs::components::Velocity>(eid, velocity);
-
-            ecs::components::GameObjectLink link;
-            link.gameObjectId = go.id;
-            link.pixelEntities = go.pixels;
-            componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
-
-            ecs::components::Sprite spriteComp;
-            spriteComp.texturePath = "assets/dragon.png";
-            componentManager.addComponent<ecs::components::Sprite>(eid, spriteComp);
+            // loop on components in game object and add to ECS entity
+            for (const auto &[compType, compData] : go.components)
+            {
+                if (compType == std::type_index(typeid(ecs::components::Transform)))
+                {
+                    const auto &t = std::any_cast<ecs::components::Transform>(compData);
+                    componentManager.addComponent(eid, t);
+                }
+                else if (compType == std::type_index(typeid(ecs::components::Velocity)))
+                {
+                    const auto &v = std::any_cast<ecs::components::Velocity>(compData);
+                    componentManager.addComponent(eid, v);
+                }
+                else if (compType == std::type_index(typeid(ecs::components::Sprite)))
+                {
+                    const auto &s = std::any_cast<ecs::components::Sprite>(compData);
+                    componentManager.addComponent(eid, s);
+                }
+            }
 
             _gameObjectToEntity[go.id] = eid;
         }
