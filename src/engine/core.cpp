@@ -14,6 +14,7 @@
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <engine/ecs/systems/scriptSystem.hpp>
 #include <box2d/box2d.h>
+#include <imgui.h>
 #include <fstream>
 #include <filesystem>
 
@@ -151,8 +152,37 @@ namespace engine
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
 
         copyProjectEditorDataToCore();
-        _pixelSimulation.detectRegions();
-        _pixelSimulation.rebuildRegionColliders();
+        _pixelSimulation.markRegionsDirty();
+
+        if (b2World_IsValid(_physicsWorld) && b2Body_IsValid(_debugFloorBody))
+        {
+            b2DestroyBody(_debugFloorBody);
+            _debugFloorBody = b2_nullBodyId;
+        }
+
+        if (b2World_IsValid(_physicsWorld))
+        {
+            const float zoom = std::max(_camera.getZoom(), 0.001f);
+            const glm::vec2 camPos = _camera.getPosition();
+            const float halfHeightPx = (WINDOW_HEIGHT * 0.5f) / zoom;
+
+            const float floorYCells = std::floor((camPos.y - halfHeightPx) / PIXEL_SIZE) - 2.0f;
+            const float floorXCells = camPos.x / PIXEL_SIZE;
+            const float floorHalfWidthCells = std::max(50.0f, (WINDOW_WIDTH / zoom) / PIXEL_SIZE);
+
+            b2BodyDef floorBodyDef = b2DefaultBodyDef();
+            floorBodyDef.type = b2_staticBody;
+            floorBodyDef.position = {floorXCells, floorYCells};
+
+            _debugFloorBody = b2CreateBody(_physicsWorld, &floorBodyDef);
+
+            b2ShapeDef floorShapeDef = b2DefaultShapeDef();
+            floorShapeDef.material.friction = 0.8f;
+            floorShapeDef.material.restitution = 0.0f;
+
+            b2Polygon floorPoly = b2MakeBox(floorHalfWidthCells, 0.5f);
+            b2CreatePolygonShape(_debugFloorBody, &floorShapeDef, &floorPoly);
+        }
 
         while (isGamePreviewActive && running)
         {
@@ -232,14 +262,49 @@ namespace engine
 
             renderer.drawSegments(triVertices, _camera);
 
-            renderer.drawBox2DDebug(_physicsWorld, _pixelSimulation.getRegionBodies(), _camera, PIXEL_SIZE, glm::vec3(0.2f, 0.2f, 1.0f));
+            std::vector<b2BodyId> debugBodies = _pixelSimulation.getRegionBodies();
+            if (b2World_IsValid(_physicsWorld) && b2Body_IsValid(_debugFloorBody))
+            {
+                debugBodies.push_back(_debugFloorBody);
+            }
+            renderer.drawBox2DDebug(_physicsWorld, debugBodies, _camera, PIXEL_SIZE, glm::vec3(0.2f, 0.2f, 1.0f));
+
+            imguiInterface.startFrame();
+
+            const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+            const ImVec2 fpsWindowPos(12.0f, (displaySize.y * 0.5f) - 28.0f);
+
+            ImGui::SetNextWindowBgAlpha(0.82f);
+            ImGui::SetNextWindowPos(fpsWindowPos, ImGuiCond_Always);
+            ImGui::SetNextWindowSize(ImVec2(190.0f, 56.0f), ImGuiCond_Always);
+            if (ImGui::Begin("##PreviewFPS", nullptr,
+                ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoCollapse |
+                ImGuiWindowFlags_NoSavedSettings))
+            {
+                const float fps = (deltaTime > 0.0f) ? (1.0f / deltaTime) : 0.0f;
+                ImGui::SetWindowFontScale(1.25f);
+                ImGui::Text("FPS: %.1f", fps);
+                ImGui::SetWindowFontScale(1.0f);
+            }
+            ImGui::End();
 
             // Render all entities that have a SpriteComponent via the ECS system
             auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
             if (spriteSystem)
                 spriteSystem->update(0.0, componentManager);
 
+            imguiInterface.endFrame(gameWindow);
+
             renderer.present(gameWindow);
+        }
+
+        if (b2World_IsValid(_physicsWorld) && b2Body_IsValid(_debugFloorBody))
+        {
+            b2DestroyBody(_debugFloorBody);
+            _debugFloorBody = b2_nullBodyId;
         }
 
         SDL_DestroyWindow(gameWindow);
@@ -311,6 +376,7 @@ namespace engine
             if (b2World_IsValid(_physicsWorld))
             {
                 b2World_Step(_physicsWorld, fixedDt, 4);
+                _pixelSimulation.syncBodyPixelsToGrid();
             }
 
             accumulator -= fixedDt;
@@ -339,6 +405,11 @@ namespace engine
         }
         if (b2World_IsValid(_physicsWorld))
         {
+            if (b2Body_IsValid(_debugFloorBody))
+            {
+                b2DestroyBody(_debugFloorBody);
+                _debugFloorBody = b2_nullBodyId;
+            }
             b2DestroyWorld(_physicsWorld);
         }
         SDL_Quit();

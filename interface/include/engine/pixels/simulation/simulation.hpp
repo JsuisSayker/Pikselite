@@ -8,6 +8,19 @@
 
 class Simulation {
     public:
+        struct BodyPixelBinding {
+            Element::ElementType type;
+            Element::Vec2f localUV;
+            Element::Vec2f uv;
+            int gridX;
+            int gridY;
+        };
+
+        struct RegionBodyBinding {
+            b2BodyId bodyId;
+            std::vector<BodyPixelBinding> pixels;
+        };
+
         Simulation(ChunkGrid &grid) : grid(grid) {
             initElements();
         }
@@ -15,8 +28,9 @@ class Simulation {
         void initElements();
         void update();
         void resetUpdatedFlags();
-        void setGrid(ChunkGrid &newGrid) { grid = newGrid; }
+        void setGrid(ChunkGrid &newGrid);
         ChunkGrid& getGrid() { return grid; }
+        void markRegionsDirty() { regionsDirty = true; }
         void orderChunksForUpdate();
         void detectRegions();
         Element::Region regionFloodFill(int x, int y, Element::ElementType type);
@@ -29,7 +43,9 @@ class Simulation {
         const std::vector<Element::Region>& getDetectedRegions() const { return detectedRegions; }
         void setPhysicsWorld(b2WorldId worldId, float pixelsPerMeter);
         void rebuildRegionColliders();
+        void syncBodyPixelsToGrid();
         const std::vector<b2BodyId>& getRegionBodies() const { return regionBodies; }
+        const std::vector<RegionBodyBinding>& getRegionBodyBindings() const { return regionBodyBindings; }
         float getPixelsPerMeter() const { return pixelsPerMeter; }
 
     private:
@@ -49,4 +65,6 @@ class Simulation {
         b2WorldId physicsWorld = b2_nullWorldId;
         float pixelsPerMeter = 1.0f;
         std::vector<b2BodyId> regionBodies;
+        std::vector<RegionBodyBinding> regionBodyBindings;
+        bool regionsDirty = true;
 };

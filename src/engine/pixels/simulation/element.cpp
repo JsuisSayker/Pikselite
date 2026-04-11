@@ -108,7 +108,13 @@ void Simulation::update()
     frame++;
     resetUpdatedFlags();
     orderChunksForUpdate();
-    detectRegions();
+
+    if (regionsDirty)
+    {
+        detectRegions();
+        rebuildRegionColliders();
+        regionsDirty = false;
+    }
 
     for (auto& entry : orderedChunks)
     {
@@ -140,10 +146,29 @@ void Simulation::update()
     }
 }
 
+void Simulation::setGrid(ChunkGrid &newGrid)
+{
+    if (b2World_IsValid(physicsWorld))
+    {
+        for (b2BodyId bodyId : regionBodies)
+        {
+            if (b2Body_IsValid(bodyId))
+                b2DestroyBody(bodyId);
+        }
+    }
+
+    grid = newGrid;
+    detectedRegions.clear();
+    regionBodies.clear();
+    regionBodyBindings.clear();
+    regionsDirty = true;
+}
+
 void Simulation::setPhysicsWorld(b2WorldId worldId, float pixelsPerMeterValue)
 {
     physicsWorld = worldId;
     pixelsPerMeter = pixelsPerMeterValue;
+    regionsDirty = true;
 }
 
 void Simulation::rebuildRegionColliders()
@@ -156,6 +181,7 @@ void Simulation::rebuildRegionColliders()
             b2DestroyBody(bodyId);
     }
     regionBodies.clear();
+    regionBodyBindings.clear();
 
     if (detectedRegions.empty()) return;
 
@@ -165,8 +191,35 @@ void Simulation::rebuildRegionColliders()
     {
         if (region.triangles.empty()) continue;
 
+        if (region.pixels.empty()) continue;
+
+        int minX = region.pixels.front().x;
+        int minY = region.pixels.front().y;
+        int maxX = region.pixels.front().x;
+        int maxY = region.pixels.front().y;
+        float sumX = 0.0f;
+        float sumY = 0.0f;
+
+        for (const auto& pixel : region.pixels)
+        {
+            minX = std::min(minX, pixel.x);
+            minY = std::min(minY, pixel.y);
+            maxX = std::max(maxX, pixel.x);
+            maxY = std::max(maxY, pixel.y);
+            sumX += static_cast<float>(pixel.x) + 0.5f;
+            sumY += static_cast<float>(pixel.y) + 0.5f;
+        }
+
+        const float invCount = 1.0f / static_cast<float>(region.pixels.size());
+        b2Vec2 centroid = {sumX * invCount, sumY * invCount};
+
+        const float width = static_cast<float>(std::max(1, maxX - minX + 1));
+        const float height = static_cast<float>(std::max(1, maxY - minY + 1));
+
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
+        bodyDef.gravityScale = 15.0f;
+        bodyDef.position = centroid;
 
         b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
 
@@ -176,9 +229,9 @@ void Simulation::rebuildRegionColliders()
         for (const auto& tri : region.triangles)
         {
             b2Vec2 points[3] = {
-                { tri.a.x * invScale, tri.a.y * invScale },
-                { tri.b.x * invScale, tri.b.y * invScale },
-                { tri.c.x * invScale, tri.c.y * invScale },
+                { (tri.a.x - centroid.x) * invScale, (tri.a.y - centroid.y) * invScale },
+                { (tri.b.x - centroid.x) * invScale, (tri.b.y - centroid.y) * invScale },
+                { (tri.c.x - centroid.x) * invScale, (tri.c.y - centroid.y) * invScale },
             };
 
             b2Hull hull = b2ComputeHull(points, 3);
@@ -190,11 +243,152 @@ void Simulation::rebuildRegionColliders()
 
         if (b2Body_GetShapeCount(bodyId) > 0)
         {
+            RegionBodyBinding binding;
+            binding.bodyId = bodyId;
+            binding.pixels.reserve(region.pixels.size());
+
+            for (const auto& rp : region.pixels)
+            {
+                Element::Pixel source = grid.getPixel(rp.x, rp.y);
+                if (source.type == Element::EMPTY) continue;
+
+                BodyPixelBinding pixelBinding;
+                pixelBinding.type = source.type;
+                pixelBinding.localUV = {static_cast<float>(rp.x) + 0.5f - centroid.x, static_cast<float>(rp.y) + 0.5f - centroid.y};
+                pixelBinding.uv = {(static_cast<float>(rp.x - minX) + 0.5f) / width, (static_cast<float>(rp.y - minY) + 0.5f) / height};
+                pixelBinding.gridX = rp.x;
+                pixelBinding.gridY = rp.y;
+
+                binding.pixels.push_back(pixelBinding);
+                grid.setPixel(rp.x, rp.y, {Element::EMPTY, false});
+            }
+
             regionBodies.push_back(bodyId);
+            regionBodyBindings.push_back(std::move(binding));
         }
         else
         {
             b2DestroyBody(bodyId);
+        }
+    }
+}
+
+void Simulation::syncBodyPixelsToGrid()
+{
+    if (!b2World_IsValid(physicsWorld)) return;
+
+    for (auto& bodyBinding : regionBodyBindings)
+    {
+        for (auto& pixel : bodyBinding.pixels)
+        {
+            grid.setPixel(pixel.gridX, pixel.gridY, {Element::EMPTY, false});
+        }
+    }
+
+    for (auto& bodyBinding : regionBodyBindings)
+    {
+        if (!b2Body_IsValid(bodyBinding.bodyId)) continue;
+        b2Transform xf = b2Body_GetTransform(bodyBinding.bodyId);
+
+        const size_t pixelCount = bodyBinding.pixels.size();
+        if (pixelCount == 0) continue;
+
+        struct PlacementCandidate
+        {
+            int targetX;
+            int targetY;
+            float error;
+        };
+
+        std::vector<PlacementCandidate> desired(pixelCount);
+        std::vector<bool> isPlaced(pixelCount, false);
+        std::unordered_map<int64_t, size_t> chosen;
+        chosen.reserve(pixelCount);
+
+        auto key = [](int x, int y) -> int64_t
+        {
+            return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y);
+        };
+
+        for (size_t i = 0; i < pixelCount; ++i)
+        {
+            auto& pixel = bodyBinding.pixels[i];
+            b2Vec2 localPoint = {pixel.localUV.x, pixel.localUV.y};
+            b2Vec2 worldPoint = b2TransformPoint(xf, localPoint);
+
+            const int gx = static_cast<int>(std::round(worldPoint.x - 0.5f));
+            const int gy = static_cast<int>(std::round(worldPoint.y - 0.5f));
+
+            const float centerX = static_cast<float>(gx) + 0.5f;
+            const float centerY = static_cast<float>(gy) + 0.5f;
+            const float dx = worldPoint.x - centerX;
+            const float dy = worldPoint.y - centerY;
+            const float err = dx * dx + dy * dy;
+
+            desired[i] = {gx, gy, err};
+
+            const int64_t k = key(gx, gy);
+            auto it = chosen.find(k);
+            if (it == chosen.end())
+            {
+                chosen.emplace(k, i);
+                isPlaced[i] = true;
+            }
+            else
+            {
+                const size_t other = it->second;
+                if (err < desired[other].error)
+                {
+                    isPlaced[other] = false;
+                    it->second = i;
+                    isPlaced[i] = true;
+                }
+            }
+        }
+
+        auto isCellAvailable = [&](int x, int y) -> bool
+        {
+            if (chosen.find(key(x, y)) != chosen.end()) return false;
+            return grid.getPixel(x, y).type == Element::EMPTY;
+        };
+
+        for (size_t i = 0; i < pixelCount; ++i)
+        {
+            if (isPlaced[i]) continue;
+
+            const int baseX = desired[i].targetX;
+            const int baseY = desired[i].targetY;
+            bool assigned = false;
+
+            for (int radius = 1; radius <= 2 && !assigned; ++radius)
+            {
+                for (int oy = -radius; oy <= radius && !assigned; ++oy)
+                {
+                    for (int ox = -radius; ox <= radius && !assigned; ++ox)
+                    {
+                        const int nx = baseX + ox;
+                        const int ny = baseY + oy;
+                        if (!isCellAvailable(nx, ny)) continue;
+
+                        chosen.emplace(key(nx, ny), i);
+                        isPlaced[i] = true;
+                        desired[i].targetX = nx;
+                        desired[i].targetY = ny;
+                        assigned = true;
+                    }
+                }
+            }
+        }
+
+        for (const auto& [cellKey, pixelIndex] : chosen)
+        {
+            int gx = static_cast<int32_t>(cellKey >> 32);
+            int gy = static_cast<int32_t>(cellKey & 0xFFFFFFFF);
+            auto& pixel = bodyBinding.pixels[pixelIndex];
+
+            grid.setPixel(gx, gy, {pixel.type, false});
+            pixel.gridX = gx;
+            pixel.gridY = gy;
         }
     }
 }
