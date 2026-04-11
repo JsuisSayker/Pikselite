@@ -4,6 +4,7 @@
 #include <vector>
 #include <queue>
 #include <unordered_set>
+#include <box2d/box2d.h>
 
 class Simulation {
     public:
@@ -22,10 +23,14 @@ class Simulation {
         int64_t makeVisitedKey(int x, int y) {
             return (static_cast<int64_t>(x) << 32) | (static_cast<uint32_t>(y));
         }
-        void buildRegionContoursMS(Element::Region& region);
+        void buildRegionContoursMarchingSquare(Element::Region& region);
         void simplifyRegionContours(Element::Region& region, float epsilon);
         void triangulateRegion(Element::Region& region);
         const std::vector<Element::Region>& getDetectedRegions() const { return detectedRegions; }
+        void setPhysicsWorld(b2WorldId worldId, float pixelsPerMeter);
+        void rebuildRegionColliders();
+        const std::vector<b2BodyId>& getRegionBodies() const { return regionBodies; }
+        float getPixelsPerMeter() const { return pixelsPerMeter; }
 
     private:
         uint64_t frame = 0;
@@ -41,4 +46,7 @@ class Simulation {
         std::vector<Element::Region> detectedRegions;
 
         std::unordered_set<int64_t> visitedForRegions;
+        b2WorldId physicsWorld = b2_nullWorldId;
+        float pixelsPerMeter = 1.0f;
+        std::vector<b2BodyId> regionBodies;
 };

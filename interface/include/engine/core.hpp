@@ -15,6 +15,7 @@
 
 #include <engine/pixels/simulation/simulation.hpp>
 #include <engine/pixels/simulation/element.hpp>
+#include <box2d/box2d.h>
 #include <vector>
 #include <iostream>
 #include <string>
@@ -64,6 +65,7 @@ namespace engine
         std::vector<graphics::Pixel> _renderPixels;
         Simulation _pixelSimulation;
         ChunkGrid _chunkGrid;
+        b2WorldId _physicsWorld = b2_nullWorldId;
 
         float accumulator = 0.0f;
         const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec

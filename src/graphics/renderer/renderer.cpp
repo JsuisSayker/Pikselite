@@ -1,4 +1,6 @@
 #include <graphics/renderer/renderer.hpp>
+#include <box2d/collision.h>
+#include <box2d/math_functions.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -379,6 +381,53 @@ namespace graphics {
 
         glDrawArrays(GL_LINES, 0, (GLsizei)segments.size());
         glBindVertexArray(0);
+    }
+
+    void Renderer::drawBox2DDebug(b2WorldId worldId, const std::vector<b2BodyId>& bodies, const Camera2D& camera, float pixelsPerMeter, glm::vec3 color) {
+        if (!b2World_IsValid(worldId)) return;
+        if (bodies.empty()) return;
+
+        std::vector<LineVertex> segments;
+        segments.reserve(bodies.size() * 16);
+
+        for (b2BodyId bodyId : bodies) {
+            if (!b2Body_IsValid(bodyId)) continue;
+
+            int shapeCount = b2Body_GetShapeCount(bodyId);
+            if (shapeCount <= 0) continue;
+
+            std::vector<b2ShapeId> shapes(shapeCount);
+            int actualCount = b2Body_GetShapes(bodyId, shapes.data(), shapeCount);
+            b2Transform xf = b2Body_GetTransform(bodyId);
+
+            for (int i = 0; i < actualCount; ++i) {
+                b2ShapeId shapeId = shapes[i];
+                if (!b2Shape_IsValid(shapeId)) continue;
+
+                b2ShapeType type = b2Shape_GetType(shapeId);
+                if (type == b2_polygonShape) {
+                    b2Polygon poly = b2Shape_GetPolygon(shapeId);
+                    b2Polygon worldPoly = b2TransformPolygon(xf, &poly);
+
+                    for (int v = 0; v < worldPoly.count; ++v) {
+                        b2Vec2 p1 = worldPoly.vertices[v];
+                        b2Vec2 p2 = worldPoly.vertices[(v + 1) % worldPoly.count];
+
+                        segments.push_back({glm::vec2(p1.x * pixelsPerMeter, p1.y * pixelsPerMeter), color});
+                        segments.push_back({glm::vec2(p2.x * pixelsPerMeter, p2.y * pixelsPerMeter), color});
+                    }
+                } else if (type == b2_segmentShape) {
+                    b2Segment seg = b2Shape_GetSegment(shapeId);
+                    b2Vec2 p1 = b2TransformPoint(xf, seg.point1);
+                    b2Vec2 p2 = b2TransformPoint(xf, seg.point2);
+
+                    segments.push_back({glm::vec2(p1.x * pixelsPerMeter, p1.y * pixelsPerMeter), color});
+                    segments.push_back({glm::vec2(p2.x * pixelsPerMeter, p2.y * pixelsPerMeter), color});
+                }
+            }
+        }
+
+        drawSegments(segments, camera);
     }
 
     GLuint Renderer::loadTexture(const std::string& filePath)

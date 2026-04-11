@@ -1,5 +1,6 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
+#include <box2d/box2d.h>
 #include <cmath>
 #include <unordered_map>
 #include <unordered_set>
@@ -139,6 +140,65 @@ void Simulation::update()
     }
 }
 
+void Simulation::setPhysicsWorld(b2WorldId worldId, float pixelsPerMeterValue)
+{
+    physicsWorld = worldId;
+    pixelsPerMeter = pixelsPerMeterValue;
+}
+
+void Simulation::rebuildRegionColliders()
+{
+    if (!b2World_IsValid(physicsWorld)) return;
+
+    for (b2BodyId bodyId : regionBodies)
+    {
+        if (b2Body_IsValid(bodyId))
+            b2DestroyBody(bodyId);
+    }
+    regionBodies.clear();
+
+    if (detectedRegions.empty()) return;
+
+    const float invScale = 1.0f;
+
+    for (const auto& region : detectedRegions)
+    {
+        if (region.triangles.empty()) continue;
+
+        b2BodyDef bodyDef = b2DefaultBodyDef();
+        bodyDef.type = b2_dynamicBody;
+
+        b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
+
+        b2ShapeDef shapeDef = b2DefaultShapeDef();
+        shapeDef.density = 1.0f;
+
+        for (const auto& tri : region.triangles)
+        {
+            b2Vec2 points[3] = {
+                { tri.a.x * invScale, tri.a.y * invScale },
+                { tri.b.x * invScale, tri.b.y * invScale },
+                { tri.c.x * invScale, tri.c.y * invScale },
+            };
+
+            b2Hull hull = b2ComputeHull(points, 3);
+            if (hull.count < 3) continue;
+
+            b2Polygon poly = b2MakePolygon(&hull, 0.0f);
+            b2CreatePolygonShape(bodyId, &shapeDef, &poly);
+        }
+
+        if (b2Body_GetShapeCount(bodyId) > 0)
+        {
+            regionBodies.push_back(bodyId);
+        }
+        else
+        {
+            b2DestroyBody(bodyId);
+        }
+    }
+}
+
 void Simulation::resetUpdatedFlags()
 {
     for (auto& [key, chunk] : grid.chunks)
@@ -229,7 +289,7 @@ void Simulation::detectRegions()
                 if (visitedForRegions.count(makeVisitedKey(globalX, globalY))) continue;
 
                 Element::Region region = regionFloodFill(globalX, globalY, p.type);
-                buildRegionContoursMS(region);
+                buildRegionContoursMarchingSquare(region);
                 simplifyRegionContours(region, 0.6f);
                 triangulateRegion(region);
                 detectedRegions.push_back(std::move(region));
@@ -238,7 +298,7 @@ void Simulation::detectRegions()
     }
 }
 
-void Simulation::buildRegionContoursMS(Element::Region& region)
+void Simulation::buildRegionContoursMarchingSquare(Element::Region& region)
 {
     region.edges.clear();
     if (region.pixels.empty()) return;

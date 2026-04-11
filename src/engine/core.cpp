@@ -13,6 +13,7 @@
 #endif
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <engine/ecs/systems/scriptSystem.hpp>
+#include <box2d/box2d.h>
 #include <fstream>
 #include <filesystem>
 
@@ -86,6 +87,11 @@ namespace engine
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface, &componentManager);
+
+        b2WorldDef worldDef = b2DefaultWorldDef();
+        worldDef.gravity = {0.0f, -9.8f};
+        _physicsWorld = b2CreateWorld(&worldDef);
+        _pixelSimulation.setPhysicsWorld(_physicsWorld, 1.0f);
     }
 
     void Core::mainLoop()
@@ -145,6 +151,8 @@ namespace engine
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
 
         copyProjectEditorDataToCore();
+        _pixelSimulation.detectRegions();
+        _pixelSimulation.rebuildRegionColliders();
 
         while (isGamePreviewActive && running)
         {
@@ -224,6 +232,8 @@ namespace engine
 
             renderer.drawSegments(triVertices, _camera);
 
+            renderer.drawBox2DDebug(_physicsWorld, _pixelSimulation.getRegionBodies(), _camera, PIXEL_SIZE, glm::vec3(0.2f, 0.2f, 1.0f));
+
             // Render all entities that have a SpriteComponent via the ECS system
             auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
             if (spriteSystem)
@@ -298,6 +308,11 @@ namespace engine
                 _pixelSimulation.update();
             }
 
+            if (b2World_IsValid(_physicsWorld))
+            {
+                b2World_Step(_physicsWorld, fixedDt, 4);
+            }
+
             accumulator -= fixedDt;
         }
 
@@ -321,6 +336,10 @@ namespace engine
         {
             copyProjectEditorDataToCore();
             saveScene(_sceneFilename);
+        }
+        if (b2World_IsValid(_physicsWorld))
+        {
+            b2DestroyWorld(_physicsWorld);
         }
         SDL_Quit();
     }
