@@ -28,9 +28,9 @@ using json = nlohmann::json;
 namespace engine
 {
     struct Project { ////////////////////////////// will move to another file later
-        std::string name;
+        std::string name = "New Project";
         std::filesystem::path path;
-        std::chrono::system_clock::time_point lastOpened;
+        std::chrono::system_clock::time_point lastOpened = std::chrono::system_clock::now();
     };
 
     class Core

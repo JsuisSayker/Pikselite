@@ -227,6 +227,8 @@ namespace engine
         int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
         if (selectedProjectIndex >= 0) {
             _currentProject = _projects[selectedProjectIndex];
+            isProjectsListPageActive = false;
+            isProjectEditorActive = true;
         }
         ImGui::EndChild();
         ImGui::PopStyleVar();
@@ -240,6 +242,8 @@ namespace engine
         selectedProjectIndex = imguiInterface.recentProjectsDisplay(_projects);
         if (selectedProjectIndex >= 0) {
             _currentProject = _projects[selectedProjectIndex];
+            isProjectsListPageActive = false;
+            isProjectEditorActive = true;
         }
         ImGui::EndChild();
         ImGui::PopStyleVar();

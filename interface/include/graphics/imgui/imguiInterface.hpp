@@ -58,7 +58,7 @@ namespace graphics {
         void fileToolBar();
         int projectOptionsBar(std::vector<Project> &projects);
         void recentProjectsDisplay(std::vector<Project> &projects);
-        void clickableProjectOverview(const std::string& projectName); // parameter will be changed later
+        void clickableProjectOverview(const std::string& projectName);
 
         void startFrame();
         void endFrame(SDL_Window* window);

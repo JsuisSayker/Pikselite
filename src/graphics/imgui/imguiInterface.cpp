@@ -852,9 +852,30 @@ namespace graphics {
 
         if (BasicButton("Open", buttonHeight, buttonWidth))
         {
-            // TODO
+            nfdchar_t* outPath = nullptr;
 
-            // return opened project;
+            nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
+        
+            if (result == NFD_OKAY)
+            {
+                std::filesystem::path selectedPath(outPath);
+                free(outPath);
+        
+                for (int i = 0; i < projects.size(); i++)
+                {
+                    if (projects[i].path == selectedPath)
+                    {
+                        return i;
+                    }
+                }
+        
+                std::cout << "Selected folder: " << selectedPath << std::endl;
+            } else if (result == NFD_ERROR)
+            {
+                std::cerr << "Error: " << NFD_GetError() << std::endl;
+            }
+
+            return -1;
         }
 
         ImGui::SameLine();
@@ -968,7 +989,8 @@ namespace graphics {
         ImGui::Text("%s", projectName.c_str());
         ImGui::Text("path/to/project");
 
-        ImGui::Text("Last opened date"); // move to far right
+        std::time_t t = std::chrono::system_clock::to_time_t(p.lastOpened);
+        ImGui::Text("Last opened: %s", std::ctime(&t));
     }
 
 } // namespace graphics
