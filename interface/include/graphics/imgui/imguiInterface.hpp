@@ -22,7 +22,6 @@
 #include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/chunk.hpp>
-#include <engine/managers/componentManager.hpp>
 
 #include <algorithm>
 #include <string>
@@ -54,7 +53,7 @@ namespace graphics {
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager);
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
 
         void fileToolBar();
         void projectOptionsBar();

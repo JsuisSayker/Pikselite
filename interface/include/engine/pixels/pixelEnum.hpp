@@ -12,11 +12,14 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <any>
+#include <typeindex>
 
 /**
  * @brief Contains enums and structs for managing pixel attributes and game objects.
  */
-namespace Pixel {
+namespace Pixel
+{
     // Type aliases for IDs
     using GameObjectID = std::uint32_t;
 
@@ -26,11 +29,48 @@ namespace Pixel {
     /**
      * @brief Represents a game object that can consist of multiple pixel entities.
      */
-    struct GameObject {
+    struct GameObject
+    {
         bool isActive = true;
 
         GameObjectID id;
         std::string name;
         std::vector<Element::Pixel> pixels;
+
+        // list of any for components
+        std::unordered_map<std::type_index, std::any> components;
+
+        // get component of type T, returns nullptr if not found
+        template <typename T>
+        T *getComponent()
+        {
+            auto it = components.find(std::type_index(typeid(T)));
+            if (it != components.end())
+            {
+                return std::any_cast<T>(&(it->second));
+            }
+            return nullptr;
+        }
+
+        // add or replace component of type T
+        template <typename T>
+        void addComponent(const T &component)
+        {
+            components[std::type_index(typeid(T))] = component;
+        }
+
+        // remove component of type T
+        template <typename T>
+        void removeComponent()
+        {
+            components.erase(std::type_index(typeid(T)));
+        }
+
+        // has component of type T
+        template <typename T>
+        bool hasComponent() const
+        {
+            return components.find(std::type_index(typeid(T))) != components.end();
+        }
     };
 }

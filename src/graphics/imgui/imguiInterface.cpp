@@ -422,9 +422,8 @@ namespace graphics {
      * @brief Displays the game objects bar, which consists of a hierarchy view of all game objects and an inspector for the selected game object. The hierarchy allows users to select, rename, and delete game objects, while the inspector displays properties of the selected game object and allows users to edit them.
      * @param gameObjects A reference to a vector of game objects to be displayed in the hierarchy.
      * @param selectedGameObjectIndex A reference to an integer that indicates the index of the currently selected game object in the hierarchy.
-     * @param componentManager A pointer to the component manager that manages the components associated with the game objects, used for displaying and editing component properties in the inspector.
      */
-    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager)
+    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex)
     {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -589,105 +588,105 @@ namespace graphics {
 
             std::vector<std::string> availableComponents;
 
-            if (!componentManager->hasComponent<ecs::components::Sprite>(selected.id)) {
+            if (!selected.hasComponent<ecs::components::Sprite>()) {
                 availableComponents.push_back("Sprite");
             }  else {
 
-                auto& s = componentManager->getComponent<ecs::components::Sprite>(selected.id);
+                auto s = selected.getComponent<ecs::components::Sprite>();
 
 
-                ImGui::Checkbox("##enabledSprite", &s.enabled);
+                ImGui::Checkbox("##enabledSprite", &s->enabled);
                 ImGui::SameLine();
                 bool open = ImGui::CollapsingHeader("Sprite Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
-                
+
                 if (open) {
-                    ImGui::BeginDisabled(!s.enabled);
+                    ImGui::BeginDisabled(!s->enabled);
 
                     if (ImGui::Button("Reset##Sprite"))
                     {
                         // s.texturePath = "";
-                        s.width = 640.0f;
-                        s.height = 640.0f;
+                        s->width = 640.0f;
+                        s->height = 640.0f;
                     }
 
                     static char textureBuffer[256];
-                    std::strncpy(textureBuffer, s.texturePath.c_str(), sizeof(textureBuffer));
+                    std::strncpy(textureBuffer, s->texturePath.c_str(), sizeof(textureBuffer));
                     if (ImGui::InputText("Sprite Texture Path", textureBuffer, sizeof(textureBuffer)))
                     {
-                        s.texturePath = textureBuffer;
+                        s->texturePath = textureBuffer;
                     }
-                    ImGui::DragFloat2("Width", &s.width, 640.0f);
-                    ImGui::DragFloat2("Height", &s.height, 640.0f);
+                    ImGui::DragFloat2("Width", &s->width, 640.0f);
+                    ImGui::DragFloat2("Height", &s->height, 640.0f);
 
                     ImGui::EndDisabled();
 
                     if (ImGui::Button("Remove##Sprite"))
                     {
-                        componentManager->removeComponent<ecs::components::Sprite>(selected.id);
+                        selected.removeComponent<ecs::components::Sprite>();
                     }
                 }
             }
 
-            if (!componentManager->hasComponent<ecs::components::Transform>(selected.id)) {
+            if (!selected.hasComponent<ecs::components::Transform>()) {
                 availableComponents.push_back("Transform");
             } else {
                 
-                auto& t = componentManager->getComponent<ecs::components::Transform>(selected.id);
-                ImGui::Checkbox("##enabledTransform", &t.enabled);
+                auto t = selected.getComponent<ecs::components::Transform>();
+                ImGui::Checkbox("##enabledTransform", &t->enabled);
                 ImGui::SameLine();
                 bool open = ImGui::CollapsingHeader("Transform Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
 
                 if (open) {
-                    ImGui::BeginDisabled(!t.enabled);
+                    ImGui::BeginDisabled(!t->enabled);
 
                     if (ImGui::Button("Reset##Transform"))
                     {
-                        t.x =0.0f;
-                        t.y = 0.0f;
-                        t.rotation = 0.0f;
-                        t.scaleX = 1.0f;
-                        t.scaleY = 1.0f;
+                        t->x =0.0f;
+                        t->y = 0.0f;
+                        t->rotation = 0.0f;
+                        t->scaleX = 1.0f;
+                        t->scaleY = 1.0f;
                     }
 
-                    ImGui::DragFloat2("Position", &t.x, 0.1f);
-                    ImGui::DragFloat("Rotation", &t.rotation, 0.1f);
-                    ImGui::DragFloat2("Scale", &t.scaleX, 0.1f);
+                    ImGui::DragFloat2("Position", &t->x, 0.1f);
+                    ImGui::DragFloat("Rotation", &t->rotation, 0.1f);
+                    ImGui::DragFloat2("Scale", &t->scaleX, 0.1f);
 
                     ImGui::EndDisabled();
             
                     if (ImGui::Button("Remove##Transform"))
                     {
-                        componentManager->removeComponent<ecs::components::Transform>(selected.id);
+                        selected.removeComponent<ecs::components::Transform>();
                     }
                 }
                 
             }
 
-            if (!componentManager->hasComponent<ecs::components::Velocity>(selected.id)) {
+            if (!selected.hasComponent<ecs::components::Velocity>()) {
                 availableComponents.push_back("Velocity");
             } else {
-                auto& v = componentManager->getComponent<ecs::components::Velocity>(selected.id);
+                auto v = selected.getComponent<ecs::components::Velocity>();
 
-                ImGui::Checkbox("##enabledVelocity", &v.enabled);
+                ImGui::Checkbox("##enabledVelocity", &v->enabled);
                 ImGui::SameLine();
                 bool open = ImGui::CollapsingHeader("Velocity Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
 
                 if (open) {
-                    ImGui::BeginDisabled(!v.enabled);
+                    ImGui::BeginDisabled(!v->enabled);
 
                     if (ImGui::Button("Reset##Velocity"))
                     {
-                        v.vx = 0.0f;
-                        v.vy = 0.0f;
+                        v->vx = 0.0f;
+                        v->vy = 0.0f;
                     }
                 
-                    ImGui::DragFloat2("Velocity", &v.vx, 0.1f);
+                    ImGui::DragFloat2("Velocity", &v->vx, 0.1f);
                     
                     ImGui::EndDisabled();
         
                     if (ImGui::Button("Remove##Velocity"))
                     {
-                        componentManager->removeComponent<ecs::components::Velocity>(selected.id);
+                        selected.removeComponent<ecs::components::Velocity>();
                     }
                 }
             }
@@ -711,13 +710,13 @@ namespace graphics {
 
                     if (ImGui::Selectable(comp.c_str())) {
                         if (comp == "Sprite") {
-                            componentManager->addComponent(selected.id, ecs::components::Sprite{});
+                            selected.addComponent(ecs::components::Sprite{});
                             availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "Sprite"), availableComponents.end());
                         } else if (comp == "Transform") {
-                            componentManager->addComponent(selected.id, ecs::components::Transform{});
+                            selected.addComponent(ecs::components::Transform{});
                             availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "Transform"), availableComponents.end());
                         } else if (comp == "Velocity") {
-                            componentManager->addComponent(selected.id, ecs::components::Velocity{});
+                            selected.addComponent(ecs::components::Velocity{});
                             availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "Velocity"), availableComponents.end());
                         }
                         query.clear();
