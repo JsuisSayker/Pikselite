@@ -59,6 +59,7 @@ namespace graphics {
         void fileToolBar();
         void projectOptionsBar();
         void recentProjectsDisplay();
+        void clickableProjectOverview();
 
         void startFrame();
         void endFrame(SDL_Window* window);

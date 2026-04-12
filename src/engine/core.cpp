@@ -221,11 +221,23 @@ namespace engine
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("MainWindow", nullptr, flags);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 100));
-        ImGui::BeginChild("projectOptions", ImVec2(0, 0), true);
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 50));
+        ImGui::BeginChild("projectOptions", ImVec2(0, 150), true);
         imguiInterface.projectOptionsBar();
         ImGui::EndChild();
         ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetStyle().ItemSpacing.y);
+
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 0));
+        ImGui::BeginChild("projectDisplaySection", ImVec2(0, 0), true);
+        imguiInterface.recentProjectsDisplay();
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
 
         ImGui::End();
         ImGui::PopStyleVar();

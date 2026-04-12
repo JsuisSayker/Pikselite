@@ -815,4 +815,48 @@ namespace graphics {
         }
     }
 
+    void ImguiInterface::recentProjectsDisplay()
+    {
+        float buttonHeight = 20.0f;
+        float buttonWidth = 80.0f;
+        float windowWidth = ImGui::GetContentRegionAvail().x;
+
+        ImGui::Text("Recent Projects");
+
+        ImGui::SameLine();
+
+        if (BasicButton("Refresh", buttonHeight, buttonWidth))
+        {
+            // TODO
+        }
+
+        ImGui::SameLine(windowWidth - buttonWidth);
+
+        if (BasicButton("ListView", buttonHeight, buttonWidth))
+        {
+            // TODO
+        }
+
+        ImGui::SameLine();
+
+        if (BasicButton("SquareView", buttonHeight, buttonWidth))
+        {
+            // TODO
+        }
+
+        std::vector<std::string> recentProjects = { /////////////////////// temp
+            "Project1",
+            "Project2",
+            "Project3",
+            "Project4"
+        };
+
+       for (int i = 0; i < 4; i++)
+        {
+            ImGui::Text("%s", recentProjects[i].c_str()); ///////// temp
+
+            // clickableProjectOverview(recentProjects[i]);
+        }
+    }
+
 } // namespace graphics
