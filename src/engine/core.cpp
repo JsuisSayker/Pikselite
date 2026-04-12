@@ -224,7 +224,10 @@ namespace engine
         ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 50));
         ImGui::BeginChild("projectOptions", ImVec2(0, 150), true);
-        imguiInterface.projectOptionsBar();
+        int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
+        if (selectedProjectIndex >= 0) {
+            _currentProject = _projects[selectedProjectIndex];
+        }
         ImGui::EndChild();
         ImGui::PopStyleVar();
         ImGui::PopStyleColor();
@@ -234,7 +237,10 @@ namespace engine
         ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 0));
         ImGui::BeginChild("projectDisplaySection", ImVec2(0, 0), true);
-        imguiInterface.recentProjectsDisplay();
+        selectedProjectIndex = imguiInterface.recentProjectsDisplay(_projects);
+        if (selectedProjectIndex >= 0) {
+            _currentProject = _projects[selectedProjectIndex];
+        }
         ImGui::EndChild();
         ImGui::PopStyleVar();
         ImGui::PopStyleColor();

@@ -6,6 +6,10 @@
 
 #include <graphics/imgui/imguiInterface.hpp>
 
+//#include <nfd.h> /////////////////////////////////
+#include <filesystem>
+#include <chrono>
+
 namespace graphics {
     /** 
      * @brief Constructs an instance of the ImguiInterface.
@@ -782,39 +786,96 @@ namespace graphics {
         });
     }
 
-    void ImguiInterface::projectOptionsBar()
+    int ImguiInterface::projectOptionsBar(std::vector<Project> &projects)
     {
         
-        float height = 25.0f;
-        float width = 80.0f;
+        float buttonHeight = 25.0f;
+        float buttonWidth = 80.0f;
+        float windowWidth = ImGui::GetContentRegionAvail().x;
+
+        static bool openPopup = false;
+        static char projectName[128] = "NewProject";
+        static std::filesystem::path selectedPath;
 
         ImGui::Text("Get Started");
         ImGui::Separator();
-        if (BasicButton("New", height, width))
+
+        if (BasicButton("New", buttonHeight, buttonWidth))
         {
-            // TODO
+
+            nfdchar_t* outPath = nullptr;
+
+            if (NFD_PickFolder(nullptr, &outPath) == NFD_OKAY)
+            {
+                selectedPath = outPath;
+                free(outPath);
+                openPopup = true;
+            }
+
+            return projects.size();
         }
-        ImGui::SameLine();
-        if (BasicButton("Open", height, width))
+
+        if (openPopup)
         {
-            // TODO
-        }
-        ImGui::SameLine();
-        if (BasicButton("Import", height, width))
-        {
-            // TODO
+            ImGui::OpenPopup("Create Project");
+            openPopup = false;
         }
         
-        float windowWidth = ImGui::GetContentRegionAvail().x;
+        if (ImGui::BeginPopupModal("Create Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::InputText("Project Name", projectName, sizeof(projectName));
+        
+            if (ImGui::Button("Save"))
+            {
+                std::filesystem::create_directory(selectedPath / projectName);
+                
+                Project newProject;
+                newProject->name = projectName;
+                newProject->path = selectedPath / projectName;
 
-        ImGui::SameLine(windowWidth - width);
-        if (BasicButton("Tutorial", height, width))
+                projects.push_back(newProject);
+
+                ImGui::CloseCurrentPopup();
+            }
+        
+            ImGui::SameLine();
+        
+            if (ImGui::Button("Cancel"))
+            {
+                ImGui::CloseCurrentPopup();
+            }
+        
+            ImGui::EndPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (BasicButton("Open", buttonHeight, buttonWidth))
+        {
+            // TODO
+
+            // return opened project;
+        }
+
+        ImGui::SameLine();
+
+        if (BasicButton("Import", buttonHeight, buttonWidth))
+        {
+            // TODO
+            // return imported project;
+        }
+
+        ImGui::SameLine(windowWidth - buttonWidth);
+
+        if (BasicButton("Tutorial", buttonHeight, buttonWidth))
         {
             // TODO
         }
+
+        return -1;
     }
 
-    void ImguiInterface::recentProjectsDisplay()
+    void ImguiInterface::recentProjectsDisplay(std::vector<Project> &projects)
     {
         float buttonHeight = 20.0f;
         float buttonWidth = 80.0f;
@@ -843,19 +904,71 @@ namespace graphics {
             // TODO
         }
 
-        std::vector<std::string> recentProjects = { /////////////////////// temp
-            "Project1",
-            "Project2",
-            "Project3",
-            "Project4"
-        };
+        std::vector<Project> recentProjects;
+
+        if (projects.empty())
+        {
+            ImGui::Text("No recent projects found.");
+            return;
+        }
+
+        if (projects.size() > 4)
+       { 
+            for (int i = 0; projects[i] != nullptr; i++)
+            {
+                Project curr = projects[i];
+                if (projects[i + 1] == nullptr)
+                    break;
+                
+                int j = 1;
+                int count = 0;
+
+                while (projects[i + j] != nullptr)
+                {
+                    if (curr.lastOpened > projects[i + j].lastOpened)
+                    {
+                        count++;
+                        if (count > 3)
+                            break;
+                    }
+
+                    if (projects[i + j + 1] == nullptr && count < 4) {
+                        recentProjects.push_back(projects[i]);
+                    }
+
+                    j++;
+                }
+            }
+        } else {
+            recentProjects = projects;
+        }
 
        for (int i = 0; i < 4; i++)
         {
-            ImGui::Text("%s", recentProjects[i].c_str()); ///////// temp
+            clickableProjectOverview(recentProjects[i]);
+            
+            if (ImGui::IsItemClicked())
+            {
+                ImGui::Text("Clicked on project: %s", recentProjects[i].name.c_str()); ////// temp
 
-            // clickableProjectOverview(recentProjects[i]);
+                return i;
+            }
         }
+
+        return -1;
+    }
+
+    void ImguiInterface::clickableProjectOverview(const std::string& projectName) // parameter will be changed later
+    {
+        // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent projects list.
+        
+        //ImGui::Image((void*)(intptr_t)thumbnailTextureID, ImVec2(100, 100)); // thumbnail
+        //ImGui::SameLine();
+
+        ImGui::Text("%s", projectName.c_str());
+        ImGui::Text("path/to/project");
+
+        ImGui::Text("Last opened date"); // move to far right
     }
 
 } // namespace graphics

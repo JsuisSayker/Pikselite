@@ -18,6 +18,8 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <filesystem>
+#include <chrono>
 #include <SDL2/SDL.h>
 
 #include <nlohmann/json.hpp>
@@ -25,6 +27,12 @@ using json = nlohmann::json;
 
 namespace engine
 {
+    struct Project { ////////////////////////////// will move to another file later
+        std::string name;
+        std::filesystem::path path;
+        std::chrono::system_clock::time_point lastOpened;
+    };
+
     class Core
     {
     public:
@@ -43,8 +51,10 @@ namespace engine
         editors::SpriteEditor *spriteEditor;
         editors::ProjectEditor *projectEditor;
 
-        
-        bool isProjectsListPageActive = true; ////////////////////////
+        std::vector<Project> _projects; ////////////////////////
+        Project _currentProject; ////////////////////////
+
+        bool isProjectsListPageActive = true;
         bool isGamePreviewActive = false;
         bool isProjectEditorActive = false;
         bool isSpriteEditorActive = false;
@@ -104,4 +114,5 @@ namespace engine
         void saveScene(const std::string& filename);
         bool loadScene(const std::string& filename);
     };
+
 } // namespace engine

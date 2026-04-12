@@ -56,9 +56,9 @@ namespace graphics {
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
 
         void fileToolBar();
-        void projectOptionsBar();
-        void recentProjectsDisplay();
-        void clickableProjectOverview();
+        int projectOptionsBar(std::vector<Project> &projects);
+        void recentProjectsDisplay(std::vector<Project> &projects);
+        void clickableProjectOverview(const std::string& projectName); // parameter will be changed later
 
         void startFrame();
         void endFrame(SDL_Window* window);
