@@ -6,7 +6,7 @@
 
 #include <graphics/imgui/imguiInterface.hpp>
 
-//#include <nfd.h> /////////////////////////////////
+#include <nfd.h>
 #include <filesystem>
 #include <chrono>
 
@@ -786,7 +786,7 @@ namespace graphics {
         });
     }
 
-    int ImguiInterface::projectOptionsBar(std::vector<Project> &projects)
+    int ImguiInterface::projectOptionsBar(std::vector<projects::Project> &projects)
     {
         
         float buttonHeight = 25.0f;
@@ -805,12 +805,12 @@ namespace graphics {
 
             nfdchar_t* outPath = nullptr;
 
-            if (NFD_PickFolder(nullptr, &outPath) == NFD_OKAY)
-            {
-                selectedPath = outPath;
-                free(outPath);
-                openPopup = true;
-            }
+            // if (NFD_PickFolder(nullptr, &outPath) == NFD_OKAY)
+            // {
+            //     selectedPath = outPath;
+            //     free(outPath);
+            //     openPopup = true;
+            // }
 
             return projects.size();
         }
@@ -829,9 +829,9 @@ namespace graphics {
             {
                 std::filesystem::create_directory(selectedPath / projectName);
                 
-                Project newProject;
-                newProject->name = projectName;
-                newProject->path = selectedPath / projectName;
+                projects::Project newProject;
+                newProject.name = projectName;
+                newProject.path = selectedPath / projectName;
 
                 projects.push_back(newProject);
 
@@ -854,26 +854,26 @@ namespace graphics {
         {
             nfdchar_t* outPath = nullptr;
 
-            nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
+            // nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
         
-            if (result == NFD_OKAY)
-            {
-                std::filesystem::path selectedPath(outPath);
-                free(outPath);
+            // if (result == NFD_OKAY)
+            // {
+            //     std::filesystem::path selectedPath(outPath);
+            //     free(outPath);
         
-                for (int i = 0; i < projects.size(); i++)
-                {
-                    if (projects[i].path == selectedPath)
-                    {
-                        return i;
-                    }
-                }
+            //     for (int i = 0; i < projects.size(); i++)
+            //     {
+            //         if (projects[i].path == selectedPath)
+            //         {
+            //             return i;
+            //         }
+            //     }
         
-                std::cout << "Selected folder: " << selectedPath << std::endl;
-            } else if (result == NFD_ERROR)
-            {
-                std::cerr << "Error: " << NFD_GetError() << std::endl;
-            }
+            //     std::cout << "Selected folder: " << selectedPath << std::endl;
+            // } else if (result == NFD_ERROR)
+            // {
+            //     std::cerr << "Error: " << NFD_GetError() << std::endl;
+            // }
 
             return -1;
         }
@@ -896,7 +896,7 @@ namespace graphics {
         return -1;
     }
 
-    void ImguiInterface::recentProjectsDisplay(std::vector<Project> &projects)
+    int ImguiInterface::recentProjectsDisplay(std::vector<projects::Project> &projects)
     {
         float buttonHeight = 20.0f;
         float buttonWidth = 80.0f;
@@ -925,41 +925,41 @@ namespace graphics {
             // TODO
         }
 
-        std::vector<Project> recentProjects;
+        std::vector<projects::Project> recentProjects;
 
         if (projects.empty())
         {
             ImGui::Text("No recent projects found.");
-            return;
+            return -1;
         }
 
         if (projects.size() > 4)
        { 
-            for (int i = 0; projects[i] != nullptr; i++)
-            {
-                Project curr = projects[i];
-                if (projects[i + 1] == nullptr)
-                    break;
+            // for (int i = 0; projects[i] != nullptr; i++)
+            // {
+            //     engine::Project curr = projects[i];
+            //     if (projects[i + 1] == nullptr)
+            //         break;
                 
-                int j = 1;
-                int count = 0;
+            //     int j = 1;
+            //     int count = 0;
 
-                while (projects[i + j] != nullptr)
-                {
-                    if (curr.lastOpened > projects[i + j].lastOpened)
-                    {
-                        count++;
-                        if (count > 3)
-                            break;
-                    }
+            //     while (projects[i + j] != nullptr)
+            //     {
+            //         if (curr.lastOpened > projects[i + j].lastOpened)
+            //         {
+            //             count++;
+            //             if (count > 3)
+            //                 break;
+            //         }
 
-                    if (projects[i + j + 1] == nullptr && count < 4) {
-                        recentProjects.push_back(projects[i]);
-                    }
+            //         if (projects[i + j + 1] == nullptr && count < 4) {
+            //             recentProjects.push_back(projects[i]);
+            //         }
 
-                    j++;
-                }
-            }
+            //         j++;
+            //     }
+            // }
         } else {
             recentProjects = projects;
         }
@@ -979,17 +979,17 @@ namespace graphics {
         return -1;
     }
 
-    void ImguiInterface::clickableProjectOverview(const std::string& projectName) // parameter will be changed later
+    void ImguiInterface::clickableProjectOverview(projects::Project &project)
     {
         // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent projects list.
         
         //ImGui::Image((void*)(intptr_t)thumbnailTextureID, ImVec2(100, 100)); // thumbnail
         //ImGui::SameLine();
 
-        ImGui::Text("%s", projectName.c_str());
+        ImGui::Text("%s", project.name.c_str());
         ImGui::Text("path/to/project");
 
-        std::time_t t = std::chrono::system_clock::to_time_t(p.lastOpened);
+        std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
         ImGui::Text("Last opened: %s", std::ctime(&t));
     }
 

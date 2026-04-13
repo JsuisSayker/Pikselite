@@ -30,6 +30,8 @@
 #include <string>
 #include <cstring>
 
+#include <projects.hpp> //////////////////////// temporary
+
 namespace graphics {
     class ImguiInterface {
     public:
@@ -56,9 +58,9 @@ namespace graphics {
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
 
         void fileToolBar();
-        int projectOptionsBar(std::vector<Project> &projects);
-        void recentProjectsDisplay(std::vector<Project> &projects);
-        void clickableProjectOverview(const std::string& projectName);
+        int projectOptionsBar(std::vector<projects::Project> &projects);
+        int recentProjectsDisplay(std::vector<projects::Project> &projects);
+        void clickableProjectOverview(projects::Project &project);
 
         void startFrame();
         void endFrame(SDL_Window* window);

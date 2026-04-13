@@ -12,7 +12,7 @@
     "sol2",
     "gtest",
     "nlohmann-json",
-    "nativefiledialog",
+    "nativefiledialog-extended",
     {
       "name": "tracy",
       "version>=": "0.13.1"

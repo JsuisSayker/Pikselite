@@ -22,17 +22,13 @@
 #include <chrono>
 #include <SDL2/SDL.h>
 
+#include <projects.hpp> ///////////////////////////////////// for now
+
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 namespace engine
 {
-    struct Project { ////////////////////////////// will move to another file later
-        std::string name = "New Project";
-        std::filesystem::path path;
-        std::chrono::system_clock::time_point lastOpened = std::chrono::system_clock::now();
-    };
-
     class Core
     {
     public:
@@ -51,8 +47,8 @@ namespace engine
         editors::SpriteEditor *spriteEditor;
         editors::ProjectEditor *projectEditor;
 
-        std::vector<Project> _projects; ////////////////////////
-        Project _currentProject; ////////////////////////
+        std::vector<projects::Project> _projects; ////////////////////////
+        projects::Project _currentProject; ////////////////////////
 
         bool isProjectsListPageActive = true;
         bool isGamePreviewActive = false;

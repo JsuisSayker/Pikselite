@@ -254,10 +254,6 @@ namespace engine
         
         imguiInterface.endFrame(sdlInterface.getWindow());
         renderer.present(sdlInterface.getWindow());
-
-        // Section (horizontal) with: Recent projects text, 2 formatting options b, List of the last 2 projects opened
-        // The project display will show: thumbnail, Title of project, path to project, Date of last opened
-        // Clicking on a project will: make isProjectEditorActive = false, isProjectEditorActive = true, and load the project data into the core
     }
 
     void Core::run()
