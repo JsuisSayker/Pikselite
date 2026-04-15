@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 
 #include <box2d/box2d.h>
 
@@ -9,6 +10,7 @@
 #include "engine/physics/boxWorld.hpp"
 #include "engine/ecs/components/transformComponent.hpp"
 #include "engine/ecs/components/physicsComponent.hpp"
+#include "engine/ecs/components/spriteComponent.hpp"
 
 namespace ecs::systems
 {
@@ -76,6 +78,8 @@ namespace ecs::systems
                     shapeDef.material.friction = physics.friction;
                     shapeDef.material.restitution = physics.restitution;
 
+                    bool createdShape = false;
+
                     for (const auto& triangle : physics.triangles)
                     {
                         b2Vec2 points[3] = {
@@ -89,7 +93,29 @@ namespace ecs::systems
                         {
                             b2Polygon polygon = b2MakePolygon(&hull, 0.0f);
                             b2CreatePolygonShape(physics.bodyId, &shapeDef, &polygon);
+                            createdShape = true;
                         }
+                    }
+
+                    // Fallback collider for sprite-based objects: create a box from sprite size
+                    // when no custom triangles are provided.
+                    if (!createdShape)
+                    {
+                        float width = PIXEL_SIZE;
+                        float height = PIXEL_SIZE;
+
+                        if (componentManager.hasComponent<components::Sprite>(entity))
+                        {
+                            const auto& sprite = componentManager.getComponent<components::Sprite>(entity);
+                            width = sprite.width;
+                            height = sprite.height;
+                        }
+
+                        const float halfWidth = std::max(width * 0.5f, 0.01f);
+                        const float halfHeight = std::max(height * 0.5f, 0.01f);
+
+                        b2Polygon box = b2MakeBox(halfWidth, halfHeight);
+                        b2CreatePolygonShape(physics.bodyId, &shapeDef, &box);
                     }
                 }
             }

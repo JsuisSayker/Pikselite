@@ -54,6 +54,8 @@ namespace engine
 {
     void Core::init()
     {
+        _boxWorld.init({0.0f, -500.0f});
+
         // Register ECS components
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
@@ -202,6 +204,12 @@ namespace engine
             _renderPixels = framePixels;
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
+            // Draw ECS sprites after the pixel pass in the preview window.
+            if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
+            {
+                spriteSystem->update(0.0, componentManager);
+            }
+
             renderer.present(gameWindow);
         }
 
@@ -329,7 +337,7 @@ namespace engine
             accumulator -= fixedDt;
         }
 
-        // ECS can stay variable
+        // Single ECS pass: any newly registered system is updated automatically.
         {
             ZoneScopedN("ECS Systems");
             systemManager.update(deltaTime, componentManager);
@@ -350,6 +358,7 @@ namespace engine
             copyProjectEditorDataToCore();
             saveScene(_sceneFilename);
         }
+        _boxWorld.shutdown();
         SDL_Quit();
     }
 

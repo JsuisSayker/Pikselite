@@ -6,6 +6,9 @@ namespace engine
     {
         for (const auto &system : systems)
         {
+            if (!system->shouldRunInUpdate())
+                continue;
+
             system->update(deltaTime, componentManager);
         }
     }

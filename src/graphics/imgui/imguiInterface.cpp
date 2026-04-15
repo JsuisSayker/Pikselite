@@ -312,8 +312,9 @@ namespace graphics {
             {
                 std::filesystem::path p = entry.path();
                 std::string ext = p.extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-                if (ext == ".png" || ext == ".jpg" || ext == ".dat")
+                if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".webp" || ext == ".dat")
                 {
                     spriteFiles.push_back(p.string());
                 }

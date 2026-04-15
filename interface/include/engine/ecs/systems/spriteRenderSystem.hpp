@@ -21,6 +21,7 @@ namespace ecs::systems
             : _renderer(renderer), _camera(camera) {}
 
         void init() override {}
+        bool shouldRunInUpdate() const override { return false; }
 
         /**
          * @brief Updates the sprite render system.
