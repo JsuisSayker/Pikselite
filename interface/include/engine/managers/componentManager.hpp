@@ -28,15 +28,19 @@ namespace engine
         ~ComponentManager() = default;
 
         /**
-         * @brief Create a Entity object
-         * 
-         * @return ecs::Entity 
+         * @brief Sets the callback invoked when an entity component set changes.
+         *
+         * The callback is called after add/remove operations so the caller can
+         * refresh signatures and system memberships.
          */
         void setEntityMutationCallback(std::function<void(ecs::EntityID)> callback)
         {
             onEntityMutated = std::move(callback);
         }
 
+        /**
+         * @brief Sets the callback invoked when a component type is removed from an entity.
+         */
         void setComponentRemovalCallback(std::function<void(ecs::EntityID, const std::type_index&)> callback)
         {
             onComponentRemoved = std::move(callback);
@@ -184,9 +188,13 @@ namespace engine
         // Map of component type to component array instance
         std::unordered_map<std::type_index, std::unique_ptr<ecs::IComponentArray>> componentArrays;
 
-        // Incremental component type ID generator
+        // Incremental component type ID generator.
         ComponentType nextComponentType = 0;
+
+        // Optional callback used by Core to recompute entity signature on mutation.
         std::function<void(ecs::EntityID)> onEntityMutated;
+
+        // Optional callback used by Core to react to specific component removals.
         std::function<void(ecs::EntityID, const std::type_index&)> onComponentRemoved;
 
         // Guard: prevent registration overflow

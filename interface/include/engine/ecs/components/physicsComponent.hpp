@@ -7,6 +7,9 @@
 
 namespace ecs::components
 {
+    /**
+     * @brief Triangle primitive used to build polygon colliders for a physics body.
+     */
     struct PhysicsTriangle
     {
         glm::vec2 a{0.0f, 0.0f};
@@ -14,6 +17,12 @@ namespace ecs::components
         glm::vec2 c{0.0f, 0.0f};
     };
 
+    /**
+     * @brief Box2D-backed body description used by PhysicsSystem.
+     *
+     * When `triangles` is empty, PhysicsSystem creates a fallback box collider
+     * from the sprite size (or pixel size default).
+     */
     struct PhysicsBody
     {
         bool enabled = true;

@@ -11,7 +11,6 @@
 #include <engine/managers/systemManager.hpp>
 #include <engine/physics/boxWorld.hpp>
 
-#include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 
 #include <engine/pixels/simulation/simulation.hpp>
@@ -97,7 +96,7 @@ namespace engine
         bool copyProjectEditorDataToCore();
 
         // Creates an ECS entity for each Pixel::GameObject,
-        // attaching Transform and GameObjectLink components.
+        // create new instance for preview.
         void loadGameObjectsIntoECS();
 
         // Rebuild and propagate ECS signature from actual component presence.

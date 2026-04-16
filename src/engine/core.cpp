@@ -1,7 +1,6 @@
 #include <engine/core.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
-#include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
@@ -59,7 +58,6 @@ namespace engine
         // Register ECS components
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
-        componentManager.registerComponent<ecs::components::GameObjectLink>();
         componentManager.registerComponent<ecs::components::Sprite>();
         componentManager.registerComponent<ecs::components::PhysicsBody>();
 
