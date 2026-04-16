@@ -5,6 +5,7 @@
 #include <engine/physics/boxWorld.hpp>
 #include <engine/managers/componentManager.hpp>
 #include <engine/ecs/systems/physicsSystem.hpp>
+#include <engine/ecs/systems/movementSystem.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
@@ -115,4 +116,45 @@ TEST(PhysicsSystemTests, CreatesBodyAndSynchronizesTransformFromSimulation)
     EXPECT_FLOAT_EQ(after.prevY, before.y);
     EXPECT_GT(after.x, before.x);
     EXPECT_LT(after.y, before.y);
+}
+
+TEST(PhysicsTransformCohabitationTests, PhysicsKeepsFinalTransformAuthorityWhenMovementAlsoRuns)
+{
+    engine::physics::BoxWorld world({0.0f, 0.0f});
+
+    engine::ComponentManager componentManager;
+    componentManager.registerComponent<ecs::components::Transform>();
+    componentManager.registerComponent<ecs::components::Velocity>();
+    componentManager.registerComponent<ecs::components::PhysicsBody>();
+    componentManager.registerComponent<ecs::components::Sprite>();
+
+    constexpr ecs::EntityID entity = 102;
+    componentManager.addComponent<ecs::components::Transform>(entity, makeTransform(0.0f, 0.0f));
+    componentManager.addComponent<ecs::components::Velocity>(entity, ecs::components::Velocity{true, 10.0f, 0.0f});
+    componentManager.addComponent<ecs::components::PhysicsBody>(entity, makePhysicsBody(true));
+
+    ecs::systems::MovementSystem movement;
+    movement.entities.insert(entity);
+
+    ecs::systems::PhysicsSystem physics(&world);
+    physics.entities.insert(entity);
+
+    // Create body first.
+    physics.update(1.0 / 60.0, componentManager);
+    auto &physicsBody = componentManager.getComponent<ecs::components::PhysicsBody>(entity);
+    ASSERT_TRUE(B2_IS_NON_NULL(physicsBody.bodyId));
+
+    // Keep body static: if Movement changes Transform, Physics should overwrite it
+    // from body transform in the same frame (current system order in Core).
+    b2Body_SetLinearVelocity(physicsBody.bodyId, {0.0f, 0.0f});
+
+    movement.update(1.0, componentManager);
+    const auto movedByVelocity = componentManager.getComponent<ecs::components::Transform>(entity);
+    EXPECT_GT(movedByVelocity.x, 0.0f);
+
+    physics.update(1.0, componentManager);
+    const auto finalTransform = componentManager.getComponent<ecs::components::Transform>(entity);
+
+    EXPECT_NEAR(finalTransform.x, 0.0f, 0.0001f);
+    EXPECT_NEAR(finalTransform.y, 0.0f, 0.0001f);
 }
