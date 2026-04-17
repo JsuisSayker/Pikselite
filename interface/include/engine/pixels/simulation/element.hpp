@@ -7,7 +7,8 @@
 constexpr int GRAVITY_DIR = -1;
 
 enum ElementState : uint8_t {
-    SOLID = 0,
+    SOLID_STATIC = 0,
+    SOLID_DYNAMIC,
     LIQUID,
     GAS,
 };
@@ -34,3 +35,5 @@ void updateWater(ChunkGrid& grid, int x, int y);
 void updateSand(ChunkGrid& grid, int x, int y);
 void updateFire(ChunkGrid& grid, int x, int y);
 void updateStone(ChunkGrid& grid, int x, int y);
+void updateDirt(ChunkGrid& grid, int x, int y);
+void updateDebug(ChunkGrid& grid, int x, int y);

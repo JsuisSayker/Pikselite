@@ -22,6 +22,7 @@ target_link_libraries(engine
     ${SDL2_LIBRARIES}
     ${GLEW_LIBRARIES}
     OpenGL::GL
+    box2d::box2d
     ${LUA_LIBRARIES}
     box2d::box2d
 )

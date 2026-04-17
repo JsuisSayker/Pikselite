@@ -15,6 +15,7 @@
 
 #include <engine/pixels/simulation/simulation.hpp>
 #include <engine/pixels/simulation/element.hpp>
+#include <box2d/box2d.h>
 #include <vector>
 #include <iostream>
 #include <string>
@@ -73,6 +74,7 @@ namespace engine
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
+        std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>> _gameObjectOccupiedCells;
         std::string _sceneFilename = "assets/scene.json";
 
         void init();
@@ -98,6 +100,7 @@ namespace engine
         // Creates an ECS entity for each Pixel::GameObject,
         // create new instance for preview.
         void loadGameObjectsIntoECS();
+        void syncGameObjectPixelsFromPhysics();
 
         // Rebuild and propagate ECS signature from actual component presence.
         void refreshEntitySignature(ecs::EntityID entityId);

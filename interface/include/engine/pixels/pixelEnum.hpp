@@ -36,6 +36,7 @@ namespace Pixel
         GameObjectID id;
         std::string name;
         std::vector<Element::Pixel> pixels;
+        std::vector<Element::Vec2i> pixelLocalCoords;
 
         // list of any for components
         std::unordered_map<std::type_index, std::any> components;
