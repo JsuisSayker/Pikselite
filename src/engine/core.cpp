@@ -55,6 +55,8 @@ namespace engine
     {
         _boxWorld.init({0.0f, -500.0f});
 
+        loadProjects(_projects);
+
         // Register ECS components
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
@@ -219,6 +221,29 @@ namespace engine
         glViewport(0, 0, w, h);
     }
 
+    void Core::sortProjects(std::vector<projects::Project>& projects)
+    {
+        std::sort(projects.begin(), projects.end(),
+            [](const projects::Project& a, const projects::Project& b)
+            {
+                return a.lastOpened > b.lastOpened;
+            });
+    }
+
+    void Core::openProject(int index)
+    {
+        _currentProject = _projects[index];
+
+        auto now = std::chrono::system_clock::now();
+        _currentProject.lastOpened = now;
+        _projects[index].lastOpened = now;
+
+        sortProjects(_projects);
+        saveProjects(_projects);
+
+        switchToProjectEditor = true;
+    }
+
     void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface)
     {
         renderer.clear();
@@ -246,10 +271,7 @@ namespace engine
         ImGui::BeginChild("projectOptions", ImVec2(0, 150), true);
         int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
         if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
-            _currentProject = _projects[selectedProjectIndex];
-            std::cout << "Selected current project: " << _currentProject.name << std::endl; ////////////////////////////////////////////
-            selectedProjectIndex = -1;
-            switchToProjectEditor = true;
+            openProject(selectedProjectIndex);
         }
         ImGui::EndChild();
         ImGui::PopStyleVar();
@@ -265,8 +287,7 @@ namespace engine
             selectedProjectIndex = imguiInterface.recentProjectsDisplay(_projects);
         
             if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
-                _currentProject = _projects[selectedProjectIndex];
-                switchToProjectEditor = true;
+                openProject(selectedProjectIndex);
             }
         }
         ImGui::EndChild();
@@ -284,6 +305,7 @@ namespace engine
             isProjectsListPageActive = false;
             isProjectEditorActive = true;
             switchToProjectEditor = false;
+            projectEditor->setCurrentProject(_currentProject);
         }
     }
 
@@ -546,6 +568,83 @@ namespace engine
         }
 
         return result;
+    }
+
+    void Core::saveProjects(const std::vector<projects::Project> &projects)
+    {
+        std::filesystem::create_directories("config");
+
+        std::ofstream file("config/projects.json");
+
+        if (!file.is_open())
+        {
+            std::cerr << "Failed to open projects.json for writing\n";
+            return;
+        }
+
+        nlohmann::json j = nlohmann::json::array();
+
+        for (const auto& p : projects)
+        {
+            std::time_t t = std::chrono::system_clock::to_time_t(p.lastOpened);
+
+            j.push_back({
+                {"name", p.name},
+                {"path", p.path.string()},
+                {"lastOpened", t}
+            });
+        }
+
+        file << j.dump(4);
+    }
+
+    void Core::loadProjects(std::vector<projects::Project> &projects)
+    {
+        std::ifstream file("projects.json");
+
+        if (!file.is_open())
+            return;
+
+        nlohmann::json j;
+
+        try
+        {
+            file >> j;
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << "Failed to parse projects.json: " << e.what() << std::endl;
+            return;
+        }
+
+        projects.clear();
+
+        for (const auto& item : j)
+        {
+            projects::Project p;
+
+            if (!item.contains("name") || !item.contains("path"))
+                continue;
+
+            p.name = item["name"].get<std::string>();
+            p.path = item["path"].get<std::string>();
+
+            std::time_t t = item.value("lastOpened", 0);
+            if (t != 0)
+            {
+                p.lastOpened = std::chrono::system_clock::from_time_t(t);
+            }
+
+            if (!std::filesystem::exists(p.path))
+            {
+                std::cout << "Skipping missing project: " << p.path << std::endl;
+                continue;
+            }
+
+            projects.push_back(p);
+        }
+
+        sortProjects(projects);
     }
 
     void Core::saveScene(const std::string &filename)

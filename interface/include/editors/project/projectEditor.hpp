@@ -21,6 +21,7 @@
 
 #include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
+#include <projects.hpp>
 
 /**
  * @brief The editors namespace contains classes related to editing and managing the project, including the ProjectEditor class which provides methods for handling user input, managing pixel and game object data, and interfacing with the graphics and component systems.
@@ -82,6 +83,9 @@ namespace editors
                           const std::vector<Pixel::GameObject> &gameObjects,
                           const ChunkGrid &chunkGrid,
                           uint32_t nextGameObjectId);
+        
+        
+        void setCurrentProject(const projects::Project& project);
 
     private:
         struct PendingTexture {
@@ -104,6 +108,7 @@ namespace editors
         
         bool _isPlacingTexture = false;
         PendingTexture _pendingTexture = {};
+        projects::Project _currentProject;
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event received. This includes managing mouse input for pixel placement and game object selection, keyboard input for camera movement and zooming, and other input events relevant to the editing process.
@@ -111,12 +116,6 @@ namespace editors
          * by the editor. The method will update the editor's state accordingly, including managing pixel placement, game object selection, sprite placement, and scene saving/loading requests based on the type and details of the event.
          */
         void handleEvents(const graphics::InputEvent &event);
-
-        /**
-         * @brief Handles ImGui user interface interactions, updating the editor's state based on user input in the ImGui interface. This includes managing UI elements for selecting sprites, creating and managing game objects, and triggering scene saving/loading requests.
-         * Note: This method should be called during the editor's run loop after handling input events, to ensure that the ImGui interface is updated and responsive to user interactions.
-         */
-        void imguiHandling();
 
         /**
          * @brief Places the pending sprite at the specified world coordinates, updating the chunk grid, pixel attributes, render pixels, and game object associations accordingly. This method will apply the changes to the scene based on the pending sprite's data, including setting the new pixel entity IDs in the chunk grid, updating the render pixels for rendering, and associating the new pixels with the selected game object if applicable. After placement, the pending sprite state will be reset to allow for new placements.

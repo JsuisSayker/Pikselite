@@ -20,9 +20,10 @@
 #include <string>
 #include <filesystem>
 #include <chrono>
+#include <algorithm>
 #include <SDL2/SDL.h>
 
-#include <projects.hpp> ///////////////////////////////////// for now
+#include <projects.hpp>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -101,6 +102,8 @@ namespace engine
         void runGamePreview();
         void shutdown();
 
+        void openProject(int index);
+        void sortProjects(std::vector<projects::Project>& projects);
         void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface); ///////////////////////////
 
         bool copyProjectEditorDataToCore();
@@ -113,6 +116,9 @@ namespace engine
         void refreshEntitySignature(ecs::EntityID entityId);
 
         std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
+
+        void saveProjects(const std::vector<projects::Project> &projects);
+        void loadProjects(std::vector<projects::Project> &projects);
 
         // save scene and load scene functions for project editor
         void saveScene(const std::string& filename);

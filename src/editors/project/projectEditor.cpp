@@ -20,7 +20,8 @@ namespace editors {
         _renderer->clear();
 
         _imguiInterface->startFrame();
-        _imguiInterface->projectTopBarEmpty();
+        _imguiInterface->projectTopBar(_currentProject.name);
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _currentProject);
         _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested, _loadSceneRequested);
 
         if (!_currentSpriteFilename.empty()) {
@@ -44,7 +45,6 @@ namespace editors {
         drawGameObjectSprites();
         drawPendingTexturePreview();
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
-        imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
     }
@@ -100,6 +100,10 @@ namespace editors {
         default:
             break;
         }
+    }
+
+    void ProjectEditor::setCurrentProject(const projects::Project& project) {
+        _currentProject = project;
     }
 
     void ProjectEditor::placePendingSpriteAtWorldInGameObject(glm::vec2 worldPos) {
@@ -202,11 +206,6 @@ namespace editors {
             sprite2d.textureID = textureIt->second;
             _renderer->drawSprite(sprite2d, _camera);
         }
-    }
-
-    void ProjectEditor::imguiHandling()
-    {
-        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
     }
 
     void ProjectEditor::mouseLeftClick() {

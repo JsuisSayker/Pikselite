@@ -5,9 +5,10 @@
  */
 
 #include <graphics/imgui/imguiInterface.hpp>
-
 #include <nfd.hpp>
+
 #include <filesystem>
+#include <fstream>
 #include <chrono>
 
 namespace graphics {
@@ -265,7 +266,7 @@ namespace graphics {
     /** 
      * @brief Displays an empty top toolbar for the project editor.
      */
-    void ImguiInterface::projectTopBarEmpty()
+    void ImguiInterface::projectTopBar(std::string title)
     {
         static BarConfig topBarConfig {
             BarOrientation::Horizontal,
@@ -277,7 +278,20 @@ namespace graphics {
 
         static Bar topBar(topBarConfig);
         topBar.Draw([&]() {
-            // Intentionally empty top bar for Project Editor mode.
+
+            if (BasicButton("Save")) {
+                // 
+            }
+
+            ImVec2 textSize = ImGui::CalcTextSize(title.c_str());
+            ImVec2 windowSize = ImGui::GetWindowSize();
+
+            ImGui::SetCursorPos(ImVec2(
+                (windowSize.x - textSize.x) * 0.5f,
+                (windowSize.y - textSize.y) * 0.5f
+            ));
+
+            ImGui::Text("%s", title.c_str());
         });
     }
 
@@ -427,8 +441,9 @@ namespace graphics {
      * @brief Displays the game objects bar, which consists of a hierarchy view of all game objects and an inspector for the selected game object. The hierarchy allows users to select, rename, and delete game objects, while the inspector displays properties of the selected game object and allows users to edit them.
      * @param gameObjects A reference to a vector of game objects to be displayed in the hierarchy.
      * @param selectedGameObjectIndex A reference to an integer that indicates the index of the currently selected game object in the hierarchy.
+     * @param currentProject A reference to the current project.
      */
-    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex)
+    void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject)
     {
         static BarConfig sideBarConfig {
             BarOrientation::Vertical,
@@ -888,6 +903,9 @@ namespace graphics {
                 if (!std::filesystem::exists(fullPath))
                 {
                     std::filesystem::create_directory(fullPath);
+                    std::filesystem::create_directory(fullPath / "Assets");
+                    std::filesystem::create_directory(fullPath / "Scenes");
+                    //std::ofstream(fullPath / "scene.json") << "{}";
 
                     projects::Project newProject;
                     newProject.name = projectName;
@@ -1005,53 +1023,18 @@ namespace graphics {
             // TODO
         }
 
-        std::vector<projects::Project> recentProjects;
-
         if (projects.empty())
         {
             ImGui::Text("No recent projects found.");
             return -1;
         }
 
-        if (projects.size() > 4)
-       { 
-            // for (int i = 0; projects[i] != nullptr; i++)
-            // {
-            //     engine::Project curr = projects[i];
-            //     if (projects[i + 1] == nullptr)
-            //         break;
-                
-            //     int j = 1;
-            //     int count = 0;
-
-            //     while (projects[i + j] != nullptr)
-            //     {
-            //         if (curr.lastOpened > projects[i + j].lastOpened)
-            //         {
-            //             count++;
-            //             if (count > 3)
-            //                 break;
-            //         }
-
-            //         if (projects[i + j + 1] == nullptr && count < 4) {
-            //             recentProjects.push_back(projects[i]);
-            //         }
-
-            //         j++;
-            //     }
-            // }
-        } else {
-            recentProjects = projects;
-        }
-
        for (int i = 0; i < 4; i++)
         {
-            clickableProjectOverview(recentProjects[i]);
+            clickableProjectOverview(projects[i]);
             
             if (ImGui::IsItemClicked())
             {
-                ImGui::Text("Clicked on project: %s", recentProjects[i].name.c_str()); ////// temp
-
                 return i;
             }
         }

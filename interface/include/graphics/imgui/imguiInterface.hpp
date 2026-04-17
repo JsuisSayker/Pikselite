@@ -50,7 +50,7 @@ namespace graphics {
                                 std::string &saveSpritePath,
                                 Element::ElementType& selectedElementType); // updated signature
         void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
-        void projectTopBarEmpty();
+        void projectTopBar(std::string title = "");
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
@@ -58,7 +58,7 @@ namespace graphics {
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject);
 
         void fileToolBar();
         int projectOptionsBar(std::vector<projects::Project> &projects);
