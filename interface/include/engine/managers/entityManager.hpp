@@ -19,9 +19,9 @@ namespace engine
         ~EntityManager();
 
         /**
-         * @brief Create a Entity object
-         * 
-         * @return ecs::Entity 
+         * @brief Creates a new entity and returns its handle.
+         *
+         * Entity IDs are reused from the free-list when possible.
          */
         ecs::Entity createEntity();
 

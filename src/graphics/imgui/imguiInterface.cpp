@@ -312,8 +312,9 @@ namespace graphics {
             {
                 std::filesystem::path p = entry.path();
                 std::string ext = p.extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-                if (ext == ".png" || ext == ".jpg" || ext == ".dat")
+                if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".webp" || ext == ".dat")
                 {
                     spriteFiles.push_back(p.string());
                 }
@@ -690,6 +691,55 @@ namespace graphics {
                     }
                 }
             }
+
+            if (!selected.hasComponent<ecs::components::PhysicsBody>()) {
+                availableComponents.push_back("PhysicsBody");
+            } else {
+                auto p = selected.getComponent<ecs::components::PhysicsBody>();
+
+                ImGui::Checkbox("##enabledPhysics", &p->enabled);
+                ImGui::SameLine();
+                bool open = ImGui::CollapsingHeader("Physics Component", nullptr, ImGuiTreeNodeFlags_DefaultOpen);
+
+                if (open) {
+                    ImGui::BeginDisabled(!p->enabled);
+
+                    if (ImGui::Button("Reset##Physics"))
+                    {
+                        p->bodyId = b2_nullBodyId;
+                        p->bodyType = b2_dynamicBody;
+                        p->fixedRotation = false;
+                        p->density = 1.0f;
+                        p->friction = 0.4f;
+                        p->restitution = 0.1f;
+                    }
+
+                    const char* bodyTypes[] = {"Static", "Kinematic", "Dynamic"};
+                    int bodyTypeIndex = 2;
+                    if (p->bodyType == b2_staticBody) bodyTypeIndex = 0;
+                    else if (p->bodyType == b2_kinematicBody) bodyTypeIndex = 1;
+
+                    if (ImGui::Combo("Body Type", &bodyTypeIndex, bodyTypes, IM_ARRAYSIZE(bodyTypes)))
+                    {
+                        p->bodyType = bodyTypeIndex == 0 ? b2_staticBody : (bodyTypeIndex == 1 ? b2_kinematicBody : b2_dynamicBody);
+                    }
+
+                    ImGui::Checkbox("Fixed Rotation", &p->fixedRotation);
+                    ImGui::DragFloat("Density", &p->density, 0.05f, 0.0f, 100.0f);
+                    ImGui::DragFloat("Friction", &p->friction, 0.01f, 0.0f, 1.0f);
+                    ImGui::DragFloat("Restitution", &p->restitution, 0.01f, 0.0f, 1.0f);
+
+                    ImGui::TextDisabled("Triangles: %d", static_cast<int>(p->triangles.size()));
+                    ImGui::TextDisabled("Body: %s", B2_IS_NULL(p->bodyId) ? "uncreated" : "created");
+
+                    ImGui::EndDisabled();
+
+                    if (ImGui::Button("Remove##Physics"))
+                    {
+                        selected.removeComponent<ecs::components::PhysicsBody>();
+                    }
+                }
+            }
             
             PopupButton("Add Component", [&]() {
                 static char search[64] = "";
@@ -718,6 +768,9 @@ namespace graphics {
                         } else if (comp == "Velocity") {
                             selected.addComponent(ecs::components::Velocity{});
                             availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "Velocity"), availableComponents.end());
+                        } else if (comp == "PhysicsBody") {
+                            selected.addComponent(ecs::components::PhysicsBody{});
+                            availableComponents.erase(std::remove(availableComponents.begin(), availableComponents.end(), "PhysicsBody"), availableComponents.end());
                         }
                         query.clear();
                         search[0] = '\0';

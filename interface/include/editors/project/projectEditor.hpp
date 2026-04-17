@@ -16,7 +16,11 @@
 #include <limits>
 #include <cmath>
 #include <unordered_map>
+#include <filesystem>
 #include <editors/aEditor.hpp>
+
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
 
 /**
  * @brief The editors namespace contains classes related to editing and managing the project, including the ProjectEditor class which provides methods for handling user input, managing pixel and game object data, and interfacing with the graphics and component systems.
@@ -80,6 +84,14 @@ namespace editors
                           uint32_t nextGameObjectId);
 
     private:
+        struct PendingTexture {
+            bool valid = false;
+            std::string texturePath;
+            GLuint textureID = 0;
+            float width = 640.0f;
+            float height = 640.0f;
+        };
+
         engine::ComponentManager *_componentManager = nullptr;
 
         uint32_t gameObjectCounter = 1;
@@ -88,6 +100,10 @@ namespace editors
         bool _saveSceneRequested = false;
         bool _loadSceneRequested = false;
         int _selectedGameObjectIndex = -1;
+        std::unordered_map<std::string, GLuint> _textureCache;
+        
+        bool _isPlacingTexture = false;
+        PendingTexture _pendingTexture = {};
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event received. This includes managing mouse input for pixel placement and game object selection, keyboard input for camera movement and zooming, and other input events relevant to the editing process.
@@ -108,6 +124,12 @@ namespace editors
          * @return A boolean indicating whether the sprite was successfully placed (true) or if there
          */
         void placePendingSpriteAtWorldInGameObject(glm::vec2 worldPos);
+        bool isTextureFile(const std::string& path) const;
+        void placeTextureAtWorldInGameObject(glm::vec2 worldPos, const std::string& texturePath);
+        void drawGameObjectSprites();
+        
+        bool loadTextureForPlacement(const std::string& texturePath);
+        void drawPendingTexturePreview();
 
         void mouseLeftClick();
     };

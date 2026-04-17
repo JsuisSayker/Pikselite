@@ -1,10 +1,12 @@
 #include <engine/core.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
-#include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
 #include <tracy/Tracy.hpp>
+
+#include <cmath>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -15,6 +17,7 @@
 #include <engine/ecs/systems/scriptSystem.hpp>
 #include <box2d/box2d.h>
 #include <imgui.h>
+#include <engine/ecs/systems/physicsSystem.hpp>
 #include <fstream>
 #include <filesystem>
 
@@ -52,11 +55,13 @@ namespace engine
 {
     void Core::init()
     {
+        _boxWorld.init({0.0f, -500.0f});
+
         // Register ECS components
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
-        componentManager.registerComponent<ecs::components::GameObjectLink>();
         componentManager.registerComponent<ecs::components::Sprite>();
+        componentManager.registerComponent<ecs::components::PhysicsBody>();
 
         // Register ECS systems
         auto &movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
@@ -79,9 +84,26 @@ namespace engine
         scriptSig.set(componentManager.getComponentType<ecs::components::Velocity>());
         systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
 
+        auto &physicsSys = systemManager.addSystem<ecs::systems::PhysicsSystem>(&_boxWorld);
+        ecs::Signature physicsSig;
+        physicsSig.set(componentManager.getComponentType<ecs::components::Transform>());
+        physicsSig.set(componentManager.getComponentType<ecs::components::PhysicsBody>());
+        systemManager.setSignature<ecs::systems::PhysicsSystem>(physicsSig);
+
         // Centralized signature sync: any component add/remove updates system membership.
         componentManager.setEntityMutationCallback([this](ecs::EntityID entityId)
                                                    { refreshEntitySignature(entityId); });
+
+        componentManager.setComponentRemovalCallback([this](ecs::EntityID entityId, const std::type_index& componentType)
+        {
+            if (componentType == typeid(ecs::components::PhysicsBody))
+            {
+                if (auto* physicsSys = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+                {
+                    physicsSys->entityDestroyed(entityId);
+                }
+            }
+        });
 
         scriptSys.init();
         scriptSys.loadScript("scripts/movement.lua");
@@ -157,7 +179,6 @@ namespace engine
         while (isGamePreviewActive && running)
         {
             timer.tick();
-            float deltaTime = timer.getDeltaTime();
             graphics::InputEvent gameEvent = handleEvents();
 
             if (gameEvent.type == graphics::WINDOW_CLOSE)
@@ -183,13 +204,13 @@ namespace engine
                 break;
             }
 
-            update(deltaTime);
+            update(timer.getDeltaTime());
 
             renderer.clear();
 
             std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
-            _renderPixels = framePixels; // cache for potential editing after preview
 
+            _renderPixels = framePixels;
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
             // debug draw Box2D bodies
@@ -203,7 +224,11 @@ namespace engine
             // Render all entities that have a SpriteComponent via the ECS system
             auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
             if (spriteSystem)
+            // Draw ECS sprites after the pixel pass in the preview window.
+            if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
+            {
                 spriteSystem->update(0.0, componentManager);
+            }
 
             renderer.present(gameWindow);
         }
@@ -226,6 +251,59 @@ namespace engine
         init();
         mainLoop();
         shutdown();
+    }
+
+    std::vector<graphics::Pixel> Core::buildSquarePixels(glm::vec2 center, float size, glm::vec3 color) const
+    {
+        std::vector<graphics::Pixel> pixels;
+        const float halfSize = size * 0.5f;
+
+        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
+        {
+            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
+            {
+                pixels.push_back({center + glm::vec2(x, y), color});
+            }
+        }
+
+        return pixels;
+    }
+
+    std::vector<graphics::Pixel> Core::buildRotatedSquarePixels(glm::vec2 center, float size, float rotation, glm::vec3 color) const
+    {
+        std::vector<graphics::Pixel> pixels;
+        const float halfSize = size * 0.5f;
+        const float cosine = std::cos(rotation);
+        const float sine = std::sin(rotation);
+
+        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
+        {
+            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
+            {
+                const float rotatedX = x * cosine - y * sine;
+                const float rotatedY = x * sine + y * cosine;
+                pixels.push_back({center + glm::vec2(rotatedX, rotatedY), color});
+            }
+        }
+
+        return pixels;
+    }
+
+    std::vector<graphics::Pixel> Core::buildRectanglePixels(glm::vec2 center, float width, float height, glm::vec3 color) const
+    {
+        std::vector<graphics::Pixel> pixels;
+        const float halfWidth = width * 0.5f;
+        const float halfHeight = height * 0.5f;
+
+        for (float y = -halfHeight + PIXEL_SIZE * 0.5f; y < halfHeight; y += PIXEL_SIZE)
+        {
+            for (float x = -halfWidth + PIXEL_SIZE * 0.5f; x < halfWidth; x += PIXEL_SIZE)
+            {
+                pixels.push_back({center + glm::vec2(x, y), color});
+            }
+        }
+
+        return pixels;
     }
 
     graphics::InputEvent Core::handleEvents()
@@ -252,6 +330,8 @@ namespace engine
         case graphics::KEY_F5:
             if (!isGamePreviewActive)
             {
+                // Ensure preview reads the latest pixels/chunks from the editor state.
+                copyProjectEditorDataToCore();
                 isGamePreviewActive = true;
                 graphics::Camera2D editorCamera = projectEditor->getCamera();
                 setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
@@ -289,7 +369,7 @@ namespace engine
             accumulator -= fixedDt;
         }
 
-        // ECS can stay variable
+        // Single ECS pass: any newly registered system is updated automatically.
         {
             ZoneScopedN("ECS Systems");
             systemManager.update(deltaTime, componentManager);
@@ -319,6 +399,7 @@ namespace engine
             }
             b2DestroyWorld(_physicsWorld);
         }
+        _boxWorld.shutdown();
         SDL_Quit();
     }
 
@@ -370,6 +451,11 @@ namespace engine
                 {
                     const auto &s = std::any_cast<ecs::components::Sprite>(compData);
                     componentManager.addComponent(eid, s);
+                }
+                else if (compType == std::type_index(typeid(ecs::components::PhysicsBody)))
+                {
+                    const auto &p = std::any_cast<ecs::components::PhysicsBody>(compData);
+                    componentManager.addComponent(eid, p);
                 }
             }
 

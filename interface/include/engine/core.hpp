@@ -9,8 +9,8 @@
 #include <engine/managers/entityManager.hpp>
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/systemManager.hpp>
+#include <engine/physics/boxWorld.hpp>
 
-#include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 
 #include <engine/pixels/simulation/simulation.hpp>
@@ -41,8 +41,8 @@ namespace engine
         void setCameraZoom(float zoom) { _camera.setZoom(zoom); }
 
     private:
-        editors::SpriteEditor *spriteEditor;
-        editors::ProjectEditor *projectEditor;
+        editors::SpriteEditor *spriteEditor = nullptr;
+        editors::ProjectEditor *projectEditor = nullptr;
 
         
         bool isProjectEditorActive = false;
@@ -61,6 +61,9 @@ namespace engine
         uint32_t gameObjectCounter = 1;
         
         graphics::Camera2D _camera;
+        physics::BoxWorld _boxWorld;
+        b2BodyId _cubeBody = b2_nullBodyId;
+        b2BodyId _groundBody = b2_nullBodyId;
         std::vector<Pixel::GameObject> _gameObjects;
         std::vector<graphics::Pixel> _renderPixels;
         Simulation _pixelSimulation;
@@ -76,6 +79,10 @@ namespace engine
         std::string _sceneFilename = "assets/scene.json";
 
         void init();
+        void runPhysicsDemo();
+        std::vector<graphics::Pixel> buildSquarePixels(glm::vec2 center, float size, glm::vec3 color) const;
+        std::vector<graphics::Pixel> buildRotatedSquarePixels(glm::vec2 center, float size, float rotation, glm::vec3 color) const;
+        std::vector<graphics::Pixel> buildRectanglePixels(glm::vec2 center, float width, float height, glm::vec3 color) const;
 
         graphics::InputEvent handleEvents();
 
@@ -92,7 +99,7 @@ namespace engine
         bool copyProjectEditorDataToCore();
 
         // Creates an ECS entity for each Pixel::GameObject,
-        // attaching Transform and GameObjectLink components.
+        // create new instance for preview.
         void loadGameObjectsIntoECS();
 
         // Rebuild and propagate ECS signature from actual component presence.

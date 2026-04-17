@@ -13,6 +13,7 @@
     "gtest",
     "box2d",
     "nlohmann-json",
+    "box2d",
     {
       "name": "tracy",
       "version>=": "0.13.1"
