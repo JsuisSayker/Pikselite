@@ -98,13 +98,13 @@ void updateDebug(ChunkGrid& grid, int x, int y)
 
 void Simulation::initElements()
 {
-    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID, 0, nullptr, -1};
-    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID, 1, updateSand, -1};
+    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID_STATIC, 0, nullptr, -1};
+    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID_DYNAMIC, 1, updateSand, -1};
     g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, 5, updateWater, -1};
     g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, 1, updateFire, -1};
-    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, 0, updateStone, -1};
-    g_elements[Element::DIRT] = { "Dirt", {120, 72, 0}, 10, SOLID, 1, updateDirt, -1};
-    g_elements[Element::DEBUG] = { "Debug", {255,0,255}, 1, SOLID, 0, updateDebug, -1};
+    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID_STATIC, 0, updateStone, -1};
+    g_elements[Element::DIRT] = { "Dirt", {120, 72, 0}, 10, SOLID_STATIC, 1, updateDirt, -1};
+    g_elements[Element::DEBUG] = { "Debug", {255,0,255}, 1, SOLID_STATIC, 0, updateDebug, -1};
 }
 
 void Simulation::update()
@@ -113,12 +113,12 @@ void Simulation::update()
     resetUpdatedFlags();
     orderChunksForUpdate();
 
-    if (regionsDirty)
-    {
-        detectRegions();
-        rebuildRegionColliders();
-        regionsDirty = false;
-    }
+    // if (regionsDirty)
+    // {
+    //     detectRegions();
+    //     rebuildRegionColliders();
+    //     regionsDirty = false;
+    // }
 
     for (auto& entry : orderedChunks)
     {
@@ -189,7 +189,7 @@ void Simulation::rebuildRegionColliders()
 
     if (detectedRegions.empty()) return;
 
-    const float invScale = 1.0f;
+    const float scale = (pixelsPerMeter > 0.0f) ? pixelsPerMeter : 1.0f;
 
     for (const auto& region : detectedRegions)
     {
@@ -216,6 +216,7 @@ void Simulation::rebuildRegionColliders()
 
         const float invCount = 1.0f / static_cast<float>(region.pixels.size());
         b2Vec2 centroid = {sumX * invCount, sumY * invCount};
+        const b2Vec2 scaledCentroid = {centroid.x * scale, centroid.y * scale};
 
         const float width = static_cast<float>(std::max(1, maxX - minX + 1));
         const float height = static_cast<float>(std::max(1, maxY - minY + 1));
@@ -223,7 +224,7 @@ void Simulation::rebuildRegionColliders()
         b2BodyDef bodyDef = b2DefaultBodyDef();
         bodyDef.type = b2_dynamicBody;
         bodyDef.gravityScale = 1.0f;
-        bodyDef.position = centroid;
+        bodyDef.position = scaledCentroid;
 
         b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
 
@@ -233,9 +234,9 @@ void Simulation::rebuildRegionColliders()
         for (const auto& tri : region.triangles)
         {
             b2Vec2 points[3] = {
-                { (tri.a.x - centroid.x) * invScale, (tri.a.y - centroid.y) * invScale },
-                { (tri.b.x - centroid.x) * invScale, (tri.b.y - centroid.y) * invScale },
-                { (tri.c.x - centroid.x) * invScale, (tri.c.y - centroid.y) * invScale },
+                { (tri.a.x - centroid.x) * scale, (tri.a.y - centroid.y) * scale },
+                { (tri.b.x - centroid.x) * scale, (tri.b.y - centroid.y) * scale },
+                { (tri.c.x - centroid.x) * scale, (tri.c.y - centroid.y) * scale },
             };
 
             b2Hull hull = b2ComputeHull(points, 3);
@@ -258,7 +259,10 @@ void Simulation::rebuildRegionColliders()
 
                 BodyPixelBinding pixelBinding;
                 pixelBinding.type = source.type;
-                pixelBinding.localUV = {static_cast<float>(rp.x) + 0.5f - centroid.x, static_cast<float>(rp.y) + 0.5f - centroid.y};
+                pixelBinding.localUV = {
+                    (static_cast<float>(rp.x) + 0.5f - centroid.x) * scale,
+                    (static_cast<float>(rp.y) + 0.5f - centroid.y) * scale
+                };
                 pixelBinding.uv = {(static_cast<float>(rp.x - minX) + 0.5f) / width, (static_cast<float>(rp.y - minY) + 0.5f) / height};
                 pixelBinding.gridX = rp.x;
                 pixelBinding.gridY = rp.y;
@@ -281,6 +285,8 @@ void Simulation::rebuildRegionColliders()
 void Simulation::syncBodyPixelsToGrid()
 {
     if (!b2World_IsValid(physicsWorld)) return;
+
+    const float scale = (pixelsPerMeter > 0.0f) ? pixelsPerMeter : 1.0f;
 
     auto cellKey = [](int x, int y) -> int64_t
     {
@@ -350,17 +356,17 @@ void Simulation::syncBodyPixelsToGrid()
                 const float minY = std::min(a.y, std::min(b.y, c.y));
                 const float maxY = std::max(a.y, std::max(b.y, c.y));
 
-                const int xStart = static_cast<int>(std::floor(minX - 0.5f));
-                const int xEnd = static_cast<int>(std::floor(maxX - 0.5f));
-                const int yStart = static_cast<int>(std::floor(minY - 0.5f));
-                const int yEnd = static_cast<int>(std::floor(maxY - 0.5f));
+                const int xStart = static_cast<int>(std::floor(minX / scale - 0.5f));
+                const int xEnd = static_cast<int>(std::floor(maxX / scale - 0.5f));
+                const int yStart = static_cast<int>(std::floor(minY / scale - 0.5f));
+                const int yEnd = static_cast<int>(std::floor(maxY / scale - 0.5f));
 
                 for (int gy = yStart; gy <= yEnd; ++gy)
                 {
                     for (int gx = xStart; gx <= xEnd; ++gx)
                     {
-                        const float px = static_cast<float>(gx) + 0.5f;
-                        const float py = static_cast<float>(gy) + 0.5f;
+                        const float px = (static_cast<float>(gx) + 0.5f) * scale;
+                        const float py = (static_cast<float>(gy) + 0.5f) * scale;
                         if (!pointInTriangle(px, py, a, b, c)) continue;
                         filledCells.insert(cellKey(gx, gy));
                     }

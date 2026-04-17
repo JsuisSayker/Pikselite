@@ -68,13 +68,13 @@ namespace engine
         std::vector<graphics::Pixel> _renderPixels;
         Simulation _pixelSimulation;
         ChunkGrid _chunkGrid;
-        b2WorldId _physicsWorld = b2_nullWorldId;
 
         float accumulator = 0.0f;
         const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
+        std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>> _gameObjectOccupiedCells;
         std::string _sceneFilename = "assets/scene.json";
 
         void init();
@@ -100,6 +100,7 @@ namespace engine
         // Creates an ECS entity for each Pixel::GameObject,
         // create new instance for preview.
         void loadGameObjectsIntoECS();
+        void syncGameObjectPixelsFromPhysics();
 
         // Rebuild and propagate ECS signature from actual component presence.
         void refreshEntitySignature(ecs::EntityID entityId);

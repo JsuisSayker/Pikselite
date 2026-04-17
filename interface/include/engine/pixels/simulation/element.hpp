@@ -7,7 +7,8 @@
 constexpr int GRAVITY_DIR = -1;
 
 enum ElementState : uint8_t {
-    SOLID = 0,
+    SOLID_STATIC = 0,
+    SOLID_DYNAMIC,
     LIQUID,
     GAS,
 };
