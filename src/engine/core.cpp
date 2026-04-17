@@ -246,7 +246,6 @@ namespace engine
         ImGui::BeginChild("projectOptions", ImVec2(0, 150), true);
         int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
         if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
-            std::cout << "Index: " << selectedProjectIndex << " Size: " << _projects.size() << std::endl; /////////////////////////
             _currentProject = _projects[selectedProjectIndex];
             std::cout << "Selected current project: " << _currentProject.name << std::endl; ////////////////////////////////////////////
             selectedProjectIndex = -1;

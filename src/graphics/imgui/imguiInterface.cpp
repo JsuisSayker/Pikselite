@@ -848,6 +848,7 @@ namespace graphics {
         static bool openPopup = false;
         static char projectName[128] = "NewProject";
         static std::filesystem::path selectedPath;
+        int resultIndex = -1;
 
         ImGui::Text("Get Started");
         ImGui::Separator();
@@ -903,7 +904,7 @@ namespace graphics {
             if (newProjectCreated)
             {
                 newProjectCreated = false;
-                return projects.size() - 1;
+                resultIndex = projects.size() - 1;
             }
         
             ImGui::SameLine();
@@ -972,7 +973,7 @@ namespace graphics {
             // TODO
         }
 
-        return -1;
+        return resultIndex;
     }
 
     int ImguiInterface::recentProjectsDisplay(std::vector<projects::Project> &projects)
