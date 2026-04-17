@@ -22,6 +22,20 @@ namespace ecs::systems
         explicit PhysicsSystem(engine::physics::BoxWorld* boxWorld)
             : _boxWorld(boxWorld) {}
 
+        std::vector<b2BodyId> getDebugBodies() const
+        {
+            std::vector<b2BodyId> bodies;
+            bodies.reserve(_bodyByEntity.size());
+            for (const auto& [entity, bodyId] : _bodyByEntity)
+            {
+                if (!B2_IS_NULL(bodyId))
+                {
+                    bodies.push_back(bodyId);
+                }
+            }
+            return bodies;
+        }
+
         void init() override {}
 
         void entityDestroyed(ecs::EntityID entity) override
@@ -48,7 +62,7 @@ namespace ecs::systems
 
         void update(double dt, engine::ComponentManager& componentManager) override
         {
-            if (!_boxWorld || !_boxWorld->isValid() || entities.empty())
+            if (!_boxWorld || !_boxWorld->isValid())
             {
                 return;
             }

@@ -15,6 +15,8 @@
 #endif
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <engine/ecs/systems/scriptSystem.hpp>
+#include <box2d/box2d.h>
+#include <imgui.h>
 #include <engine/ecs/systems/physicsSystem.hpp>
 #include <fstream>
 #include <filesystem>
@@ -46,6 +48,50 @@ namespace
     Pixel::GameObject gameObjectFromJson(const json &j)
     {
         // TODO
+    }
+
+    bool buildPhysicsTrianglesFromGameObjectPixels(const Pixel::GameObject& go,
+                                                   Simulation& simulation,
+                                                   std::vector<ecs::components::PhysicsTriangle>& outTriangles)
+    {
+        outTriangles.clear();
+        if (go.pixelLocalCoords.empty()) return false;
+
+        Element::Region region;
+        const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
+        if (pairCount == 0) return false;
+
+        region.pixels.reserve(pairCount);
+        for (size_t i = 0; i < pairCount; ++i)
+        {
+            const auto& srcPixel = go.pixels[i];
+            if (srcPixel.type == Element::EMPTY) continue;
+
+            const auto& def = g_elements[srcPixel.type];
+            if (def.state != SOLID_STATIC) continue;
+
+            region.pixels.push_back(go.pixelLocalCoords[i]);
+        }
+
+        if (region.pixels.empty()) return false;
+
+        simulation.buildRegionContoursMarchingSquare(region);
+        simulation.simplifyRegionContours(region, 0.6f);
+        simulation.triangulateRegion(region);
+
+        if (region.triangles.empty()) return false;
+
+        outTriangles.reserve(region.triangles.size());
+        for (const auto& tri : region.triangles)
+        {
+            ecs::components::PhysicsTriangle physicsTri;
+            physicsTri.a = glm::vec2(tri.a.x * PIXEL_SIZE, tri.a.y * PIXEL_SIZE);
+            physicsTri.b = glm::vec2(tri.b.x * PIXEL_SIZE, tri.b.y * PIXEL_SIZE);
+            physicsTri.c = glm::vec2(tri.c.x * PIXEL_SIZE, tri.c.y * PIXEL_SIZE);
+            outTriangles.push_back(physicsTri);
+        }
+
+        return true;
     }
 }
 
@@ -108,6 +154,8 @@ namespace engine
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface, &componentManager);
+
+        _pixelSimulation.setPhysicsWorld(_boxWorld.getWorldId(), PIXEL_SIZE);
     }
 
     void Core::mainLoop()
@@ -165,6 +213,10 @@ namespace engine
             SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
+
+        copyProjectEditorDataToCore();
+        // _pixelSimulation.markRegionsDirty();
+
         while (isGamePreviewActive && running)
         {
             timer.tick();
@@ -202,7 +254,18 @@ namespace engine
             _renderPixels = framePixels;
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
-            // Draw ECS sprites after the pixel pass in the preview window.
+            // debug draw Box2D bodies
+            std::vector<b2BodyId> debugBodies = _pixelSimulation.getRegionBodies();
+            renderer.drawBox2DDebug(_boxWorld.getWorldId(), debugBodies, _camera, 1.0f, glm::vec3(0.2f, 0.2f, 1.0f));
+
+            if (auto *physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+            {
+                const std::vector<b2BodyId> ecsDebugBodies = physicsSystem->getDebugBodies();
+                renderer.drawBox2DDebug(_boxWorld.getWorldId(), ecsDebugBodies, _camera, 1.0f, glm::vec3(1.0f, 0.8f, 0.2f));
+            }
+
+            
+
             if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
             {
                 spriteSystem->update(0.0, componentManager);
@@ -340,6 +403,9 @@ namespace engine
             ZoneScopedN("ECS Systems");
             systemManager.update(deltaTime, componentManager);
         }
+
+        syncGameObjectPixelsFromPhysics();
+        _pixelSimulation.syncBodyPixelsToGrid();
     }
 
     void Core::render()
@@ -385,6 +451,7 @@ namespace engine
             entityManager.destroyEntity(ecs::Entity(entityId));
         }
         _gameObjectToEntity.clear();
+        _gameObjectOccupiedCells.clear();
 
         for (const auto &go : _gameObjects)
         {
@@ -411,13 +478,92 @@ namespace engine
                 }
                 else if (compType == std::type_index(typeid(ecs::components::PhysicsBody)))
                 {
-                    const auto &p = std::any_cast<ecs::components::PhysicsBody>(compData);
+                    auto p = std::any_cast<ecs::components::PhysicsBody>(compData);
+
+                    if (p.triangles.empty())
+                    {
+                        std::vector<ecs::components::PhysicsTriangle> generatedTriangles;
+                        if (buildPhysicsTrianglesFromGameObjectPixels(go, _pixelSimulation, generatedTriangles))
+                        {
+                            p.triangles = std::move(generatedTriangles);
+                        }
+                    }
+
                     componentManager.addComponent(eid, p);
                 }
             }
 
             _gameObjectToEntity[go.id] = eid;
         }
+    }
+
+    void Core::syncGameObjectPixelsFromPhysics()
+    {
+        ChunkGrid& grid = _pixelSimulation.getGrid();
+
+        for (const auto& [goId, occupiedCells] : _gameObjectOccupiedCells)
+        {
+            for (const auto& cell : occupiedCells)
+            {
+                grid.setPixel(cell.x, cell.y, {Element::EMPTY, false});
+            }
+        }
+
+        std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>> nextOccupiedCells;
+        nextOccupiedCells.reserve(_gameObjects.size());
+
+        for (const auto& go : _gameObjects)
+        {
+            if (!go.isActive) continue;
+            if (go.pixelLocalCoords.empty() || go.pixels.empty()) continue;
+
+            auto entityIt = _gameObjectToEntity.find(go.id);
+            if (entityIt == _gameObjectToEntity.end()) continue;
+
+            const ecs::EntityID entityId = entityIt->second;
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::PhysicsBody>(entityId)) continue;
+
+            const auto& physics = componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
+            if (!physics.enabled) continue;
+            if (physics.bodyType != b2_dynamicBody) continue;
+
+            const auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+            const float cosine = std::cos(transform.rotation);
+            const float sine = std::sin(transform.rotation);
+
+            const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
+            std::vector<Element::Vec2i> occupiedCells;
+            occupiedCells.reserve(pairCount);
+
+            for (size_t i = 0; i < pairCount; ++i)
+            {
+                const auto& srcPixel = go.pixels[i];
+                if (srcPixel.type == Element::EMPTY) continue;
+
+                const auto& def = g_elements[srcPixel.type];
+                if (def.state != SOLID_STATIC) continue;
+
+                const float localX = (static_cast<float>(go.pixelLocalCoords[i].x) + 0.5f) * PIXEL_SIZE;
+                const float localY = (static_cast<float>(go.pixelLocalCoords[i].y) + 0.5f) * PIXEL_SIZE;
+
+                const float worldX = transform.x + (localX * cosine - localY * sine);
+                const float worldY = transform.y + (localX * sine + localY * cosine);
+
+                const int gridX = static_cast<int>(std::floor(worldX / PIXEL_SIZE));
+                const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
+
+                grid.setPixel(gridX, gridY, {srcPixel.type, false});
+                occupiedCells.push_back({gridX, gridY});
+            }
+
+            if (!occupiedCells.empty())
+            {
+                nextOccupiedCells[go.id] = std::move(occupiedCells);
+            }
+        }
+
+        _gameObjectOccupiedCells = std::move(nextOccupiedCells);
     }
 
     void Core::refreshEntitySignature(ecs::EntityID entityId)

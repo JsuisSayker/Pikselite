@@ -114,6 +114,7 @@ namespace editors {
         int anchorGY = (int)std::floor(worldPos.y / PIXEL_SIZE);
 
         std::vector<Element::Pixel> objectPixels;
+        std::vector<Element::Vec2i> objectLocalCoords;
 
         // Place each cell relative to anchor
         for (const auto& cell : _pendingSprite.cells) {
@@ -128,9 +129,23 @@ namespace editors {
             Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
             chunk.set(lx, ly, Element::Pixel{cell.type});
             objectPixels.push_back(Element::Pixel{cell.type});
+            objectLocalCoords.push_back({cell.localGX, cell.localGY});
         }
 
         newObject.pixels = std::move(objectPixels);
+        newObject.pixelLocalCoords = std::move(objectLocalCoords);
+
+        ecs::components::Transform transform{};
+        transform.enabled = true;
+        transform.x = static_cast<float>(anchorGX) * PIXEL_SIZE;
+        transform.y = static_cast<float>(anchorGY) * PIXEL_SIZE;
+        transform.prevX = transform.x;
+        transform.prevY = transform.y;
+        transform.rotation = 0.0f;
+        transform.scaleX = 1.0f;
+        transform.scaleY = 1.0f;
+        newObject.addComponent(transform);
+
         _gameObjects.push_back(std::move(newObject));
         std::cout << "Placed sprite at grid: (" << anchorGX << ", " << anchorGY << ")" << std::endl;
     }

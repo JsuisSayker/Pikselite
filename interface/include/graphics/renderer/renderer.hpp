@@ -8,6 +8,7 @@
 #include <graphics/graphicsEnum.hpp>
 #include <engine/pixels/pixelEnum.hpp>
 #include <graphics/renderer/camera.hpp>
+#include <box2d/box2d.h>
 
 #include <vector>
 #include <iostream>
@@ -68,6 +69,8 @@ namespace graphics {
          * Note: This method applies the camera's view-projection transformation to the grid lines, allowing for panning and zooming effects. The grid will be drawn as a series of lines spaced according to the cell size, and will cover the visible area of the screen based on the camera's view.
          */
         void drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color);
+        void drawSegments(const std::vector<LineVertex>& segments, const Camera2D& camera);
+        void drawBox2DDebug(b2WorldId worldId, const std::vector<b2BodyId>& bodies, const Camera2D& camera, float pixelsPerMeter, glm::vec3 color);
 
         /**
          * @brief Loads a texture from the specified file path and returns its OpenGL texture ID.

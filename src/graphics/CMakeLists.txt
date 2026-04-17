@@ -19,5 +19,6 @@ target_link_libraries(graphics
     ${SDL2_LIBRARIES}
     ${GLEW_LIBRARIES}
     OpenGL::GL
+    box2d::box2d
     pikselite_interface
 )
