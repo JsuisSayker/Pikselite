@@ -6,6 +6,7 @@
 
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
 
 namespace {
@@ -47,6 +48,7 @@ TEST(ComponentManagerTests, MutationCallbackIsTriggeredOnAddAndRemove)
 {
     engine::ComponentManager componentManager;
     componentManager.registerComponent<ecs::components::Transform>();
+    componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     int callbackCount = 0;
     ecs::EntityID lastEntity = 0;
@@ -95,6 +97,7 @@ TEST(SystemManagerTests, MovementSystemMembershipFollowsSignature)
     engine::ComponentManager componentManager;
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::Velocity>();
+    componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
     auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
@@ -120,6 +123,7 @@ TEST(SystemManagerTests, SystemWithoutConfiguredSignatureDoesNotMatch)
     engine::ComponentManager componentManager;
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::Velocity>();
+    componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
     auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
@@ -135,6 +139,7 @@ TEST(SystemManagerTests, UpdateAffectsOnlyMatchingEntities)
     engine::ComponentManager componentManager;
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::Velocity>();
+    componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
     auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 #include <box2d/box2d.h>
 
@@ -9,6 +10,7 @@
 #include "engine/managers/componentManager.hpp"
 #include "engine/physics/boxWorld.hpp"
 #include "engine/ecs/components/transformComponent.hpp"
+#include "engine/ecs/components/velocityComponent.hpp"
 #include "engine/ecs/components/physicsComponent.hpp"
 #include "engine/ecs/components/spriteComponent.hpp"
 
@@ -77,6 +79,14 @@ namespace ecs::systems
                     continue;
                 }
 
+                const bool hasVelocity = componentManager.hasComponent<components::Velocity>(entity);
+                components::Velocity* velocity = hasVelocity
+                    ? &componentManager.getComponent<components::Velocity>(entity)
+                    : nullptr;
+
+                const float desiredHorizontalVelocity = velocity ? velocity->vx : 0.0f;
+                const float desiredVerticalVelocity = velocity ? velocity->vy : 0.0f;
+
                 if (B2_IS_NULL(physics.bodyId))
                 {
                     b2BodyDef bodyDef = b2DefaultBodyDef();
@@ -131,6 +141,24 @@ namespace ecs::systems
                         b2Polygon box = b2MakeBox(halfWidth, halfHeight);
                         b2CreatePolygonShape(physics.bodyId, &shapeDef, &box);
                     }
+                }
+
+                if (B2_IS_NON_NULL(physics.bodyId) && hasVelocity)
+                {
+                    b2Vec2 currentVelocity = b2Body_GetLinearVelocity(physics.bodyId);
+
+                    // Horizontal motion is input-driven.
+                    currentVelocity.x = desiredHorizontalVelocity;
+
+                    // Vertical motion is physics-driven. Treat positive vy as a
+                    // one-shot jump request and only consume it when near grounded speed.
+                    if (desiredVerticalVelocity > 0.0f && std::abs(currentVelocity.y) < 0.01f)
+                    {
+                        currentVelocity.y = desiredVerticalVelocity;
+                        velocity->vy = 0.0f;
+                    }
+
+                    b2Body_SetLinearVelocity(physics.bodyId, currentVelocity);
                 }
             }
 
