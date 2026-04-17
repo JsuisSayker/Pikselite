@@ -215,10 +215,6 @@ namespace engine
 
             // debug draw Box2D bodies
             std::vector<b2BodyId> debugBodies = _pixelSimulation.getRegionBodies();
-            if (b2World_IsValid(_physicsWorld) && b2Body_IsValid(_debugFloorBody))
-            {
-                debugBodies.push_back(_debugFloorBody);
-            }
             renderer.drawBox2DDebug(_physicsWorld, debugBodies, _camera, PIXEL_SIZE, glm::vec3(0.2f, 0.2f, 1.0f));
 
             // Render all entities that have a SpriteComponent via the ECS system
@@ -231,12 +227,6 @@ namespace engine
             }
 
             renderer.present(gameWindow);
-        }
-
-        if (b2World_IsValid(_physicsWorld) && b2Body_IsValid(_debugFloorBody))
-        {
-            b2DestroyBody(_debugFloorBody);
-            _debugFloorBody = b2_nullBodyId;
         }
 
         SDL_DestroyWindow(gameWindow);
@@ -392,11 +382,6 @@ namespace engine
         }
         if (b2World_IsValid(_physicsWorld))
         {
-            if (b2Body_IsValid(_debugFloorBody))
-            {
-                b2DestroyBody(_debugFloorBody);
-                _debugFloorBody = b2_nullBodyId;
-            }
             b2DestroyWorld(_physicsWorld);
         }
         _boxWorld.shutdown();

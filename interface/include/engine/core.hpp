@@ -69,7 +69,6 @@ namespace engine
         Simulation _pixelSimulation;
         ChunkGrid _chunkGrid;
         b2WorldId _physicsWorld = b2_nullWorldId;
-        b2BodyId _debugFloorBody = b2_nullBodyId;
 
         float accumulator = 0.0f;
         const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
