@@ -9,6 +9,7 @@ namespace Element {
         WATER,
         FIRE,
         STONE,
+        DIRT,
         DEBUG,
     };
     

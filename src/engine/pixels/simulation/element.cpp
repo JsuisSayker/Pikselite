@@ -88,6 +88,9 @@ void updateFire(ChunkGrid& grid, int x, int y)
 void updateStone(ChunkGrid& grid, int x, int y)
 {
 }
+void updateDirt(ChunkGrid& grid, int x, int y)
+{
+}
 
 void updateDebug(ChunkGrid& grid, int x, int y)
 {
@@ -100,6 +103,7 @@ void Simulation::initElements()
     g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, 5, updateWater, -1};
     g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, 1, updateFire, -1};
     g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID, 0, updateStone, -1};
+    g_elements[Element::DIRT] = { "Dirt", {120, 72, 0}, 10, SOLID, 1, updateDirt, -1};
     g_elements[Element::DEBUG] = { "Debug", {255,0,255}, 1, SOLID, 0, updateDebug, -1};
 }
 
