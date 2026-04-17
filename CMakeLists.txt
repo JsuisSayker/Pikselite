@@ -47,6 +47,7 @@ add_subdirectory(src/graphics)
 add_subdirectory(src/editors)
 add_subdirectory(src/engine)
 add_subdirectory(tests)
+add_subdirectory(external/nfd)
 
 # -------------------------------------------------
 # Build executable
@@ -110,6 +111,7 @@ target_link_libraries(${PROJECT_NAME}
     SDL2::SDL2main
     GLEW::GLEW
     OpenGL::GL
+    nfd
     imgui_backends
     pikselite_interface
     graphics

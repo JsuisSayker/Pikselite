@@ -107,6 +107,7 @@ namespace engine
             } else if (isProjectsListPageActive) {
                 ZoneScopedN("ProjectsListPage");
                 runProjectsListPage(sdlInterface, renderer, imguiInterface);
+
             } else if (isProjectEditorActive)
             {
                 ZoneScopedN("ProjectEditor");
@@ -199,7 +200,7 @@ namespace engine
         glViewport(0, 0, w, h);
     }
 
-    void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface) ///////////////////////////
+    void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface)
     {
         renderer.clear();
         imguiInterface.startFrame();
@@ -225,10 +226,10 @@ namespace engine
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 50));
         ImGui::BeginChild("projectOptions", ImVec2(0, 150), true);
         int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
-        if (selectedProjectIndex >= 0) {
+        if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
+            std::cout << "Index: " << selectedProjectIndex << " Size: " << _projects.size() << std::endl; /////////////////////////
             _currentProject = _projects[selectedProjectIndex];
-            isProjectsListPageActive = false;
-            isProjectEditorActive = true;
+            switchToProjectEditor = true;
         }
         ImGui::EndChild();
         ImGui::PopStyleVar();
@@ -254,6 +255,12 @@ namespace engine
         
         imguiInterface.endFrame(sdlInterface.getWindow());
         renderer.present(sdlInterface.getWindow());
+
+        if (switchToProjectEditor) {
+            switchToProjectEditor = false;
+            isProjectsListPageActive = false;
+            isProjectEditorActive = true;
+        }
     }
 
     void Core::run()

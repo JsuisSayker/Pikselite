@@ -47,14 +47,15 @@ namespace engine
         editors::SpriteEditor *spriteEditor;
         editors::ProjectEditor *projectEditor;
 
-        std::vector<projects::Project> _projects; ////////////////////////
-        projects::Project _currentProject; ////////////////////////
+        std::vector<projects::Project> _projects;
+        projects::Project _currentProject;
 
+        bool running;
         bool isProjectsListPageActive = true;
         bool isGamePreviewActive = false;
         bool isProjectEditorActive = false;
         bool isSpriteEditorActive = false;
-        bool running;
+        bool switchToProjectEditor = false;
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
         graphics::ImguiInterface imguiInterface;

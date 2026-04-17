@@ -68,5 +68,6 @@ namespace graphics {
     private:
         SDL_Window* _window;
         SDL_GLContext _glContext;
+        bool newProjectCreated = false;
     };
 } // namespace graphics

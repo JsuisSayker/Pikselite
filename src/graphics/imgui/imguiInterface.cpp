@@ -6,7 +6,7 @@
 
 #include <graphics/imgui/imguiInterface.hpp>
 
-#include <nfd.h>
+#include <nfd.hpp>
 #include <filesystem>
 #include <chrono>
 
@@ -788,7 +788,6 @@ namespace graphics {
 
     int ImguiInterface::projectOptionsBar(std::vector<projects::Project> &projects)
     {
-        
         float buttonHeight = 25.0f;
         float buttonWidth = 80.0f;
         float windowWidth = ImGui::GetContentRegionAvail().x;
@@ -802,17 +801,20 @@ namespace graphics {
 
         if (BasicButton("New", buttonHeight, buttonWidth))
         {
+            NFD::UniquePath outPath;
 
-            nfdchar_t* outPath = nullptr;
+            nfdresult_t result = NFD::PickFolder(outPath);
 
-            // if (NFD_PickFolder(nullptr, &outPath) == NFD_OKAY)
-            // {
-            //     selectedPath = outPath;
-            //     free(outPath);
-            //     openPopup = true;
-            // }
+            if (result == NFD_OKAY)
+            {
+                selectedPath = outPath.get();
 
-            return projects.size();
+                openPopup = true;
+            } else if (result == NFD_ERROR)
+            {
+                std::cout << "Error: " << NFD::GetError() << std::endl;
+                // std::cerr << "Error: " << NFD::GetError() << std::endl;
+            }
         }
 
         if (openPopup)
@@ -827,15 +829,28 @@ namespace graphics {
         
             if (ImGui::Button("Save"))
             {
-                std::filesystem::create_directory(selectedPath / projectName);
-                
-                projects::Project newProject;
-                newProject.name = projectName;
-                newProject.path = selectedPath / projectName;
+                std::filesystem::path fullPath = selectedPath / projectName;
 
-                projects.push_back(newProject);
+                if (!std::filesystem::exists(fullPath))
+                {
+                    std::filesystem::create_directory(fullPath);
+
+                    projects::Project newProject;
+                    newProject.name = projectName;
+                    newProject.path = fullPath;
+
+                    projects.push_back(newProject);
+
+                    newProjectCreated = true;
+                }
 
                 ImGui::CloseCurrentPopup();
+            }
+
+            if (newProjectCreated)
+            {
+                newProjectCreated = false;
+                return projects.size() - 1;
             }
         
             ImGui::SameLine();
@@ -850,32 +865,43 @@ namespace graphics {
 
         ImGui::SameLine();
 
+
         if (BasicButton("Open", buttonHeight, buttonWidth))
         {
-            nfdchar_t* outPath = nullptr;
+            // static int selectedProjectIndex = -1;
+            // nfdchar_t* outPath = nullptr;
 
-            // nfdresult_t result = NFD_PickFolder(nullptr, &outPath);
-        
+            // nfdresult_t result = NFD::PickFolder(outPath);
+
             // if (result == NFD_OKAY)
             // {
             //     std::filesystem::path selectedPath(outPath);
             //     free(outPath);
-        
-            //     for (int i = 0; i < projects.size(); i++)
+
+            //     auto normalizedSelected = std::filesystem::weakly_canonical(selectedPath);
+
+            //     for (size_t i = 0; i < projects.size(); i++)
             //     {
-            //         if (projects[i].path == selectedPath)
+            //         if (projects[i].path == normalizedSelected)
             //         {
-            //             return i;
+            //             selectedProjectIndex = i;
+            //             break;
             //         }
             //     }
-        
-            //     std::cout << "Selected folder: " << selectedPath << std::endl;
-            // } else if (result == NFD_ERROR)
+
+            //     if (selectedProjectIndex == -1)
+            //     {
+            //         std::cout << "Project not found in list: " << selectedPath << std::endl;
+            //     } else {
+            //         projects[selectedProjectIndex].lastOpened = std::chrono::system_clock::now();
+            //     }
+            // }
+            // else if (result == NFD_ERROR)
             // {
             //     std::cerr << "Error: " << NFD_GetError() << std::endl;
             // }
 
-            return -1;
+            // return selectedProjectIndex;
         }
 
         ImGui::SameLine();
