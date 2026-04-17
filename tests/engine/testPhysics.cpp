@@ -59,7 +59,7 @@ TEST(BoxWorldTests, InitStepAndShutdownLifecycle)
 
 TEST(PhysicsSystemTests, DisabledPhysicsBodyDoesNotCreateBox2DBody)
 {
-    engine::physics::BoxWorld world({0.0f, 0.0f});
+    engine::physics::BoxWorld world({0.0f, -10.0f});
 
     engine::ComponentManager componentManager;
     componentManager.registerComponent<ecs::components::Transform>();
@@ -80,11 +80,12 @@ TEST(PhysicsSystemTests, DisabledPhysicsBodyDoesNotCreateBox2DBody)
 
 TEST(PhysicsSystemTests, CreatesBodyAndSynchronizesTransformFromSimulation)
 {
-    engine::physics::BoxWorld world({0.0f, 0.0f});
+    engine::physics::BoxWorld world({0.0f, -10.0f});
 
     engine::ComponentManager componentManager;
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::PhysicsBody>();
+    componentManager.registerComponent<ecs::components::Velocity>();
     componentManager.registerComponent<ecs::components::Sprite>();
 
     constexpr ecs::EntityID entity = 101;
@@ -120,7 +121,7 @@ TEST(PhysicsSystemTests, CreatesBodyAndSynchronizesTransformFromSimulation)
 
 TEST(PhysicsTransformCohabitationTests, PhysicsKeepsFinalTransformAuthorityWhenMovementAlsoRuns)
 {
-    engine::physics::BoxWorld world({0.0f, 0.0f});
+    engine::physics::BoxWorld world({0.0f, -10.0f});
 
     engine::ComponentManager componentManager;
     componentManager.registerComponent<ecs::components::Transform>();
@@ -144,17 +145,74 @@ TEST(PhysicsTransformCohabitationTests, PhysicsKeepsFinalTransformAuthorityWhenM
     auto &physicsBody = componentManager.getComponent<ecs::components::PhysicsBody>(entity);
     ASSERT_TRUE(B2_IS_NON_NULL(physicsBody.bodyId));
 
-    // Keep body static: if Movement changes Transform, Physics should overwrite it
-    // from body transform in the same frame (current system order in Core).
+    // Keep body static: Movement should skip Transform writes because
+    // PhysicsBody is enabled on this entity.
     b2Body_SetLinearVelocity(physicsBody.bodyId, {0.0f, 0.0f});
 
+    const auto beforeMovement = componentManager.getComponent<ecs::components::Transform>(entity);
     movement.update(1.0, componentManager);
     const auto movedByVelocity = componentManager.getComponent<ecs::components::Transform>(entity);
-    EXPECT_GT(movedByVelocity.x, 0.0f);
+    EXPECT_FLOAT_EQ(movedByVelocity.x, beforeMovement.x);
+    EXPECT_FLOAT_EQ(movedByVelocity.y, beforeMovement.y);
 
     physics.update(1.0, componentManager);
     const auto finalTransform = componentManager.getComponent<ecs::components::Transform>(entity);
 
-    EXPECT_NEAR(finalTransform.x, 0.0f, 0.0001f);
-    EXPECT_NEAR(finalTransform.y, 0.0f, 0.0001f);
+    EXPECT_GT(finalTransform.x, beforeMovement.x);
+    EXPECT_LT(finalTransform.y, beforeMovement.y);
+}
+
+TEST(PhysicsTransformCohabitationTests, MovementUpdatesTransformWhenPhysicsBodyIsDisabled)
+{
+    engine::ComponentManager componentManager;
+    componentManager.registerComponent<ecs::components::Transform>();
+    componentManager.registerComponent<ecs::components::Velocity>();
+    componentManager.registerComponent<ecs::components::PhysicsBody>();
+
+    constexpr ecs::EntityID entity = 103;
+    componentManager.addComponent<ecs::components::Transform>(entity, makeTransform(1.0f, 2.0f));
+    componentManager.addComponent<ecs::components::Velocity>(entity, ecs::components::Velocity{true, 3.0f, -2.0f});
+    componentManager.addComponent<ecs::components::PhysicsBody>(entity, makePhysicsBody(false));
+
+    ecs::systems::MovementSystem movement;
+    movement.entities.insert(entity);
+
+    movement.update(2.0, componentManager);
+
+    const auto transform = componentManager.getComponent<ecs::components::Transform>(entity);
+    EXPECT_FLOAT_EQ(transform.x, 7.0f);
+    EXPECT_FLOAT_EQ(transform.y, -2.0f);
+}
+
+TEST(PhysicsSystemTests, HorizontalVelocityAndGravityWorkTogether)
+{
+    engine::physics::BoxWorld world({0.0f, -10.0f});
+
+    engine::ComponentManager componentManager;
+    componentManager.registerComponent<ecs::components::Transform>();
+    componentManager.registerComponent<ecs::components::Velocity>();
+    componentManager.registerComponent<ecs::components::PhysicsBody>();
+    componentManager.registerComponent<ecs::components::Sprite>();
+
+    constexpr ecs::EntityID entity = 104;
+    componentManager.addComponent<ecs::components::Transform>(entity, makeTransform(0.0f, 10.0f));
+    componentManager.addComponent<ecs::components::Velocity>(entity, ecs::components::Velocity{true, 6.0f, 0.0f});
+    componentManager.addComponent<ecs::components::PhysicsBody>(entity, makePhysicsBody(true));
+
+    ecs::components::Sprite sprite{};
+    sprite.width = 16.0f;
+    sprite.height = 24.0f;
+    componentManager.addComponent<ecs::components::Sprite>(entity, sprite);
+
+    ecs::systems::PhysicsSystem physics(&world);
+    physics.entities.insert(entity);
+
+    physics.update(1.0 / 60.0, componentManager);
+
+    const auto before = componentManager.getComponent<ecs::components::Transform>(entity);
+    physics.update(1.0, componentManager);
+    const auto after = componentManager.getComponent<ecs::components::Transform>(entity);
+
+    EXPECT_GT(after.x, before.x);
+    EXPECT_LT(after.y, before.y);
 }
