@@ -7,6 +7,7 @@
 #include "engine/managers/componentManager.hpp"
 #include "engine/ecs/components/transformComponent.hpp"
 #include "engine/ecs/components/velocityComponent.hpp"
+#include "engine/ecs/components/physicsComponent.hpp"
 
 namespace ecs::systems
 {
@@ -31,6 +32,17 @@ namespace ecs::systems
         {
             for (auto entity : entities)
             {
+                // Unity-like authority rule: if physics is active on an entity,
+                // MovementSystem must not write Transform for that entity.
+                if (componentManager.hasComponent<components::PhysicsBody>(entity))
+                {
+                    const auto &physics = componentManager.getComponent<components::PhysicsBody>(entity);
+                    if (physics.enabled)
+                    {
+                        continue;
+                    }
+                }
+
                 auto &transform = componentManager.getComponent<components::Transform>(entity);
                 auto &velocity = componentManager.getComponent<components::Velocity>(entity);
 
