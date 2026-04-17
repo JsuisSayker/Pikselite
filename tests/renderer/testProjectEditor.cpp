@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include <editors/project/projectEditor.hpp>
-#include <engine/pixels/chunk.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
 #include <engine/pixels/pixelEnum.hpp>
 
 using namespace Pixel;
@@ -20,8 +20,8 @@ static void writeSimpleSpriteData(const std::string& filename) {
     fout.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
     fout.write(reinterpret_cast<const char*>(&cy), sizeof(cy));
 
-    for (int x = 0; x < CHUNK_SIZE; ++x) {
-        for (int y = 0; y < CHUNK_SIZE; ++y) {
+    for (int x = 0; x < CHUNKS_SIZE; ++x) {
+        for (int y = 0; y < CHUNKS_SIZE; ++y) {
             PixelEntityID id = (x == 0 && y == 0) ? 1 : EMPTY;
             fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
         }
@@ -67,14 +67,11 @@ TEST(ProjectEditorTests, LoadPlacementAndPlacePendingSprite) {
 
     editors::ProjectEditor editor(nullptr, nullptr, nullptr, nullptr);
     EXPECT_TRUE(editor.testLoadSpriteForPlacement(tmp.string()));
-    editor.testPlacePendingSpriteAtGrid(0, 0);
 
     auto pixels = editor.getPixels();
     auto gameObjects = editor.getGameObjects();
-    auto attrs = editor.getPixelAttributes();
     EXPECT_EQ(pixels.size(), 1);
     EXPECT_EQ(gameObjects.size(), 1);
-    EXPECT_EQ(attrs.renderIndex.size(), 1);
 
     EXPECT_EQ(editor.getChunkGrid().getPixel(0, 0), 1);
 
@@ -94,18 +91,12 @@ TEST(ProjectEditorTests, SetSceneDataReplacesEditorState) {
     object.pixelEntities = {77};
     std::vector<Pixel::GameObject> gameObjects{object};
 
-    Pixel::PixelAttributes attributes;
-    attributes.renderIndex[77] = 0;
-    attributes.solidAttributes[77] = Pixel::Solid{};
+    ::ChunkGrid grid;
 
-    Pixel::ChunkGrid grid;
-    grid.getOrCreateChunk(0, 0).set(2, 3, 77);
-
-    editor.setSceneData(renderPixels, gameObjects, attributes, grid, 42, 9);
+    editor.setSceneData(renderPixels, gameObjects, grid, 9);
 
     const auto loadedPixels = editor.getPixels();
     const auto loadedObjects = editor.getGameObjects();
-    const auto loadedAttributes = editor.getPixelAttributes();
     auto loadedGrid = editor.getChunkGrid();
 
     ASSERT_EQ(loadedPixels.size(), 1u);
@@ -122,10 +113,7 @@ TEST(ProjectEditorTests, SetSceneDataReplacesEditorState) {
     EXPECT_EQ(loadedObjects[0].pixelEntities[0], 77u);
 
     EXPECT_EQ(loadedGrid.getPixel(2, 3), 77u);
-    EXPECT_EQ(loadedAttributes.renderIndex.count(77), 1u);
-    EXPECT_EQ(loadedAttributes.solidAttributes.count(77), 1u);
 
-    EXPECT_EQ(editor.getPixelIdCounter(), 42u);
     EXPECT_EQ(editor.getGameObjectCounter(), 9u);
 }
 
@@ -134,21 +122,17 @@ TEST(ProjectEditorTests, SetSceneDataCountersAreUsedWhenPlacingSprite) {
     writeSimpleSpriteData(tmp.string());
 
     editors::ProjectEditor editor(nullptr, nullptr, nullptr, nullptr);
-    editor.setSceneData({}, {}, Pixel::PixelAttributes{}, Pixel::ChunkGrid{}, 100, 50);
+    editor.setSceneData({}, {}, ::ChunkGrid{}, 50);
 
     ASSERT_TRUE(editor.testLoadSpriteForPlacement(tmp.string()));
-    editor.testPlacePendingSpriteAtGrid(0, 0);
 
     const auto objects = editor.getGameObjects();
-    const auto attributes = editor.getPixelAttributes();
 
     ASSERT_EQ(objects.size(), 1u);
     EXPECT_EQ(objects[0].id, 50u);
     ASSERT_EQ(objects[0].pixelEntities.size(), 1u);
     EXPECT_EQ(objects[0].pixelEntities[0], 100u);
     EXPECT_EQ(editor.getChunkGrid().getPixel(0, 0), 100u);
-    EXPECT_EQ(attributes.renderIndex.count(100u), 1u);
-    EXPECT_EQ(editor.getPixelIdCounter(), 101u);
     EXPECT_EQ(editor.getGameObjectCounter(), 51u);
 
     std::filesystem::remove(tmp);
@@ -166,10 +150,9 @@ TEST(ProjectEditorTests, RunExecutesAndPreservesSceneWithoutInput) {
     };
     Pixel::PixelAttributes attributes;
     attributes.renderIndex[5] = 0;
-    Pixel::ChunkGrid grid;
-    grid.getOrCreateChunk(0, 0).set(0, 0, 5);
+    ::ChunkGrid grid;
 
-    editor.setSceneData(renderPixels, {}, attributes, grid, 6, 1);
+    editor.setSceneData(renderPixels, {}, grid, 1);
 
     editor.run({graphics::NO_EVENT, iface.getWindowID()});
     editor.run({graphics::KEY_W, iface.getWindowID()});

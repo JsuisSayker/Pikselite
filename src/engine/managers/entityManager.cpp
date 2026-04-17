@@ -40,6 +40,11 @@ namespace engine
         }
     }
 
+    bool EntityManager::hasEntity(ecs::EntityID entity) const
+    {
+        return signatures.find(entity) != signatures.end();
+    }
+
     const std::vector<std::unique_ptr<ecs::Entity>> &EntityManager::getEntities() const
     {
         return entities;

@@ -12,11 +12,21 @@
 
 namespace engine::events
 {
+    /**
+     * @brief The EventBus class manages the subscription and publishing of events.
+     */
     class EventBus
     {
     public:
         using HandlerId = std::uint64_t;
 
+        /**
+         * @brief Subscribes to an event type.
+         * 
+         * @tparam EventT 
+         * @param handler 
+         * @return HandlerId 
+         */
         template <typename EventT>
         HandlerId subscribe(std::function<void(const EventT &)> handler)
         {
@@ -32,6 +42,12 @@ namespace engine::events
             return id;
         }
 
+        /**
+         * @brief Unsubscribes from an event type using the handler ID returned by the subscribe function.
+         * 
+         * @tparam EventT 
+         * @param id 
+         */
         template <typename EventT>
         void unsubscribe(HandlerId id)
         {
@@ -45,16 +61,25 @@ namespace engine::events
                       vec.end());
         }
 
-        // publish takes ownership of the event via unique_ptr
+        /**
+         * @brief Publishes an event to all subscribed handlers.
+         * 
+         * @param ev 
+         */
         void publish(std::unique_ptr<IEvent> ev);
 
     private:
+        // Internal struct to store handler information
         struct Handler
         {
             HandlerId id;
             std::function<void(const IEvent &)> fn;
         };
+
+        // Map of event type to list of handlers
         std::unordered_map<std::type_index, std::vector<Handler>> handlers;
+
+        // Incremental ID generator for handlers
         HandlerId lastId = 0;
     };
 

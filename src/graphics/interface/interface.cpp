@@ -72,6 +72,19 @@ namespace graphics {
 
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL2_ProcessEvent(&event);
+
+            if (event.type == SDL_DROPFILE)
+            {
+                result.type = FILE_DROPPED;
+                result.windowID = event.drop.windowID;
+                if (event.drop.file)
+                {
+                    result.droppedFilePath = event.drop.file;
+                    SDL_free(event.drop.file);
+                }
+                return result;
+            }
+
             ImGuiIO &io = ImGui::GetIO();
             if (io.WantCaptureKeyboard || io.WantCaptureMouse)
                 continue;
@@ -100,6 +113,7 @@ namespace graphics {
                 case SDLK_o: result.type = KEY_O; return result;
                 case SDLK_TAB: result.type = KEY_TAB; return result;
                 case SDLK_F5: result.type = KEY_F5; return result;
+                case SDLK_ESCAPE: result.type = KEY_ESCAPE; return result;
                 }
                 break;
             case SDL_MOUSEBUTTONDOWN:

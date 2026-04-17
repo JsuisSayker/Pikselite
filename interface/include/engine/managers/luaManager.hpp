@@ -8,16 +8,36 @@
 
 namespace engine
 {
+
+    /**
+     * @brief The LuaManager class is responsible for managing the Lua scripting environment using the sol2 library.
+     * 
+     */
     class LuaManager
     {
     public:
+
+        /**
+         * @brief Construct a new Lua Manager object
+         * 
+         */
         LuaManager();
         ~LuaManager() = default;
 
-        /// Load and execute a .lua file. Functions defined in it become callable.
+        /**
+         * @brief Load and execute a .lua file. Functions defined in it become callable.
+         * 
+         */
         bool loadScript(const std::string &filepath);
 
-        /// Call a Lua function by name with arbitrary args (forwarded via sol2).
+        /**
+         * @brief Call a Lua function by name with arbitrary args (forwarded via sol2).
+         * 
+         * @tparam Args 
+         * @param functionName 
+         * @param args 
+         * @return sol::protected_function_result 
+         */
         template <typename... Args>
         sol::protected_function_result call(const std::string &functionName, Args &&...args)
         {
@@ -34,13 +54,24 @@ namespace engine
             return result;
         }
 
-        /// Check if a global function exists in the loaded script.
+        /**
+         * @brief Check if a global function exists in the loaded script.
+         * 
+         * @param name 
+         * @return true 
+         * @return false 
+         */
         bool hasFunction(const std::string &name) const;
 
-        /// Direct access to the sol::state (for registering bindings).
+        /**
+         * @brief Direct access to the sol::state (for registering bindings).
+         * 
+         * @return sol::state& 
+         */
         sol::state &state() { return _lua; }
 
     private:
+        // The sol::state object manages the Lua environment and is used to execute scripts and call functions.
         sol::state _lua;
     };
 } // namespace engine::scripting

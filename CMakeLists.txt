@@ -43,6 +43,8 @@ find_path(SOL2_INCLUDE_DIRS "sol/sol.hpp")
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(imgui_backends CONFIG REQUIRED)
 
+find_package(box2d CONFIG REQUIRED)
+# find_package(imgui CONFIG REQUIRED)
 
 # -------------------------------------------------
 # Add subdirectories

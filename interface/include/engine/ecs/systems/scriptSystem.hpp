@@ -19,18 +19,32 @@ namespace ecs::systems
     public:
         ScriptSystem() = default;
 
+        /**
+         * @brief Initializes the ScriptSystem.
+         * 
+         */
         void init() override
         {
             _lua = std::make_unique<engine::LuaManager>();
             registerBindings();
         }
 
-        /// Load a .lua file (call after init)
+        /**
+         * @brief Loads a Lua script file.
+         * @param filepath The path to the Lua script file.
+         * @return True if the script was loaded successfully, false otherwise.
+         */
         bool loadScript(const std::string &filepath)
         {
             return _lua && _lua->loadScript(filepath);
         }
 
+        /**
+         * @brief Updates the script system.
+         * This function is called every frame and allows the Lua script to modify entity components based on input or other logic defined in the script.
+         * @param dt The delta time since the last update.
+         * @param componentManager The component manager.
+         */
         void update(double dt, engine::ComponentManager &componentManager) override
         {
             if (!_lua || !_lua->hasFunction("update"))
@@ -77,8 +91,13 @@ namespace ecs::systems
         }
 
     private:
+        // Lua manager instance
         std::unique_ptr<engine::LuaManager> _lua;
 
+        /**
+         * @brief Registers C++ functions and variables to be accessible from Lua scripts.
+         * This includes input handling functions and utility functions like logging.
+        */
         void registerBindings()
         {
             sol::state &lua = _lua->state();

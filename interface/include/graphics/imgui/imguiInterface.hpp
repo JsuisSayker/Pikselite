@@ -18,11 +18,13 @@
 #include <imgui/backends/imgui_impl_opengl3.h>
 
 #include <graphics/imgui/components/components.hpp>
-#include <engine/pixels/chunk.hpp>
 
-#include <engine/ecs/components/gameObjectComponent.hpp>
-
-#include <engine/managers/componentManager.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/physicsComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/pixels/simulation/element.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
 
 #include <algorithm>
 #include <string>
@@ -39,20 +41,22 @@ namespace graphics {
 
         void showImGuiDemo();
 
-        void pixelEditor(Pixel& pixel, ::Pixel::ChunkGrid grid, ::Pixel::PixelAttributes &pixelAttributes, const char* label);
+        void pixelEditor(Pixel& pixel, ChunkGrid grid, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
-        void pixelSpriteHandler(bool &showDefaultPropertiesEditor, std::string &saveSpritePath);
+        void pixelSpriteHandler(bool &showDefaultPropertiesEditor,
+                                std::string &saveSpritePath,
+                                Element::ElementType& selectedElementType); // updated signature
         void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
         void projectTopBarEmpty();
 
-        void defaultPixelPropertiesEditor(::Pixel::DefaultPixelProperties& defaultProperties, const char* label);
+        void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
         void projectNavbar(::std::string &currentSpriteFilename);
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, engine::ComponentManager* componentManager);
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
 
         void startFrame();
         void endFrame(SDL_Window* window);
