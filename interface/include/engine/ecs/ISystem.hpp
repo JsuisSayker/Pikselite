@@ -30,6 +30,18 @@ namespace ecs
         virtual void init() = 0;
 
         /**
+         * @brief Whether this system should be executed by SystemManager::update.
+         * Rendering-only systems can override and return false.
+         */
+        virtual bool shouldRunInUpdate() const { return true; }
+
+        /**
+         * @brief Notifies the system that an entity has been destroyed.
+         * Default implementation is a no-op for systems that do not own entity-local resources.
+         */
+        virtual void entityDestroyed(EntityID /*entity*/) {}
+
+        /**
          * @brief A set of entities that this system is interested in.
          */
         std::set<EntityID> entities;

@@ -1,6 +1,8 @@
 #include <editors/project/projectEditor.hpp>
 #include <SDL2/SDL.h>
 
+#include <algorithm>
+
 namespace editors {
 
     ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface,
@@ -22,7 +24,14 @@ namespace editors {
         _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested, _loadSceneRequested);
 
         if (!_currentSpriteFilename.empty()) {
-            _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
+            if (isTextureFile(_currentSpriteFilename))
+            {
+                _isPlacingTexture = loadTextureForPlacement(_currentSpriteFilename);
+            }
+            else
+            {
+                _isPlacingSprite = loadSpriteForPlacement(_currentSpriteFilename);
+            }
             _currentSpriteFilename.clear();
         }
 
@@ -32,6 +41,8 @@ namespace editors {
         _renderPixels = framePixels; // cache for editing
 
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+        drawGameObjectSprites();
+        drawPendingTexturePreview();
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
         imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
@@ -48,6 +59,8 @@ namespace editors {
         gameObjectCounter = nextGameObjectId;
         _pendingSprite = {};
         _isPlacingSprite = false;
+        _pendingTexture = {};
+        _isPlacingTexture = false;
         _leftMouseDownLastFrame = false;
     }
 
@@ -73,6 +86,16 @@ namespace editors {
             break;
         case graphics::KEY_O:
             _camera.zoomOut(1.1f);
+            break;
+        case graphics::KEY_ESCAPE:
+            _isPlacingTexture = false;
+            _pendingTexture = {};
+            break;
+        case graphics::FILE_DROPPED:
+            if (!event.droppedFilePath.empty() && isTextureFile(event.droppedFilePath))
+            {
+                _isPlacingTexture = loadTextureForPlacement(event.droppedFilePath);
+            }
             break;
         default:
             break;
@@ -112,6 +135,75 @@ namespace editors {
         std::cout << "Placed sprite at grid: (" << anchorGX << ", " << anchorGY << ")" << std::endl;
     }
 
+    bool ProjectEditor::isTextureFile(const std::string& path) const
+    {
+        std::string ext = std::filesystem::path(path).extension().string();
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".webp";
+    }
+
+    void ProjectEditor::placeTextureAtWorldInGameObject(glm::vec2 worldPos, const std::string& texturePath)
+    {
+        if (texturePath.empty())
+            return;
+
+        Pixel::GameObject newObject;
+        newObject.id = gameObjectCounter++;
+        newObject.name = "Sprite_" + std::to_string(newObject.id);
+
+        ecs::components::Transform transform{};
+        transform.enabled = true;
+        transform.x = worldPos.x;
+        transform.y = worldPos.y;
+        transform.rotation = 0.0f;
+        transform.scaleX = 1.0f;
+        transform.scaleY = 1.0f;
+        transform.prevX = worldPos.x;
+        transform.prevY = worldPos.y;
+
+        ecs::components::Sprite sprite{};
+        sprite.enabled = true;
+        sprite.texturePath = texturePath;
+        sprite.width = 640.0f;
+        sprite.height = 640.0f;
+
+        newObject.addComponent(transform);
+        newObject.addComponent(sprite);
+
+        _gameObjects.push_back(std::move(newObject));
+    }
+
+    void ProjectEditor::drawGameObjectSprites()
+    {
+        for (auto& go : _gameObjects)
+        {
+            if (!go.isActive)
+                continue;
+
+            auto* sprite = go.getComponent<ecs::components::Sprite>();
+            auto* transform = go.getComponent<ecs::components::Transform>();
+            if (!sprite || !transform || !sprite->enabled)
+                continue;
+
+            auto textureIt = _textureCache.find(sprite->texturePath);
+            if (textureIt == _textureCache.end())
+            {
+                const GLuint textureId = _renderer->loadTexture(sprite->texturePath);
+                _textureCache[sprite->texturePath] = textureId;
+                textureIt = _textureCache.find(sprite->texturePath);
+            }
+
+            if (textureIt == _textureCache.end() || textureIt->second == 0)
+                continue;
+
+            graphics::Sprite2D sprite2d;
+            sprite2d.position = {transform->x, transform->y};
+            sprite2d.size = {sprite->width * transform->scaleX, sprite->height * transform->scaleY};
+            sprite2d.textureID = textureIt->second;
+            _renderer->drawSprite(sprite2d, _camera);
+        }
+    }
+
     void ProjectEditor::imguiHandling()
     {
         _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
@@ -121,13 +213,62 @@ namespace editors {
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
 
-        if (_isPlacingSprite) {
+        if (_isPlacingTexture && _pendingTexture.valid) {
+            placeTextureAtWorldInGameObject(worldPos, _pendingTexture.texturePath);
+            _isPlacingTexture = false;
+            _pendingTexture = {};
+        } else if (_isPlacingSprite) {
             placePendingSpriteAtWorldInGameObject(worldPos);
             _isPlacingSprite = false;
             _pendingSprite = {};
         } else {
             // Handle other left-click interactions (e.g., selecting game objects)
         }
+    }
+
+    bool ProjectEditor::loadTextureForPlacement(const std::string& texturePath)
+    {
+        if (texturePath.empty())
+            return false;
+
+        // Check if already in cache, otherwise load it
+        auto textureIt = _textureCache.find(texturePath);
+        GLuint textureID = 0;
+        if (textureIt == _textureCache.end())
+        {
+            textureID = _renderer->loadTexture(texturePath);
+            if (textureID == 0)
+                return false;
+            _textureCache[texturePath] = textureID;
+        }
+        else
+        {
+            textureID = textureIt->second;
+        }
+
+        _pendingTexture.valid = true;
+        _pendingTexture.texturePath = texturePath;
+        _pendingTexture.textureID = textureID;
+        _pendingTexture.width = 640.0f;
+        _pendingTexture.height = 640.0f;
+
+        return true;
+    }
+
+    void ProjectEditor::drawPendingTexturePreview()
+    {
+        if (!_isPlacingTexture || !_pendingTexture.valid || _pendingTexture.textureID == 0)
+            return;
+
+        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+        glm::vec2 worldPos = screenToWorld(mousePos);
+
+        graphics::Sprite2D sprite2d;
+        sprite2d.position = worldPos;
+        sprite2d.size = {_pendingTexture.width, _pendingTexture.height};
+        sprite2d.textureID = _pendingTexture.textureID;
+
+        _renderer->drawSprite(sprite2d, _camera);
     }
 
 } // namespace editors

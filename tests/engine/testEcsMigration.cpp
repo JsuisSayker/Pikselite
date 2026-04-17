@@ -8,7 +8,6 @@
 #include <engine/managers/systemManager.hpp>
 
 #include <engine/pixels/pixelEnum.hpp>
-#include <engine/ecs/components/gameObjectComponent.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>

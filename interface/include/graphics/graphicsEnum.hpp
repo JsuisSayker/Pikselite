@@ -9,7 +9,9 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>      // for glm::ortho, translate, etc.
-#include <glm/gtc/type_ptr.hpp> 
+#include <glm/gtc/type_ptr.hpp>
+
+#include <string>
 
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1030
@@ -66,10 +68,12 @@ namespace graphics {
         KEY_O,
         KEY_TAB,
         KEY_F5,
+        KEY_ESCAPE,
         MOUSE_LEFT_CLICK,
         MOUSE_LEFT_DRAG,
         MOUSE_RIGHT_CLICK,
         MOUSE_RIGHT_DRAG,
+        FILE_DROPPED,
         WINDOW_CLOSE,
         QUIT,
         NO_EVENT,
@@ -83,5 +87,6 @@ namespace graphics {
     struct InputEvent {
         InputEventType type = NO_EVENT;
         uint32_t windowID = 0;
+        std::string droppedFilePath;
     };
 }

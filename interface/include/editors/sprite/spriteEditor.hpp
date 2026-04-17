@@ -13,7 +13,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <engine/ecs/components/gameObjectComponent.hpp>
 #include <limits>
 #include <cmath>
 #include <unordered_map>

@@ -12,6 +12,7 @@
     "sol2",
     "gtest",
     "nlohmann-json",
+    "box2d",
     "nativefiledialog-extended",
     {
       "name": "tracy",

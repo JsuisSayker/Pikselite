@@ -19,7 +19,10 @@
 
 #include <graphics/imgui/components/components.hpp>
 
-#include <engine/ecs/components/gameObjectComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/physicsComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/chunk.hpp>
 
