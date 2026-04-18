@@ -14,25 +14,10 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: x64-windows
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
       VCPKG_CACHE_KEY: "windows-vcpkg-v1"
-      VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Restore vcpkg setup from cache
-      shell: cmd
-      run: |
-        set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
-        set "VCPKG_SETUP_ZIP=%CACHE_DIR%\%VCPKG_SETUP_CACHE_KEY%.zip"
-        if exist "%VCPKG_SETUP_ZIP%" (
-          echo === Restoring vcpkg setup from cache ===
-          if exist "%VCPKG_ROOT%" rmdir /s /q "%VCPKG_ROOT%"
-          powershell -Command "Expand-Archive -Path '%VCPKG_SETUP_ZIP%' -DestinationPath '%VCPKG_ROOT%' -Force"
-          echo === Vcpkg setup restored from cache ===
-        ) else (
-          echo === No cached vcpkg setup found ===
-        )
 
     - name: Setup vcpkg
       shell: cmd
@@ -46,19 +31,3 @@ jobs:
       shell: cmd
       run: |
         build.bat Cache
-
-    - name: Save vcpkg setup to cache
-      shell: cmd
-      if: always()
-      run: |
-        set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
-        set "VCPKG_SETUP_ZIP=%CACHE_DIR%\%VCPKG_SETUP_CACHE_KEY%.zip"
-        if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
-        if exist "%VCPKG_ROOT%" (
-          if exist "%VCPKG_SETUP_ZIP%" del /f /q "%VCPKG_SETUP_ZIP%"
-          echo === Saving vcpkg setup to cache ===
-          powershell -Command "Compress-Archive -Path '%VCPKG_ROOT%\*' -DestinationPath '%VCPKG_SETUP_ZIP%' -Force"
-          echo === Vcpkg setup saved to cache ===
-        ) else (
-          echo === No vcpkg to save ===
-        )
