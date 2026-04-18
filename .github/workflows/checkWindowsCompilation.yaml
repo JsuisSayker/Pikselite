@@ -19,8 +19,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Restore vcpkg cache
-      shell: powershell -ExecutionPolicy Bypass
+      shell: powershell
       run: |
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
         $cacheKey = "windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}"
         $cacheDir = "$env:LOCALAPPDATA\temp\vcpkg-cache"
         $zipPath = "$cacheDir\$cacheKey.zip"
@@ -49,9 +50,10 @@ jobs:
         build.bat
 
     - name: Save vcpkg cache
-      shell: powershell -ExecutionPolicy Bypass
+      shell: powershell
       if: success()
       run: |
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
         $cacheKey = "windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}"
         $cacheDir = "$env:LOCALAPPDATA\temp\vcpkg-cache"
         $zipPath = "$cacheDir\$cacheKey.zip"
