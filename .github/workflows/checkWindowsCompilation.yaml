@@ -25,7 +25,9 @@ jobs:
           ${{ env.VCPKG_ROOT }}\installed
           ${{ env.VCPKG_ROOT }}\packages
           ${{ env.VCPKG_ROOT }}\buildtrees
-        key: windows-vcpkg-${{ hashFiles('vcpkg.json') }}
+        key: windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        restore-keys: |
+          windows-vcpkg-
 
     - name: Setup vcpkg
       shell: cmd
