@@ -1,39 +1,41 @@
 name: Check Windows Compilation
 run-name: check-windows-compilation
-
 on:
-    push:
-        branches:
-            - main
-            - dev
-            - ci_cd
-    pull_request:
-        branches:
-            - main
-            - dev
-            - ci_cd
-permissions:
-    contents: read
+  push:
+  pull_request:
 
 jobs:
-    check_windows_compilation:
-        name: Check Windows Compilation
-        runs-on: self-hosted
-        steps:
-            - name: Checkout Repo
-              uses: actions/checkout@v3
-              with:
-                    fetch-depth: 0
+  build:
+    runs-on: [self-hosted, Windows, X64]
 
-            - name: Check Windows Compilation
-              shell: cmd
-              run: |
-                echo "Checking Windows compilation..."
-                REM Run build.bat at the root of the repository and check for errors
-                call build.bat
-                if errorlevel 1 (
-                    echo "Windows compilation failed with error code %ERRORLEVEL%"
-                    exit /b %ERRORLEVEL%
-                ) else (
-                    echo "Windows compilation succeeded!"
-                )
+    env:
+      BUILD_DIR: build
+      VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+      VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Cache vcpkg
+      uses: actions/cache@v4
+      with:
+        path: |
+          ${{ env.VCPKG_ROOT }}\installed
+          ${{ env.VCPKG_ROOT }}\packages
+          ${{ env.VCPKG_ROOT }}\buildtrees
+        key: windows-vcpkg-${{ hashFiles('vcpkg.json') }}
+
+    - name: Setup vcpkg
+      shell: cmd
+      run: |
+        if not exist "%VCPKG_ROOT%" (
+          git clone https://github.com/microsoft/vcpkg "%VCPKG_ROOT%"
+          call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
+        )
+
+    - name: Build Engine
+      shell: cmd
+      run: |
+        build.bat
