@@ -8,12 +8,8 @@ set "BUILD_DIR=build"
 set "CONFIG_TYPE=Release"
 set "CACHE_ENABLED=0"
 set "BUILD_COVERAGE=OFF"
-
-if defined LOCALAPPDATA (
-    set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
-) else (
-    set "CACHE_DIR=%TEMP%\vcpkg-cache"
-)
+set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
+set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
 
 if "%~1" neq "" if /I not "%~1"=="Cache" (
     set "CONFIG_TYPE=%~1"
@@ -25,12 +21,12 @@ if "%~1" neq "" if /I not "%~1"=="Cache" (
     set "CONFIG_TYPE=Release"
 )
 
+
 :: Use CI-provided env if available, fallback to local
 if "%VCPKG_ROOT%"=="" set "VCPKG_ROOT=%CD%\vcpkg"
 if "%VCPKG_OVERLAY_PORTS%"=="" set "VCPKG_OVERLAY_PORTS=%CD%\external\overlay-ports"
 if "%VCPKG_DEFAULT_TRIPLET%"=="" set "VCPKG_DEFAULT_TRIPLET=x64-windows"
 if "%VCPKG_CACHE_KEY%"=="" set "VCPKG_CACHE_KEY=local-default"
-set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
 
 :: -------------------------------------------------
 :: CACHE: Restore from cache
@@ -55,7 +51,6 @@ echo CD=%CD%
 echo VCPKG_ROOT=%VCPKG_ROOT%
 echo VCPKG_OVERLAY_PORTS=%VCPKG_OVERLAY_PORTS%
 echo CACHE_KEY=%VCPKG_CACHE_KEY%
-echo CACHE_ENABLED=%CACHE_ENABLED%
 echo.
 
 :: -------------------------------------------------
@@ -114,15 +109,12 @@ echo === Build completed successfully ===
 
 :: -------------------------------------------------
 :: CACHE: Save to cache
-:: -------------------------------------------------
+:: -------------------------------------------------*
 if "%CACHE_ENABLED%"=="1" (
-    if defined LOCALAPPDATA (
-        set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
-    ) else (
-        set "CACHE_DIR=%TEMP%\vcpkg-cache"
-    )
+    echo %LOCALAPPDATA%
+    echo %TEMP%
+    echo %CACHE_ZIP%
     set "VCPKG_INSTALLED=%BUILD_DIR%\vcpkg_installed"
-    set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
     if exist "%VCPKG_INSTALLED%" (
         if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
         if exist "%CACHE_ZIP%" del /f /q "%CACHE_ZIP%"
