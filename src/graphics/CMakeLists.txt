@@ -20,5 +20,6 @@ target_link_libraries(graphics
     ${GLEW_LIBRARIES}
     OpenGL::GL
     box2d::box2d
+    imgui::imgui
     pikselite_interface
 )
