@@ -5,7 +5,8 @@ set "ENABLE_COVERAGE=ON"
 set "ENABLE_PROFILING=ON"
 set "VCPKG_ROOT=%USERPROFILE%\vcpkg"
 set "TARGET_TRIPLET=x64-windows"
-set "VCPKG_OVERLAY_PORTS=%USERPROFILE%\Desktop\Pikselite-Engine\external\overlay-ports"
+@REM set "VCPKG_OVERLAY_PORTS=%USERPROFILE%\Desktop\Pikselite-Engine\external\overlay-ports"
+set "VCPKG_OVERLAY_PORTS=%~dp0external\overlay-ports"
 set "VC_VARS_PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
 
 @REM echo %VCPKG_OVERLAY_PORTS%
