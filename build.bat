@@ -8,7 +8,9 @@ set "TARGET_TRIPLET=x64-windows"
 set "VCPKG_OVERLAY_PORTS=%USERPROFILE%\Desktop\Pikselite-Engine\external\overlay-ports"
 set "VC_VARS_PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
 
-echo %VCPKG_OVERLAY_PORTS%
+@REM echo %VCPKG_OVERLAY_PORTS%
+@REM echo %VCPKG_ROOT%
+@REM echo "%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake"
 
 :: Get the shell second parameter and set CONFIG_TYPE to it if it exists, otherwise set it to Release
 if "%~1" neq "" (
@@ -52,7 +54,7 @@ cmake -B "%BUILD_DIR%" -S . ^
 -DENABLE_COVERAGE="%ENABLE_COVERAGE%" ^
 -DVCPKG_OVERLAY_PORTS=external/overlay-ports ^
 -DPIKSELITE_ENABLE_PROFILING="%ENABLE_PROFILING%" ^
--DCMAKE_TOOLCHAIN_FILE="C:/Users/killi/vcpkg/scripts/buildsystems/vcpkg.cmake" ^
+-DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
 -DVCPKG_TARGET_TRIPLET=%TARGET_TRIPLET%
 
 if %ERRORLEVEL% neq 0 (
