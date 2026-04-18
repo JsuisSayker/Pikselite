@@ -6,11 +6,42 @@ setlocal EnableDelayedExpansion
 :: -------------------------------------------------
 set "BUILD_DIR=build"
 set "CONFIG_TYPE=Release"
+set "CACHE_ENABLED=0"
+set "BUILD_COVERAGE=OFF"
+
+if "%~1" neq "" if /I not "%~1"=="Cache" (
+    set "CONFIG_TYPE=%~1"
+    set "BUILD_COVERAGE=ON"
+) else if "%~1"=="Cache" (
+    set "CONFIG_TYPE=Release"
+    set "CACHE_ENABLED=1"
+) else (
+    set "CONFIG_TYPE=Release"
+)
+
 
 :: Use CI-provided env if available, fallback to local
 if "%VCPKG_ROOT%"=="" set "VCPKG_ROOT=%CD%\vcpkg"
 if "%VCPKG_OVERLAY_PORTS%"=="" set "VCPKG_OVERLAY_PORTS=%CD%\external\overlay-ports"
 if "%VCPKG_DEFAULT_TRIPLET%"=="" set "VCPKG_DEFAULT_TRIPLET=x64-windows"
+if "%VCPKG_CACHE_KEY%"=="" set "VCPKG_CACHE_KEY=local-default"
+
+:: -------------------------------------------------
+:: CACHE: Restore from cache
+:: -------------------------------------------------
+if "%CACHE_ENABLED%"=="1" (
+    set "VCPKG_INSTALLED=%BUILD_DIR%\vcpkg_installed"
+    set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
+    set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
+    if exist "%CACHE_ZIP%" (
+        echo === Restoring vcpkg from cache ===
+        if exist "%VCPKG_INSTALLED%" rmdir /s /q "%VCPKG_INSTALLED%"
+        powershell -Command "Expand-Archive -Path '%CACHE_ZIP%' -DestinationPath '%BUILD_DIR%\vcpkg_installed' -Force"
+        echo === Cache restored ===
+    ) else (
+        echo === No cached vcpkg found, will build from scratch ===
+    )
+)
 
 :: -------------------------------------------------
 :: DEBUG INFO (very useful for CI)
@@ -19,6 +50,7 @@ echo === Environment ===
 echo CD=%CD%
 echo VCPKG_ROOT=%VCPKG_ROOT%
 echo VCPKG_OVERLAY_PORTS=%VCPKG_OVERLAY_PORTS%
+echo CACHE_KEY=%VCPKG_CACHE_KEY%
 echo.
 
 :: -------------------------------------------------
@@ -54,7 +86,8 @@ set VCPKG_OVERLAY_PORTS=%VCPKG_OVERLAY_PORTS%
 cmake -B "%BUILD_DIR%" -S . ^
   -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
   -DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET% ^
-  -DCMAKE_BUILD_TYPE=%CONFIG_TYPE%
+  -DCMAKE_BUILD_TYPE=%CONFIG_TYPE% ^
+  -DENABLE_COVERAGE=%BUILD_COVERAGE%
 
 if %ERRORLEVEL% neq 0 (
     echo CMake configuration failed!
@@ -73,3 +106,19 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo === Build completed successfully ===
+
+:: -------------------------------------------------
+:: CACHE: Save to cache
+:: -------------------------------------------------*
+if "%CACHE_ENABLED%"=="1" (
+    set "VCPKG_INSTALLED=%BUILD_DIR%\vcpkg_installed"
+    if exist "%VCPKG_INSTALLED%" (
+        if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
+        if exist "%CACHE_ZIP%" del /f /q "%CACHE_ZIP%"
+        echo === Saving vcpkg cache ===
+        powershell -Command "Compress-Archive -Path '%VCPKG_INSTALLED%\*' -DestinationPath '%CACHE_ZIP%' -Force"
+        echo === Cache saved to %CACHE_ZIP% ===
+    ) else (
+        echo === No vcpkg installed, skipping cache save ===
+    )
+)
