@@ -6,7 +6,7 @@
   "registries": [
     {
       "kind": "filesystem",
-      "path": "external/overlay-ports",
+      "path": "./external/overlay-ports",
       "baseline": "default",
       "packages": ["imgui-backends"]
     }
