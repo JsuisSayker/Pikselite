@@ -1,27 +1,27 @@
-name: Updating
-run-name: updating-main-dev-branches
+# name: Updating
+# run-name: updating-main-dev-branches
 
-on:
-    push:
-        branches:
-            - dev
-    pull_request:
-        branches:
-            - dev
+# on:
+#     push:
+#         branches:
+#             - dev
+#     pull_request:
+#         branches:
+#             - dev
 
-permissions:
-    contents: write
+# permissions:
+#     contents: write
 
-jobs:
-    update_dev_branches:
-        name: Update Main Dev Branches
-        runs-on: self-hosted
-        steps:
-            - name: Checkout Repo
-              uses: actions/checkout@v3
-              with:
-                    fetch-depth: 0
+# jobs:
+#     update_dev_branches:
+#         name: Update Main Dev Branches
+#         runs-on: self-hosted
+#         steps:
+#             - name: Checkout Repo
+#               uses: actions/checkout@v3
+#               with:
+#                     fetch-depth: 0
 
-            - name: Update Main Dev Branches
-              run: |
-                git switch pre_prod && git pull origin dev && git push || echo "No changes or the branch does not exist"
+#             - name: Update Main Dev Branches
+#               run: |
+#                 git switch pre_prod && git pull origin dev && git push || echo "No changes or the branch does not exist"
