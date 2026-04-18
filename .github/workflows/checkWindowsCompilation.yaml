@@ -23,6 +23,7 @@ jobs:
       with:
         path: ${{ env.VCPKG_ROOT }}
         key: windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+        compressionLevel: 0
         restore-keys: |
           windows-vcpkg-
 
