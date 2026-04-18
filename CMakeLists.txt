@@ -4,10 +4,8 @@ cmake_minimum_required(VERSION 3.20)
 # -------------------------------------------------
 set(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/external/overlay-ports")
 
-set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Debug)
-set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Debug)
-set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release)
-set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release)
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "Debug" "Release")
+set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL "Debug" "Release")
 project(PikseliteEngine)
 
 # Use C++17
