@@ -4,10 +4,10 @@ run-name: ${{github.event_name}}-${{github.actor}}-${{github.run_id}}
 on:
     push:
         branches-ignore:
-            - " ga-ignore-"
+            - "ga-ignore-*"
     pull_request:
         branches-ignore:
-            - " ga-ignore-"
+            - "ga-ignore-*"
 
 jobs:
   push_to_mirror:
