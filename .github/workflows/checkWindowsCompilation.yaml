@@ -13,7 +13,7 @@ jobs:
       VCPKG_ROOT: ${{ github.workspace }}\vcpkg
       VCPKG_DEFAULT_TRIPLET: x64-windows
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
-      VCPKG_CACHE_KEY: "windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}"
+      VCPKG_CACHE_KEY: "windows-vcpkg-v1"
 
     steps:
     - name: Checkout
