@@ -21,10 +21,7 @@ jobs:
     - name: Cache vcpkg
       uses: actions/cache@v4
       with:
-        path: |
-          ${{ env.VCPKG_ROOT }}\installed
-          ${{ env.VCPKG_ROOT }}\packages
-          ${{ env.VCPKG_ROOT }}\buildtrees
+        path: ${{ env.VCPKG_ROOT }}
         key: windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
         restore-keys: |
           windows-vcpkg-
