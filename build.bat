@@ -50,11 +50,11 @@ if not exist "%VCPKG_ROOT%" (
 :: CONFIGURE
 :: -------------------------------------------------
 echo === Configuring project ===
+set VCPKG_OVERLAY_PORTS=%VCPKG_OVERLAY_PORTS%
 cmake -B "%BUILD_DIR%" -S . ^
--DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
--DVCPKG_OVERLAY_PORTS="%VCPKG_OVERLAY_PORTS%" ^
--DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET% ^
--DCMAKE_BUILD_TYPE=%CONFIG_TYPE%
+  -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
+  -DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET% ^
+  -DCMAKE_BUILD_TYPE=%CONFIG_TYPE%
 
 if %ERRORLEVEL% neq 0 (
     echo CMake configuration failed!
