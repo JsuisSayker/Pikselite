@@ -18,14 +18,22 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Cache vcpkg
-      uses: actions/cache@v4
-      with:
-        path: ${{ env.VCPKG_ROOT }}
-        key: windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
-        compressionLevel: 0
-        restore-keys: |
-          windows-vcpkg-
+    - name: Restore vcpkg cache
+      shell: powershell
+      run: |
+        $cacheKey = "windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}"
+        $cacheDir = "$env:LOCALAPPDATA\temp\vcpkg-cache"
+        $zipPath = "$cacheDir\$cacheKey.zip"
+        if (Test-Path $zipPath) {
+          Write-Host "Restoring vcpkg from cache..."
+          if (Test-Path "$env:VCPKG_ROOT") {
+            Remove-Item -Path "$env:VCPKG_ROOT" -Recurse -Force
+          }
+          Expand-Archive -Path $zipPath -DestinationPath "$env:VCPKG_ROOT" -Force
+          Write-Host "Cache restored successfully"
+        } else {
+          Write-Host "No cached vcpkg found, will build from scratch"
+        }
 
     - name: Setup vcpkg
       shell: cmd
@@ -39,3 +47,24 @@ jobs:
       shell: cmd
       run: |
         build.bat
+
+    - name: Save vcpkg cache
+      shell: powershell
+      if: success()
+      run: |
+        $cacheKey = "windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}"
+        $cacheDir = "$env:LOCALAPPDATA\temp\vcpkg-cache"
+        $zipPath = "$cacheDir\$cacheKey.zip"
+        if (-not (Test-Path $cacheDir)) {
+          New-Item -ItemType Directory -Path $cacheDir -Force
+        }
+        if (Test-Path "$env:VCPKG_ROOT/installed") {
+          Write-Host "Saving vcpkg cache..."
+          if (Test-Path $zipPath) {
+            Remove-Item -Path $zipPath -Force
+          }
+          Compress-Archive -Path "$env:VCPKG_ROOT\*" -DestinationPath $zipPath -CompressionLevel Optimal -Force
+          Write-Host "Cache saved: $zipPath"
+        } else {
+          Write-Host "No vcpkg installed, skipping cache save"
+        }
