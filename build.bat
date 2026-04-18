@@ -49,10 +49,10 @@ if not exist "%VCPKG_ROOT%" (
 :: -------------------------------------------------
 :: CONFIGURE
 :: -------------------------------------------------
+@REM -DVCPKG_OVERLAY_PORTS="%VCPKG_OVERLAY_PORTS%" ^
 echo === Configuring project ===
 cmake -B "%BUILD_DIR%" -S . ^
 -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
--DVCPKG_OVERLAY_PORTS="%VCPKG_OVERLAY_PORTS%" ^
 -DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET% ^
 -DCMAKE_BUILD_TYPE=%CONFIG_TYPE%
 
