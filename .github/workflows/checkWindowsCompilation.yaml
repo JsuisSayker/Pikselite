@@ -19,22 +19,9 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Restore vcpkg cache
-      shell: powershell
+      shell: cmd
       run: |
-        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-        $cacheKey = "windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}"
-        $cacheDir = "$env:LOCALAPPDATA\temp\vcpkg-cache"
-        $zipPath = "$cacheDir\$cacheKey.zip"
-        if (Test-Path $zipPath) {
-          Write-Host "Restoring vcpkg from cache..."
-          if (Test-Path "$env:VCPKG_ROOT") {
-            Remove-Item -Path "$env:VCPKG_ROOT" -Recurse -Force
-          }
-          Expand-Archive -Path $zipPath -DestinationPath "$env:VCPKG_ROOT" -Force
-          Write-Host "Cache restored successfully"
-        } else {
-          Write-Host "No cached vcpkg found, will build from scratch"
-        }
+        powershell -ExecutionPolicy Bypass -Command "Set-Location '$env:VCPKG_ROOT'; $cacheKey = 'windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}'; $cacheDir = [System.IO.Path]::Combine($env:LOCALAPPDATA, 'temp', 'vcpkg-cache'); $zipPath = [System.IO.Path]::Combine($cacheDir, $cacheKey + '.zip'); if (Test-Path $zipPath) { Write-Host 'Restoring vcpkg from cache...'; if (Test-Path $env:VCPKG_ROOT) { Remove-Item -Path $env:VCPKG_ROOT -Recurse -Force }; Expand-Archive -Path $zipPath -DestinationPath $env:VCPKG_ROOT -Force; Write-Host 'Cache restored successfully' } else { Write-Host 'No cached vcpkg found, will build from scratch' }"
 
     - name: Setup vcpkg
       shell: cmd
@@ -50,23 +37,7 @@ jobs:
         build.bat
 
     - name: Save vcpkg cache
-      shell: powershell
+      shell: cmd
       if: success()
       run: |
-        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-        $cacheKey = "windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}"
-        $cacheDir = "$env:LOCALAPPDATA\temp\vcpkg-cache"
-        $zipPath = "$cacheDir\$cacheKey.zip"
-        if (-not (Test-Path $cacheDir)) {
-          New-Item -ItemType Directory -Path $cacheDir -Force
-        }
-        if (Test-Path "$env:VCPKG_ROOT/installed") {
-          Write-Host "Saving vcpkg cache..."
-          if (Test-Path $zipPath) {
-            Remove-Item -Path $zipPath -Force
-          }
-          Compress-Archive -Path "$env:VCPKG_ROOT\*" -DestinationPath $zipPath -CompressionLevel Optimal -Force
-          Write-Host "Cache saved: $zipPath"
-        } else {
-          Write-Host "No vcpkg installed, skipping cache save"
-        }
+        powershell -ExecutionPolicy Bypass -Command "$cacheKey = 'windows-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}'; $cacheDir = [System.IO.Path]::Combine($env:LOCALAPPDATA, 'temp', 'vcpkg-cache'); $zipPath = [System.IO.Path]::Combine($cacheDir, $cacheKey + '.zip'); if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force }; if (Test-Path $env:VCPKG_ROOT + '/installed') { Write-Host 'Saving vcpkg cache...'; if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }; Compress-Archive -Path $env:VCPKG_ROOT + '/*' -DestinationPath $zipPath -CompressionLevel Optimal -Force; Write-Host ('Cache saved: ' + $zipPath) } else { Write-Host 'No vcpkg installed, skipping cache save' }"
