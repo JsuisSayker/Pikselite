@@ -8,6 +8,8 @@ set "BUILD_DIR=build"
 set "CONFIG_TYPE=Release"
 set "CACHE_ENABLED=0"
 set "BUILD_COVERAGE=OFF"
+set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
+set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
 
 if "%~1" neq "" if /I not "%~1"=="Cache" (
     set "CONFIG_TYPE=%~1"
@@ -31,8 +33,6 @@ if "%VCPKG_CACHE_KEY%"=="" set "VCPKG_CACHE_KEY=local-default"
 :: -------------------------------------------------
 if "%CACHE_ENABLED%"=="1" (
     set "VCPKG_INSTALLED=%BUILD_DIR%\vcpkg_installed"
-    set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
-    set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
     if exist "%CACHE_ZIP%" (
         echo === Restoring vcpkg from cache ===
         if exist "%VCPKG_INSTALLED%" rmdir /s /q "%VCPKG_INSTALLED%"
@@ -111,6 +111,9 @@ echo === Build completed successfully ===
 :: CACHE: Save to cache
 :: -------------------------------------------------*
 if "%CACHE_ENABLED%"=="1" (
+    echo %LOCALAPPDATA%
+    echo %TEMP%
+    echo %CACHE_ZIP%
     set "VCPKG_INSTALLED=%BUILD_DIR%\vcpkg_installed"
     if exist "%VCPKG_INSTALLED%" (
         if not exist "%CACHE_DIR%" mkdir "%CACHE_DIR%"
