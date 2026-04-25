@@ -1,5 +1,5 @@
 {
-  "name": "imgui",
+  "name": "imgui-backends",
   "version": "1.91.9",
   "description": "Dear ImGui with SDL2 and OpenGL3 bindings",
   "homepage": "https://github.com/ocornut/imgui",

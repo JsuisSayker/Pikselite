@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.20)
 # -------------------------------------------------
 set(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/external/overlay-ports")
 
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "Debug" "Release")
+set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL "Debug" "Release")
 project(PikseliteEngine)
 
 # Use C++17
@@ -37,6 +39,8 @@ find_package(Stb REQUIRED)
 find_package(Lua REQUIRED)
 find_path(SOL2_INCLUDE_DIRS "sol/sol.hpp")
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(imgui_backends CONFIG REQUIRED)
+
 find_package(box2d CONFIG REQUIRED)
 # find_package(imgui CONFIG REQUIRED)
 
@@ -75,12 +79,12 @@ message(STATUS "CMAKE_SOURCE_DIR:${CMAKE_SOURCE_DIR}")
 link_directories(${CMAKE_BINARY_DIR}/lib)
 
 # Declare the static library manually if not found by vcpkg
-add_library(imgui_backends STATIC IMPORTED)
-set(VCPKG_INSTALLED_DIR "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/include")
-set_target_properties(imgui_backends PROPERTIES
-    IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/imgui_backends.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${VCPKG_INSTALLED_DIR}/imgui;${VCPKG_INSTALLED_DIR}/imgui/backends"
-)
+# add_library(imgui_backends STATIC IMPORTED)
+# set(VCPKG_INSTALLED_DIR "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/include")
+# set_target_properties(imgui_backends PROPERTIES
+#     IMPORTED_LOCATION "${CMAKE_BINARY_DIR}/lib/imgui_backends.lib"
+#     INTERFACE_INCLUDE_DIRECTORIES "${VCPKG_INSTALLED_DIR}/imgui;${VCPKG_INSTALLED_DIR}/imgui/backends"
+# )
 
 option(PIKSELITE_ENABLE_PROFILING "Enable Tracy profiling" ON)
 
@@ -111,7 +115,7 @@ target_link_libraries(${PROJECT_NAME}
     SDL2::SDL2main
     GLEW::GLEW
     OpenGL::GL
-    imgui_backends
+    imgui::imgui_backends
     pikselite_interface
     graphics
     engine

@@ -12,7 +12,6 @@ pikselite
 *.vs
 
 vcpkg_installed/
-build/
 
 PikseliteEngine.exe
 
