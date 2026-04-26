@@ -3,6 +3,7 @@
 #include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/components/physicsComponent.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
 #include <tracy/Tracy.hpp>
 
@@ -106,6 +107,7 @@ namespace engine
         componentManager.registerComponent<ecs::components::Velocity>();
         componentManager.registerComponent<ecs::components::Sprite>();
         componentManager.registerComponent<ecs::components::PhysicsBody>();
+        componentManager.registerComponent<ecs::components::Script>();
 
         // Register ECS systems
         auto &movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
@@ -122,13 +124,12 @@ namespace engine
         systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
 
         // Script system (needs Transform + Velocity) — runs Lua scripts
-        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>();
+        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>(&entityManager, &systemManager, &eventBus, &_chunkGrid);
         ecs::Signature scriptSig;
-        scriptSig.set(componentManager.getComponentType<ecs::components::Transform>());
-        scriptSig.set(componentManager.getComponentType<ecs::components::Velocity>());
+        scriptSig.set(componentManager.getComponentType<ecs::components::Script>());
         systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
 
-        auto &physicsSys = systemManager.addSystem<ecs::systems::PhysicsSystem>(&_boxWorld);
+        auto &physicsSys = systemManager.addSystem<ecs::systems::PhysicsSystem>(&_boxWorld, &eventBus);
         ecs::Signature physicsSig;
         physicsSig.set(componentManager.getComponentType<ecs::components::Transform>());
         physicsSig.set(componentManager.getComponentType<ecs::components::PhysicsBody>());
@@ -150,7 +151,6 @@ namespace engine
         });
 
         scriptSys.init();
-        scriptSys.loadScript("scripts/movement.lua");
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface, &componentManager);
@@ -458,6 +458,12 @@ namespace engine
             ecs::Entity entity = entityManager.createEntity();
             ecs::EntityID eid = entity.id;
 
+            if (auto *scriptSys = systemManager.getSystem<ecs::systems::ScriptSystem>())
+            {
+                const std::string runtimeName = go.name.empty() ? ("GameObject_" + std::to_string(go.id)) : go.name;
+                scriptSys->setEntityName(eid, runtimeName);
+            }
+
             // loop on components in game object and add to ECS entity
             for (const auto &[compType, compData] : go.components)
             {
@@ -490,6 +496,11 @@ namespace engine
                     }
 
                     componentManager.addComponent(eid, p);
+                }
+                else if (compType == std::type_index(typeid(ecs::components::Script)))
+                {
+                    const auto &s = std::any_cast<ecs::components::Script>(compData);
+                    componentManager.addComponent(eid, s);
                 }
             }
 
