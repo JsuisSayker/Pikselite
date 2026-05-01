@@ -124,7 +124,7 @@ namespace engine
         systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
 
         // Script system (needs Transform + Velocity) — runs Lua scripts
-        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>(&entityManager, &systemManager, &eventBus, &_chunkGrid);
+        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>(&entityManager, &systemManager, &eventBus, &_chunkGrid, &_camera);
         ecs::Signature scriptSig;
         scriptSig.set(componentManager.getComponentType<ecs::components::Script>());
         systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
@@ -444,12 +444,27 @@ namespace engine
 
     void Core::loadGameObjectsIntoECS()
     {
-        for (auto &[goId, entityId] : _gameObjectToEntity)
+        // Shutdown all systems to clear their state before reloading
+        systemManager.shutdownAll();
+
+        // Destroy ALL entities (including dynamically created ones from Lua)
+        const auto& allEntities = entityManager.getEntities();
+        std::vector<ecs::EntityID> entitiesToDestroy;
+        for (const auto& entityPtr : allEntities)
+        {
+            if (entityPtr)
+            {
+                entitiesToDestroy.push_back(entityPtr->id);
+            }
+        }
+        
+        for (ecs::EntityID entityId : entitiesToDestroy)
         {
             componentManager.entityDestroyed(entityId);
             systemManager.entityDestroyed(entityId);
             entityManager.destroyEntity(ecs::Entity(entityId));
         }
+        
         _gameObjectToEntity.clear();
         _gameObjectOccupiedCells.clear();
 

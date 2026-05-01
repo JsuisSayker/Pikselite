@@ -14,6 +14,7 @@
 #include "engine/managers/luaManager.hpp"
 #include "engine/pixels/simulation/chunk.hpp"
 #include "engine/pixels/simulation/element.hpp"
+#include <graphics/renderer/camera.hpp>
 
 #include <SDL2/SDL.h>
 #include <memory>
@@ -31,11 +32,13 @@ namespace ecs::systems
                 ScriptSystem(engine::EntityManager* entityManager = nullptr,
                                          engine::SystemManager* systemManager = nullptr,
                                          engine::events::EventBus* eventBus = nullptr,
-                                         ChunkGrid* chunkGrid = nullptr)
+                                         ChunkGrid* chunkGrid = nullptr,
+                                         graphics::Camera2D* camera = nullptr)
                         : _entityManager(entityManager),
                             _systemManager(systemManager),
                             _eventBus(eventBus),
-                            _chunkGrid(chunkGrid)
+                            _chunkGrid(chunkGrid),
+                            _camera(camera)
                 {
                 }
 
@@ -82,6 +85,19 @@ namespace ecs::systems
             _entityNames.erase(entity);
         }
 
+        void shutdown() override
+        {
+            _scriptInstances.clear();
+            _pendingCollisionEnter.clear();
+            _pendingCollisionExit.clear();
+            _entityNames.clear();
+            _pixelCommands.clear();
+            _victory = false;
+            _lose = false;
+            _victoryReason.clear();
+            _loseReason.clear();
+        }
+
         /**
          * @brief Updates the script system.
          * This function is called every frame and allows the Lua script to modify entity components based on input or other logic defined in the script.
@@ -122,6 +138,12 @@ namespace ecs::systems
                 }
 
                 applyEntityTableChanges(entity, lua["entity"]);
+
+                if (_camera && _cameraFollowEntity == entity && _activeComponentManager->hasComponent<components::Transform>(entity))
+                {
+                    const auto& transform = _activeComponentManager->getComponent<components::Transform>(entity);
+                    _camera->setPosition(transform.x, transform.y);
+                }
             }
 
             flushPixelCommands();
@@ -148,6 +170,8 @@ namespace ecs::systems
         engine::SystemManager* _systemManager = nullptr;
         engine::events::EventBus* _eventBus = nullptr;
         ChunkGrid* _chunkGrid = nullptr;
+        graphics::Camera2D* _camera = nullptr;
+        ecs::EntityID _cameraFollowEntity = 0;
 
         engine::ComponentManager* _activeComponentManager = nullptr;
         std::unordered_map<ecs::EntityID, ScriptInstance> _scriptInstances;
@@ -229,11 +253,60 @@ namespace ecs::systems
                 if (lowerKey == "space") return state[SDL_SCANCODE_SPACE];
                 if (lowerKey == "lshift") return state[SDL_SCANCODE_LSHIFT];
                 if (lowerKey == "escape") return state[SDL_SCANCODE_ESCAPE];
+                if (lowerKey == "e") return state[SDL_SCANCODE_E];
+                if (lowerKey == "q") return state[SDL_SCANCODE_Q];
+                if (lowerKey == "r") return state[SDL_SCANCODE_R];
+                if (lowerKey == "f") return state[SDL_SCANCODE_F];
                 return false;
             });
 
             lua.set_function("log", [](const std::string& msg) {
                 std::cout << "[Lua] " << msg << std::endl;
+            });
+
+            lua.set_function("is_mouse_pressed", [](const std::string& button) -> bool {
+                const std::string lowerButton = toLower(button);
+                const Uint32 state = SDL_GetMouseState(nullptr, nullptr);
+                if (lowerButton == "left") return (state & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+                if (lowerButton == "right") return (state & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
+                if (lowerButton == "middle") return (state & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
+                return false;
+            });
+
+            lua.set_function("get_mouse_world_position", [this](sol::this_state ts) -> sol::object {
+                sol::state_view view(ts);
+                if (!_camera)
+                {
+                    return sol::make_object(view, sol::nil);
+                }
+
+                SDL_Window* window = SDL_GetMouseFocus();
+                if (!window)
+                {
+                    return sol::make_object(view, sol::nil);
+                }
+
+                int width = 0;
+                int height = 0;
+                SDL_GetWindowSize(window, &width, &height);
+
+                int mouseX = 0;
+                int mouseY = 0;
+                SDL_GetMouseState(&mouseX, &mouseY);
+
+                const glm::vec2 worldPos = _camera->screenToWorld(glm::vec2(static_cast<float>(mouseX), static_cast<float>(mouseY)), width, height);
+                sol::table out = view.create_table();
+                out["x"] = worldPos.x;
+                out["y"] = worldPos.y;
+                return sol::make_object(view, out);
+            });
+
+            lua.set_function("follow_entity", [this](std::uint32_t entityId) {
+                _cameraFollowEntity = entityId;
+            });
+
+            lua.set_function("clear_camera_follow", [this]() {
+                _cameraFollowEntity = 0;
             });
 
             lua.set_function("get_entity", [this](std::uint32_t id, sol::this_state ts) -> sol::object {
