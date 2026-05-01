@@ -1059,7 +1059,7 @@ namespace graphics {
 
        for (int i = 0; i < 4 && i < static_cast<int>(projects.size()); i++)
         {
-            ImVec2 size(ImGui::GetContentRegionAvail().x - 20, 100);
+            ImVec2 size(ImGui::GetContentRegionAvail().x - 20, 200);
 
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImDrawList* draw = ImGui::GetWindowDrawList();
@@ -1089,7 +1089,7 @@ namespace graphics {
 
             ImGui::InvisibleButton(("ProjectBtn_" + std::to_string(i)).c_str(), size);
 
-            ImGui::SetCursorScreenPos(ImVec2(pos.x + 15, pos.y + 10));
+            ImGui::SetCursorScreenPos(ImVec2(pos.x, pos.y));
 
             clickableProjectOverview(projects[i], fontBoldBig, fontRegularSmall);
             
@@ -1116,7 +1116,44 @@ namespace graphics {
     {
         // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent projects list.
         
-        // Add thumbnail
+        float thumbSize = 120.0f;
+
+        ImGui::BeginGroup();
+
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImDrawList* draw = ImGui::GetWindowDrawList();
+
+        if (thumbnail)
+        {
+            draw->AddImageRounded(
+                thumbnail,
+                pos,
+                ImVec2(pos.x + thumbSize, pos.y + thumbSize),
+                ImVec2(0, 0),
+                ImVec2(1, 1),
+                IM_COL32_WHITE,
+                8.0f
+            );
+        }
+        else
+        {
+            draw->AddRectFilled(
+                pos,
+                ImVec2(pos.x + thumbSize, pos.y + thumbSize),
+                IM_COL32(80, 80, 80, 255),
+                8.0f
+            );
+
+            draw->AddText(
+                ImVec2(pos.x + 10, pos.y + 20),
+                IM_COL32_WHITE,
+                "No Img"
+            );
+        }
+
+        ImGui::Dummy(ImVec2(thumbSize, thumbSize));
+
+        ImGui::EndGroup();
         
         ImGui::SameLine();
 

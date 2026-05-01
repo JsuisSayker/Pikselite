@@ -77,5 +77,6 @@ namespace graphics {
         ImFont* fontRegularBig = nullptr;
         ImFont* fontBoldSmall = nullptr;
         ImFont* fontBoldBig = nullptr;
+        ImTextureID thumbnail;
     };
 } // namespace graphics
