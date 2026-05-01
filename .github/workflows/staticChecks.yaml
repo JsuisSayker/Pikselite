@@ -27,9 +27,18 @@ jobs:
                         cmake \
                         build-essential
 
+            - name: Setup vcpkg
+              run: |
+                git clone https://github.com/microsoft/vcpkg
+                ./vcpkg/bootstrap-vcpkg.sh
+
             - name: Generate compile_commands.json
               run: |
-                    cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+                cmake -S . -B build \
+                -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake \
+                -DVCPKG_TARGET_TRIPLET=x64-linux \
+                -DCMAKE_BUILD_TYPE=Debug \
+                -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
             - name: Check code formatting
               run: |
