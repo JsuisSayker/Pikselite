@@ -1,14 +1,14 @@
-#include <gtest/gtest.h>
+#include <editors/project/projectEditor.hpp>
+#include <engine/pixels/pixelEnum.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
 #include <filesystem>
 #include <fstream>
-
-#include <editors/project/projectEditor.hpp>
-#include <engine/pixels/simulation/chunk.hpp>
-#include <engine/pixels/pixelEnum.hpp>
+#include <gtest/gtest.h>
 
 using namespace Pixel;
 
-static void writeSimpleSpriteData(const std::string& filename) {
+static void writeSimpleSpriteData(const std::string& filename)
+{
     std::ofstream fout(filename, std::ios::binary);
     ASSERT_TRUE(fout.good());
 
@@ -20,8 +20,10 @@ static void writeSimpleSpriteData(const std::string& filename) {
     fout.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
     fout.write(reinterpret_cast<const char*>(&cy), sizeof(cy));
 
-    for (int x = 0; x < CHUNKS_SIZE; ++x) {
-        for (int y = 0; y < CHUNKS_SIZE; ++y) {
+    for (int x = 0; x < CHUNKS_SIZE; ++x)
+    {
+        for (int y = 0; y < CHUNKS_SIZE; ++y)
+        {
             PixelEntityID id = (x == 0 && y == 0) ? 1 : EMPTY;
             fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
         }
@@ -30,8 +32,8 @@ static void writeSimpleSpriteData(const std::string& filename) {
     // oldRenderIndex mapping
     uint32_t count = 1;
     fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
-    PixelEntityID id = 1;
-    int index = 0;
+    PixelEntityID id    = 1;
+    int           index = 0;
     fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
     fout.write(reinterpret_cast<const char*>(&index), sizeof(index));
 
@@ -61,14 +63,16 @@ static void writeSimpleSpriteData(const std::string& filename) {
     fout.close();
 }
 
-TEST(ProjectEditorTests, LoadPlacementAndPlacePendingSprite) {
-    std::filesystem::path tmp = std::filesystem::temp_directory_path() / "project_editor_test_sprite.dat";
+TEST(ProjectEditorTests, LoadPlacementAndPlacePendingSprite)
+{
+    std::filesystem::path tmp =
+        std::filesystem::temp_directory_path() / "project_editor_test_sprite.dat";
     writeSimpleSpriteData(tmp.string());
 
     editors::ProjectEditor editor(nullptr, nullptr, nullptr, nullptr);
     EXPECT_TRUE(editor.testLoadSpriteForPlacement(tmp.string()));
 
-    auto pixels = editor.getPixels();
+    auto pixels      = editor.getPixels();
     auto gameObjects = editor.getGameObjects();
     EXPECT_EQ(pixels.size(), 1);
     EXPECT_EQ(gameObjects.size(), 1);
@@ -78,16 +82,15 @@ TEST(ProjectEditorTests, LoadPlacementAndPlacePendingSprite) {
     std::filesystem::remove(tmp);
 }
 
-TEST(ProjectEditorTests, SetSceneDataReplacesEditorState) {
+TEST(ProjectEditorTests, SetSceneDataReplacesEditorState)
+{
     editors::ProjectEditor editor(nullptr, nullptr, nullptr, nullptr);
 
-    std::vector<graphics::Pixel> renderPixels{
-        {{20.0f, 30.0f}, {0.9f, 0.1f, 0.2f}}
-    };
+    std::vector<graphics::Pixel> renderPixels{{{20.0f, 30.0f}, {0.9f, 0.1f, 0.2f}}};
 
     Pixel::GameObject object;
-    object.id = 12;
-    object.name = "LoadedObject";
+    object.id            = 12;
+    object.name          = "LoadedObject";
     object.pixelEntities = {77};
     std::vector<Pixel::GameObject> gameObjects{object};
 
@@ -95,9 +98,9 @@ TEST(ProjectEditorTests, SetSceneDataReplacesEditorState) {
 
     editor.setSceneData(renderPixels, gameObjects, grid, 9);
 
-    const auto loadedPixels = editor.getPixels();
+    const auto loadedPixels  = editor.getPixels();
     const auto loadedObjects = editor.getGameObjects();
-    auto loadedGrid = editor.getChunkGrid();
+    auto       loadedGrid    = editor.getChunkGrid();
 
     ASSERT_EQ(loadedPixels.size(), 1u);
     EXPECT_FLOAT_EQ(loadedPixels[0].position.x, 20.0f);
@@ -117,8 +120,10 @@ TEST(ProjectEditorTests, SetSceneDataReplacesEditorState) {
     EXPECT_EQ(editor.getGameObjectCounter(), 9u);
 }
 
-TEST(ProjectEditorTests, SetSceneDataCountersAreUsedWhenPlacingSprite) {
-    std::filesystem::path tmp = std::filesystem::temp_directory_path() / "project_editor_test_sprite_counters.dat";
+TEST(ProjectEditorTests, SetSceneDataCountersAreUsedWhenPlacingSprite)
+{
+    std::filesystem::path tmp =
+        std::filesystem::temp_directory_path() / "project_editor_test_sprite_counters.dat";
     writeSimpleSpriteData(tmp.string());
 
     editors::ProjectEditor editor(nullptr, nullptr, nullptr, nullptr);
@@ -138,17 +143,16 @@ TEST(ProjectEditorTests, SetSceneDataCountersAreUsedWhenPlacingSprite) {
     std::filesystem::remove(tmp);
 }
 
-TEST(ProjectEditorTests, RunExecutesAndPreservesSceneWithoutInput) {
-    graphics::Interface iface(128, 128);
-    graphics::Renderer renderer(iface.getWindow(), iface.getGLContext());
+TEST(ProjectEditorTests, RunExecutesAndPreservesSceneWithoutInput)
+{
+    graphics::Interface      iface(128, 128);
+    graphics::Renderer       renderer(iface.getWindow(), iface.getGLContext());
     graphics::ImguiInterface imgui(iface.getWindow(), iface.getGLContext());
 
     editors::ProjectEditor editor(&iface, &renderer, &imgui, nullptr);
 
-    std::vector<graphics::Pixel> renderPixels{
-        {{0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}}
-    };
-    Pixel::PixelAttributes attributes;
+    std::vector<graphics::Pixel> renderPixels{{{0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}}};
+    Pixel::PixelAttributes       attributes;
     attributes.renderIndex[5] = 0;
     ::ChunkGrid grid;
 

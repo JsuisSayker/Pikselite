@@ -1,29 +1,30 @@
 #pragma once
 
-#include <engine/pixels/simulation/chunk.hpp>
 #include <cstdint>
 #include <cstdlib>
+#include <engine/pixels/simulation/chunk.hpp>
 
 constexpr int GRAVITY_DIR = -1;
 
-enum ElementState : uint8_t {
+enum ElementState : uint8_t
+{
     SOLID_STATIC = 0,
     SOLID_DYNAMIC,
     LIQUID,
     GAS,
 };
 
-struct ElementDefinition {
-    std::string name;
-    uint8_t color[3];
-    uint8_t density;
+struct ElementDefinition
+{
+    std::string  name;
+    uint8_t      color[3];
+    uint8_t      density;
     ElementState state;
 
     uint8_t dispersionRate;
-    
-    
+
     void (*update)(ChunkGrid& grid, int x, int y);
-    
+
     // for future lua scripting to create custom behaviors
     int luaScriptID = -1;
 };

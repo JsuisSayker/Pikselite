@@ -1,103 +1,106 @@
 #pragma once
 
-#include <editors/sprite/spriteEditor.hpp>
+#include <SDL2/SDL.h>
+#include <box2d/box2d.h>
 #include <editors/project/projectEditor.hpp>
-
-#include <engine/time.hpp>
-#include <engine/events/events.hpp>
+#include <editors/sprite/spriteEditor.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/events/eventBus.hpp>
-#include <engine/managers/entityManager.hpp>
+#include <engine/events/events.hpp>
 #include <engine/managers/componentManager.hpp>
+#include <engine/managers/entityManager.hpp>
 #include <engine/managers/systemManager.hpp>
 #include <engine/physics/boxWorld.hpp>
-
-#include <engine/ecs/components/spriteComponent.hpp>
-
-#include <engine/pixels/simulation/simulation.hpp>
 #include <engine/pixels/simulation/element.hpp>
-#include <box2d/box2d.h>
-#include <vector>
+#include <engine/pixels/simulation/simulation.hpp>
+#include <engine/time.hpp>
 #include <iostream>
-#include <string>
-#include <SDL2/SDL.h>
-
 #include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
 using json = nlohmann::json;
 
 namespace engine
 {
     class Core
     {
-    public:
-                /**
-                 * @brief Creates the engine core and initializes rendering/editor interfaces.
-                 * @param width Window width in pixels.
-                 * @param height Window height in pixels.
-                 * @return Constructs `Core`.
-                 */
+      public:
+        /**
+         * @brief Creates the engine core and initializes rendering/editor interfaces.
+         * @param width Window width in pixels.
+         * @param height Window height in pixels.
+         * @return Constructs `Core`.
+         */
         Core(int width, int height)
-            : running(true),
-              sdlInterface(width, height),
+            : running(true), sdlInterface(width, height),
               renderer(sdlInterface.getWindow(), sdlInterface.getGLContext()),
               imguiInterface(sdlInterface.getWindow(), sdlInterface.getGLContext()),
-              _pixelSimulation(_chunkGrid) {}
+              _pixelSimulation(_chunkGrid)
+        {
+        }
 
-                /**
-                 * @brief Runs initialization, main loop, and shutdown.
-                 * @return void
-                 */
+        /**
+         * @brief Runs initialization, main loop, and shutdown.
+         * @return void
+         */
         void run();
 
-                /**
-                 * @brief Sets camera world position.
-                 * @param x World X position.
-                 * @param y World Y position.
-                 * @return void
-                 */
-        void setCameraPosition(float x, float y) { _camera.setPosition(x, y); }
+        /**
+         * @brief Sets camera world position.
+         * @param x World X position.
+         * @param y World Y position.
+         * @return void
+         */
+        void setCameraPosition(float x, float y)
+        {
+            _camera.setPosition(x, y);
+        }
 
-                /**
-                 * @brief Sets camera zoom factor.
-                 * @param zoom Zoom multiplier.
-                 * @return void
-                 */
-        void setCameraZoom(float zoom) { _camera.setZoom(zoom); }
+        /**
+         * @brief Sets camera zoom factor.
+         * @param zoom Zoom multiplier.
+         * @return void
+         */
+        void setCameraZoom(float zoom)
+        {
+            _camera.setZoom(zoom);
+        }
 
-    private:
-        editors::SpriteEditor *spriteEditor = nullptr;
-        editors::ProjectEditor *projectEditor = nullptr;
+      private:
+        editors::SpriteEditor*  spriteEditor  = nullptr;
+        editors::ProjectEditor* projectEditor = nullptr;
 
-        
         bool isProjectEditorActive = false;
-        
-        bool running;
-        bool isGamePreviewActive = false;
-        graphics::Interface sdlInterface;
-        graphics::Renderer renderer;
-        graphics::ImguiInterface imguiInterface;
-        Timer timer;
-        events::EventBus eventBus;
-        engine::EntityManager entityManager;
-        engine::ComponentManager componentManager;
-        engine::SystemManager systemManager;
-        
-        uint32_t gameObjectCounter = 1;
-        
-        graphics::Camera2D _camera;
-        physics::BoxWorld _boxWorld;
-        b2BodyId _cubeBody = b2_nullBodyId;
-        b2BodyId _groundBody = b2_nullBodyId;
-        std::vector<Pixel::GameObject> _gameObjects;
-        std::vector<graphics::Pixel> _renderPixels;
-        Simulation _pixelSimulation;
-        ChunkGrid _chunkGrid;
 
-        float accumulator = 0.0f;
-        const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
+        bool                     running;
+        bool                     isGamePreviewActive = false;
+        graphics::Interface      sdlInterface;
+        graphics::Renderer       renderer;
+        graphics::ImguiInterface imguiInterface;
+        Timer                    timer;
+        events::EventBus         eventBus;
+        engine::EntityManager    entityManager;
+        engine::ComponentManager componentManager;
+        engine::SystemManager    systemManager;
+
+        uint32_t gameObjectCounter = 1;
+
+        graphics::Camera2D             _camera;
+        physics::BoxWorld              _boxWorld;
+        b2BodyId                       _cubeBody   = b2_nullBodyId;
+        b2BodyId                       _groundBody = b2_nullBodyId;
+        std::vector<Pixel::GameObject> _gameObjects;
+        std::vector<graphics::Pixel>   _renderPixels;
+        Simulation                     _pixelSimulation;
+        ChunkGrid                      _chunkGrid;
+
+        float       accumulator = 0.0f;
+        const float fixedDt     = 1.0f / 60.0f; // 60 ticks/sec
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
-        std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>> _gameObjectOccupiedCells;
+        std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
+                    _gameObjectOccupiedCells;
         std::string _sceneFilename = "assets/scene.json";
 
         /**
@@ -119,7 +122,8 @@ namespace engine
          * @param color RGB color in normalized range.
          * @return Pixel list for rendering.
          */
-        std::vector<graphics::Pixel> buildSquarePixels(glm::vec2 center, float size, glm::vec3 color) const;
+        std::vector<graphics::Pixel> buildSquarePixels(glm::vec2 center, float size,
+                                                       glm::vec3 color) const;
 
         /**
          * @brief Generates a rotated filled square pixel set.
@@ -129,7 +133,9 @@ namespace engine
          * @param color RGB color in normalized range.
          * @return Pixel list for rendering.
          */
-        std::vector<graphics::Pixel> buildRotatedSquarePixels(glm::vec2 center, float size, float rotation, glm::vec3 color) const;
+        std::vector<graphics::Pixel> buildRotatedSquarePixels(glm::vec2 center, float size,
+                                                              float     rotation,
+                                                              glm::vec3 color) const;
 
         /**
          * @brief Generates a filled rectangle pixel set.
@@ -139,7 +145,8 @@ namespace engine
          * @param color RGB color in normalized range.
          * @return Pixel list for rendering.
          */
-        std::vector<graphics::Pixel> buildRectanglePixels(glm::vec2 center, float width, float height, glm::vec3 color) const;
+        std::vector<graphics::Pixel> buildRectanglePixels(glm::vec2 center, float width,
+                                                          float height, glm::vec3 color) const;
 
         /**
          * @brief Polls and processes one input event.

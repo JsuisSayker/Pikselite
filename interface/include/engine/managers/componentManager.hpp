@@ -1,15 +1,15 @@
 #pragma once
 
-#include <unordered_map>
-#include <memory>
-#include <typeindex>
-#include <stdexcept>
-#include <iostream>
-#include <functional>
-
 #include "engine/ecs/IComponentArray.hpp"
 #include "engine/ecs/componentArray.hpp"
 #include "engine/ecs/signature.hpp"
+
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <typeindex>
+#include <unordered_map>
 
 namespace engine
 {
@@ -18,13 +18,14 @@ namespace engine
     constexpr std::size_t MAX_COMPONENT_TYPES = ecs::MAX_COMPONENT_TYPES;
 
     /**
-     * @brief The ComponentManager class is responsible for managing the storage and access of components in the ECS architecture.
-     * 
+     * @brief The ComponentManager class is responsible for managing the storage and access of
+     * components in the ECS architecture.
+     *
      */
     class ComponentManager
     {
-    public:
-        ComponentManager() = default;
+      public:
+        ComponentManager()  = default;
         ~ComponentManager() = default;
 
         /**
@@ -41,23 +42,24 @@ namespace engine
         /**
          * @brief Sets the callback invoked when a component type is removed from an entity.
          */
-        void setComponentRemovalCallback(std::function<void(ecs::EntityID, const std::type_index&)> callback)
+        void setComponentRemovalCallback(
+            std::function<void(ecs::EntityID, const std::type_index&)> callback)
         {
             onComponentRemoved = std::move(callback);
         }
 
         /**
          * @brief Registers a component type with the manager.
-         * 
-         * @tparam T 
+         *
+         * @tparam T
          */
-        template <typename T>
-        void registerComponent()
+        template <typename T> void registerComponent()
         {
             const std::type_index key = std::type_index(typeid(T));
             if (componentTypes.find(key) != componentTypes.end())
             {
-                std::cerr << "Registering component type more than once: " << key.name() << std::endl;
+                std::cerr << "Registering component type more than once: " << key.name()
+                          << std::endl;
                 return;
             }
 
@@ -70,15 +72,14 @@ namespace engine
 
         /**
          * @brief Gets the type of a component.
-         * 
-         * @tparam T 
-         * @return ComponentType 
+         *
+         * @tparam T
+         * @return ComponentType
          */
-        template <typename T>
-        ComponentType getComponentType()
+        template <typename T> ComponentType getComponentType()
         {
             const std::type_index key = std::type_index(typeid(T));
-            auto it = componentTypes.find(key);
+            auto                  it  = componentTypes.find(key);
             if (it == componentTypes.end())
             {
                 std::cerr << "Component not registered before use: " << key.name() << std::endl;
@@ -89,13 +90,12 @@ namespace engine
 
         /**
          * @brief Adds a component to an entity.
-         * 
-         * @tparam T 
-         * @param entity 
-         * @param component 
+         *
+         * @tparam T
+         * @param entity
+         * @param component
          */
-        template <typename T>
-        void addComponent(ecs::EntityID entity, const T &component)
+        template <typename T> void addComponent(ecs::EntityID entity, const T& component)
         {
             getComponentArray<T>()->insertData(entity, component);
             notifyEntityMutated(entity);
@@ -103,12 +103,11 @@ namespace engine
 
         /**
          * @brief Removes a component from an entity.
-         * 
-         * @tparam T 
-         * @param entity 
+         *
+         * @tparam T
+         * @param entity
          */
-        template <typename T>
-        void removeComponent(ecs::EntityID entity)
+        template <typename T> void removeComponent(ecs::EntityID entity)
         {
             const std::type_index key = std::type_index(typeid(T));
             getComponentArray<T>()->removeData(entity);
@@ -118,39 +117,38 @@ namespace engine
 
         /**
          * @brief Gets a reference to a component of an entity.
-         * 
-         * @tparam T 
-         * @param entity 
-         * @return T& 
+         *
+         * @tparam T
+         * @param entity
+         * @return T&
          */
-        template <typename T>
-        T &getComponent(ecs::EntityID entity)
+        template <typename T> T& getComponent(ecs::EntityID entity)
         {
             return getComponentArray<T>()->getData(entity);
         }
 
         /**
          * @brief Checks if an entity has a component of a specific type.
-         * 
-         * @tparam T 
-         * @param entity 
-         * @return true 
-         * @return false 
+         *
+         * @tparam T
+         * @param entity
+         * @return true
+         * @return false
          */
-        template <typename T>
-        bool hasComponent(ecs::EntityID entity)
+        template <typename T> bool hasComponent(ecs::EntityID entity)
         {
             return getComponentArray<T>()->has(entity);
         }
 
         /**
-         * @brief Notifies the component manager that an entity has been destroyed, so it can remove any associated components.
-         * 
-         * @param entity 
+         * @brief Notifies the component manager that an entity has been destroyed, so it can remove
+         * any associated components.
+         *
+         * @param entity
          */
         void entityDestroyed(ecs::EntityID entity)
         {
-            for (auto &pair : componentArrays)
+            for (auto& pair : componentArrays)
             {
                 pair.second->entityDestroyed(entity);
             }
@@ -159,9 +157,9 @@ namespace engine
         /**
          * @brief Builds the signature for an entity by checking all registered component types.
          * This automatically discovers which components the entity has.
-         * 
-         * @param entityId 
-         * @return ecs::Signature 
+         *
+         * @param entityId
+         * @return ecs::Signature
          */
         ecs::Signature getEntitySignature(ecs::EntityID entityId) const
         {
@@ -181,7 +179,7 @@ namespace engine
             return sig;
         }
 
-    private:
+      private:
         // Map of component type to component array
         std::unordered_map<std::type_index, ComponentType> componentTypes;
 
@@ -222,15 +220,13 @@ namespace engine
             }
         }
 
-
         /**
          * @brief Gets the component array for a specific component type.
-         * 
-         * @tparam T 
-         * @return ecs::ComponentArray<T>* 
+         *
+         * @tparam T
+         * @return ecs::ComponentArray<T>*
          */
-        template <typename T>
-        ecs::ComponentArray<T> *getComponentArray()
+        template <typename T> ecs::ComponentArray<T>* getComponentArray()
         {
             const std::type_index key = std::type_index(typeid(T));
 
@@ -239,7 +235,7 @@ namespace engine
                 std::cerr << "Component not registered before use: " << key.name() << std::endl;
                 throw std::runtime_error("Component not registered before use");
             }
-            return static_cast<ecs::ComponentArray<T> *>(componentArrays.at(key).get());
+            return static_cast<ecs::ComponentArray<T>*>(componentArrays.at(key).get());
         }
     };
 } // namespace engine

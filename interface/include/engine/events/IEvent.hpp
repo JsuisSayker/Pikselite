@@ -1,6 +1,5 @@
 #pragma once
 
-
 namespace engine::events
 {
     /**
@@ -10,4 +9,4 @@ namespace engine::events
     {
         virtual ~IEvent() = default;
     };
-} // namespace events
+} // namespace engine::events

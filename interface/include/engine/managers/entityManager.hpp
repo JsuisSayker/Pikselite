@@ -1,20 +1,21 @@
 #pragma once
 
-#include <vector>
-#include <memory>
-
 #include "engine/ecs/entity.hpp"
 #include "engine/ecs/signature.hpp"
+
+#include <memory>
+#include <vector>
 
 namespace engine
 {
     /**
-     * @brief The EntityManager class is responsible for creating, destroying, and managing entities in the ECS architecture.
-     * It maintains a list of active entities, a pool of available entity IDs for reuse, and a mapping of entity IDs to their component signatures.
+     * @brief The EntityManager class is responsible for creating, destroying, and managing entities
+     * in the ECS architecture. It maintains a list of active entities, a pool of available entity
+     * IDs for reuse, and a mapping of entity IDs to their component signatures.
      */
     class EntityManager
     {
-    public:
+      public:
         EntityManager();
         ~EntityManager();
 
@@ -26,46 +27,46 @@ namespace engine
         ecs::Entity createEntity();
 
         /**
-         * @brief Destroys a given entity, making its ID available for reuse and removing its signature.
-         * 
-         * @param entity 
+         * @brief Destroys a given entity, making its ID available for reuse and removing its
+         * signature.
+         *
+         * @param entity
          */
-         void destroyEntity(ecs::Entity entity);
+        void destroyEntity(ecs::Entity entity);
 
         /**
          * @brief Checks if a given entity exists.
-         * 
-         * @param entity 
-         * @return true 
-         * @return false 
+         *
+         * @param entity
+         * @return true
+         * @return false
          */
-         bool hasEntity(ecs::EntityID entity) const;
+        bool hasEntity(ecs::EntityID entity) const;
 
-         /**
+        /**
          * @brief Gets a const reference to the list of active entities.
-         * 
-         * @return const std::vector<std::unique_ptr<ecs::Entity>>& 
+         *
+         * @return const std::vector<std::unique_ptr<ecs::Entity>>&
          */
         const std::vector<std::unique_ptr<ecs::Entity>>& getEntities() const;
 
         /**
          * @brief Sets the component signature for a given entity ID.
-         * 
-         * @param entity 
-         * @param signature 
+         *
+         * @param entity
+         * @param signature
          */
-        void setSignature(ecs::EntityID entity, const ecs::Signature &signature);
+        void setSignature(ecs::EntityID entity, const ecs::Signature& signature);
 
         /**
          * @brief Gets the component signature for a given entity ID.
-         * 
-         * @param entity 
-         * @return ecs::Signature 
+         *
+         * @param entity
+         * @return ecs::Signature
          */
         ecs::Signature getSignature(ecs::EntityID entity);
 
-    private:
-
+      private:
         // List of active entities
         std::vector<std::unique_ptr<ecs::Entity>> entities;
 
