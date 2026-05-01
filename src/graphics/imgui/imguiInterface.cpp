@@ -860,7 +860,8 @@ namespace graphics {
         float buttonWidth = 80.0f;
         float windowWidth = ImGui::GetContentRegionAvail().x;
 
-        static bool openPopup = false;
+        static bool openNewPopup = false;
+        static bool openOpenPopup = false;
         static char projectName[128] = "NewProject";
         static std::filesystem::path selectedPath;
         int resultIndex = -1;
@@ -878,7 +879,7 @@ namespace graphics {
             {
                 selectedPath = outPath.get();
 
-                openPopup = true;
+                openNewPopup = true;
             } else if (result == NFD_ERROR)
             {
                 std::cout << "Error: " << NFD::GetError() << std::endl;
@@ -886,10 +887,10 @@ namespace graphics {
             }
         }
 
-        if (openPopup)
+        if (openNewPopup)
         {
             ImGui::OpenPopup("Create Project");
-            openPopup = false;
+            openNewPopup = false;
         }
         
         if (ImGui::BeginPopupModal("Create Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
@@ -940,40 +941,33 @@ namespace graphics {
 
         if (BasicButton("Open", buttonHeight, buttonWidth))
         {
-            // static int selectedProjectIndex = -1;
-            // nfdchar_t* outPath = nullptr;
+            openOpenPopup = true;
+        }
 
-            // nfdresult_t result = NFD::PickFolder(outPath);
+        if (openOpenPopup)
+        {
+            ImGui::OpenPopup("Open Project");
+            openOpenPopup = false;
+        }
 
-            // if (result == NFD_OKAY)
-            // {
-            //     std::filesystem::path selectedPath(outPath);
-            //     free(outPath);
+        if (ImGui::BeginPopupModal("Open Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            for (int i = 0; i < static_cast<int>(projects.size()); i++)
+            {
+                clickableProjectOverview(projects[i]);
+            
+                if (ImGui::IsItemClicked())
+                {
+                    resultIndex = i;
+                    
+                    projects[i].lastOpened = std::chrono::system_clock::now();
 
-            //     auto normalizedSelected = std::filesystem::weakly_canonical(selectedPath);
+                    ImGui::CloseCurrentPopup();
+                    break;
+                }
+            }
 
-            //     for (size_t i = 0; i < projects.size(); i++)
-            //     {
-            //         if (projects[i].path == normalizedSelected)
-            //         {
-            //             selectedProjectIndex = i;
-            //             break;
-            //         }
-            //     }
-
-            //     if (selectedProjectIndex == -1)
-            //     {
-            //         std::cout << "Project not found in list: " << selectedPath << std::endl;
-            //     } else {
-            //         projects[selectedProjectIndex].lastOpened = std::chrono::system_clock::now();
-            //     }
-            // }
-            // else if (result == NFD_ERROR)
-            // {
-            //     std::cerr << "Error: " << NFD_GetError() << std::endl;
-            // }
-
-            // return selectedProjectIndex;
+            ImGui::EndPopup();
         }
 
         ImGui::SameLine();
@@ -1029,16 +1023,13 @@ namespace graphics {
             return -1;
         }
 
-        std::cout << "OK" << std::endl; /////////////////////////////////////////////////////////////
-
        for (int i = 0; i < 4 && i < static_cast<int>(projects.size()); i++)
         {
             clickableProjectOverview(projects[i]);
-
-        std::cout << "OK5" << std::endl; /////////////////////////////////////////////////////////////
             
             if (ImGui::IsItemClicked())
             {
+                projects[i].lastOpened = std::chrono::system_clock::now();
                 return i;
             }
         }
@@ -1053,18 +1044,11 @@ namespace graphics {
         //ImGui::Image((void*)(intptr_t)thumbnailTextureID, ImVec2(100, 100)); // thumbnail
         //ImGui::SameLine();
 
-        std::cout << "OK2" << std::endl; /////////////////////////////////////////////////////////////
-
         ImGui::Text("%s", project.name.c_str());
-        std::cout << "project name: " << project.name << std::endl; /////////////////////////////////////////////////////////////
         ImGui::Text("%s", project.path.string().c_str());
-
-        std::cout << "OK3" << std::endl; /////////////////////////////////////////////////////////////
 
         std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
         ImGui::Text("Last opened: %s", std::ctime(&t));
-
-        std::cout << "OK4" << std::endl; /////////////////////////////////////////////////////////////
     }
 
 } // namespace graphics
