@@ -29,7 +29,8 @@ jobs:
                         ninja-build \
                         gcc \
                         g++ \
-                        pkg-config
+                        pkg-config \
+                        autoconf automake libtool m4 \
 
             - name: Install OpenGL dependencies
               run: |
