@@ -255,9 +255,6 @@ namespace engine
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
             // debug draw Box2D bodies
-            std::vector<b2BodyId> debugBodies = _pixelSimulation.getRegionBodies();
-            renderer.drawBox2DDebug(_boxWorld.getWorldId(), debugBodies, _camera, 1.0f, glm::vec3(0.2f, 0.2f, 1.0f));
-
             if (auto *physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
             {
                 const std::vector<b2BodyId> ecsDebugBodies = physicsSystem->getDebugBodies();
@@ -405,7 +402,6 @@ namespace engine
         }
 
         syncGameObjectPixelsFromPhysics();
-        _pixelSimulation.syncBodyPixelsToGrid();
     }
 
     void Core::render()
