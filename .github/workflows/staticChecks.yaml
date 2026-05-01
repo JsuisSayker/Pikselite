@@ -31,6 +31,19 @@ jobs:
                         g++ \
                         pkg-config
 
+            - name: Install OpenGL dependencies
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y \
+                libgl1-mesa-dev \
+                libglu1-mesa-dev \
+                freeglut3-dev \
+                libx11-dev \
+                libxrandr-dev \
+                libxi-dev \
+                libxinerama-dev \
+                libxcursor-dev
+
             - name: Setup vcpkg
               run: |
                 git clone https://github.com/microsoft/vcpkg
