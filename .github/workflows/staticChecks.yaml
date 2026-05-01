@@ -1,0 +1,54 @@
+name: Static Checks
+run-name: ${{github.event_name}}-${{github.actor}}-${{github.run_id}}
+
+on:
+    push:
+        branches-ignore:
+            - "ga-ignore-*"
+    pull_request:
+        branches-ignore:
+            - "ga-ignore-*"
+
+
+jobs:
+    static_checks:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Install dependencies
+              run: |
+                    sudo apt-get update
+                    sudo apt-get install -y \
+                        clang-format \
+                        clang-tidy \
+                        cppcheck \
+                        cmake \
+                        build-essential
+
+            - name: Generate compile_commands.json
+              run: |
+                    build.bat Debug
+
+            - name: Check code formatting
+              run: |
+                    FILES=$(find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \))
+                    clang-format --dry-run --Werror $FILES
+
+            - name: Run linting
+              run: |
+                FILES=$(find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \))
+                clang-tidy $FILES -- -I. -Iinclude
+
+            - name: Run cppcheck
+              run: |
+                cppcheck \
+                --enable=all \
+                --inconclusive \
+                --std=c++20 \
+                --force \
+                --quiet \
+                --error-exitcode=1 \
+                -I include \
+                .
