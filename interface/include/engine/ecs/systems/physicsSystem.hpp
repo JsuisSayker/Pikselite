@@ -3,12 +3,15 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 
 #include <box2d/box2d.h>
 
 #include "engine/ecs/ISystem.hpp"
 #include "engine/managers/componentManager.hpp"
 #include "engine/physics/boxWorld.hpp"
+#include "engine/events/eventBus.hpp"
+#include "engine/events/events.hpp"
 #include "engine/ecs/components/transformComponent.hpp"
 #include "engine/ecs/components/velocityComponent.hpp"
 #include "engine/ecs/components/physicsComponent.hpp"
@@ -19,8 +22,9 @@ namespace ecs::systems
     class PhysicsSystem : public ISystem
     {
     public:
-        explicit PhysicsSystem(engine::physics::BoxWorld* boxWorld)
-            : _boxWorld(boxWorld) {}
+        explicit PhysicsSystem(engine::physics::BoxWorld* boxWorld,
+                               engine::events::EventBus* eventBus = nullptr)
+            : _boxWorld(boxWorld), _eventBus(eventBus) {}
 
         std::vector<b2BodyId> getDebugBodies() const
         {
@@ -95,9 +99,12 @@ namespace ecs::systems
                     bodyDef.rotation = b2MakeRot(transform.rotation);
                     bodyDef.fixedRotation = physics.fixedRotation;
                     physics.bodyId = b2CreateBody(worldId, &bodyDef);
+                    b2Body_SetUserData(physics.bodyId,
+                                       reinterpret_cast<void*>(static_cast<std::uintptr_t>(entity)));
                     _bodyByEntity[entity] = physics.bodyId;
 
                     b2ShapeDef shapeDef = b2DefaultShapeDef();
+                    shapeDef.enableContactEvents = true;
                     shapeDef.density = physics.density;
                     shapeDef.material.friction = physics.friction;
                     shapeDef.material.restitution = physics.restitution;
@@ -163,6 +170,7 @@ namespace ecs::systems
             }
 
             _boxWorld->step(static_cast<float>(dt), 4);
+            publishCollisionEvents();
 
             for (auto entity : entities)
             {
@@ -184,7 +192,73 @@ namespace ecs::systems
         }
 
     private:
+        ecs::EntityID resolveEntityForShape(b2ShapeId shapeId) const
+        {
+            if (!b2Shape_IsValid(shapeId))
+            {
+                return 0;
+            }
+
+            const b2BodyId bodyId = b2Shape_GetBody(shapeId);
+            if (!b2Body_IsValid(bodyId))
+            {
+                return 0;
+            }
+
+            void* userData = b2Body_GetUserData(bodyId);
+            if (userData == nullptr)
+            {
+                return 0;
+            }
+
+            return static_cast<ecs::EntityID>(reinterpret_cast<std::uintptr_t>(userData));
+        }
+
+        void publishCollisionEvents()
+        {
+
+            if (_eventBus == nullptr || !_boxWorld || !_boxWorld->isValid())
+            {
+                return;
+            }
+
+            const b2ContactEvents contactEvents = b2World_GetContactEvents(_boxWorld->getWorldId());
+
+            for (int i = 0; i < contactEvents.beginCount; ++i)
+            {
+                const auto& event = contactEvents.beginEvents[i];
+                const ecs::EntityID entityA = resolveEntityForShape(event.shapeIdA);
+                const ecs::EntityID entityB = resolveEntityForShape(event.shapeIdB);
+                if (entityA == 0 || entityB == 0 || entityA == entityB)
+                {
+                    continue;
+                }
+
+                auto ev = std::make_unique<engine::events::CollisionEnterEvent>();
+                ev->entityA = entityA;
+                ev->entityB = entityB;
+                _eventBus->publish(std::move(ev));
+            }
+
+            for (int i = 0; i < contactEvents.endCount; ++i)
+            {
+                const auto& event = contactEvents.endEvents[i];
+                const ecs::EntityID entityA = resolveEntityForShape(event.shapeIdA);
+                const ecs::EntityID entityB = resolveEntityForShape(event.shapeIdB);
+                if (entityA == 0 || entityB == 0 || entityA == entityB)
+                {
+                    continue;
+                }
+
+                auto ev = std::make_unique<engine::events::CollisionExitEvent>();
+                ev->entityA = entityA;
+                ev->entityB = entityB;
+                _eventBus->publish(std::move(ev));
+            }
+        }
+
         engine::physics::BoxWorld* _boxWorld = nullptr;
+        engine::events::EventBus* _eventBus = nullptr;
         std::unordered_map<ecs::EntityID, b2BodyId> _bodyByEntity;
     };
 } // namespace ecs::systems

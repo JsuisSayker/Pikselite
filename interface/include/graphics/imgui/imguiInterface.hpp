@@ -23,6 +23,7 @@
 #include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/chunk.hpp>
 

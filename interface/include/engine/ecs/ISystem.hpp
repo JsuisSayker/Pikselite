@@ -42,6 +42,12 @@ namespace ecs
         virtual void entityDestroyed(EntityID /*entity*/) {}
 
         /**
+         * @brief Cleans up the system's state. Called when the system is being shut down or scene is reset.
+         * Default implementation is a no-op.
+         */
+        virtual void shutdown() {}
+
+        /**
          * @brief A set of entities that this system is interested in.
          */
         std::set<EntityID> entities;
