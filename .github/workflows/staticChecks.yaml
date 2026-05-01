@@ -52,14 +52,16 @@ jobs:
             - name: Check formatting
               run: |
                 choco install llvm -y
-                Get-ChildItem -Recurse -Include *.cpp,*.hpp,*.h | ForEach-Object {
-                clang-format --dry-run --Werror $_.FullName
-                }
-              shell: pwsh
+                for /r src %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
+                for /r interface %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
+                for /r tests %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
+              shell: cmd
 
             - name: Run clang-tidy
               run: |
-                for /r %%f in (*.cpp) do clang-tidy "%%f" -p build
+                for /r src %%f in (*.cpp) do clang-tidy "%%f" -p build
+                for /r interface %%f in (*.cpp) do clang-tidy "%%f" -p build
+                for /r tests %%f in (*.cpp) do clang-tidy "%%f" -p build
               shell: cmd
 
             - name: Run cppcheck
@@ -73,4 +75,6 @@ jobs:
                 --quiet \
                 --error-exitcode=1 \
                 -I include \
-                .
+                src \
+                interface \
+                tests
