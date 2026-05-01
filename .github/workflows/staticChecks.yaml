@@ -37,19 +37,23 @@ jobs:
 
 
             - name: Generate compile_commands.json
+              shell: cmd
               run: build.bat Debug
 
             - name: Check code formatting
+              shell: cmd
               run: |
                     FILES=$(find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \))
                     clang-format --dry-run --Werror $FILES
 
             - name: Run linting
+              shell: cmd
               run: |
                 FILES=$(find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \))
                 clang-tidy $FILES -- -I. -Iinclude
 
             - name: Run cppcheck
+              shell: cmd
               run: |
                 cppcheck \
                 --enable=all \
