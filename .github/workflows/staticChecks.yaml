@@ -12,7 +12,7 @@ on:
 
 jobs:
     static_checks:
-        runs-on: ubuntu-latest
+        runs-on: windows-latest
         steps:
             - name: Checkout repo
               uses: actions/checkout@v4
@@ -32,31 +32,12 @@ jobs:
                         pkg-config \
                         autoconf automake libtool m4 \
 
-            - name: Install OpenGL dependencies
-              run: |
-                sudo apt-get update
-                sudo apt-get install -y \
-                libgl1-mesa-dev \
-                libglu1-mesa-dev \
-                freeglut3-dev \
-                libx11-dev \
-                libxrandr-dev \
-                libxi-dev \
-                libxinerama-dev \
-                libxcursor-dev
+            - name: Setup MSVC
+              uses: ilammy/msvc-dev-cmd@v1
 
-            - name: Setup vcpkg
-              run: |
-                git clone https://github.com/microsoft/vcpkg
-                ./vcpkg/bootstrap-vcpkg.sh
 
             - name: Generate compile_commands.json
-              run: |
-                cmake -S . -B build \
-                -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake \
-                -DVCPKG_TARGET_TRIPLET=x64-linux \
-                -DCMAKE_BUILD_TYPE=Debug \
-                -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+              run: build.bat Debug
 
             - name: Check code formatting
               run: |
