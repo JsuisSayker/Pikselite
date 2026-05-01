@@ -65,8 +65,11 @@ if not exist "%VCPKG_OVERLAY_PORTS%" (
 :: SETUP MSVC
 :: -------------------------------------------------
 echo === Setup MSVC ===
-call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-if %ERRORLEVEL% neq 0 exit /b 1
+if "%CI%"=="" (
+    echo === Setup MSVC ===
+    call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    if %ERRORLEVEL% neq 0 exit /b 1
+)
 
 :: -------------------------------------------------
 :: SETUP VCPKG (local, reproducible)
