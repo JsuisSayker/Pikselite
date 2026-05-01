@@ -1,0 +1,47 @@
+Checks: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  modernize-*,
+  -readability-magic-numbers,
+  -readability-identifier-naming,
+  -modernize-use-trailing-return-type,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-avoid-magic-numbers
+
+WarningsAsErrors: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*
+
+HeaderFilterRegex: '.*'
+
+AnalyzeTemporaryDtors: false
+
+FormatStyle: none
+
+User: game-engine
+
+CheckOptions:
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+
+  - key: readability-function-size.LineThreshold
+    value: '300'
+
+  - key: readability-function-size.StatementThreshold
+    value: '200'
+
+  - key: performance-for-range-copy.WarnOnAllAutoCopies
+    value: 'true'
+
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'std::string;std::vector'
+
+  - key: modernize-loop-convert.MinConfidence
+    value: reasonable
+
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: '1'
