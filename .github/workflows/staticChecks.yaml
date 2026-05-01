@@ -25,7 +25,11 @@ jobs:
                         clang-tidy \
                         cppcheck \
                         cmake \
-                        build-essential
+                        build-essential \
+                        ninja-build \
+                        gcc \
+                        g++ \
+                        pkg-config
 
             - name: Setup vcpkg
               run: |
