@@ -267,8 +267,8 @@ namespace engine
         ImGui::Begin("MainWindow", nullptr, flags);
 
         ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 50));
-        ImGui::BeginChild("projectOptions", ImVec2(0, 150), true);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(170, 100));
+        ImGui::BeginChild("projectOptions", ImVec2(0, 250), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
         if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
             openProject(selectedProjectIndex);
@@ -279,9 +279,11 @@ namespace engine
 
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetStyle().ItemSpacing.y);
 
+        float remainingHeight = ImGui::GetContentRegionAvail().y;
+
         ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(100, 0));
-        ImGui::BeginChild("projectDisplaySection", ImVec2(0, 0), true);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(150, 30));
+        ImGui::BeginChild("projectDisplaySection", ImVec2(0, remainingHeight), true);
         if (!switchToProjectEditor)
         {
             selectedProjectIndex = imguiInterface.recentProjectsDisplay(_projects);
@@ -301,7 +303,6 @@ namespace engine
         renderer.present(sdlInterface.getWindow());
 
         if (switchToProjectEditor) {
-            std::cout << "ok" << std::endl; //////////////////////////////////////////////
             isProjectsListPageActive = false;
             isProjectEditorActive = true;
             switchToProjectEditor = false;

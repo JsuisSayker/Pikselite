@@ -21,6 +21,14 @@ namespace graphics {
         : _window(window), _glContext(glContext) {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
+
+        ImGuiIO& io = ImGui::GetIO();
+        fontLight = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Light.ttf", 10.0f);
+        fontRegularSmall = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", 15.0f);
+        fontRegularBig = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", 28.0f);
+        fontBoldSmall = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", 25.0f);
+        fontBoldBig = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", 35.0f);
+
         ImGui::StyleColorsDark();
 
         // ── Global Unity-like style overrides ─────────────────────────────────
@@ -812,10 +820,9 @@ namespace graphics {
         static Bar topBar(topBarConfig);
 
         topBar.Draw([&]() {
-
             static int fileIndex = 0;
             std::vector<std::string> fileOptions = {"Save", "Exit"};
-            if (DropdownButton("File", fileIndex, fileOptions))
+            if (DropdownButton("File", fileIndex, fileOptions, fontRegularSmall))
             {
                 switch (fileIndex)
                 {
@@ -831,8 +838,8 @@ namespace graphics {
             ImGui::SameLine();
 
             static int editIndex = 0;
-            std::vector<std::string> editOptions = {"Placeholder1", "Placeholder2"};
-            if (DropdownButton("Edit", editIndex, editOptions))
+            std::vector<std::string> editOptions = {"Placeholder1", "Placeholder2"}; // temp
+            if (DropdownButton("Edit", editIndex, editOptions, fontRegularSmall))
             {
                 switch (editIndex)
                 {
@@ -847,7 +854,7 @@ namespace graphics {
 
             ImGui::SameLine();
 
-            if (BasicButton("Help"))
+            if (BasicButton("Help", 0.0f, 0.0f, fontRegularSmall))
             {
                 // TODO
             }
@@ -856,20 +863,29 @@ namespace graphics {
 
     int ImguiInterface::projectOptionsBar(std::vector<projects::Project> &projects)
     {
-        float buttonHeight = 25.0f;
-        float buttonWidth = 80.0f;
+        float buttonHeight = 40.0f;
+        float buttonWidth = 95.0f;
         float windowWidth = ImGui::GetContentRegionAvail().x;
+        float verticalSpacing = 20.0f;
 
         static bool openNewPopup = false;
-        static bool openOpenPopup = false;
         static char projectName[128] = "NewProject";
         static std::filesystem::path selectedPath;
         int resultIndex = -1;
 
+        ImGui::PushFont(fontRegularBig);
         ImGui::Text("Get Started");
-        ImGui::Separator();
+        ImGui::PopFont();
+        ImGui::Spacing();
 
-        if (BasicButton("New", buttonHeight, buttonWidth))
+        ImGui::PushStyleColor(ImGuiCol_Separator, IM_COL32(255, 255, 255, 255));
+        ImGui::Separator();
+        ImGui::PopStyleColor();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (HoverChangeButton("New", buttonHeight, buttonWidth, fontBoldSmall))
         {
             NFD::UniquePath outPath;
 
@@ -936,30 +952,39 @@ namespace graphics {
             ImGui::EndPopup();
         }
 
-        ImGui::SameLine();
+        ImGui::SameLine(0.0f, verticalSpacing);
 
 
-        if (BasicButton("Open", buttonHeight, buttonWidth))
-        {
-            openOpenPopup = true;
-        }
-
-        if (openOpenPopup)
+        if (HoverChangeButton("Open", buttonHeight, buttonWidth, fontBoldSmall))
         {
             ImGui::OpenPopup("Open Project");
-            openOpenPopup = false;
         }
 
-        if (ImGui::BeginPopupModal("Open Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Appearing);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        if (ImGui::BeginPopupModal("Open Project", nullptr))
         {
             for (int i = 0; i < static_cast<int>(projects.size()); i++)
             {
+                ImVec2 size = ImVec2(0, 100);
+
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+                //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
+                ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(150, 150, 150, 255));
+
+                ImGui::BeginChild(("Project_" + std::to_string(i)).c_str(), size, true);
+
                 clickableProjectOverview(projects[i]);
+
+                ImGui::EndChild();
+
+                ImGui::PopStyleColor();
+                ImGui::PopStyleVar();
             
                 if (ImGui::IsItemClicked())
                 {
                     resultIndex = i;
-                    
+
                     projects[i].lastOpened = std::chrono::system_clock::now();
 
                     ImGui::CloseCurrentPopup();
@@ -969,18 +994,19 @@ namespace graphics {
 
             ImGui::EndPopup();
         }
+        ImGui::PopStyleVar();
 
-        ImGui::SameLine();
+        ImGui::SameLine(0.0f, verticalSpacing);
 
-        if (BasicButton("Import", buttonHeight, buttonWidth))
+        if (HoverChangeButton("Import", buttonHeight, buttonWidth, fontBoldSmall))
         {
             // TODO
             // return imported project;
         }
 
-        ImGui::SameLine(windowWidth - buttonWidth);
+        ImGui::SameLine(windowWidth);
 
-        if (BasicButton("Tutorial", buttonHeight, buttonWidth))
+        if (HoverChangeButton("Tutorial", buttonHeight, buttonWidth, fontBoldSmall))
         {
             // TODO
         }
@@ -994,16 +1020,11 @@ namespace graphics {
         float buttonWidth = 80.0f;
         float windowWidth = ImGui::GetContentRegionAvail().x;
 
+        ImGui::PushFont(fontRegularBig);
         ImGui::Text("Recent Projects");
+        ImGui::PopFont();
 
-        ImGui::SameLine();
-
-        if (BasicButton("Refresh", buttonHeight, buttonWidth))
-        {
-            // TODO
-        }
-
-        ImGui::SameLine(windowWidth - buttonWidth);
+        ImGui::SameLine(windowWidth);
 
         if (BasicButton("ListView", buttonHeight, buttonWidth))
         {
@@ -1017,38 +1038,102 @@ namespace graphics {
             // TODO
         }
 
+        ImGui::Spacing();
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(40, 40, 40, 255));
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(70, 70, 70, 255));
+        ImGui::BeginChild("ProjectsList", ImVec2(0, 0), true);
+
         if (projects.empty())
         {
             ImGui::Text("No recent projects found.");
+
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
+
             return -1;
         }
 
        for (int i = 0; i < 4 && i < static_cast<int>(projects.size()); i++)
         {
-            clickableProjectOverview(projects[i]);
+            ImVec2 size(ImGui::GetContentRegionAvail().x - 20, 100);
+
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImDrawList* draw = ImGui::GetWindowDrawList();
+
+            float rounding = 8.0f;
+
+            draw->AddRectFilled( // shadow
+                ImVec2(pos.x + 2, pos.y + 10),
+                ImVec2(pos.x + size.x + 1, pos.y + size.y + 6),
+                IM_COL32(0, 0, 0, 30),
+                rounding
+            );
+
+            draw->AddRectFilled(
+                pos,
+                ImVec2(pos.x + size.x, pos.y + size.y),
+                IM_COL32(55, 55, 55, 255), // lighter bg color
+                rounding
+            );
+
+            draw->AddRect(
+                pos,
+                ImVec2(pos.x + size.x, pos.y + size.y),
+                IM_COL32(80, 80, 80, 255),
+                rounding
+            );
+
+            ImGui::InvisibleButton(("ProjectBtn_" + std::to_string(i)).c_str(), size);
+
+            ImGui::SetCursorScreenPos(ImVec2(pos.x + 15, pos.y + 10));
+
+            clickableProjectOverview(projects[i], fontBoldBig, fontRegularSmall);
             
             if (ImGui::IsItemClicked())
             {
                 projects[i].lastOpened = std::chrono::system_clock::now();
+
+                ImGui::EndChild();
+                ImGui::PopStyleVar(2);
+                ImGui::PopStyleColor(2);
+
                 return i;
             }
         }
 
+        ImGui::EndChild();
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(2);
+
         return -1;
     }
 
-    void ImguiInterface::clickableProjectOverview(projects::Project &project)
+    void ImguiInterface::clickableProjectOverview(projects::Project &project, ImFont* nameFont, ImFont* infoFont)
     {
         // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent projects list.
         
-        //ImGui::Image((void*)(intptr_t)thumbnailTextureID, ImVec2(100, 100)); // thumbnail
-        //ImGui::SameLine();
+        // Add thumbnail
+        
+        ImGui::SameLine();
 
+        if (nameFont) ImGui::PushFont(nameFont);
         ImGui::Text("%s", project.name.c_str());
-        ImGui::Text("%s", project.path.string().c_str());
+        if (nameFont) ImGui::PopFont();
+
+        if (infoFont) ImGui::PushFont(infoFont);
+        ImGui::TextDisabled("%s", project.path.string().c_str());
+        if (infoFont) ImGui::PopFont();
 
         std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
-        ImGui::Text("Last opened: %s", std::ctime(&t));
+        char buffer[64];
+        std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", std::localtime(&t));
+        if (infoFont) ImGui::PushFont(infoFont);
+        ImGui::TextDisabled("Last opened: %s", buffer);
+        if (infoFont) ImGui::PopFont();
     }
 
 } // namespace graphics

@@ -63,7 +63,7 @@ namespace graphics {
         void fileToolBar();
         int projectOptionsBar(std::vector<projects::Project> &projects);
         int recentProjectsDisplay(std::vector<projects::Project> &projects);
-        void clickableProjectOverview(projects::Project &project);
+        void clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
 
         void startFrame();
         void endFrame(SDL_Window* window);
@@ -72,5 +72,10 @@ namespace graphics {
         SDL_Window* _window;
         SDL_GLContext _glContext;
         bool newProjectCreated = false;
+        ImFont* fontLight = nullptr;
+        ImFont* fontRegularSmall = nullptr;
+        ImFont* fontRegularBig = nullptr;
+        ImFont* fontBoldSmall = nullptr;
+        ImFont* fontBoldBig = nullptr;
     };
 } // namespace graphics
