@@ -13,27 +13,27 @@ on:
 jobs:
     static_checks:
         runs-on: windows-latest
+
+        env:
+            BUILD_DIR: build
+            VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+            VCPKG_DEFAULT_TRIPLET: x64-windows
+            VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
+
         steps:
             - name: Checkout repo
               uses: actions/checkout@v4
 
-            - name: Install dependencies
-              run: |
-                    sudo apt-get update
-                    sudo apt-get install -y \
-                        clang-format \
-                        clang-tidy \
-                        cppcheck \
-                        cmake \
-                        build-essential \
-                        ninja-build \
-                        gcc \
-                        g++ \
-                        pkg-config \
-                        autoconf automake libtool m4 \
-
             - name: Setup MSVC
               uses: ilammy/msvc-dev-cmd@v1
+
+            - name: Setup vcpkg
+              shell: cmd
+              run: |
+                    if not exist "%VCPKG_ROOT%" (
+                    git clone https://github.com/microsoft/vcpkg "%VCPKG_ROOT%"
+                    call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
+                    )
 
 
             - name: Generate compile_commands.json
