@@ -29,7 +29,7 @@ jobs:
 
             - name: Generate compile_commands.json
               run: |
-                    build.bat Debug
+                    cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
             - name: Check code formatting
               run: |
