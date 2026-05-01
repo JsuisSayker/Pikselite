@@ -32,8 +32,8 @@ jobs:
                   vcpkg
                 key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
 
-            - name: Setup MSVC
-              uses: ilammy/msvc-dev-cmd@v1
+            # - name: Setup MSVC
+            #   uses: ilammy/msvc-dev-cmd@v1
 
             - name: Setup vcpkg
               shell: cmd
