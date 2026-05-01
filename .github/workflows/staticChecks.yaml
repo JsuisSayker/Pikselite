@@ -49,17 +49,18 @@ jobs:
               shell: cmd
               run: build.bat Debug
 
-            - name: Check code formatting
-              shell: cmd
+            - name: Check formatting
               run: |
-                    FILES=$(find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \))
-                    clang-format --dry-run --Werror $FILES
+                choco install llvm -y
+                Get-ChildItem -Recurse -Include *.cpp,*.hpp,*.h | ForEach-Object {
+                clang-format --dry-run --Werror $_.FullName
+                }
+              shell: pwsh
 
-            - name: Run linting
-              shell: cmd
+            - name: Run clang-tidy
               run: |
-                FILES=$(find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \))
-                clang-tidy $FILES -- -I. -Iinclude
+                for /r %%f in (*.cpp) do clang-tidy "%%f" -p build
+              shell: cmd
 
             - name: Run cppcheck
               shell: cmd
