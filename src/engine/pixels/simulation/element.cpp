@@ -113,13 +113,6 @@ void Simulation::update()
     resetUpdatedFlags();
     orderChunksForUpdate();
 
-    // if (regionsDirty)
-    // {
-    //     detectRegions();
-    //     rebuildRegionColliders();
-    //     regionsDirty = false;
-    // }
-
     for (auto& entry : orderedChunks)
     {
         int cx = entry.cx;
@@ -204,6 +197,46 @@ void Simulation::orderChunksForUpdate()
                 return a.cy < b.cy; // bottom -> top for GRAVITY_DIR = -1
             return a.cx < b.cx;     // left -> right
         });
+}
+
+bool Simulation::tryDisplacePixel(int x, int y, int range)
+{
+    Element::Pixel existing = grid.getPixel(x, y);
+    if (existing.type == Element::EMPTY) return false;
+
+    auto tryPlace = [&](int nx, int ny) -> bool
+    {
+        Element::Pixel& dst = grid.getPixelRef(nx, ny);
+        if (dst.type != Element::EMPTY) return false;
+
+        Element::Pixel moved = existing;
+        moved.updatedThisFrame = true;
+        grid.setPixel(x, y, {Element::EMPTY, false});
+        dst = moved;
+        return true;
+    };
+
+    for (int i = 1; i <= range; ++i)
+    {
+        if (tryPlace(x, y + GRAVITY_DIR * i))
+            return true;
+    }
+
+    for (int i = 1; i <= range; ++i)
+    {
+        if (tryPlace(x - i, y))
+            return true;
+        if (tryPlace(x + i, y))
+            return true;
+    }
+
+    for (int i = 1; i <= range; ++i)
+    {
+        if (tryPlace(x, y - GRAVITY_DIR * i))
+            return true;
+    }
+
+    return false;
 }
 
 Element::Region Simulation::regionFloodFill(int x, int y, Element::ElementType type)

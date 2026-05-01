@@ -549,6 +549,12 @@ namespace engine
                 const int gridX = static_cast<int>(std::floor(worldX / PIXEL_SIZE));
                 const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
 
+                Element::Pixel existing = grid.getPixel(gridX, gridY);
+                if (existing.type != Element::EMPTY && existing.type != srcPixel.type)
+                {
+                    _pixelSimulation.tryDisplacePixel(gridX, gridY, 10);
+                }
+
                 grid.setPixel(gridX, gridY, {srcPixel.type, false});
                 occupiedCells.push_back({gridX, gridY});
             }

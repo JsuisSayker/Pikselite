@@ -131,6 +131,8 @@ class Simulation {
          */
         float getPixelsPerMeter() const { return pixelsPerMeter; }
 
+        bool tryDisplacePixel(int x, int y, int range);
+
     private:
         uint64_t frame = 0;
         ChunkGrid &grid;
