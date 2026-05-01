@@ -905,7 +905,7 @@ namespace graphics {
                     std::filesystem::create_directory(fullPath);
                     std::filesystem::create_directory(fullPath / "Assets");
                     std::filesystem::create_directory(fullPath / "Scenes");
-                    //std::ofstream(fullPath / "scene.json") << "{}";
+                    std::ofstream(fullPath / "scene.json") << "{}";
 
                     projects::Project newProject;
                     newProject.name = projectName;
@@ -1029,9 +1029,13 @@ namespace graphics {
             return -1;
         }
 
-       for (int i = 0; i < 4; i++)
+        std::cout << "OK" << std::endl; /////////////////////////////////////////////////////////////
+
+       for (int i = 0; i < 4 && i < static_cast<int>(projects.size()); i++)
         {
             clickableProjectOverview(projects[i]);
+
+        std::cout << "OK5" << std::endl; /////////////////////////////////////////////////////////////
             
             if (ImGui::IsItemClicked())
             {
@@ -1049,11 +1053,18 @@ namespace graphics {
         //ImGui::Image((void*)(intptr_t)thumbnailTextureID, ImVec2(100, 100)); // thumbnail
         //ImGui::SameLine();
 
+        std::cout << "OK2" << std::endl; /////////////////////////////////////////////////////////////
+
         ImGui::Text("%s", project.name.c_str());
-        ImGui::Text("path/to/project");
+        std::cout << "project name: " << project.name << std::endl; /////////////////////////////////////////////////////////////
+        ImGui::Text("%s", project.path.string().c_str());
+
+        std::cout << "OK3" << std::endl; /////////////////////////////////////////////////////////////
 
         std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
         ImGui::Text("Last opened: %s", std::ctime(&t));
+
+        std::cout << "OK4" << std::endl; /////////////////////////////////////////////////////////////
     }
 
 } // namespace graphics

@@ -600,10 +600,14 @@ namespace engine
 
     void Core::loadProjects(std::vector<projects::Project> &projects)
     {
-        std::ifstream file("projects.json");
+        std::filesystem::path projectsPath ="config/projects.json";
+        std::ifstream file(projectsPath);
 
-        if (!file.is_open())
+        if (!file.is_open()) {
+            std::cout << "No projects.json found, starting with empty project list.\n";
             return;
+        }
+        
 
         nlohmann::json j;
 
@@ -613,10 +617,10 @@ namespace engine
         }
         catch (const std::exception& e)
         {
-            std::cerr << "Failed to parse projects.json: " << e.what() << std::endl;
+            std::cout << "Failed to parse projects.json: " << e.what() << std::endl;
             return;
         }
-
+        
         projects.clear();
 
         for (const auto& item : j)
@@ -643,7 +647,7 @@ namespace engine
 
             projects.push_back(p);
         }
-
+        
         sortProjects(projects);
     }
 
