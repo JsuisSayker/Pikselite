@@ -51,6 +51,7 @@ echo CD=%CD%
 echo VCPKG_ROOT=%VCPKG_ROOT%
 echo VCPKG_OVERLAY_PORTS=%VCPKG_OVERLAY_PORTS%
 echo CACHE_KEY=%VCPKG_CACHE_KEY%
+echo CI=%CI%
 echo.
 
 :: -------------------------------------------------
