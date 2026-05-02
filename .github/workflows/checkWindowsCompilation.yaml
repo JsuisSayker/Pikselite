@@ -43,13 +43,26 @@ jobs:
           call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
         )
 
-    - name: Cache vcpkg
-      uses: actions/cache@v4
-      with:
-        path: |
-          build/vcpkg_installed
-          vcpkg
-        key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+    - name: Install CMake (winget)
+      shell: powershell
+      run: |
+        winget install --id Kitware.CMake `
+        --silent `
+        --accept-package-agreements `
+        --accept-source-agreements
+
+    - name: Refresh PATH
+      shell: powershell
+      run: |
+        $machine = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+        $user = [System.Environment]::GetEnvironmentVariable("Path", "User")
+        $env:Path = "$machine;$user"
+
+    - name: Verify CMake
+      shell: cmd
+      run: |
+        where cmake
+        cmake --version
 
     - name: Build Engine
       shell: cmd
