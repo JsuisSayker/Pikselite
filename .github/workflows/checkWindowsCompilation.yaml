@@ -15,7 +15,7 @@ jobs:
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
       VCPKG_CACHE_KEY: "windows-vcpkg-v1"
       VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
-      CI: true
+      # CI: true
 
     steps:
     - name: Checkout
@@ -59,7 +59,7 @@ jobs:
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
       VCPKG_CACHE_KEY: "windows-vcpkg-v1"
       VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
-      CI: true
+      # CI: true
 
     steps:
     - name: Checkout
