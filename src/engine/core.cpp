@@ -255,9 +255,6 @@ namespace engine
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
             // debug draw Box2D bodies
-            std::vector<b2BodyId> debugBodies = _pixelSimulation.getRegionBodies();
-            renderer.drawBox2DDebug(_boxWorld.getWorldId(), debugBodies, _camera, 1.0f, glm::vec3(0.2f, 0.2f, 1.0f));
-
             if (auto *physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
             {
                 const std::vector<b2BodyId> ecsDebugBodies = physicsSystem->getDebugBodies();
@@ -405,7 +402,6 @@ namespace engine
         }
 
         syncGameObjectPixelsFromPhysics();
-        _pixelSimulation.syncBodyPixelsToGrid();
     }
 
     void Core::render()
@@ -579,6 +575,12 @@ namespace engine
                 const int gridX = static_cast<int>(std::floor(worldX / PIXEL_SIZE));
                 const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
 
+                Element::Pixel existing = grid.getPixel(gridX, gridY);
+                if (existing.type != Element::EMPTY && existing.type != srcPixel.type)
+                {
+                    _pixelSimulation.tryDisplacePixel(gridX, gridY, 3);
+                }
+
                 grid.setPixel(gridX, gridY, {srcPixel.type, false});
                 occupiedCells.push_back({gridX, gridY});
             }
@@ -634,10 +636,33 @@ namespace engine
                         gx * PIXEL_SIZE,
                         gy * PIXEL_SIZE);
 
-                    renderPixel.color = glm::vec3(
-                        def.color[0] / 255.0f,
-                        def.color[1] / 255.0f,
-                        def.color[2] / 255.0f);
+                
+                    if (simPixel.isBurning)
+                    {
+                        glm::vec3 pColor = glm::vec3(
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f
+                        );
+                        ElementDefinition& fireDef = g_elements[Element::FIRE];
+                        glm::vec3 fColor = glm::vec3(
+                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
+                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
+                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f
+                        );
+                        float progress = (def.fireParams.burnDuration > 0)
+                            ? 1.0f - (static_cast<float>(simPixel.burnTimer) / def.fireParams.burnDuration)
+                            : 1.0f;
+                        progress = glm::clamp(progress, 0.0f, 1.0f);
+                        renderPixel.color = glm::mix(pColor, fColor, progress);
+                        renderPixel.color = glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
+                    } else {
+                        renderPixel.color = glm::vec3(
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f
+                        );
+                    }
 
                     result.push_back(renderPixel);
                 }

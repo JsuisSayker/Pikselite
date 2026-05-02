@@ -51,6 +51,15 @@ class Simulation {
         void update();
 
         /**
+         * @brief Updates one sand pixel behavior.
+         * @param grid Simulation grid.
+         * @param x Global X coordinate.
+         * @param y Global Y coordinate.
+         * @return void
+         */
+        inline void updateBurning(ChunkGrid& grid, int x, int y);
+
+        /**
          * @brief Resets per-pixel update flags for the current frame.
          * @return void
          */
@@ -70,22 +79,11 @@ class Simulation {
         ChunkGrid& getGrid() { return grid; }
 
         /**
-         * @brief Marks region extraction/collider data as dirty.
-         * @return void
-         */
-        void markRegionsDirty() { regionsDirty = true; }
-
-        /**
          * @brief Builds an ordered chunk list for deterministic updates.
          * @return void
          */
         void orderChunksForUpdate();
 
-        /**
-         * @brief Detects connected regions from the grid.
-         * @return void
-         */
-        void detectRegions();
 
         /**
          * @brief Flood-fills one connected region of a given element type.
@@ -129,12 +127,6 @@ class Simulation {
         void triangulateRegion(Element::Region& region);
 
         /**
-         * @brief Returns last detected regions.
-         * @return Const reference to detected regions.
-         */
-        const std::vector<Element::Region>& getDetectedRegions() const { return detectedRegions; }
-
-        /**
          * @brief Assigns Box2D world and scaling used by physics sync.
          * @param worldId Box2D world id.
          * @param pixelsPerMeter Scale factor between grid cells and world units.
@@ -143,34 +135,12 @@ class Simulation {
         void setPhysicsWorld(b2WorldId worldId, float pixelsPerMeter);
 
         /**
-         * @brief Rebuilds region colliders in the assigned Box2D world.
-         * @return void
-         */
-        void rebuildRegionColliders();
-
-        /**
-         * @brief Writes region-body pixels back into the simulation grid.
-         * @return void
-         */
-        void syncBodyPixelsToGrid();
-
-        /**
-         * @brief Returns active region body ids.
-         * @return Const reference to region body id list.
-         */
-        const std::vector<b2BodyId>& getRegionBodies() const { return regionBodies; }
-
-        /**
-         * @brief Returns body-to-pixel bindings.
-         * @return Const reference to region body bindings.
-         */
-        const std::vector<RegionBodyBinding>& getRegionBodyBindings() const { return regionBodyBindings; }
-
-        /**
          * @brief Returns current world scaling factor.
          * @return Pixels-per-meter value.
          */
         float getPixelsPerMeter() const { return pixelsPerMeter; }
+
+        bool tryDisplacePixel(int x, int y, int range);
 
     private:
         uint64_t frame = 0;

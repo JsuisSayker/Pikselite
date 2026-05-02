@@ -40,7 +40,7 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
 void updateWater(ChunkGrid& grid, int x, int y)
 {
-    auto& def = g_elements[Element::WATER];
+    ElementDefinition& def = g_elements[Element::WATER];
 
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR)) return;
 
@@ -84,6 +84,42 @@ void updateSand(ChunkGrid& grid, int x, int y)
 }
 void updateFire(ChunkGrid& grid, int x, int y)
 {
+    Element::Pixel& p = grid.getPixelRef(x, y);
+    ElementDefinition& def = g_elements[Element::FIRE];
+
+    if (p.burnTimer > 0)
+        p.burnTimer--;
+    else {
+        p = Element::Pixel{Element::EMPTY};
+        return;
+    }
+
+    const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+    for (auto& d : dirs)
+    {
+        int nx = x + d[0];
+        int ny = y + d[1];
+
+        Element::Pixel& neighbor = grid.getPixelRef(nx, ny);
+        if (neighbor.type == Element::EMPTY || neighbor.type == Element::FIRE || neighbor.isBurning) continue;
+
+        ElementDefinition& nDef = g_elements[neighbor.type];
+        if (nDef.fireParams.flammability == 0) continue;
+        
+        uint16_t chance = (nDef.fireParams.flammability * def.fireParams.burnSpreadChance) / 255;
+        if (rand() % 255 < chance)
+        {
+            neighbor.isBurning = true;
+            neighbor.burnTimer = nDef.fireParams.burnDuration;
+            neighbor.updatedThisFrame = true;
+        }
+    }
+
+    if (tryMove(grid, x, y, x, y - GRAVITY_DIR)) return;
+    int dir = (rand() % 2) ? -1 : 1;
+    if (tryMove(grid, x, y, x + dir, y - GRAVITY_DIR)) return;
+    if (tryMove(grid, x, y, x - dir, y - GRAVITY_DIR)) return;
 }
 void updateStone(ChunkGrid& grid, int x, int y)
 {
@@ -91,20 +127,121 @@ void updateStone(ChunkGrid& grid, int x, int y)
 void updateDirt(ChunkGrid& grid, int x, int y)
 {
 }
-
 void updateDebug(ChunkGrid& grid, int x, int y)
 {
 }
 
 void Simulation::initElements()
 {
-    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID_STATIC, 0, nullptr, -1};
-    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID_DYNAMIC, 1, updateSand, -1};
-    g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, 5, updateWater, -1};
-    g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, 1, updateFire, -1};
-    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID_STATIC, 0, updateStone, -1};
-    g_elements[Element::DIRT] = { "Dirt", {120, 72, 0}, 10, SOLID_STATIC, 1, updateDirt, -1};
-    g_elements[Element::DEBUG] = { "Debug", {255,0,255}, 1, SOLID_STATIC, 0, updateDebug, -1};
+    g_elements[Element::EMPTY] = { "Empty", {}, 0, SOLID_STATIC, 0, fireBehavior{}, nullptr, -1};
+    g_elements[Element::SAND] = { "Sand", {}, 5, SOLID_DYNAMIC, 1, fireBehavior{}, updateSand, -1};
+    g_elements[Element::WATER] = { "Water", {}, 2, LIQUID, 5, fireBehavior{}, updateWater, -1};
+    g_elements[Element::FIRE] = { "Fire", {}, 1, GAS, 1, fireBehavior{}, updateFire, -1};
+    g_elements[Element::STONE] = { "Stone", {}, 255, SOLID_STATIC, 0, fireBehavior{}, updateStone, -1};
+    g_elements[Element::DIRT] = { "Dirt", {}, 10, SOLID_STATIC, 1, fireBehavior{}, updateDirt, -1};
+    g_elements[Element::WOOD] = { "Wood", {}, 5, SOLID_STATIC, 1, fireBehavior{150, 20, 30, Element::FIRE}, nullptr, -1};
+    g_elements[Element::DEBUG] = { "Debug", {}, 1, SOLID_STATIC, 0, fireBehavior{}, updateDebug, -1};
+
+    g_elements[Element::SAND].colorPalette = {{
+        {194, 178, 128},
+        {206, 188, 140},
+        {182, 164, 116},
+        {216, 198, 150}
+    }};
+    g_elements[Element::WATER].colorPalette = {{
+        {30, 90, 200},
+        {50, 120, 220},
+        {70, 150, 240},
+        {20, 70, 180}
+    }};
+    g_elements[Element::FIRE].colorPalette = {{
+        {255, 80, 0},
+        {255, 120, 0},
+        {255, 180, 50},
+        {200, 40, 0}
+    }};
+    g_elements[Element::STONE].colorPalette = {{
+        {95, 95, 100},
+        {75, 75, 80},
+        {115, 115, 120},
+        {60, 60, 65}
+    }};
+    g_elements[Element::DIRT].colorPalette = {{
+        {110, 75, 40},
+        {130, 90, 50},
+        {90, 60, 30},
+        {70, 45, 20}
+    }};
+    g_elements[Element::WOOD].colorPalette = {{
+        {120, 70, 15},
+        {140, 90, 30},
+        {100, 50, 10},
+        {160, 110, 50}
+    }};
+    g_elements[Element::DEBUG].colorPalette = {{
+        {255, 0, 255},
+        {200, 0, 200},
+        {150, 0, 150},
+        {255, 100, 255}
+    }};
+
+    g_elements[Element::FIRE].fireParams = {
+        200,
+        10,
+        50,
+        Element::EMPTY
+    };
+    g_elements[Element::WOOD].fireParams = {
+        150,
+        30,
+        30,
+        Element::EMPTY
+    };
+}
+
+inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
+{
+    Element::Pixel& p = grid.getPixelRef(x, y);
+    ElementDefinition& elementDef = g_elements[p.type];
+
+    if (p.type == Element::FIRE) return;
+
+    if (p.burnTimer > 0)
+        p.burnTimer--;
+    else
+    {
+        p.type = elementDef.fireParams.burnToElement;
+        p.isBurning = false;
+    }
+    
+    const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+    for (auto& d : dirs)
+    {
+        int nx = x + d[0];
+        int ny = y + d[1];
+
+        Element::Pixel& n = grid.getPixelRef(nx, ny);
+        if (n.type == Element::EMPTY || n.isBurning || n.type == Element::FIRE) continue;
+        ElementDefinition& nDef = g_elements[n.type];
+        if (nDef.fireParams.flammability == 0) continue;
+
+        uint16_t chance = (nDef.fireParams.flammability * elementDef.fireParams.burnSpreadChance) / 255;
+        if (rand() % 255 < chance)        {
+            n.isBurning = true;
+            n.burnTimer = nDef.fireParams.burnDuration;
+            n.updatedThisFrame = true;
+        }
+    }
+
+    if (rand() % 255 < elementDef.fireParams.burnSpreadChance)
+    {
+        Element::Pixel& p = grid.getPixelRef(x, y - 1);
+        if (p.type != Element::EMPTY) return;
+        p.type = Element::FIRE;
+        p.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
+        p.updatedThisFrame = true;
+    }
 }
 
 void Simulation::update()
@@ -112,13 +249,6 @@ void Simulation::update()
     frame++;
     resetUpdatedFlags();
     orderChunksForUpdate();
-
-    // if (regionsDirty)
-    // {
-    //     detectRegions();
-    //     rebuildRegionColliders();
-    //     regionsDirty = false;
-    // }
 
     for (auto& entry : orderedChunks)
     {
@@ -141,10 +271,15 @@ void Simulation::update()
                     continue;
 
                 p.updatedThisFrame = true;
-
-                auto& def = g_elements[p.type];
-                if (def.update)
-                    def.update(grid, cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
+                    
+                if (p.isBurning)
+                    updateBurning(grid, cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
+                else 
+                {
+                    ElementDefinition& def = g_elements[p.type];
+                    if (def.update)
+                        def.update(grid, cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
+                }
             }
         }
     }
@@ -173,215 +308,6 @@ void Simulation::setPhysicsWorld(b2WorldId worldId, float pixelsPerMeterValue)
     physicsWorld = worldId;
     pixelsPerMeter = pixelsPerMeterValue;
     regionsDirty = true;
-}
-
-void Simulation::rebuildRegionColliders()
-{
-    if (!b2World_IsValid(physicsWorld)) return;
-
-    for (b2BodyId bodyId : regionBodies)
-    {
-        if (b2Body_IsValid(bodyId))
-            b2DestroyBody(bodyId);
-    }
-    regionBodies.clear();
-    regionBodyBindings.clear();
-
-    if (detectedRegions.empty()) return;
-
-    const float scale = (pixelsPerMeter > 0.0f) ? pixelsPerMeter : 1.0f;
-
-    for (const auto& region : detectedRegions)
-    {
-        if (region.triangles.empty()) continue;
-
-        if (region.pixels.empty()) continue;
-
-        int minX = region.pixels.front().x;
-        int minY = region.pixels.front().y;
-        int maxX = region.pixels.front().x;
-        int maxY = region.pixels.front().y;
-        float sumX = 0.0f;
-        float sumY = 0.0f;
-
-        for (const auto& pixel : region.pixels)
-        {
-            minX = std::min(minX, pixel.x);
-            minY = std::min(minY, pixel.y);
-            maxX = std::max(maxX, pixel.x);
-            maxY = std::max(maxY, pixel.y);
-            sumX += static_cast<float>(pixel.x) + 0.5f;
-            sumY += static_cast<float>(pixel.y) + 0.5f;
-        }
-
-        const float invCount = 1.0f / static_cast<float>(region.pixels.size());
-        b2Vec2 centroid = {sumX * invCount, sumY * invCount};
-        const b2Vec2 scaledCentroid = {centroid.x * scale, centroid.y * scale};
-
-        const float width = static_cast<float>(std::max(1, maxX - minX + 1));
-        const float height = static_cast<float>(std::max(1, maxY - minY + 1));
-
-        b2BodyDef bodyDef = b2DefaultBodyDef();
-        bodyDef.type = b2_dynamicBody;
-        bodyDef.gravityScale = 1.0f;
-        bodyDef.position = scaledCentroid;
-
-        b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
-
-        b2ShapeDef shapeDef = b2DefaultShapeDef();
-        shapeDef.density = 1.0f;
-
-        for (const auto& tri : region.triangles)
-        {
-            b2Vec2 points[3] = {
-                { (tri.a.x - centroid.x) * scale, (tri.a.y - centroid.y) * scale },
-                { (tri.b.x - centroid.x) * scale, (tri.b.y - centroid.y) * scale },
-                { (tri.c.x - centroid.x) * scale, (tri.c.y - centroid.y) * scale },
-            };
-
-            b2Hull hull = b2ComputeHull(points, 3);
-            if (hull.count < 3) continue;
-
-            b2Polygon poly = b2MakePolygon(&hull, 0.0f);
-            b2CreatePolygonShape(bodyId, &shapeDef, &poly);
-        }
-
-        if (b2Body_GetShapeCount(bodyId) > 0)
-        {
-            RegionBodyBinding binding;
-            binding.bodyId = bodyId;
-            binding.pixels.reserve(region.pixels.size());
-
-            for (const auto& rp : region.pixels)
-            {
-                Element::Pixel source = grid.getPixel(rp.x, rp.y);
-                if (source.type == Element::EMPTY) continue;
-
-                BodyPixelBinding pixelBinding;
-                pixelBinding.type = source.type;
-                pixelBinding.localUV = {
-                    (static_cast<float>(rp.x) + 0.5f - centroid.x) * scale,
-                    (static_cast<float>(rp.y) + 0.5f - centroid.y) * scale
-                };
-                pixelBinding.uv = {(static_cast<float>(rp.x - minX) + 0.5f) / width, (static_cast<float>(rp.y - minY) + 0.5f) / height};
-                pixelBinding.gridX = rp.x;
-                pixelBinding.gridY = rp.y;
-
-                binding.pixels.push_back(pixelBinding);
-                binding.fillType = source.type;
-                grid.setPixel(rp.x, rp.y, {Element::EMPTY, false});
-            }
-
-            regionBodies.push_back(bodyId);
-            regionBodyBindings.push_back(std::move(binding));
-        }
-        else
-        {
-            b2DestroyBody(bodyId);
-        }
-    }
-}
-
-void Simulation::syncBodyPixelsToGrid()
-{
-    if (!b2World_IsValid(physicsWorld)) return;
-
-    const float scale = (pixelsPerMeter > 0.0f) ? pixelsPerMeter : 1.0f;
-
-    auto cellKey = [](int x, int y) -> int64_t
-    {
-        return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y);
-    };
-
-    auto pointInTriangle = [](float px, float py, const b2Vec2& a, const b2Vec2& b, const b2Vec2& c) -> bool
-    {
-        const float v0x = c.x - a.x;
-        const float v0y = c.y - a.y;
-        const float v1x = b.x - a.x;
-        const float v1y = b.y - a.y;
-        const float v2x = px - a.x;
-        const float v2y = py - a.y;
-
-        const float den = v1x * v0y - v1y * v0x;
-        if (std::fabs(den) < 1e-6f) return false;
-
-        const float u = (v2x * v0y - v2y * v0x) / den;
-        const float v = (v1x * v2y - v1y * v2x) / den;
-        const float eps = 1e-4f;
-        return u >= -eps && v >= -eps && (u + v) <= 1.0f + eps;
-    };
-
-    for (auto& bodyBinding : regionBodyBindings)
-    {
-        for (const auto& cell : bodyBinding.occupiedCells)
-        {
-            grid.setPixel(cell.x, cell.y, {Element::EMPTY, false});
-        }
-        bodyBinding.occupiedCells.clear();
-    }
-
-    for (auto& bodyBinding : regionBodyBindings)
-    {
-        if (!b2Body_IsValid(bodyBinding.bodyId)) continue;
-
-        const int shapeCount = b2Body_GetShapeCount(bodyBinding.bodyId);
-        if (shapeCount <= 0) continue;
-
-        std::vector<b2ShapeId> shapes(shapeCount);
-        const int actualCount = b2Body_GetShapes(bodyBinding.bodyId, shapes.data(), shapeCount);
-        const b2Transform xf = b2Body_GetTransform(bodyBinding.bodyId);
-
-        std::unordered_set<int64_t> filledCells;
-        filledCells.reserve(bodyBinding.pixels.size() * 2 + 16);
-
-        for (int i = 0; i < actualCount; ++i)
-        {
-            const b2ShapeId shapeId = shapes[i];
-            if (!b2Shape_IsValid(shapeId)) continue;
-            if (b2Shape_GetType(shapeId) != b2_polygonShape) continue;
-
-            const b2Polygon localPoly = b2Shape_GetPolygon(shapeId);
-            if (localPoly.count < 3) continue;
-
-            const b2Polygon worldPoly = b2TransformPolygon(xf, &localPoly);
-            const b2Vec2 a = worldPoly.vertices[0];
-
-            for (int t = 1; t + 1 < worldPoly.count; ++t)
-            {
-                const b2Vec2 b = worldPoly.vertices[t];
-                const b2Vec2 c = worldPoly.vertices[t + 1];
-
-                const float minX = std::min(a.x, std::min(b.x, c.x));
-                const float maxX = std::max(a.x, std::max(b.x, c.x));
-                const float minY = std::min(a.y, std::min(b.y, c.y));
-                const float maxY = std::max(a.y, std::max(b.y, c.y));
-
-                const int xStart = static_cast<int>(std::floor(minX / scale - 0.5f));
-                const int xEnd = static_cast<int>(std::floor(maxX / scale - 0.5f));
-                const int yStart = static_cast<int>(std::floor(minY / scale - 0.5f));
-                const int yEnd = static_cast<int>(std::floor(maxY / scale - 0.5f));
-
-                for (int gy = yStart; gy <= yEnd; ++gy)
-                {
-                    for (int gx = xStart; gx <= xEnd; ++gx)
-                    {
-                        const float px = (static_cast<float>(gx) + 0.5f) * scale;
-                        const float py = (static_cast<float>(gy) + 0.5f) * scale;
-                        if (!pointInTriangle(px, py, a, b, c)) continue;
-                        filledCells.insert(cellKey(gx, gy));
-                    }
-                }
-            }
-        }
-
-        for (int64_t key : filledCells)
-        {
-            const int gx = static_cast<int32_t>(key >> 32);
-            const int gy = static_cast<int32_t>(key & 0xFFFFFFFF);
-            grid.setPixel(gx, gy, {bodyBinding.fillType, false});
-            bodyBinding.occupiedCells.push_back({gx, gy});
-        }
-    }
 }
 
 void Simulation::resetUpdatedFlags()
@@ -415,6 +341,46 @@ void Simulation::orderChunksForUpdate()
         });
 }
 
+bool Simulation::tryDisplacePixel(int x, int y, int range)
+{
+    Element::Pixel existing = grid.getPixel(x, y);
+    if (existing.type == Element::EMPTY) return false;
+
+    auto tryPlace = [&](int nx, int ny) -> bool
+    {
+        Element::Pixel& dst = grid.getPixelRef(nx, ny);
+        if (dst.type != Element::EMPTY) return false;
+
+        Element::Pixel moved = existing;
+        moved.updatedThisFrame = true;
+        grid.setPixel(x, y, {Element::EMPTY, false});
+        dst = moved;
+        return true;
+    };
+
+    for (int i = 1; i <= range; ++i)
+    {
+        if (tryPlace(x, y + GRAVITY_DIR * i))
+            return true;
+    }
+
+    for (int i = 1; i <= range; ++i)
+    {
+        if (tryPlace(x - i, y))
+            return true;
+        if (tryPlace(x + i, y))
+            return true;
+    }
+
+    for (int i = 1; i <= range; ++i)
+    {
+        if (tryPlace(x, y - GRAVITY_DIR * i))
+            return true;
+    }
+
+    return false;
+}
+
 Element::Region Simulation::regionFloodFill(int x, int y, Element::ElementType type)
 {
     Element::Region region;
@@ -446,41 +412,6 @@ Element::Region Simulation::regionFloodFill(int x, int y, Element::ElementType t
     }
 
     return region;
-}
-
-void Simulation::detectRegions()
-{
-    visitedForRegions.clear();
-    detectedRegions.clear();
-
-    for (auto& [key, chunk] : grid.chunks)
-    {
-        int cx = static_cast<int32_t>(key >> 32);
-        int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
-
-        for (int y = 0; y < CHUNK_SIZE; ++y)
-        {
-            for (int x = 0; x < CHUNK_SIZE; ++x)
-            {
-                Element::Pixel p = chunk.get(x, y);
-                if (p.type == Element::EMPTY) continue;
-
-                // for demo, only detect stone regions. can be extended to other types or all types
-                if (p.type != Element::STONE) continue;
-
-                int globalX = cx * CHUNK_SIZE + x;
-                int globalY = cy * CHUNK_SIZE + y;
-
-                if (visitedForRegions.count(makeVisitedKey(globalX, globalY))) continue;
-
-                Element::Region region = regionFloodFill(globalX, globalY, p.type);
-                buildRegionContoursMarchingSquare(region);
-                simplifyRegionContours(region, 0.6f);
-                triangulateRegion(region);
-                detectedRegions.push_back(std::move(region));
-            }
-        }
-    }
 }
 
 void Simulation::buildRegionContoursMarchingSquare(Element::Region& region)

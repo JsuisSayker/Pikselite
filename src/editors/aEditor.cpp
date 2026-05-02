@@ -91,10 +91,11 @@ std::vector<graphics::Pixel> AbstractEditor::addPendingSpriteToRenderPixels() {
             (anchorGY + cell.localGY) * PIXEL_SIZE
         };
         const auto& def = g_elements[cell.type];
+        uint8_t i = _renderer->generatePixelColorIndex(anchorGX + cell.localGX, anchorGY + cell.localGY);
         p.color = {
-            def.color[0] / 255.0f,
-            def.color[1] / 255.0f,
-            def.color[2] / 255.0f
+            def.colorPalette[i % PALETTE_SIZE].r / 255.0f,
+            def.colorPalette[i % PALETTE_SIZE].g / 255.0f,
+            def.colorPalette[i % PALETTE_SIZE].b / 255.0f
         };
         p.color *= 0.65f;
         out.push_back(p);
@@ -120,9 +121,9 @@ std::vector<graphics::Pixel> AbstractEditor::buildRenderPixels() const {
                     (cy * CHUNK_SIZE + y) * PIXEL_SIZE
                 };
                 rp.color = {
-                    def.color[0] / 255.0f,
-                    def.color[1] / 255.0f,
-                    def.color[2] / 255.0f
+                    def.colorPalette[sp.colorIndex % PALETTE_SIZE].r / 255.0f,
+                    def.colorPalette[sp.colorIndex % PALETTE_SIZE].g / 255.0f,
+                    def.colorPalette[sp.colorIndex % PALETTE_SIZE].b / 255.0f
                 };
                 result.push_back(rp);
             }
