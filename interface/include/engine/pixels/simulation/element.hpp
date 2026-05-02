@@ -3,8 +3,10 @@
 #include <engine/pixels/simulation/chunk.hpp>
 #include <cstdint>
 #include <cstdlib>
+#include <array>
 
 constexpr int GRAVITY_DIR = -1;
+constexpr int PALETTE_SIZE = 4;
 
 enum ElementState : uint8_t {
     SOLID_STATIC = 0,
@@ -13,9 +15,13 @@ enum ElementState : uint8_t {
     GAS,
 };
 
+struct ColorPalette {
+    uint8_t r, g, b;
+};
+
 struct ElementDefinition {
     std::string name;
-    uint8_t color[3];
+    std::array<ColorPalette, PALETTE_SIZE> colorPalette;
     uint8_t density;
     ElementState state;
 

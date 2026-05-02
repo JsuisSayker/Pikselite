@@ -552,10 +552,10 @@ namespace engine
                 Element::Pixel existing = grid.getPixel(gridX, gridY);
                 if (existing.type != Element::EMPTY && existing.type != srcPixel.type)
                 {
-                    _pixelSimulation.tryDisplacePixel(gridX, gridY, 10);
+                    _pixelSimulation.tryDisplacePixel(gridX, gridY, 3);
                 }
 
-                grid.setPixel(gridX, gridY, {srcPixel.type, false});
+                grid.setPixel(gridX, gridY, {srcPixel.type, false, srcPixel.colorIndex});
                 occupiedCells.push_back({gridX, gridY});
             }
 
@@ -611,9 +611,10 @@ namespace engine
                         gy * PIXEL_SIZE);
 
                     renderPixel.color = glm::vec3(
-                        def.color[0] / 255.0f,
-                        def.color[1] / 255.0f,
-                        def.color[2] / 255.0f);
+                        def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
+                        def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
+                        def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f
+                    );
 
                     result.push_back(renderPixel);
                 }

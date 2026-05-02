@@ -31,6 +31,8 @@ namespace Element {
         ElementType type = EMPTY;
         /** @brief Marks whether this pixel was already processed this frame. */
         bool updatedThisFrame = false;
+        /** @brief Index into the element's color palette for rendering variation. */
+        uint8_t colorIndex = 0;
     };
 
     /**

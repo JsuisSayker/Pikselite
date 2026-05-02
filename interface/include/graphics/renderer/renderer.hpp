@@ -8,10 +8,12 @@
 #include <graphics/graphicsEnum.hpp>
 #include <engine/pixels/pixelEnum.hpp>
 #include <graphics/renderer/camera.hpp>
+#include <engine/pixels/simulation/element.hpp>
 #include <box2d/box2d.h>
 
 #include <vector>
 #include <iostream>
+#include <random>
 
 /**
  * @brief The graphics namespace contains classes and functions related to rendering and user interface management.
@@ -92,6 +94,13 @@ namespace graphics {
          * Note: After calling this method, the specified texture ID will no longer be valid and should not be used for rendering. Any sprites or pixels using this texture will need to be updated to use a different texture or removed from rendering.
          */
         void unloadTexture(GLuint textureID);
+
+        uint8_t generatePixelColorIndex(int x, int y) const {
+            uint32_t h = x * 374761393u + y * 668265263u; // large primes
+            h = (h ^ (h >> 13)) * 1274126177u;
+            h =  h ^ (h >> 16);
+            return h % PALETTE_SIZE; // Modulo by the number of colors in the palette
+        }
 
     private:
         SDL_Window* _window;

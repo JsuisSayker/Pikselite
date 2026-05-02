@@ -127,8 +127,9 @@ namespace editors {
             int ly = toLocal(targetGY);
 
             Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-            chunk.set(lx, ly, Element::Pixel{cell.type});
-            objectPixels.push_back(Element::Pixel{cell.type});
+            uint8_t colorIndex = _renderer->generatePixelColorIndex(anchorGX + cell.localGX, anchorGY + cell.localGY);
+            chunk.set(lx, ly, Element::Pixel{cell.type, false, colorIndex});
+            objectPixels.push_back(Element::Pixel{cell.type, false, colorIndex});
             objectLocalCoords.push_back({cell.localGX, cell.localGY});
         }
 

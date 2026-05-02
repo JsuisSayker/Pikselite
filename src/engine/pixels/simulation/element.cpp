@@ -98,14 +98,52 @@ void updateDebug(ChunkGrid& grid, int x, int y)
 
 void Simulation::initElements()
 {
-    g_elements[Element::EMPTY] = { "Empty", {0,0,0}, 0, SOLID_STATIC, 0, nullptr, -1};
-    g_elements[Element::SAND] = { "Sand", {194,178,128}, 5, SOLID_DYNAMIC, 1, updateSand, -1};
-    g_elements[Element::WATER] = { "Water", {0,0,255}, 2, LIQUID, 5, updateWater, -1};
-    g_elements[Element::FIRE] = { "Fire", {255,100,0}, 1, GAS, 1, updateFire, -1};
-    g_elements[Element::STONE] = { "Stone", {100,100,100}, 255, SOLID_STATIC, 0, updateStone, -1};
-    g_elements[Element::DIRT] = { "Dirt", {120, 72, 0}, 10, SOLID_STATIC, 1, updateDirt, -1};
-    g_elements[Element::DEBUG] = { "Debug", {255,0,255}, 1, SOLID_STATIC, 0, updateDebug, -1};
+    g_elements[Element::EMPTY] = { "Empty", {}, 0, SOLID_STATIC, 0, nullptr, -1};
+    g_elements[Element::SAND] = { "Sand", {}, 5, SOLID_DYNAMIC, 1, updateSand, -1};
+    g_elements[Element::WATER] = { "Water", {}, 2, LIQUID, 5, updateWater, -1};
+    g_elements[Element::FIRE] = { "Fire", {}, 1, GAS, 1, updateFire, -1};
+    g_elements[Element::STONE] = { "Stone", {}, 255, SOLID_STATIC, 0, updateStone, -1};
+    g_elements[Element::DIRT] = { "Dirt", {}, 10, SOLID_STATIC, 1, updateDirt, -1};
+    g_elements[Element::DEBUG] = { "Debug", {}, 1, SOLID_STATIC, 0, updateDebug, -1};
+    
+    g_elements[Element::SAND].colorPalette = {{
+        {194, 178, 128},
+        {206, 188, 140},
+        {182, 164, 116},
+        {216, 198, 150}
+    }};
+    g_elements[Element::WATER].colorPalette = {{
+        {35, 105, 220},
+        {40, 110, 220},
+        {50, 120, 220},
+        {30, 100, 220}
+    }};
+    g_elements[Element::FIRE].colorPalette = {{
+        {255, 80, 0},
+        {255, 120, 0},
+        {255, 180, 50},
+        {200, 40, 0}
+    }};
+    g_elements[Element::STONE].colorPalette = {{
+        {95, 95, 100},
+        {75, 75, 80},
+        {115, 115, 120},
+        {70, 70, 75}
+    }};
+    g_elements[Element::DIRT].colorPalette = {{
+        {110, 75, 40},
+        {130, 90, 50},
+        {90, 60, 30},
+        {70, 45, 20}
+    }};
+    g_elements[Element::DEBUG].colorPalette = {{
+        {255, 0, 255},
+        {200, 0, 200},
+        {150, 0, 150},
+        {255, 100, 255}
+    }};
 }
+
 
 void Simulation::update()
 {

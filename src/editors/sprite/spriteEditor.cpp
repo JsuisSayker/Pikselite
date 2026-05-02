@@ -179,9 +179,11 @@ namespace editors {
         int lx = ((gridX % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
         int ly = ((gridY % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
 
-        Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-        chunk.set(lx, ly, Element::Pixel{_currentElementType}); // use selected element
+        // colorIndex can be used for simple variation based on position, or could be extended to use a more complex palette system in the future
+        uint8_t colorIndex = _renderer->generatePixelColorIndex(gridX, gridY);
 
+        Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+        chunk.set(lx, ly, Element::Pixel{_currentElementType, false, colorIndex}); // use selected element
 
         _currentPixel = getPixelAt(worldPos);
     }
@@ -212,7 +214,6 @@ namespace editors {
             }
         }
 
-        std::cout << "Saved sprite to: " << filename << std::endl;
         return true;
     }
 
@@ -234,9 +235,8 @@ namespace editors {
             int ly = toLocal(targetGY);
 
             Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-            chunk.set(lx, ly, Element::Pixel{cell.type});
+            uint8_t colorIndex = _renderer->generatePixelColorIndex(targetGX, targetGY);
+            chunk.set(lx, ly, Element::Pixel{cell.type, false, colorIndex});
         }
-
-        std::cout << "Placed sprite at grid: (" << anchorGX << ", " << anchorGY << ")" << std::endl;
     }
 } // namespace editors
