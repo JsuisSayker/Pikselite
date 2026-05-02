@@ -1,10 +1,12 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <engine/pixels/simulation/chunk.hpp>
 
-constexpr int GRAVITY_DIR = -1;
+constexpr int GRAVITY_DIR  = -1;
+constexpr int PALETTE_SIZE = 4;
 
 enum ElementState : uint8_t
 {
@@ -14,14 +16,28 @@ enum ElementState : uint8_t
     GAS,
 };
 
+struct ColorPalette
+{
+    uint8_t r, g, b;
+};
+
+struct fireBehavior
+{
+    uint8_t              flammability     = 0;
+    uint8_t              burnDuration     = 0;
+    uint8_t              burnSpreadChance = 0;
+    Element::ElementType burnToElement    = Element::EMPTY;
+};
+
 struct ElementDefinition
 {
-    std::string  name;
-    uint8_t      color[3];
-    uint8_t      density;
-    ElementState state;
+    std::string                            name;
+    std::array<ColorPalette, PALETTE_SIZE> colorPalette;
+    uint8_t                                density;
+    ElementState                           state;
 
-    uint8_t dispersionRate;
+    uint8_t      dispersionRate;
+    fireBehavior fireParams;
 
     void (*update)(ChunkGrid& grid, int x, int y);
 

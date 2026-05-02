@@ -49,6 +49,17 @@ namespace engine
         void entityDestroyed(ecs::EntityID entity);
 
         /**
+         * @brief Shuts down all systems, clearing their state.
+         */
+        void shutdownAll()
+        {
+            for (auto& system : systems)
+            {
+                system->shutdown();
+            }
+        }
+
+        /**
          * @brief Adds a new system of type T to the manager and returns a reference to it.
          *
          * @tparam T

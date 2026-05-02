@@ -21,6 +21,8 @@ namespace Element
         STONE,
         /** @brief Dirt element. */
         DIRT,
+        /** @brief Wood element. */
+        WOOD,
         /** @brief Debug-only element. */
         DEBUG,
     };
@@ -34,6 +36,12 @@ namespace Element
         ElementType type = EMPTY;
         /** @brief Marks whether this pixel was already processed this frame. */
         bool updatedThisFrame = false;
+        /** @brief Index into the element's color palette for rendering variation. */
+        uint8_t colorIndex = 0;
+        /** @brief Timer for how long this pixel has been burning, used by fire behavior. */
+        uint8_t burnTimer = 0;
+        /** @brief Whether this pixel is currently on fire, used by fire behavior. */
+        bool isBurning = false;
     };
 
     /**

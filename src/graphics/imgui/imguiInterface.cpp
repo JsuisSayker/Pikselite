@@ -761,6 +761,46 @@ namespace graphics
                     }
                 }
 
+                if (!selected.hasComponent<ecs::components::Script>())
+                {
+                    availableComponents.push_back("Script");
+                }
+                else
+                {
+                    auto s = selected.getComponent<ecs::components::Script>();
+
+                    ImGui::Checkbox("##enabledScript", &s->enabled);
+                    ImGui::SameLine();
+                    bool open = ImGui::CollapsingHeader("Script Component", nullptr,
+                                                        ImGuiTreeNodeFlags_DefaultOpen);
+
+                    if (open)
+                    {
+                        ImGui::BeginDisabled(!s->enabled);
+
+                        if (ImGui::Button("Reset##Script"))
+                        {
+                            s->scriptPath = "scripts/movement.lua";
+                        }
+
+                        char scriptPathBuffer[512] = {0};
+                        std::strncpy(scriptPathBuffer, s->scriptPath.c_str(),
+                                     sizeof(scriptPathBuffer) - 1);
+                        if (ImGui::InputText("Script Path", scriptPathBuffer,
+                                             sizeof(scriptPathBuffer)))
+                        {
+                            s->scriptPath = scriptPathBuffer;
+                        }
+
+                        ImGui::EndDisabled();
+
+                        if (ImGui::Button("Remove##Script"))
+                        {
+                            selected.removeComponent<ecs::components::Script>();
+                        }
+                    }
+                }
+
                 if (!selected.hasComponent<ecs::components::PhysicsBody>())
                 {
                     availableComponents.push_back("PhysicsBody");
@@ -876,6 +916,14 @@ namespace graphics
                                     availableComponents.erase(
                                         std::remove(availableComponents.begin(),
                                                     availableComponents.end(), "PhysicsBody"),
+                                        availableComponents.end());
+                                }
+                                else if (comp == "Script")
+                                {
+                                    selected.addComponent(ecs::components::Script{});
+                                    availableComponents.erase(
+                                        std::remove(availableComponents.begin(),
+                                                    availableComponents.end(), "Script"),
                                         availableComponents.end());
                                 }
                                 query.clear();

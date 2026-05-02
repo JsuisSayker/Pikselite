@@ -108,7 +108,11 @@ namespace editors
             p.position      = {(anchorGX + cell.localGX) * PIXEL_SIZE,
                                (anchorGY + cell.localGY) * PIXEL_SIZE};
             const auto& def = g_elements[cell.type];
-            p.color         = {def.color[0] / 255.0f, def.color[1] / 255.0f, def.color[2] / 255.0f};
+            uint8_t     i   = _renderer->generatePixelColorIndex(anchorGX + cell.localGX,
+                                                                 anchorGY + cell.localGY);
+            p.color         = {def.colorPalette[i % PALETTE_SIZE].r / 255.0f,
+                               def.colorPalette[i % PALETTE_SIZE].g / 255.0f,
+                               def.colorPalette[i % PALETTE_SIZE].b / 255.0f};
             p.color *= 0.65f;
             out.push_back(p);
         }
@@ -135,8 +139,9 @@ namespace editors
                     graphics::Pixel rp;
                     rp.position = {(cx * CHUNK_SIZE + x) * PIXEL_SIZE,
                                    (cy * CHUNK_SIZE + y) * PIXEL_SIZE};
-                    rp.color    = {def.color[0] / 255.0f, def.color[1] / 255.0f,
-                                   def.color[2] / 255.0f};
+                    rp.color    = {def.colorPalette[sp.colorIndex % PALETTE_SIZE].r / 255.0f,
+                                   def.colorPalette[sp.colorIndex % PALETTE_SIZE].g / 255.0f,
+                                   def.colorPalette[sp.colorIndex % PALETTE_SIZE].b / 255.0f};
                     result.push_back(rp);
                 }
             }

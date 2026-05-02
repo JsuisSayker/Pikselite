@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cstring>
 #include <engine/ecs/components/physicsComponent.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/components/transformComponent.hpp>
 #include <engine/ecs/components/velocityComponent.hpp>

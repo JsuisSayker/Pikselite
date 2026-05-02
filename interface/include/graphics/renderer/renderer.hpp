@@ -8,9 +8,11 @@
 
 #include <box2d/box2d.h>
 #include <engine/pixels/pixelEnum.hpp>
+#include <engine/pixels/simulation/element.hpp>
 #include <graphics/graphicsEnum.hpp>
 #include <graphics/renderer/camera.hpp>
 #include <iostream>
+#include <random>
 #include <vector>
 
 /**
@@ -129,6 +131,14 @@ namespace graphics
          * different texture or removed from rendering.
          */
         void unloadTexture(GLuint textureID);
+
+        uint8_t generatePixelColorIndex(int x, int y) const
+        {
+            uint32_t h = x * 374761393u + y * 668265263u; // large primes
+            h          = (h ^ (h >> 13)) * 1274126177u;
+            h          = h ^ (h >> 16);
+            return h % PALETTE_SIZE; // Modulo by the number of colors in the palette
+        }
 
       private:
         SDL_Window*   _window;
