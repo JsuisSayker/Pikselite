@@ -38,6 +38,7 @@ find_package(Lua REQUIRED)
 find_path(SOL2_INCLUDE_DIRS "sol/sol.hpp")
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(box2d CONFIG REQUIRED)
+find_package(nfd CONFIG REQUIRED)
 # find_package(imgui CONFIG REQUIRED)
 
 # -------------------------------------------------
@@ -48,7 +49,6 @@ add_subdirectory(src/graphics)
 add_subdirectory(src/editors)
 add_subdirectory(src/engine)
 add_subdirectory(tests)
-add_subdirectory(external/nfd)
 
 # -------------------------------------------------
 # Build executable
@@ -112,11 +112,11 @@ target_link_libraries(${PROJECT_NAME}
     SDL2::SDL2main
     GLEW::GLEW
     OpenGL::GL
-    nfd
     imgui_backends
     pikselite_interface
     graphics
     engine
     editor
     nlohmann_json::nlohmann_json
+    nfd::nfd
 )
