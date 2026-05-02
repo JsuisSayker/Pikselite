@@ -102,6 +102,8 @@ namespace engine
     {
         _boxWorld.init({0.0f, -500.0f});
 
+        loadProjects(_projects);
+
         // Register ECS components
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
@@ -174,9 +176,11 @@ namespace engine
             {
                 ZoneScopedN("GamePreview");
                 runGamePreview();
-            }
+            } else if (isProjectsListPageActive) {
+                ZoneScopedN("ProjectsListPage");
+                runProjectsListPage(sdlInterface, renderer, imguiInterface);
 
-            if (isProjectEditorActive)
+            } else if (isProjectEditorActive)
             {
                 ZoneScopedN("ProjectEditor");
                 projectEditor->run(event);
@@ -194,8 +198,7 @@ namespace engine
                         projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid, gameObjectCounter);
                     }
                 }
-            }
-            else
+            } else if (isSpriteEditorActive)
             {
                 ZoneScopedN("SpriteEditor");
                 spriteEditor->run(event);
@@ -281,6 +284,95 @@ namespace engine
         glViewport(0, 0, w, h);
     }
 
+    void Core::sortProjects(std::vector<projects::Project>& projects)
+    {
+        std::sort(projects.begin(), projects.end(),
+            [](const projects::Project& a, const projects::Project& b)
+            {
+                return a.lastOpened > b.lastOpened;
+            });
+    }
+
+    void Core::openProject(int index)
+    {
+        _currentProject = _projects[index];
+
+        auto now = std::chrono::system_clock::now();
+        _currentProject.lastOpened = now;
+        _projects[index].lastOpened = now;
+
+        sortProjects(_projects);
+        saveProjects(_projects);
+
+        switchToProjectEditor = true;
+    }
+
+    void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface)
+    {
+        renderer.clear();
+        imguiInterface.startFrame();
+
+        imguiInterface.fileToolBar();
+
+        float toolbarHeight = 40.0f;
+        
+        ImGuiIO& io = ImGui::GetIO();
+        ImGui::SetNextWindowPos(ImVec2(0, toolbarHeight));
+        ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - toolbarHeight));
+
+        ImGuiWindowFlags flags =
+            ImGuiWindowFlags_NoDecoration |
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoSavedSettings;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::Begin("MainWindow", nullptr, flags);
+
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(170, 100));
+        ImGui::BeginChild("projectOptions", ImVec2(0, 250), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
+        if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
+            openProject(selectedProjectIndex);
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetStyle().ItemSpacing.y);
+
+        float remainingHeight = ImGui::GetContentRegionAvail().y;
+
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(150, 30));
+        ImGui::BeginChild("projectDisplaySection", ImVec2(0, remainingHeight), true);
+        if (!switchToProjectEditor)
+        {
+            selectedProjectIndex = imguiInterface.recentProjectsDisplay(_projects);
+        
+            if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
+                openProject(selectedProjectIndex);
+            }
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+
+        ImGui::End();
+        ImGui::PopStyleVar();
+        
+        imguiInterface.endFrame(sdlInterface.getWindow());
+        renderer.present(sdlInterface.getWindow());
+
+        if (switchToProjectEditor) {
+            isProjectsListPageActive = false;
+            isProjectEditorActive = true;
+            switchToProjectEditor = false;
+            projectEditor->setCurrentProject(_currentProject);
+        }
+    }
+
     void Core::run()
     {
         init();
@@ -360,7 +452,11 @@ namespace engine
             break;
         }
         case graphics::KEY_TAB:
-            isProjectEditorActive = !isProjectEditorActive;
+            if (!isProjectsListPageActive)
+            {
+                isProjectEditorActive = !isProjectEditorActive;
+                isSpriteEditorActive = !isSpriteEditorActive;
+            }
             break;
         case graphics::KEY_F5:
             if (!isGamePreviewActive)
@@ -645,6 +741,87 @@ namespace engine
         }
 
         return result;
+    }
+
+    void Core::saveProjects(const std::vector<projects::Project> &projects)
+    {
+        std::filesystem::create_directories("config");
+
+        std::ofstream file("config/projects.json");
+
+        if (!file.is_open())
+        {
+            std::cerr << "Failed to open projects.json for writing\n";
+            return;
+        }
+
+        nlohmann::json j = nlohmann::json::array();
+
+        for (const auto& p : projects)
+        {
+            std::time_t t = std::chrono::system_clock::to_time_t(p.lastOpened);
+
+            j.push_back({
+                {"name", p.name},
+                {"path", p.path.string()},
+                {"lastOpened", t}
+            });
+        }
+
+        file << j.dump(4);
+    }
+
+    void Core::loadProjects(std::vector<projects::Project> &projects)
+    {
+        std::filesystem::path projectsPath ="config/projects.json";
+        std::ifstream file(projectsPath);
+
+        if (!file.is_open()) {
+            std::cout << "No projects.json found, starting with empty project list.\n";
+            return;
+        }
+        
+
+        nlohmann::json j;
+
+        try
+        {
+            file >> j;
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << "Failed to parse projects.json: " << e.what() << std::endl;
+            return;
+        }
+        
+        projects.clear();
+
+        for (const auto& item : j)
+        {
+            projects::Project p;
+
+            if (!item.contains("name") || !item.contains("path"))
+                continue;
+
+            p.name = item["name"].get<std::string>();
+            p.path = item["path"].get<std::string>();
+
+            std::time_t t = item.value("lastOpened", 0);
+            if (t != 0)
+            {
+                p.lastOpened = std::chrono::system_clock::from_time_t(t);
+            }
+
+            if (!std::filesystem::exists(p.path))
+            {
+                std::cout << "Skipping missing project: " << p.path << std::endl;
+                continue;
+            }
+
+            projects.push_back(p);
+        }
+        
+        sortProjects(projects);
     }
 
     void Core::saveScene(const std::string &filename)

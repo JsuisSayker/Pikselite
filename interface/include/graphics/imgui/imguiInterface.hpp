@@ -34,6 +34,8 @@
 #include <string>
 #include <cstring>
 
+#include <projects.hpp> //////////////////////// temporary
+
 namespace graphics {
     class ImguiInterface {
     public:
@@ -49,7 +51,7 @@ namespace graphics {
                                 std::string &saveSpritePath,
                                 Element::ElementType& selectedElementType); // updated signature
         void spriteTopToolbar(int &selectedTool, int &brushSize, bool &isEraserActive);
-        void projectTopBarEmpty();
+        void projectTopBar(std::string title = "");
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
@@ -57,7 +59,12 @@ namespace graphics {
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject);
+
+        void fileToolBar();
+        int projectOptionsBar(std::vector<projects::Project> &projects);
+        int recentProjectsDisplay(std::vector<projects::Project> &projects);
+        void clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
 
         void startFrame();
         void endFrame(SDL_Window* window);
@@ -65,5 +72,12 @@ namespace graphics {
     private:
         SDL_Window* _window;
         SDL_GLContext _glContext;
+        bool newProjectCreated = false;
+        ImFont* fontLight = nullptr;
+        ImFont* fontRegularSmall = nullptr;
+        ImFont* fontRegularBig = nullptr;
+        ImFont* fontBoldSmall = nullptr;
+        ImFont* fontBoldBig = nullptr;
+        ImTextureID thumbnail;
     };
 } // namespace graphics

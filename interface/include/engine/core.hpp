@@ -19,7 +19,12 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <filesystem>
+#include <chrono>
+#include <algorithm>
 #include <SDL2/SDL.h>
+
+#include <projects.hpp>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -67,11 +72,15 @@ namespace engine
         editors::SpriteEditor *spriteEditor = nullptr;
         editors::ProjectEditor *projectEditor = nullptr;
 
-        
-        bool isProjectEditorActive = false;
-        
+        std::vector<projects::Project> _projects;
+        projects::Project _currentProject;
+
         bool running;
+        bool isProjectsListPageActive = true;
         bool isGamePreviewActive = false;
+        bool isProjectEditorActive = false;
+        bool isSpriteEditorActive = false;
+        bool switchToProjectEditor = false;
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
         graphics::ImguiInterface imguiInterface;
@@ -179,10 +188,10 @@ namespace engine
          */
         void shutdown();
 
-        /**
-         * @brief Copies project editor data into core runtime state.
-         * @return `true` if copy happened, otherwise `false`.
-         */
+        void openProject(int index);
+        void sortProjects(std::vector<projects::Project>& projects);
+        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface); ///////////////////////////
+
         bool copyProjectEditorDataToCore();
 
         // Creates an ECS entity for each Pixel::GameObject,
@@ -214,6 +223,9 @@ namespace engine
          */
         std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
 
+        void saveProjects(const std::vector<projects::Project> &projects);
+        void loadProjects(std::vector<projects::Project> &projects);
+
         // save scene and load scene functions for project editor
         /**
          * @brief Saves current scene to disk.
@@ -229,4 +241,5 @@ namespace engine
          */
         bool loadScene(const std::string& filename);
     };
+
 } // namespace engine
