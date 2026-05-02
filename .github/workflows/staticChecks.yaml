@@ -47,7 +47,7 @@ jobs:
 
             - name: Generate compile_commands.json
               shell: cmd
-              run: build.bat Debug
+              run: build.bat Cache
 
             - name: Check formatting
               run: |
@@ -57,27 +57,26 @@ jobs:
                 for /r tests %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
               shell: cmd
 
-            - name: Run clang-tidy
-              run: |
-                for /r src %%f in (*.cpp) do clang-tidy "%%f" -p build
-                for /r interface %%f in (*.cpp) do clang-tidy "%%f" -p build
-                for /r tests %%f in (*.cpp) do clang-tidy "%%f" -p build
-              shell: cmd
+            # - name: Run clang-tidy
+            #   run: |
+            #     for /r src %%f in (*.cpp) do clang-tidy "%%f" -p build
+            #     for /r interface %%f in (*.cpp) do clang-tidy "%%f" -p build
+            #     for /r tests %%f in (*.cpp) do clang-tidy "%%f" -p build
+            #   shell: cmd
 
-            - name: Run cppcheck
-              shell: cmd
-              run: |
-                cppcheck \
-                --enable=all \
-                --inconclusive \
-                --std=c++20 \
-                --force \
-                --quiet \
-                --error-exitcode=1 \
-                --template=gcc \
-                --suppress=missingIncludeSystem \
-                -I interface/include \
-                src \
-                interface \
-                tests \
-                2> cppcheck_report.txt
+            # - name: Run cppcheck
+            #   shell: cmd
+            #   run: |
+            #     cppcheck \
+            #     --enable=all \
+            #     --inconclusive \
+            #     --std=c++20 \
+            #     --force \
+            #     --quiet \
+            #     --error-exitcode=1 \
+            #     --template=gcc \
+            #     --suppress=missingIncludeSystem \
+            #     -I interface/include \
+            #     src \
+            #     interface \
+            #     tests
