@@ -74,7 +74,10 @@ jobs:
                 --force \
                 --quiet \
                 --error-exitcode=1 \
-                -I include \
+                --template=gcc \
+                --suppress=missingIncludeSystem \
+                -I interface/include \
                 src \
                 interface \
-                tests
+                tests \
+                2> cppcheck_report.txt
