@@ -47,7 +47,7 @@ jobs:
 
             - name: Generate compile_commands.json
               shell: cmd
-              run: build.bat Cache
+              run: build.bat
 
             - name: Check formatting
               run: |
