@@ -40,7 +40,7 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
 void updateWater(ChunkGrid& grid, int x, int y)
 {
-    auto& def = g_elements[Element::WATER];
+    ElementDefinition& def = g_elements[Element::WATER];
 
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR)) return;
 
@@ -84,6 +84,42 @@ void updateSand(ChunkGrid& grid, int x, int y)
 }
 void updateFire(ChunkGrid& grid, int x, int y)
 {
+    Element::Pixel& p = grid.getPixelRef(x, y);
+    ElementDefinition& def = g_elements[Element::FIRE];
+
+    if (p.burnTimer > 0)
+        p.burnTimer--;
+    else {
+        p = Element::Pixel{Element::EMPTY};
+        return;
+    }
+
+    const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+    for (auto& d : dirs)
+    {
+        int nx = x + d[0];
+        int ny = y + d[1];
+
+        Element::Pixel& neighbor = grid.getPixelRef(nx, ny);
+        if (neighbor.type == Element::EMPTY || neighbor.type == Element::FIRE || neighbor.isBurning) continue;
+
+        ElementDefinition& nDef = g_elements[neighbor.type];
+        if (nDef.fireParams.flammability == 0) continue;
+        
+        uint16_t chance = (nDef.fireParams.flammability * def.fireParams.burnSpreadChance) / 255;
+        if (rand() % 255 < chance)
+        {
+            neighbor.isBurning = true;
+            neighbor.burnTimer = nDef.fireParams.burnDuration;
+            neighbor.updatedThisFrame = true;
+        }
+    }
+
+    if (tryMove(grid, x, y, x, y - GRAVITY_DIR)) return;
+    int dir = (rand() % 2) ? -1 : 1;
+    if (tryMove(grid, x, y, x + dir, y - GRAVITY_DIR)) return;
+    if (tryMove(grid, x, y, x - dir, y - GRAVITY_DIR)) return;
 }
 void updateStone(ChunkGrid& grid, int x, int y)
 {
@@ -91,21 +127,21 @@ void updateStone(ChunkGrid& grid, int x, int y)
 void updateDirt(ChunkGrid& grid, int x, int y)
 {
 }
-
 void updateDebug(ChunkGrid& grid, int x, int y)
 {
 }
 
 void Simulation::initElements()
 {
-    g_elements[Element::EMPTY] = { "Empty", {}, 0, SOLID_STATIC, 0, nullptr, -1};
-    g_elements[Element::SAND] = { "Sand", {}, 5, SOLID_DYNAMIC, 1, updateSand, -1};
-    g_elements[Element::WATER] = { "Water", {}, 2, LIQUID, 5, updateWater, -1};
-    g_elements[Element::FIRE] = { "Fire", {}, 1, GAS, 1, updateFire, -1};
-    g_elements[Element::STONE] = { "Stone", {}, 255, SOLID_STATIC, 0, updateStone, -1};
-    g_elements[Element::DIRT] = { "Dirt", {}, 10, SOLID_STATIC, 1, updateDirt, -1};
-    g_elements[Element::DEBUG] = { "Debug", {}, 1, SOLID_STATIC, 0, updateDebug, -1};
-    
+    g_elements[Element::EMPTY] = { "Empty", {}, 0, SOLID_STATIC, 0, fireBehavior{}, nullptr, -1};
+    g_elements[Element::SAND] = { "Sand", {}, 5, SOLID_DYNAMIC, 1, fireBehavior{}, updateSand, -1};
+    g_elements[Element::WATER] = { "Water", {}, 2, LIQUID, 5, fireBehavior{}, updateWater, -1};
+    g_elements[Element::FIRE] = { "Fire", {}, 1, GAS, 1, fireBehavior{}, updateFire, -1};
+    g_elements[Element::STONE] = { "Stone", {}, 255, SOLID_STATIC, 0, fireBehavior{}, updateStone, -1};
+    g_elements[Element::DIRT] = { "Dirt", {}, 10, SOLID_STATIC, 1, fireBehavior{}, updateDirt, -1};
+    g_elements[Element::WOOD] = { "Wood", {}, 5, SOLID_STATIC, 1, fireBehavior{150, 20, 30, Element::FIRE}, nullptr, -1};
+    g_elements[Element::DEBUG] = { "Debug", {}, 1, SOLID_STATIC, 0, fireBehavior{}, updateDebug, -1};
+
     g_elements[Element::SAND].colorPalette = {{
         {194, 178, 128},
         {206, 188, 140},
@@ -113,10 +149,10 @@ void Simulation::initElements()
         {216, 198, 150}
     }};
     g_elements[Element::WATER].colorPalette = {{
-        {35, 105, 220},
-        {40, 110, 220},
+        {30, 90, 200},
         {50, 120, 220},
-        {30, 100, 220}
+        {70, 150, 240},
+        {20, 70, 180}
     }};
     g_elements[Element::FIRE].colorPalette = {{
         {255, 80, 0},
@@ -128,7 +164,7 @@ void Simulation::initElements()
         {95, 95, 100},
         {75, 75, 80},
         {115, 115, 120},
-        {70, 70, 75}
+        {60, 60, 65}
     }};
     g_elements[Element::DIRT].colorPalette = {{
         {110, 75, 40},
@@ -136,14 +172,77 @@ void Simulation::initElements()
         {90, 60, 30},
         {70, 45, 20}
     }};
+    g_elements[Element::WOOD].colorPalette = {{
+        {120, 70, 15},
+        {140, 90, 30},
+        {100, 50, 10},
+        {160, 110, 50}
+    }};
     g_elements[Element::DEBUG].colorPalette = {{
         {255, 0, 255},
         {200, 0, 200},
         {150, 0, 150},
         {255, 100, 255}
     }};
+
+    g_elements[Element::FIRE].fireParams = {
+        200,
+        10,
+        50,
+        Element::EMPTY
+    };
+    g_elements[Element::WOOD].fireParams = {
+        150,
+        30,
+        30,
+        Element::EMPTY
+    };
 }
 
+inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
+{
+    Element::Pixel& p = grid.getPixelRef(x, y);
+    ElementDefinition& elementDef = g_elements[p.type];
+
+    if (p.type == Element::FIRE) return;
+
+    if (p.burnTimer > 0)
+        p.burnTimer--;
+    else
+    {
+        p.type = elementDef.fireParams.burnToElement;
+        p.isBurning = false;
+    }
+    
+    const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+    for (auto& d : dirs)
+    {
+        int nx = x + d[0];
+        int ny = y + d[1];
+
+        Element::Pixel& n = grid.getPixelRef(nx, ny);
+        if (n.type == Element::EMPTY || n.isBurning || n.type == Element::FIRE) continue;
+        ElementDefinition& nDef = g_elements[n.type];
+        if (nDef.fireParams.flammability == 0) continue;
+
+        uint16_t chance = (nDef.fireParams.flammability * elementDef.fireParams.burnSpreadChance) / 255;
+        if (rand() % 255 < chance)        {
+            n.isBurning = true;
+            n.burnTimer = nDef.fireParams.burnDuration;
+            n.updatedThisFrame = true;
+        }
+    }
+
+    if (rand() % 255 < elementDef.fireParams.burnSpreadChance)
+    {
+        Element::Pixel& p = grid.getPixelRef(x, y - 1);
+        if (p.type != Element::EMPTY) return;
+        p.type = Element::FIRE;
+        p.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
+        p.updatedThisFrame = true;
+    }
+}
 
 void Simulation::update()
 {
@@ -172,10 +271,15 @@ void Simulation::update()
                     continue;
 
                 p.updatedThisFrame = true;
-
-                auto& def = g_elements[p.type];
-                if (def.update)
-                    def.update(grid, cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
+                    
+                if (p.isBurning)
+                    updateBurning(grid, cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
+                else 
+                {
+                    ElementDefinition& def = g_elements[p.type];
+                    if (def.update)
+                        def.update(grid, cx * CHUNK_SIZE + x, cy * CHUNK_SIZE + y);
+                }
             }
         }
     }

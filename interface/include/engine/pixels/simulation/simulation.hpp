@@ -51,6 +51,15 @@ class Simulation {
         void update();
 
         /**
+         * @brief Updates one sand pixel behavior.
+         * @param grid Simulation grid.
+         * @param x Global X coordinate.
+         * @param y Global Y coordinate.
+         * @return void
+         */
+        inline void updateBurning(ChunkGrid& grid, int x, int y);
+
+        /**
          * @brief Resets per-pixel update flags for the current frame.
          * @return void
          */

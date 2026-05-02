@@ -19,6 +19,13 @@ struct ColorPalette {
     uint8_t r, g, b;
 };
 
+struct fireBehavior {
+    uint8_t flammability = 0;
+    uint8_t burnDuration = 0;
+    uint8_t burnSpreadChance = 0;
+    Element::ElementType burnToElement = Element::EMPTY;
+};
+
 struct ElementDefinition {
     std::string name;
     std::array<ColorPalette, PALETTE_SIZE> colorPalette;
@@ -26,7 +33,7 @@ struct ElementDefinition {
     ElementState state;
 
     uint8_t dispersionRate;
-    
+    fireBehavior fireParams;
     
     void (*update)(ChunkGrid& grid, int x, int y);
     

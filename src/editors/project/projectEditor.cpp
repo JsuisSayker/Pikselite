@@ -128,8 +128,16 @@ namespace editors {
 
             Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
             uint8_t colorIndex = _renderer->generatePixelColorIndex(anchorGX + cell.localGX, anchorGY + cell.localGY);
-            chunk.set(lx, ly, Element::Pixel{cell.type, false, colorIndex});
-            objectPixels.push_back(Element::Pixel{cell.type, false, colorIndex});
+            ElementDefinition& def = g_elements[cell.type];
+            if (cell.type == Element::FIRE) {
+                uint8_t burnDuration = def.fireParams.burnDuration;
+                chunk.set(lx, ly, Element::Pixel{cell.type, false, colorIndex, burnDuration});
+                objectPixels.push_back(Element::Pixel{cell.type, false, colorIndex, burnDuration}); 
+            }
+            else {
+                chunk.set(lx, ly, Element::Pixel{cell.type, false, colorIndex});
+                objectPixels.push_back(Element::Pixel{cell.type, false, colorIndex});
+            }
             objectLocalCoords.push_back({cell.localGX, cell.localGY});
         }
 
