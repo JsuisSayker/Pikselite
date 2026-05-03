@@ -21,4 +21,4 @@ find src include -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) \
 
 
 
-cppcheck --enable=all --inconclusive --std=c++20 --force --quiet --error-exitcode=1 --template=gcc --suppress=missingIncludeSystem -I interface/include src interface tests 2> cppcheck_report.txt
+cppcheck --enable=all --inconclusive --std=c++20 --force --quiet --error-exitcode=1 --template=gcc --suppress=missingIncludeSystem --check-level=exhaustive -I interface/include src interface tests 2> cppcheck_report.txt
