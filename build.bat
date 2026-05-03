@@ -8,6 +8,7 @@ set "BUILD_DIR=build"
 set "CONFIG_TYPE=Release"
 set "CACHE_ENABLED=0"
 set "BUILD_COVERAGE=OFF"
+set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
 if "%VCPKG_CACHE_KEY%"=="" set "VCPKG_CACHE_KEY=local-default"
 set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
@@ -24,7 +25,13 @@ if "%~1" neq "" if /I not "%~1"=="Cache" (
 
 
 :: Use CI-provided env if available, fallback to local
-if "%VCPKG_ROOT%"=="" set "VCPKG_ROOT=%CD%\vcpkg"
+if "%VCPKG_ROOT%"=="" (
+    for %%p in (%VCPKG_PATHS%) do (
+        if exist "%%p\vcpkg.exe" (
+            set "VCPKG_ROOT=%%p"
+        )
+    )
+)
 if "%VCPKG_OVERLAY_PORTS%"=="" set "VCPKG_OVERLAY_PORTS=%CD%\external\overlay-ports"
 if "%VCPKG_DEFAULT_TRIPLET%"=="" set "VCPKG_DEFAULT_TRIPLET=x64-windows"
 
