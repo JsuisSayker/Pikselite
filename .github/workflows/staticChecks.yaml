@@ -1,0 +1,82 @@
+name: Static Checks
+run-name: ${{github.event_name}}-${{github.actor}}-${{github.run_id}}
+
+on:
+    push:
+        branches-ignore:
+            - "ga-ignore-*"
+    pull_request:
+        branches-ignore:
+            - "ga-ignore-*"
+
+
+jobs:
+    static_checks:
+        runs-on: windows-latest
+
+        env:
+            BUILD_DIR: build
+            VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+            VCPKG_DEFAULT_TRIPLET: x64-windows
+            VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
+            CI: true
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Cache vcpkg
+              uses: actions/cache@v4
+              with:
+                path: |
+                  build/vcpkg_installed
+                  vcpkg
+                key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+
+            - name: Setup MSVC
+              uses: ilammy/msvc-dev-cmd@v1
+
+            - name: Setup vcpkg
+              shell: cmd
+              run: |
+                    if not exist "%VCPKG_ROOT%" (
+                    git clone https://github.com/microsoft/vcpkg "%VCPKG_ROOT%"
+                    call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
+                    )
+
+
+            - name: Generate compile_commands.json
+              shell: cmd
+              run: build.bat
+
+            - name: Check formatting
+              run: |
+                choco install llvm -y
+                for /r src %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
+                for /r interface %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
+                for /r tests %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
+              shell: cmd
+
+            # - name: Run clang-tidy
+            #   run: |
+            #     for /r src %%f in (*.cpp) do clang-tidy "%%f" -p build
+            #     for /r interface %%f in (*.cpp) do clang-tidy "%%f" -p build
+            #     for /r tests %%f in (*.cpp) do clang-tidy "%%f" -p build
+            #   shell: cmd
+
+            # - name: Run cppcheck
+            #   shell: cmd
+            #   run: |
+            #     cppcheck \
+            #     --enable=all \
+            #     --inconclusive \
+            #     --std=c++20 \
+            #     --force \
+            #     --quiet \
+            #     --error-exitcode=1 \
+            #     --template=gcc \
+            #     --suppress=missingIncludeSystem \
+            #     -I interface/include \
+            #     src \
+            #     interface \
+            #     tests

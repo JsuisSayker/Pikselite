@@ -10,7 +10,6 @@
     "lua",
     "sol2",
     "gtest",
-    "box2d",
     "nlohmann-json",
     "box2d",
     {

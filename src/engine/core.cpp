@@ -1,86 +1,66 @@
+#include <cmath>
 #include <engine/core.hpp>
-#include <engine/ecs/components/transformComponent.hpp>
-#include <engine/ecs/components/velocityComponent.hpp>
-#include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/ecs/components/scriptComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
 #include <engine/ecs/systems/movementSystem.hpp>
 #include <tracy/Tracy.hpp>
 
-#include <cmath>
-
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
-#pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
 #error "Not set"
 #endif
-#include <engine/ecs/systems/spriteRenderSystem.hpp>
-#include <engine/ecs/systems/scriptSystem.hpp>
 #include <box2d/box2d.h>
-#include <imgui.h>
 #include <engine/ecs/systems/physicsSystem.hpp>
-#include <fstream>
+#include <engine/ecs/systems/scriptSystem.hpp>
+#include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <filesystem>
+#include <fstream>
+#include <imgui.h>
 
 namespace
 {
-    json pixelToJson(const graphics::Pixel &pixel)
-    {
-        return {
-            {"x", pixel.position.x},
-            {"y", pixel.position.y},
-            {"r", pixel.color.r},
-            {"g", pixel.color.g},
-            {"b", pixel.color.b}};
-    }
 
-    graphics::Pixel pixelFromJson(const json &j)
-    {
-        return {
-            {j.value("x", 0.0f), j.value("y", 0.0f)},
-            {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}};
-    }
-
-    json gameObjectToJson(const Pixel::GameObject &go)
-    {
-        // TODO
-    }
-
-    Pixel::GameObject gameObjectFromJson(const json &j)
-    {
-        // TODO
-    }
-
-    bool buildPhysicsTrianglesFromGameObjectPixels(const Pixel::GameObject& go,
-                                                   Simulation& simulation,
-                                                   std::vector<ecs::components::PhysicsTriangle>& outTriangles)
+    bool buildPhysicsTrianglesFromGameObjectPixels(
+        const Pixel::GameObject& go, Simulation& simulation,
+        std::vector<ecs::components::PhysicsTriangle>& outTriangles)
     {
         outTriangles.clear();
-        if (go.pixelLocalCoords.empty()) return false;
+        if (go.pixelLocalCoords.empty())
+            return false;
 
         Element::Region region;
-        const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
-        if (pairCount == 0) return false;
+        const size_t    pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
+        if (pairCount == 0)
+            return false;
 
         region.pixels.reserve(pairCount);
         for (size_t i = 0; i < pairCount; ++i)
         {
             const auto& srcPixel = go.pixels[i];
-            if (srcPixel.type == Element::EMPTY) continue;
+            if (srcPixel.type == Element::EMPTY)
+                continue;
 
             const auto& def = g_elements[srcPixel.type];
-            if (def.state != SOLID_STATIC) continue;
+            if (def.state != SOLID_STATIC)
+                continue;
 
             region.pixels.push_back(go.pixelLocalCoords[i]);
         }
 
-        if (region.pixels.empty()) return false;
+        if (region.pixels.empty())
+            return false;
 
         simulation.buildRegionContoursMarchingSquare(region);
         simulation.simplifyRegionContours(region, 0.6f);
         simulation.triangulateRegion(region);
 
-        if (region.triangles.empty()) return false;
+        if (region.triangles.empty())
+            return false;
 
         outTriangles.reserve(region.triangles.size());
         for (const auto& tri : region.triangles)
@@ -94,7 +74,7 @@ namespace
 
         return true;
     }
-}
+} // namespace
 
 namespace engine
 {
@@ -110,26 +90,29 @@ namespace engine
         componentManager.registerComponent<ecs::components::Script>();
 
         // Register ECS systems
-        auto &movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
+        auto&          movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
         ecs::Signature movementSig;
         movementSig.set(componentManager.getComponentType<ecs::components::Transform>());
         movementSig.set(componentManager.getComponentType<ecs::components::Velocity>());
         systemManager.setSignature<ecs::systems::MovementSystem>(movementSig);
 
         // Sprite render system (needs Transform + Sprite)
-        auto &spriteRenderSys = systemManager.addSystem<ecs::systems::SpriteRenderSystem>(&renderer, &_camera);
+        auto& spriteRenderSys =
+            systemManager.addSystem<ecs::systems::SpriteRenderSystem>(&renderer, &_camera);
         ecs::Signature spriteSig;
         spriteSig.set(componentManager.getComponentType<ecs::components::Transform>());
         spriteSig.set(componentManager.getComponentType<ecs::components::Sprite>());
         systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
 
         // Script system (needs Transform + Velocity) — runs Lua scripts
-        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>(&entityManager, &systemManager, &eventBus, &_chunkGrid, &_camera);
+        auto& scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>(
+            &entityManager, &systemManager, &eventBus, &_chunkGrid, &_camera);
         ecs::Signature scriptSig;
         scriptSig.set(componentManager.getComponentType<ecs::components::Script>());
         systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
 
-        auto &physicsSys = systemManager.addSystem<ecs::systems::PhysicsSystem>(&_boxWorld, &eventBus);
+        auto& physicsSys =
+            systemManager.addSystem<ecs::systems::PhysicsSystem>(&_boxWorld, &eventBus);
         ecs::Signature physicsSig;
         physicsSig.set(componentManager.getComponentType<ecs::components::Transform>());
         physicsSig.set(componentManager.getComponentType<ecs::components::PhysicsBody>());
@@ -139,21 +122,23 @@ namespace engine
         componentManager.setEntityMutationCallback([this](ecs::EntityID entityId)
                                                    { refreshEntitySignature(entityId); });
 
-        componentManager.setComponentRemovalCallback([this](ecs::EntityID entityId, const std::type_index& componentType)
-        {
-            if (componentType == typeid(ecs::components::PhysicsBody))
+        componentManager.setComponentRemovalCallback(
+            [this](ecs::EntityID entityId, const std::type_index& componentType)
             {
-                if (auto* physicsSys = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+                if (componentType == typeid(ecs::components::PhysicsBody))
                 {
-                    physicsSys->entityDestroyed(entityId);
+                    if (auto* physicsSys = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+                    {
+                        physicsSys->entityDestroyed(entityId);
+                    }
                 }
-            }
-        });
+            });
 
         scriptSys.init();
 
-        spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
-        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface, &componentManager);
+        spriteEditor  = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
+        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface,
+                                                   &componentManager);
 
         _pixelSimulation.setPhysicsWorld(_boxWorld.getWorldId(), PIXEL_SIZE);
     }
@@ -191,7 +176,8 @@ namespace engine
                 {
                     if (loadScene(_sceneFilename))
                     {
-                        projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid, gameObjectCounter);
+                        projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid,
+                                                    gameObjectCounter);
                     }
                 }
             }
@@ -206,11 +192,9 @@ namespace engine
 
     void Core::runGamePreview()
     {
-        SDL_Window *gameWindow = SDL_CreateWindow(
-            "Game Preview",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-            WINDOW_WIDTH, WINDOW_HEIGHT,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        SDL_Window* gameWindow =
+            SDL_CreateWindow("Game Preview", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                             WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
 
@@ -249,21 +233,21 @@ namespace engine
 
             renderer.clear();
 
-            std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
+            std::vector<graphics::Pixel> framePixels =
+                buildRenderPixels(_pixelSimulation.getGrid());
 
             _renderPixels = framePixels;
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
             // debug draw Box2D bodies
-            if (auto *physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+            if (auto* physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
             {
                 const std::vector<b2BodyId> ecsDebugBodies = physicsSystem->getDebugBodies();
-                renderer.drawBox2DDebug(_boxWorld.getWorldId(), ecsDebugBodies, _camera, 1.0f, glm::vec3(1.0f, 0.8f, 0.2f));
+                renderer.drawBox2DDebug(_boxWorld.getWorldId(), ecsDebugBodies, _camera, 1.0f,
+                                        glm::vec3(1.0f, 0.8f, 0.2f));
             }
 
-            
-
-            if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
+            if (auto* spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
             {
                 spriteSystem->update(0.0, componentManager);
             }
@@ -285,93 +269,40 @@ namespace engine
         shutdown();
     }
 
-    std::vector<graphics::Pixel> Core::buildSquarePixels(glm::vec2 center, float size, glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float halfSize = size * 0.5f;
-
-        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
-        {
-            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
-            {
-                pixels.push_back({center + glm::vec2(x, y), color});
-            }
-        }
-
-        return pixels;
-    }
-
-    std::vector<graphics::Pixel> Core::buildRotatedSquarePixels(glm::vec2 center, float size, float rotation, glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float halfSize = size * 0.5f;
-        const float cosine = std::cos(rotation);
-        const float sine = std::sin(rotation);
-
-        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
-        {
-            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
-            {
-                const float rotatedX = x * cosine - y * sine;
-                const float rotatedY = x * sine + y * cosine;
-                pixels.push_back({center + glm::vec2(rotatedX, rotatedY), color});
-            }
-        }
-
-        return pixels;
-    }
-
-    std::vector<graphics::Pixel> Core::buildRectanglePixels(glm::vec2 center, float width, float height, glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float halfWidth = width * 0.5f;
-        const float halfHeight = height * 0.5f;
-
-        for (float y = -halfHeight + PIXEL_SIZE * 0.5f; y < halfHeight; y += PIXEL_SIZE)
-        {
-            for (float x = -halfWidth + PIXEL_SIZE * 0.5f; x < halfWidth; x += PIXEL_SIZE)
-            {
-                pixels.push_back({center + glm::vec2(x, y), color});
-            }
-        }
-
-        return pixels;
-    }
-
     graphics::InputEvent Core::handleEvents()
     {
         graphics::InputEvent event = sdlInterface.pollEvent();
 
         switch (event.type)
         {
-        case graphics::QUIT:
-            running = false;
-            break;
-        case graphics::WINDOW_CLOSE:
-        {
-            uint32_t mainWindowID = sdlInterface.getWindowID();
-            if (event.windowID == mainWindowID)
-            {
+            case graphics::QUIT:
                 running = false;
-            }
-            break;
-        }
-        case graphics::KEY_TAB:
-            isProjectEditorActive = !isProjectEditorActive;
-            break;
-        case graphics::KEY_F5:
-            if (!isGamePreviewActive)
+                break;
+            case graphics::WINDOW_CLOSE:
             {
-                // Ensure preview reads the latest pixels/chunks from the editor state.
-                copyProjectEditorDataToCore();
-                isGamePreviewActive = true;
-                graphics::Camera2D editorCamera = projectEditor->getCamera();
-                setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
-                setCameraZoom(editorCamera.getZoom());
+                uint32_t mainWindowID = sdlInterface.getWindowID();
+                if (event.windowID == mainWindowID)
+                {
+                    running = false;
+                }
+                break;
             }
-            break;
-        default:
-            break;
+            case graphics::KEY_TAB:
+                isProjectEditorActive = !isProjectEditorActive;
+                break;
+            case graphics::KEY_F5:
+                if (!isGamePreviewActive)
+                {
+                    // Ensure preview reads the latest pixels/chunks from the editor state.
+                    copyProjectEditorDataToCore();
+                    isGamePreviewActive             = true;
+                    graphics::Camera2D editorCamera = projectEditor->getCamera();
+                    setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
+                    setCameraZoom(editorCamera.getZoom());
+                }
+                break;
+            default:
+                break;
         }
         return event;
     }
@@ -428,8 +359,8 @@ namespace engine
             return false;
 
         _renderPixels = projectEditor->getPixels();
-        _gameObjects = projectEditor->getGameObjects();
-        _chunkGrid = projectEditor->getChunkGrid();
+        _gameObjects  = projectEditor->getGameObjects();
+        _chunkGrid    = projectEditor->getChunkGrid();
         _pixelSimulation.setGrid(_chunkGrid);
         gameObjectCounter = projectEditor->getGameObjectCounter();
 
@@ -444,7 +375,7 @@ namespace engine
         systemManager.shutdownAll();
 
         // Destroy ALL entities (including dynamically created ones from Lua)
-        const auto& allEntities = entityManager.getEntities();
+        const auto&                allEntities = entityManager.getEntities();
         std::vector<ecs::EntityID> entitiesToDestroy;
         for (const auto& entityPtr : allEntities)
         {
@@ -453,44 +384,45 @@ namespace engine
                 entitiesToDestroy.push_back(entityPtr->id);
             }
         }
-        
+
         for (ecs::EntityID entityId : entitiesToDestroy)
         {
             componentManager.entityDestroyed(entityId);
             systemManager.entityDestroyed(entityId);
             entityManager.destroyEntity(ecs::Entity(entityId));
         }
-        
+
         _gameObjectToEntity.clear();
         _gameObjectOccupiedCells.clear();
 
-        for (const auto &go : _gameObjects)
+        for (const auto& go : _gameObjects)
         {
-            ecs::Entity entity = entityManager.createEntity();
-            ecs::EntityID eid = entity.id;
+            ecs::Entity   entity = entityManager.createEntity();
+            ecs::EntityID eid    = entity.id;
 
-            if (auto *scriptSys = systemManager.getSystem<ecs::systems::ScriptSystem>())
+            if (auto* scriptSys = systemManager.getSystem<ecs::systems::ScriptSystem>())
             {
-                const std::string runtimeName = go.name.empty() ? ("GameObject_" + std::to_string(go.id)) : go.name;
+                const std::string runtimeName =
+                    go.name.empty() ? ("GameObject_" + std::to_string(go.id)) : go.name;
                 scriptSys->setEntityName(eid, runtimeName);
             }
 
             // loop on components in game object and add to ECS entity
-            for (const auto &[compType, compData] : go.components)
+            for (const auto& [compType, compData] : go.components)
             {
                 if (compType == std::type_index(typeid(ecs::components::Transform)))
                 {
-                    const auto &t = std::any_cast<ecs::components::Transform>(compData);
+                    const auto& t = std::any_cast<ecs::components::Transform>(compData);
                     componentManager.addComponent(eid, t);
                 }
                 else if (compType == std::type_index(typeid(ecs::components::Velocity)))
                 {
-                    const auto &v = std::any_cast<ecs::components::Velocity>(compData);
+                    const auto& v = std::any_cast<ecs::components::Velocity>(compData);
                     componentManager.addComponent(eid, v);
                 }
                 else if (compType == std::type_index(typeid(ecs::components::Sprite)))
                 {
-                    const auto &s = std::any_cast<ecs::components::Sprite>(compData);
+                    const auto& s = std::any_cast<ecs::components::Sprite>(compData);
                     componentManager.addComponent(eid, s);
                 }
                 else if (compType == std::type_index(typeid(ecs::components::PhysicsBody)))
@@ -500,7 +432,8 @@ namespace engine
                     if (p.triangles.empty())
                     {
                         std::vector<ecs::components::PhysicsTriangle> generatedTriangles;
-                        if (buildPhysicsTrianglesFromGameObjectPixels(go, _pixelSimulation, generatedTriangles))
+                        if (buildPhysicsTrianglesFromGameObjectPixels(go, _pixelSimulation,
+                                                                      generatedTriangles))
                         {
                             p.triangles = std::move(generatedTriangles);
                         }
@@ -510,7 +443,7 @@ namespace engine
                 }
                 else if (compType == std::type_index(typeid(ecs::components::Script)))
                 {
-                    const auto &s = std::any_cast<ecs::components::Script>(compData);
+                    const auto& s = std::any_cast<ecs::components::Script>(compData);
                     componentManager.addComponent(eid, s);
                 }
             }
@@ -536,23 +469,32 @@ namespace engine
 
         for (const auto& go : _gameObjects)
         {
-            if (!go.isActive) continue;
-            if (go.pixelLocalCoords.empty() || go.pixels.empty()) continue;
+            if (!go.isActive)
+                continue;
+            if (go.pixelLocalCoords.empty() || go.pixels.empty())
+                continue;
 
             auto entityIt = _gameObjectToEntity.find(go.id);
-            if (entityIt == _gameObjectToEntity.end()) continue;
+            if (entityIt == _gameObjectToEntity.end())
+                continue;
 
             const ecs::EntityID entityId = entityIt->second;
-            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
-            if (!componentManager.hasComponent<ecs::components::PhysicsBody>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!componentManager.hasComponent<ecs::components::PhysicsBody>(entityId))
+                continue;
 
-            const auto& physics = componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
-            if (!physics.enabled) continue;
-            if (physics.bodyType != b2_dynamicBody) continue;
+            const auto& physics =
+                componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
+            if (!physics.enabled)
+                continue;
+            if (physics.bodyType != b2_dynamicBody)
+                continue;
 
-            const auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+            const auto& transform =
+                componentManager.getComponent<ecs::components::Transform>(entityId);
             const float cosine = std::cos(transform.rotation);
-            const float sine = std::sin(transform.rotation);
+            const float sine   = std::sin(transform.rotation);
 
             const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
             std::vector<Element::Vec2i> occupiedCells;
@@ -561,13 +503,17 @@ namespace engine
             for (size_t i = 0; i < pairCount; ++i)
             {
                 const auto& srcPixel = go.pixels[i];
-                if (srcPixel.type == Element::EMPTY) continue;
+                if (srcPixel.type == Element::EMPTY)
+                    continue;
 
                 const auto& def = g_elements[srcPixel.type];
-                if (def.state != SOLID_STATIC) continue;
+                if (def.state != SOLID_STATIC)
+                    continue;
 
-                const float localX = (static_cast<float>(go.pixelLocalCoords[i].x) + 0.5f) * PIXEL_SIZE;
-                const float localY = (static_cast<float>(go.pixelLocalCoords[i].y) + 0.5f) * PIXEL_SIZE;
+                const float localX =
+                    (static_cast<float>(go.pixelLocalCoords[i].x) + 0.5f) * PIXEL_SIZE;
+                const float localY =
+                    (static_cast<float>(go.pixelLocalCoords[i].y) + 0.5f) * PIXEL_SIZE;
 
                 const float worldX = transform.x + (localX * cosine - localY * sine);
                 const float worldY = transform.y + (localX * sine + localY * cosine);
@@ -610,7 +556,7 @@ namespace engine
         std::vector<graphics::Pixel> result;
         result.reserve(10000);
 
-        for (const auto &[key, chunk] : grid.chunks)
+        for (const auto& [key, chunk] : grid.chunks)
         {
             // Correct signed decode from packed int64 key
             const int cx = static_cast<int32_t>(key >> 32);
@@ -620,11 +566,11 @@ namespace engine
             {
                 for (int x = 0; x < CHUNK_SIZE; ++x)
                 {
-                    const Element::Pixel &simPixel = chunk.pixels[y * CHUNK_SIZE + x];
+                    const Element::Pixel& simPixel = chunk.pixels[y * CHUNK_SIZE + x];
                     if (simPixel.type == Element::EMPTY)
                         continue;
 
-                    const auto &def = g_elements[simPixel.type];
+                    const auto& def = g_elements[simPixel.type];
 
                     graphics::Pixel renderPixel;
 
@@ -632,36 +578,34 @@ namespace engine
                     const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
                     const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
 
-                    renderPixel.position = glm::vec2(
-                        gx * PIXEL_SIZE,
-                        gy * PIXEL_SIZE);
+                    renderPixel.position = glm::vec2(gx * PIXEL_SIZE, gy * PIXEL_SIZE);
 
-                
                     if (simPixel.isBurning)
                     {
                         glm::vec3 pColor = glm::vec3(
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f
-                        );
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
                         ElementDefinition& fireDef = g_elements[Element::FIRE];
-                        glm::vec3 fColor = glm::vec3(
+                        glm::vec3          fColor  = glm::vec3(
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f
-                        );
-                        float progress = (def.fireParams.burnDuration > 0)
-                            ? 1.0f - (static_cast<float>(simPixel.burnTimer) / def.fireParams.burnDuration)
-                            : 1.0f;
-                        progress = glm::clamp(progress, 0.0f, 1.0f);
+                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
+                        float progress    = (def.fireParams.burnDuration > 0)
+                                                ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
+                                                          def.fireParams.burnDuration)
+                                                : 1.0f;
+                        progress          = glm::clamp(progress, 0.0f, 1.0f);
                         renderPixel.color = glm::mix(pColor, fColor, progress);
-                        renderPixel.color = glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
-                    } else {
+                        renderPixel.color =
+                            glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
+                    }
+                    else
+                    {
                         renderPixel.color = glm::vec3(
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f
-                        );
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
                     }
 
                     result.push_back(renderPixel);
@@ -672,12 +616,12 @@ namespace engine
         return result;
     }
 
-    void Core::saveScene(const std::string &filename)
+    void Core::saveScene(const std::string& filename)
     {
         // TODO
     }
 
-    bool Core::loadScene(const std::string &filename)
+    bool Core::loadScene(const std::string& filename)
     {
         // TODO
         return false;

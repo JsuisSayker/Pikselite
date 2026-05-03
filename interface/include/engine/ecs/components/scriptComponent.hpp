@@ -9,7 +9,7 @@ namespace ecs::components
      */
     struct Script
     {
-        bool enabled = true;
+        bool        enabled    = true;
         std::string scriptPath = "scripts/movement.lua";
     };
 } // namespace ecs::components
