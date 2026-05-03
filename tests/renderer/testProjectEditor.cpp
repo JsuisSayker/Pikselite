@@ -54,11 +54,11 @@ static void writeSimpleSpriteData(const std::string& filename)
     uint32_t numPixels = 1;
     fout.write(reinterpret_cast<const char*>(&numPixels), sizeof(numPixels));
     float px = 0.0f, py = 0.0f, r = 0.1f, g = 0.2f, b = 0.3f;
-    fout.write(reinterpret_cast<const char*>(&px), sizeof(px));
-    fout.write(reinterpret_cast<const char*>(&py), sizeof(py));
-    fout.write(reinterpret_cast<const char*>(&r), sizeof(r));
-    fout.write(reinterpret_cast<const char*>(&g), sizeof(g));
-    fout.write(reinterpret_cast<const char*>(&b), sizeof(b));
+    fout.write(reinterpret_cast<const char*>(std::addressof(px)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(py)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(r)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(g)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(b)), sizeof(float));
 
     fout.close();
 }

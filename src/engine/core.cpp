@@ -24,30 +24,6 @@
 
 namespace
 {
-    json pixelToJson(const graphics::Pixel& pixel)
-    {
-        return {{"x", pixel.position.x},
-                {"y", pixel.position.y},
-                {"r", pixel.color.r},
-                {"g", pixel.color.g},
-                {"b", pixel.color.b}};
-    }
-
-    graphics::Pixel pixelFromJson(const json& j)
-    {
-        return {{j.value("x", 0.0f), j.value("y", 0.0f)},
-                {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}};
-    }
-
-    json gameObjectToJson(const Pixel::GameObject& go)
-    {
-        // TODO
-    }
-
-    Pixel::GameObject gameObjectFromJson(const json& j)
-    {
-        // TODO
-    }
 
     bool buildPhysicsTrianglesFromGameObjectPixels(
         const Pixel::GameObject& go, Simulation& simulation,
@@ -291,63 +267,6 @@ namespace engine
         init();
         mainLoop();
         shutdown();
-    }
-
-    std::vector<graphics::Pixel> Core::buildSquarePixels(glm::vec2 center, float size,
-                                                         glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float                  halfSize = size * 0.5f;
-
-        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
-        {
-            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
-            {
-                pixels.push_back({center + glm::vec2(x, y), color});
-            }
-        }
-
-        return pixels;
-    }
-
-    std::vector<graphics::Pixel> Core::buildRotatedSquarePixels(glm::vec2 center, float size,
-                                                                float     rotation,
-                                                                glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float                  halfSize = size * 0.5f;
-        const float                  cosine   = std::cos(rotation);
-        const float                  sine     = std::sin(rotation);
-
-        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
-        {
-            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
-            {
-                const float rotatedX = x * cosine - y * sine;
-                const float rotatedY = x * sine + y * cosine;
-                pixels.push_back({center + glm::vec2(rotatedX, rotatedY), color});
-            }
-        }
-
-        return pixels;
-    }
-
-    std::vector<graphics::Pixel> Core::buildRectanglePixels(glm::vec2 center, float width,
-                                                            float height, glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float                  halfWidth  = width * 0.5f;
-        const float                  halfHeight = height * 0.5f;
-
-        for (float y = -halfHeight + PIXEL_SIZE * 0.5f; y < halfHeight; y += PIXEL_SIZE)
-        {
-            for (float x = -halfWidth + PIXEL_SIZE * 0.5f; x < halfWidth; x += PIXEL_SIZE)
-            {
-                pixels.push_back({center + glm::vec2(x, y), color});
-            }
-        }
-
-        return pixels;
     }
 
     graphics::InputEvent Core::handleEvents()

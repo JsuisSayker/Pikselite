@@ -91,7 +91,7 @@ namespace graphics
                 return result;
             }
 
-            ImGuiIO& io = ImGui::GetIO();
+            const ImGuiIO& io = ImGui::GetIO();
             if (io.WantCaptureKeyboard || io.WantCaptureMouse)
                 continue;
             switch (event.type)

@@ -258,11 +258,11 @@ namespace graphics
 
         // Attribute layout
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel),
-                              (void*)offsetof(Pixel, position));
+                              reinterpret_cast<void*>(offsetof(Pixel, position)));
         glEnableVertexAttribArray(0);
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel),
-                              (void*)offsetof(Pixel, color));
+                              reinterpret_cast<void*>(offsetof(Pixel, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
@@ -303,11 +303,11 @@ namespace graphics
                      GL_DYNAMIC_DRAW);
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel),
-                              (void*)offsetof(Pixel, position));
+                              reinterpret_cast<void*>(offsetof(Pixel, position)));
         glEnableVertexAttribArray(0);
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel),
-                              (void*)offsetof(Pixel, color));
+                              reinterpret_cast<void*>(offsetof(Pixel, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
@@ -375,11 +375,11 @@ namespace graphics
                      GL_DYNAMIC_DRAW);
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
-                              (void*)offsetof(LineVertex, position));
+                              reinterpret_cast<void*>(offsetof(LineVertex, position)));
         glEnableVertexAttribArray(0);
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
-                              (void*)offsetof(LineVertex, color));
+                              reinterpret_cast<void*>(offsetof(LineVertex, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_LINES, 0, (GLsizei)vertices.size());
@@ -411,11 +411,11 @@ namespace graphics
                      GL_DYNAMIC_DRAW);
 
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
-                              (void*)offsetof(LineVertex, position));
+                              reinterpret_cast<void*>(offsetof(LineVertex, position)));
         glEnableVertexAttribArray(0);
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
-                              (void*)offsetof(LineVertex, color));
+                              reinterpret_cast<void*>(offsetof(LineVertex, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_LINES, 0, (GLsizei)segments.size());

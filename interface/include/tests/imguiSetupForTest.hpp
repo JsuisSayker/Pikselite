@@ -8,7 +8,7 @@ namespace imguiTest
     class ImGuiTestCommon
     {
       public:
-        void InitImGuiForTests(SDL_Window*& window, SDL_GLContext& glContext)
+        static void InitImGuiForTests(SDL_Window*& window, SDL_GLContext& glContext)
         {
             SDL_Init(SDL_INIT_VIDEO);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -27,7 +27,7 @@ namespace imguiTest
             ImGui_ImplOpenGL3_Init("#version 330");
         }
 
-        void ShutdownImGuiForTests(SDL_Window* window, SDL_GLContext glContext)
+        static void ShutdownImGuiForTests(SDL_Window* window, SDL_GLContext glContext)
         {
             ImGui_ImplOpenGL3_Shutdown();
             ImGui_ImplSDL2_Shutdown();
