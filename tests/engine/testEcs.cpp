@@ -1,46 +1,45 @@
-#include <gtest/gtest.h>
-
+#include <engine/ecs/components/physicsComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/ecs/systems/movementSystem.hpp>
 #include <engine/managers/componentManager.hpp>
 #include <engine/managers/entityManager.hpp>
 #include <engine/managers/systemManager.hpp>
+#include <gtest/gtest.h>
 
-#include <engine/ecs/components/transformComponent.hpp>
-#include <engine/ecs/components/velocityComponent.hpp>
-#include <engine/ecs/components/physicsComponent.hpp>
-#include <engine/ecs/systems/movementSystem.hpp>
-
-namespace {
-
-ecs::components::Transform makeTransform(float x, float y)
+namespace
 {
-    ecs::components::Transform t{};
-    t.enabled = true;
-    t.x = x;
-    t.y = y;
-    t.rotation = 0.0f;
-    t.scaleX = 1.0f;
-    t.scaleY = 1.0f;
-    t.prevX = 0.0f;
-    t.prevY = 0.0f;
-    return t;
-}
 
-ecs::components::Velocity makeVelocity(float vx, float vy)
-{
-    ecs::components::Velocity v{};
-    v.enabled = true;
-    v.vx = vx;
-    v.vy = vy;
-    return v;
-}
+    ecs::components::Transform makeTransform(float x, float y)
+    {
+        ecs::components::Transform t{};
+        t.enabled  = true;
+        t.x        = x;
+        t.y        = y;
+        t.rotation = 0.0f;
+        t.scaleX   = 1.0f;
+        t.scaleY   = 1.0f;
+        t.prevX    = 0.0f;
+        t.prevY    = 0.0f;
+        return t;
+    }
 
-ecs::Signature makeMovementSignature(engine::ComponentManager& componentManager)
-{
-    ecs::Signature sig{};
-    sig.set(componentManager.getComponentType<ecs::components::Transform>());
-    sig.set(componentManager.getComponentType<ecs::components::Velocity>());
-    return sig;
-}
+    ecs::components::Velocity makeVelocity(float vx, float vy)
+    {
+        ecs::components::Velocity v{};
+        v.enabled = true;
+        v.vx      = vx;
+        v.vy      = vy;
+        return v;
+    }
+
+    ecs::Signature makeMovementSignature(engine::ComponentManager& componentManager)
+    {
+        ecs::Signature sig{};
+        sig.set(componentManager.getComponentType<ecs::components::Transform>());
+        sig.set(componentManager.getComponentType<ecs::components::Velocity>());
+        return sig;
+    }
 
 } // namespace
 
@@ -50,13 +49,15 @@ TEST(ComponentManagerTests, MutationCallbackIsTriggeredOnAddAndRemove)
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
-    int callbackCount = 0;
-    ecs::EntityID lastEntity = 0;
+    int           callbackCount = 0;
+    ecs::EntityID lastEntity    = 0;
 
-    componentManager.setEntityMutationCallback([&](ecs::EntityID entityId) {
-        ++callbackCount;
-        lastEntity = entityId;
-    });
+    componentManager.setEntityMutationCallback(
+        [&](ecs::EntityID entityId)
+        {
+            ++callbackCount;
+            lastEntity = entityId;
+        });
 
     constexpr ecs::EntityID entity = 42;
     componentManager.addComponent<ecs::components::Transform>(entity, makeTransform(1.0f, 2.0f));
@@ -100,8 +101,9 @@ TEST(SystemManagerTests, MovementSystemMembershipFollowsSignature)
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
-    auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
-    systemManager.setSignature<ecs::systems::MovementSystem>(makeMovementSignature(componentManager));
+    auto&                 movement = systemManager.addSystem<ecs::systems::MovementSystem>();
+    systemManager.setSignature<ecs::systems::MovementSystem>(
+        makeMovementSignature(componentManager));
 
     constexpr ecs::EntityID entity = 7;
 
@@ -126,7 +128,7 @@ TEST(SystemManagerTests, SystemWithoutConfiguredSignatureDoesNotMatch)
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
-    auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
+    auto&                 movement = systemManager.addSystem<ecs::systems::MovementSystem>();
 
     constexpr ecs::EntityID entity = 9;
     systemManager.entitySignatureChanged(entity, makeMovementSignature(componentManager));
@@ -142,16 +144,18 @@ TEST(SystemManagerTests, UpdateAffectsOnlyMatchingEntities)
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
-    auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
-    systemManager.setSignature<ecs::systems::MovementSystem>(makeMovementSignature(componentManager));
+    auto&                 movement = systemManager.addSystem<ecs::systems::MovementSystem>();
+    systemManager.setSignature<ecs::systems::MovementSystem>(
+        makeMovementSignature(componentManager));
 
-    constexpr ecs::EntityID moving = 1;
+    constexpr ecs::EntityID moving       = 1;
     constexpr ecs::EntityID staticEntity = 2;
 
     componentManager.addComponent<ecs::components::Transform>(moving, makeTransform(0.0f, 0.0f));
     componentManager.addComponent<ecs::components::Velocity>(moving, makeVelocity(3.0f, -1.0f));
 
-    componentManager.addComponent<ecs::components::Transform>(staticEntity, makeTransform(10.0f, 20.0f));
+    componentManager.addComponent<ecs::components::Transform>(staticEntity,
+                                                              makeTransform(10.0f, 20.0f));
 
     systemManager.entitySignatureChanged(moving, makeMovementSignature(componentManager));
 
@@ -165,7 +169,8 @@ TEST(SystemManagerTests, UpdateAffectsOnlyMatchingEntities)
     EXPECT_FLOAT_EQ(movedTransform.x, 6.0f);
     EXPECT_FLOAT_EQ(movedTransform.y, -2.0f);
 
-    const auto& staticTransform = componentManager.getComponent<ecs::components::Transform>(staticEntity);
+    const auto& staticTransform =
+        componentManager.getComponent<ecs::components::Transform>(staticEntity);
     EXPECT_FLOAT_EQ(staticTransform.x, 10.0f);
     EXPECT_FLOAT_EQ(staticTransform.y, 20.0f);
 

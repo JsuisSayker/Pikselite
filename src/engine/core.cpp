@@ -1,30 +1,19 @@
+#include <cmath>
 #include <engine/core.hpp>
 #include <tracy/Tracy.hpp>
-
-#include <cmath>
+#include <engine/ecs/systems/spriteRenderSystem.hpp>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
-#pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
 #error "Not set"
 #endif
-#include <engine/ecs/systems/spriteRenderSystem.hpp>
-#include <engine/ecs/systems/scriptSystem.hpp>
 #include <box2d/box2d.h>
-#include <imgui.h>
 #include <engine/ecs/systems/physicsSystem.hpp>
 
 namespace
 {
-    json pixelToJson(const graphics::Pixel &pixel)
-    {
-        return {
-            {"x", pixel.position.x},
-            {"y", pixel.position.y},
-            {"r", pixel.color.r},
-            {"g", pixel.color.g},
-            {"b", pixel.color.b}};
-    }
 
     graphics::Pixel pixelFromJson(const json &j)
     {
@@ -83,7 +72,8 @@ namespace engine
                     _sceneFilename = projectEditor->getSceneFilename();
                     if (loadScene(_sceneFilename))
                     {
-                        projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid, gameObjectCounter);
+                        projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid,
+                                                    gameObjectCounter);
                     }
                 }
             }
@@ -98,11 +88,9 @@ namespace engine
 
     void Core::runGamePreview()
     {
-        SDL_Window *gameWindow = SDL_CreateWindow(
-            "Game Preview",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-            WINDOW_WIDTH, WINDOW_HEIGHT,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        SDL_Window* gameWindow =
+            SDL_CreateWindow("Game Preview", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                             WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
 
@@ -141,18 +129,21 @@ namespace engine
 
             renderer.clear();
 
-            std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
+            std::vector<graphics::Pixel> framePixels =
+                buildRenderPixels(_pixelSimulation.getGrid());
 
             _renderPixels = framePixels;
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
-            if (auto *physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+            // debug draw Box2D bodies
+            if (auto* physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
             {
                 const std::vector<b2BodyId> ecsDebugBodies = physicsSystem->getDebugBodies();
-                renderer.drawBox2DDebug(_boxWorld.getWorldId(), ecsDebugBodies, _camera, 1.0f, glm::vec3(1.0f, 0.8f, 0.2f));
+                renderer.drawBox2DDebug(_boxWorld.getWorldId(), ecsDebugBodies, _camera, 1.0f,
+                                        glm::vec3(1.0f, 0.8f, 0.2f));
             }
 
-            if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
+            if (auto* spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
             {
                 spriteSystem->update(0.0, componentManager);
             }
@@ -174,93 +165,40 @@ namespace engine
         shutdown();
     }
 
-    std::vector<graphics::Pixel> Core::buildSquarePixels(glm::vec2 center, float size, glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float halfSize = size * 0.5f;
-
-        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
-        {
-            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
-            {
-                pixels.push_back({center + glm::vec2(x, y), color});
-            }
-        }
-
-        return pixels;
-    }
-
-    std::vector<graphics::Pixel> Core::buildRotatedSquarePixels(glm::vec2 center, float size, float rotation, glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float halfSize = size * 0.5f;
-        const float cosine = std::cos(rotation);
-        const float sine = std::sin(rotation);
-
-        for (float y = -halfSize + PIXEL_SIZE * 0.5f; y < halfSize; y += PIXEL_SIZE)
-        {
-            for (float x = -halfSize + PIXEL_SIZE * 0.5f; x < halfSize; x += PIXEL_SIZE)
-            {
-                const float rotatedX = x * cosine - y * sine;
-                const float rotatedY = x * sine + y * cosine;
-                pixels.push_back({center + glm::vec2(rotatedX, rotatedY), color});
-            }
-        }
-
-        return pixels;
-    }
-
-    std::vector<graphics::Pixel> Core::buildRectanglePixels(glm::vec2 center, float width, float height, glm::vec3 color) const
-    {
-        std::vector<graphics::Pixel> pixels;
-        const float halfWidth = width * 0.5f;
-        const float halfHeight = height * 0.5f;
-
-        for (float y = -halfHeight + PIXEL_SIZE * 0.5f; y < halfHeight; y += PIXEL_SIZE)
-        {
-            for (float x = -halfWidth + PIXEL_SIZE * 0.5f; x < halfWidth; x += PIXEL_SIZE)
-            {
-                pixels.push_back({center + glm::vec2(x, y), color});
-            }
-        }
-
-        return pixels;
-    }
-
     graphics::InputEvent Core::handleEvents()
     {
         graphics::InputEvent event = sdlInterface.pollEvent();
 
         switch (event.type)
         {
-        case graphics::QUIT:
-            running = false;
-            break;
-        case graphics::WINDOW_CLOSE:
-        {
-            uint32_t mainWindowID = sdlInterface.getWindowID();
-            if (event.windowID == mainWindowID)
-            {
+            case graphics::QUIT:
                 running = false;
-            }
-            break;
-        }
-        case graphics::KEY_TAB:
-            isProjectEditorActive = !isProjectEditorActive;
-            break;
-        case graphics::KEY_F5:
-            if (!isGamePreviewActive)
+                break;
+            case graphics::WINDOW_CLOSE:
             {
-                // Ensure preview reads the latest pixels/chunks from the editor state.
-                copyProjectEditorDataToCore();
-                isGamePreviewActive = true;
-                graphics::Camera2D editorCamera = projectEditor->getCamera();
-                setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
-                setCameraZoom(editorCamera.getZoom());
+                uint32_t mainWindowID = sdlInterface.getWindowID();
+                if (event.windowID == mainWindowID)
+                {
+                    running = false;
+                }
+                break;
             }
-            break;
-        default:
-            break;
+            case graphics::KEY_TAB:
+                isProjectEditorActive = !isProjectEditorActive;
+                break;
+            case graphics::KEY_F5:
+                if (!isGamePreviewActive)
+                {
+                    // Ensure preview reads the latest pixels/chunks from the editor state.
+                    copyProjectEditorDataToCore();
+                    isGamePreviewActive             = true;
+                    graphics::Camera2D editorCamera = projectEditor->getCamera();
+                    setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
+                    setCameraZoom(editorCamera.getZoom());
+                }
+                break;
+            default:
+                break;
         }
         return event;
     }
@@ -317,7 +255,7 @@ namespace engine
         std::vector<graphics::Pixel> result;
         result.reserve(10000);
 
-        for (const auto &[key, chunk] : grid.chunks)
+        for (const auto& [key, chunk] : grid.chunks)
         {
             // Correct signed decode from packed int64 key
             const int cx = static_cast<int32_t>(key >> 32);
@@ -327,11 +265,11 @@ namespace engine
             {
                 for (int x = 0; x < CHUNK_SIZE; ++x)
                 {
-                    const Element::Pixel &simPixel = chunk.pixels[y * CHUNK_SIZE + x];
+                    const Element::Pixel& simPixel = chunk.pixels[y * CHUNK_SIZE + x];
                     if (simPixel.type == Element::EMPTY)
                         continue;
 
-                    const auto &def = g_elements[simPixel.type];
+                    const auto& def = g_elements[simPixel.type];
 
                     graphics::Pixel renderPixel;
 
@@ -339,14 +277,35 @@ namespace engine
                     const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
                     const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
 
-                    renderPixel.position = glm::vec2(
-                        gx * PIXEL_SIZE,
-                        gy * PIXEL_SIZE);
+                    renderPixel.position = glm::vec2(gx * PIXEL_SIZE, gy * PIXEL_SIZE);
 
-                    renderPixel.color = glm::vec3(
-                        def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
-                        def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                        def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
+                    if (simPixel.isBurning)
+                    {
+                        glm::vec3 pColor = glm::vec3(
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
+                        ElementDefinition& fireDef = g_elements[Element::FIRE];
+                        glm::vec3          fColor  = glm::vec3(
+                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
+                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
+                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
+                        float progress    = (def.fireParams.burnDuration > 0)
+                                                ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
+                                                          def.fireParams.burnDuration)
+                                                : 1.0f;
+                        progress          = glm::clamp(progress, 0.0f, 1.0f);
+                        renderPixel.color = glm::mix(pColor, fColor, progress);
+                        renderPixel.color =
+                            glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
+                    }
+                    else
+                    {
+                        renderPixel.color = glm::vec3(
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
+                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
+                    }
 
                     result.push_back(renderPixel);
                 }

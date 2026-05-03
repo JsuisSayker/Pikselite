@@ -1,5 +1,7 @@
-#include "engine/ecs/entity.hpp"
 #include "engine/managers/entityManager.hpp"
+
+#include "engine/ecs/entity.hpp"
+
 #include <algorithm>
 
 // ...existing code...
@@ -30,7 +32,7 @@ namespace engine
     void EntityManager::destroyEntity(ecs::Entity entity)
     {
         auto it = std::remove_if(entities.begin(), entities.end(),
-                                 [entity](const std::unique_ptr<ecs::Entity> &e)
+                                 [entity](const std::unique_ptr<ecs::Entity>& e)
                                  { return e->id == entity.id; });
         if (it != entities.end())
         {
@@ -45,12 +47,12 @@ namespace engine
         return signatures.find(entity) != signatures.end();
     }
 
-    const std::vector<std::unique_ptr<ecs::Entity>> &EntityManager::getEntities() const
+    const std::vector<std::unique_ptr<ecs::Entity>>& EntityManager::getEntities() const
     {
         return entities;
     }
 
-    void EntityManager::setSignature(ecs::EntityID entity, const ecs::Signature &signature)
+    void EntityManager::setSignature(ecs::EntityID entity, const ecs::Signature& signature)
     {
         signatures[entity] = signature;
     }

@@ -16,8 +16,8 @@ namespace engine::physics
         }
 
         b2WorldDef worldDef = b2DefaultWorldDef();
-        worldDef.gravity = gravity;
-        worldId = b2CreateWorld(&worldDef);
+        worldDef.gravity    = gravity;
+        worldId             = b2CreateWorld(&worldDef);
     }
 
     void BoxWorld::shutdown()
