@@ -63,6 +63,18 @@ namespace engine
                  */
         void setCameraZoom(float zoom) { _camera.setZoom(zoom); }
 
+        /**
+         * @brief Draws sprites with layer strictly below the given value.
+         * @param layer Upper bound (exclusive).
+         */
+        void drawSpritesBelowLayer(int layer);
+
+        /**
+         * @brief Draws sprites with layer strictly above the given value.
+         * @param layer Lower bound (exclusive).
+         */
+        void drawSpritesAboveLayer(int layer);
+
     private:
         editors::SpriteEditor *spriteEditor = nullptr;
         editors::ProjectEditor *projectEditor = nullptr;

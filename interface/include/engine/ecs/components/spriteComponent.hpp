@@ -17,5 +17,6 @@ namespace ecs::components
         float       width       = 640.0f;
         float       height      = 640.0f;
         bool        loaded      = false;   // true once the texture has been loaded
+        int         layer       = 1;       // rendering layer (lower renders behind higher)
     };
 } // namespace ecs::components
