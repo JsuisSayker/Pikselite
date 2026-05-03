@@ -6,6 +6,8 @@
 
 #include <graphics/imgui/imguiInterface.hpp>
 
+#include <cstdio>
+
 namespace graphics {
     /** 
      * @brief Constructs an instance of the ImguiInterface.
@@ -295,7 +297,7 @@ namespace graphics {
     std::vector<std::string> spriteFiles;
 
     /** 
-     * @brief Scans the "assets" directory for sprite files (PNG, JPG, DAT) and updates the list of available sprites. This function is called when the user clicks the "Refresh" button in the project navbar to ensure that any new or removed sprite files are reflected in the interface.
+     * @brief Scans the "assets" directory for sprite and scene files (PNG, JPG, DAT, SCENE).
      */
     void ImguiInterface::scanSprites()
     {
@@ -304,7 +306,7 @@ namespace graphics {
         std::string folder = "assets";
 
         if (!fs::exists(folder))
-        return;
+            return;
 
         for (const auto& entry : fs::directory_iterator(folder))
         {
@@ -314,7 +316,7 @@ namespace graphics {
                 std::string ext = p.extension().string();
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-                if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".webp" || ext == ".dat")
+                if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".webp" || ext == ".dat" || ext == ".scene")
                 {
                     spriteFiles.push_back(p.string());
                 }
@@ -340,6 +342,15 @@ namespace graphics {
      * @param loadSceneRequested A reference to a boolean that indicates whether a load scene request has been made.
      */
     void ImguiInterface::projectNavbar(std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested)
+    {
+        static std::string dummySceneFilename;
+        projectNavbar(currentSpriteFilename, dummySceneFilename, saveSceneRequested, loadSceneRequested);
+    }
+
+    void ImguiInterface::projectNavbar(std::string &currentSpriteFilename,
+                                       std::string &currentSceneFilename,
+                                       bool &saveSceneRequested,
+                                       bool &loadSceneRequested)
     {
         static BarConfig bottomBarConfig {
             BarOrientation::Horizontal,
@@ -386,6 +397,8 @@ namespace graphics {
                 ImGui::PushID(sprite.c_str());
             
                 std::string name = std::filesystem::path(sprite).filename().string();
+                std::string ext = std::filesystem::path(sprite).extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
             
                 ImGui::BeginGroup();
             
@@ -395,9 +408,30 @@ namespace graphics {
                 if (offset > 0)
                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
             
-                if (ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize)))
+                const bool clicked = ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize));
+                const bool doubleClicked = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+
+                if (ext == ".scene")
                 {
-                    currentSpriteFilename = sprite;
+                    if (clicked)
+                    {
+                        currentSceneFilename = sprite;
+                    }
+
+                    if (doubleClicked)
+                    {
+                        currentSceneFilename = sprite;
+                        loadSceneRequested = true;
+                    }
+
+                    currentSpriteFilename.clear();
+                }
+                else
+                {
+                    if (clicked)
+                    {
+                        currentSpriteFilename = sprite;
+                    }
                 }
             
                 float textWidth = ImGui::CalcTextSize(name.c_str()).x;
@@ -417,6 +451,7 @@ namespace graphics {
 
             ImGui::Columns(1);
         });
+
     }
 
     /** 
@@ -449,10 +484,9 @@ namespace graphics {
             std::string lowerSearch = searchBuffer;
             std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(), ::tolower);
     
-            if (ImGui::BeginChild("GameObjectList", ImVec2(0, 0), true))
+            ImGui::BeginChild("GameObjectList", ImVec2(0, 0), true);
+            for (size_t i = 0; i < gameObjects.size(); ++i)
             {
-                for (size_t i = 0; i < gameObjects.size(); ++i)
-                {
                     const std::string objName =
                         gameObjects[i].name.empty() ?
                         ("GameObject " + std::to_string(gameObjects[i].id)) :
@@ -503,9 +537,7 @@ namespace graphics {
     
                     ImGui::PopID();
                 }
-    
-                ImGui::EndChild();
-            }
+            ImGui::EndChild();
     
             if (openRenamePopup)
             {

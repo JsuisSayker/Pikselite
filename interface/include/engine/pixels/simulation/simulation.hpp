@@ -139,7 +139,6 @@ class Simulation {
          * @return Pixels-per-meter value.
          */
         float getPixelsPerMeter() const { return pixelsPerMeter; }
-
         bool tryDisplacePixel(int x, int y, int range);
 
     private:

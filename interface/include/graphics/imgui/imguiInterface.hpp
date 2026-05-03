@@ -55,6 +55,10 @@ namespace graphics {
 
         void projectNavbar(::std::string &currentSpriteFilename);
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
+        void projectNavbar(::std::string &currentSpriteFilename,
+                   ::std::string &currentSceneFilename,
+                   bool &saveSceneRequested,
+                   bool &loadSceneRequested);
         void scanSprites();
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex);

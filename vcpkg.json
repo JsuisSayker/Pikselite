@@ -13,6 +13,7 @@
     "box2d",
     "nlohmann-json",
     "box2d",
+    "zlib",
     {
       "name": "tracy",
       "version>=": "0.13.1"

@@ -59,6 +59,7 @@ namespace editors
         std::vector<Pixel::GameObject> getGameObjects() const { return _gameObjects; }
         ChunkGrid getChunkGrid() const { return _chunkGrid; }
         uint32_t getGameObjectCounter() const { return gameObjectCounter; }
+        std::string getSceneFilename() const { return _currentSceneFilename; }
 
         // Methods for consuming save and load scene requests, which will return whether a request was made and reset the request state. These methods can be called by the main application loop to determine if the user has requested to save or load a scene, and to trigger the appropriate actions in response.
         bool consumeSaveSceneRequest()
@@ -101,6 +102,7 @@ namespace editors
         bool _loadSceneRequested = false;
         int _selectedGameObjectIndex = -1;
         std::unordered_map<std::string, GLuint> _textureCache;
+        std::string _currentSceneFilename = "assets/default.scene";
         
         bool _isPlacingTexture = false;
         PendingTexture _pendingTexture = {};
