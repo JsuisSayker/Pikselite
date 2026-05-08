@@ -24,10 +24,11 @@ namespace editors
 
         _imguiInterface->startFrame();
         _imguiInterface->projectTopBarEmpty();
+        _imguiInterface->setFileExplorerDataOnly(false);
         _imguiInterface->projectNavbar(_currentSpriteFilename,
-                           _currentSceneFilename,
-                           _saveSceneRequested,
-                           _loadSceneRequested);
+                   _currentSceneFilename,
+                   _saveSceneRequested,
+                   _loadSceneRequested);
 
         if (!_currentSpriteFilename.empty())
         {

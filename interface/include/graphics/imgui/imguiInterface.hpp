@@ -57,6 +57,7 @@ namespace graphics
                    bool &saveSceneRequested,
                    bool &loadSceneRequested);
         void scanSprites();
+        void setFileExplorerDataOnly(bool dataOnly);
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
                             int&                              selectedGameObjectIndex);
@@ -65,7 +66,26 @@ namespace graphics
         void endFrame(SDL_Window* window);
 
       private:
+        struct FileEntry
+        {
+            std::string path;
+            std::string name;
+            std::string ext;
+            bool        isDir = false;
+        };
+
+        void loadExplorerIcons();
+        void unloadExplorerIcons();
+
         SDL_Window*   _window;
         SDL_GLContext _glContext;
+        std::string   _fileExplorerCurrentDir;
+        std::vector<FileEntry> _fileExplorerEntries;
+        bool _fileExplorerDataOnly = false;
+        std::string _fileClipboardPath;
+        bool _fileClipboardCut = false;
+        GLuint _iconDirTexture = 0;
+        GLuint _iconSceneTexture = 0;
+        GLuint _iconDataTexture = 0;
     };
 } // namespace graphics

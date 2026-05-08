@@ -243,7 +243,6 @@ namespace engine
         if (projectEditor)
         {
             copyProjectEditorDataToCore();
-            saveScene(_sceneFilename);
         }
         _boxWorld.shutdown();
         SDL_Quit();
