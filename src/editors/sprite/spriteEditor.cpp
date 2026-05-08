@@ -76,6 +76,7 @@ namespace editors
         _imguiInterface->pixelSpriteHandler(unusedDefaultPropertiesEditor, _newSpritePath,
                                             _currentElementType);
 
+        _imguiInterface->setFileExplorerDataOnly(true);
         _imguiInterface->projectNavbar(_currentSpriteFilename);
 
         if (!_currentSpriteFilename.empty())

@@ -101,7 +101,7 @@ namespace engine
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
                     _gameObjectOccupiedCells;
-        std::string _sceneFilename = "assets/scene.json";
+        std::string _sceneFilename = "assets/default.scene";
 
         /**
          * @brief Initializes subsystems, ECS registration, and editors.
