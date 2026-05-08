@@ -244,9 +244,59 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
     }
 }
 
+void Simulation::updateParticles()
+{
+    for (auto it = particles.begin(); it != particles.end(); )
+    {
+        it->lifetime--;
+        if (it->lifetime == 0)
+        {
+            it = particles.erase(it);
+        }
+        else
+        {
+            // simple Euler integration, can be improved with substepping or Verlet if needed
+            it->position.x += it->velocity.x;
+            it->position.y += it->velocity.y;
+
+            // apply gravity
+            it->velocity.y += 0.1f; // gravity strength, can be tuned
+
+            // apply some damping to velocity
+            it->velocity.x *= 0.98f;
+            it->velocity.y *= 0.98f;
+
+            // check for collisions with the grid and update velocity accordingly
+            int gridX = static_cast<int>(it->position.x);
+            int gridY = static_cast<int>(it->position.y);
+            Element::Pixel p = grid.getPixel(gridX, gridY);
+            if (p.type == Element::EMPTY)
+            {
+                // check if there is neighboring pixel
+                const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+                for (auto& d : dirs)
+                {
+                    int nx = gridX + d[0];
+                    int ny = gridY + d[1];
+                    Element::Pixel neighbor = grid.getPixel(nx, ny);
+                    if (neighbor.type != Element::EMPTY)
+                    {
+                        // reinsert the particle in the grid and stop its movement
+                        grid.setPixel(gridX, gridY, {it->type, false, 0, 0, false});
+                        it = particles.erase(it);
+                        break;
+                    }
+                }
+            }
+            ++it;
+        }
+    }
+}
+
 void Simulation::update()
 {
     frame++;
+    updateParticles();
     resetUpdatedFlags();
     orderChunksForUpdate();
 

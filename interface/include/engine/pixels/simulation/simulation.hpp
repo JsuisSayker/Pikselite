@@ -51,6 +51,12 @@ class Simulation {
         void update();
 
         /**
+         * @brief Updates particle behaviors and lifetimes, removing expired particles.
+         * @return void
+         */
+        void updateParticles();
+
+        /**
          * @brief Updates one sand pixel behavior.
          * @param grid Simulation grid.
          * @param x Global X coordinate.
@@ -145,6 +151,7 @@ class Simulation {
     private:
         uint64_t frame = 0;
         ChunkGrid &grid;
+        std::vector<Element::Particle> particles;
 
         struct ChunkEntry {
             int cx;
