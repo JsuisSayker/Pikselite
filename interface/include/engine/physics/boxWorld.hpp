@@ -9,7 +9,7 @@ namespace engine::physics
      */
     class BoxWorld
     {
-    public:
+      public:
         BoxWorld() = default;
 
         explicit BoxWorld(b2Vec2 gravity)
@@ -44,7 +44,7 @@ namespace engine::physics
          */
         [[nodiscard]] bool isValid() const;
 
-    private:
+      private:
         b2WorldId worldId = b2_nullWorldId;
     };
 } // namespace engine::physics

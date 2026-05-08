@@ -4,7 +4,7 @@ namespace engine
 {
     void SystemManager::update(double deltaTime, engine::ComponentManager& componentManager)
     {
-        for (const auto &system : systems)
+        for (const auto& system : systems)
         {
             if (!system->shouldRunInUpdate())
                 continue;
@@ -13,9 +13,10 @@ namespace engine
         }
     }
 
-    void SystemManager::entitySignatureChanged(ecs::EntityID entity, const ecs::Signature &entitySignature)
+    void SystemManager::entitySignatureChanged(ecs::EntityID         entity,
+                                               const ecs::Signature& entitySignature)
     {
-        for (auto &[type, system] : systemsMap)
+        for (auto& [type, system] : systemsMap)
         {
             const auto sigIt = systemSignatures.find(type);
             if (sigIt == systemSignatures.end())
@@ -25,7 +26,7 @@ namespace engine
                 continue;
             }
 
-            const auto &sysSig = sigIt->second;
+            const auto& sysSig = sigIt->second;
 
             if ((entitySignature & sysSig) == sysSig)
             {
@@ -40,7 +41,7 @@ namespace engine
 
     void SystemManager::entityDestroyed(ecs::EntityID entity)
     {
-        for (const auto &system : systems)
+        for (const auto& system : systems)
         {
             system->entityDestroyed(entity);
             system->entities.erase(entity);

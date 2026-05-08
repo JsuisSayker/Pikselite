@@ -2,13 +2,13 @@
 
 #include "Ievent.hpp"
 
+#include <algorithm>
+#include <cstdint>
 #include <functional>
+#include <memory>
+#include <typeindex>
 #include <unordered_map>
 #include <vector>
-#include <typeindex>
-#include <memory>
-#include <cstdint>
-#include <algorithm>
 
 namespace engine::events
 {
@@ -17,24 +17,23 @@ namespace engine::events
      */
     class EventBus
     {
-    public:
+      public:
         using HandlerId = std::uint64_t;
 
         /**
          * @brief Subscribes to an event type.
-         * 
-         * @tparam EventT 
-         * @param handler 
-         * @return HandlerId 
+         *
+         * @tparam EventT
+         * @param handler
+         * @return HandlerId
          */
-        template <typename EventT>
-        HandlerId subscribe(std::function<void(const EventT &)> handler)
+        template <typename EventT> HandlerId subscribe(std::function<void(const EventT&)> handler)
         {
-            auto type = std::type_index(typeid(EventT));
-            HandlerId id = ++lastId;
-            auto wrapper = [h = std::move(handler)](const IEvent &base)
+            auto      type    = std::type_index(typeid(EventT));
+            HandlerId id      = ++lastId;
+            auto      wrapper = [h = std::move(handler)](const IEvent& base)
             {
-                auto derived = dynamic_cast<const EventT *>(&base);
+                auto derived = dynamic_cast<const EventT*>(&base);
                 if (derived)
                     h(*derived);
             };
@@ -43,37 +42,37 @@ namespace engine::events
         }
 
         /**
-         * @brief Unsubscribes from an event type using the handler ID returned by the subscribe function.
-         * 
-         * @tparam EventT 
-         * @param id 
+         * @brief Unsubscribes from an event type using the handler ID returned by the subscribe
+         * function.
+         *
+         * @tparam EventT
+         * @param id
          */
-        template <typename EventT>
-        void unsubscribe(HandlerId id)
+        template <typename EventT> void unsubscribe(HandlerId id)
         {
             auto type = std::type_index(typeid(EventT));
-            auto it = handlers.find(type);
+            auto it   = handlers.find(type);
             if (it == handlers.end())
                 return;
-            auto &vec = it->second;
-            vec.erase(std::remove_if(vec.begin(), vec.end(), [id](const Handler &h)
-                                     { return h.id == id; }),
+            auto& vec = it->second;
+            vec.erase(std::remove_if(vec.begin(), vec.end(),
+                                     [id](const Handler& h) { return h.id == id; }),
                       vec.end());
         }
 
         /**
          * @brief Publishes an event to all subscribed handlers.
-         * 
-         * @param ev 
+         *
+         * @param ev
          */
         void publish(std::unique_ptr<IEvent> ev);
 
-    private:
+      private:
         // Internal struct to store handler information
         struct Handler
         {
-            HandlerId id;
-            std::function<void(const IEvent &)> fn;
+            HandlerId                          id;
+            std::function<void(const IEvent&)> fn;
         };
 
         // Map of event type to list of handlers
