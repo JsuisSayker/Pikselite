@@ -1001,44 +1001,26 @@ namespace graphics {
 
         if (HoverChangeButton("Open", buttonHeight, buttonWidth, fontBoldSmall))
         {
-            ImGui::OpenPopup("Open Project");
-        }
+            NFD::UniquePath outPath;
 
-        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Appearing);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        if (ImGui::BeginPopupModal("Open Project", nullptr))
-        {
-            for (int i = 0; i < static_cast<int>(projects.size()); i++)
+            nfdresult_t result = NFD::PickFolder(outPath);
+
+            if (result == NFD_OKAY)
             {
-                ImVec2 size = ImVec2(0, 100);
+                selectedPath = outPath.get();
 
-                ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
-                //ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10, 10));
-                ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(150, 150, 150, 255));
-
-                ImGui::BeginChild(("Project_" + std::to_string(i)).c_str(), size, true);
-
-                clickableProjectOverview(projects[i]);
-
-                ImGui::EndChild();
-
-                ImGui::PopStyleColor();
-                ImGui::PopStyleVar();
-            
-                if (ImGui::IsItemClicked())
-                {
-                    resultIndex = i;
-
-                    projects[i].lastOpened = std::chrono::system_clock::now();
-
-                    ImGui::CloseCurrentPopup();
-                    break;
-                }
+            } else if (result == NFD_ERROR)
+            {
+                std::cerr << "Error: " << NFD::GetError() << std::endl;
             }
 
-            ImGui::EndPopup();
+            projects::Project openedProject;
+            openedProject.name = selectedPath.filename().string();
+            openedProject.path = selectedPath;
+            projects.push_back(openedProject);
+
+            resultIndex = projects.size() - 1;
         }
-        ImGui::PopStyleVar();
 
         ImGui::SameLine(0.0f, verticalSpacing);
 
