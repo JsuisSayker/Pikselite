@@ -1026,8 +1026,42 @@ namespace graphics {
 
         if (HoverChangeButton("Import", buttonHeight, buttonWidth, fontBoldSmall))
         {
-            // TODO
-            // return imported project;
+            NFD::UniquePath outPath;
+
+            nfdresult_t result = NFD::PickFolder(outPath);
+
+            if (result == NFD_OKAY)
+            {
+                selectedPath = outPath.get();
+
+                // TODO: check if it's a valid project
+
+                std::filesystem::path destination = std::filesystem::path(projectsPath) / selectedPath.filename();
+                if (std::filesystem::exists(destination))
+                {
+                    std::cout << "Project already exists in Projects folder.\n";
+                    return resultIndex;
+                }
+
+                try {
+                    std::filesystem::rename(selectedPath, destination);
+
+                    projects::Project importedProject;
+                    importedProject.name = destination.filename().string();
+                    importedProject.path = destination;
+                    projects.push_back(importedProject);
+
+                    resultIndex = projects.size() - 1;
+                } catch (const std::exception& e)
+                {
+                    std::cout << "Import failed: " << e.what() << std::endl;
+                    return resultIndex;
+                }
+            } else if (result == NFD_ERROR)
+            {
+                std::cout << "Error: " << NFD::GetError() << std::endl;
+                return resultIndex;
+            }
         }
 
         ImGui::SameLine(windowWidth);
