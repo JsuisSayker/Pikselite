@@ -24,8 +24,11 @@ namespace editors
 
         _imguiInterface->startFrame();
         _imguiInterface->projectTopBarEmpty();
-        _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested,
-                                       _loadSceneRequested);
+        _imguiInterface->setFileExplorerDataOnly(false);
+        _imguiInterface->projectNavbar(_currentSpriteFilename,
+                   _currentSceneFilename,
+                   _saveSceneRequested,
+                   _loadSceneRequested);
 
         if (!_currentSpriteFilename.empty())
         {
@@ -100,9 +103,21 @@ namespace editors
                 _pendingTexture   = {};
                 break;
             case graphics::FILE_DROPPED:
-                if (!event.droppedFilePath.empty() && isTextureFile(event.droppedFilePath))
+                if (!event.droppedFilePath.empty())
                 {
-                    _isPlacingTexture = loadTextureForPlacement(event.droppedFilePath);
+                    const std::string ext = std::filesystem::path(event.droppedFilePath).extension().string();
+                    std::string lowerExt = ext;
+                    std::transform(lowerExt.begin(), lowerExt.end(), lowerExt.begin(), ::tolower);
+
+                    if (lowerExt == ".scene")
+                    {
+                        _currentSceneFilename = event.droppedFilePath;
+                        _loadSceneRequested = true;
+                    }
+                    else if (isTextureFile(event.droppedFilePath))
+                    {
+                        _isPlacingTexture = loadTextureForPlacement(event.droppedFilePath);
+                    }
                 }
                 break;
             default:

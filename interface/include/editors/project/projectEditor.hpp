@@ -94,6 +94,10 @@ namespace editors
         {
             return gameObjectCounter;
         }
+        std::string getSceneFilename() const
+        {
+            return _currentSceneFilename;
+        }
 
         // Methods for consuming save and load scene requests, which will return whether a request
         // was made and reset the request state. These methods can be called by the main application
@@ -144,6 +148,8 @@ namespace editors
 
         bool           _isPlacingTexture = false;
         PendingTexture _pendingTexture   = {};
+
+        std::string _currentSceneFilename = "assets/default.scene";
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event

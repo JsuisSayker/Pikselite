@@ -53,6 +53,17 @@ namespace Pixel
             return nullptr;
         }
 
+        template <typename T>
+        const T *getComponent() const
+        {
+            auto it = components.find(std::type_index(typeid(T)));
+            if (it != components.end())
+            {
+                return std::any_cast<T>(&(it->second));
+            }
+            return nullptr;
+        }
+
         // add or replace component of type T
         template <typename T> void addComponent(const T& component)
         {
