@@ -15,6 +15,8 @@ namespace Element
         SAND,
         /** @brief Water element. */
         WATER,
+        /** @brief Lava element. */
+        LAVA,
         /** @brief Fire element. */
         FIRE,
         /** @brief Stone element. */

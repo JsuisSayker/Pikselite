@@ -43,6 +43,22 @@ void updateWater(ChunkGrid& grid, int x, int y)
 {
     ElementDefinition& def = g_elements[Element::WATER];
 
+    // lava interaction
+    // Check for lava below water in a range for more natural interaction
+    int interactionRange = 3;
+    for (int i = 1; i <= interactionRange; ++i)
+    {
+        Element::Pixel& below = grid.getPixelRef(x, y - i);
+        if (below.type == Element::LAVA)
+        {
+            below.type             = Element::STONE;
+            below.updatedThisFrame = true;
+
+            grid.setPixel(x, y, {Element::FIRE, false});
+            return;
+        }
+    }
+
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
         return;
 
@@ -68,7 +84,69 @@ void updateWater(ChunkGrid& grid, int x, int y)
         }
     }
 }
+void updateLava(ChunkGrid& grid, int x, int y)
+{
+    ElementDefinition& def = g_elements[Element::LAVA];
+    
+    if (rand() % 255 < def.fireParams.burnSpreadChance / 5)
+    {
+        Element::Pixel& p = grid.getPixelRef(x, y + 1);
+        if (p.type == Element::EMPTY) {
+            p.type             = Element::FIRE;
+            p.burnTimer        = g_elements[Element::FIRE].fireParams.burnDuration;
+            p.updatedThisFrame = true;
+        }
+    }
+    
+    if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
+        return;
 
+    int maxDisp = def.dispersionRate;
+
+    int dir = (rand() % 2) ? -1 : 1;
+
+    for (int d = 0; d < 2; ++d)
+    {
+        int dx = (d == 0) ? dir : -dir;
+        for (int i = 1; i <= maxDisp; ++i)
+        {
+            int             nx  = x + dx * i;
+            Element::Pixel& mid = grid.getPixelRef(x + dx * (i - 1), y);
+            if (mid.type != Element::EMPTY && mid.type != Element::LAVA)
+                break;
+
+            if (tryMove(grid, x, y, nx, y))
+                break;
+
+            if (tryMove(grid, x, y, nx, y + GRAVITY_DIR))
+                break;
+        }
+    }
+
+    const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+    for (auto& d : dirs)
+    {
+        int nx = x + d[0];
+        int ny = y + d[1];
+
+        Element::Pixel& neighbor = grid.getPixelRef(nx, ny);
+        if (neighbor.type == Element::EMPTY || neighbor.isBurning)
+            continue;
+
+        ElementDefinition& nDef = g_elements[neighbor.type];
+        if (nDef.fireParams.flammability == 0)
+            continue;
+
+        uint16_t chance = (nDef.fireParams.flammability * def.fireParams.burnSpreadChance) / 255;
+        if (rand() % 255 < chance)
+        {
+            neighbor.isBurning        = true;
+            neighbor.burnTimer        = nDef.fireParams.burnDuration;
+            neighbor.updatedThisFrame = true;
+        }
+    }
+}
 void updateSand(ChunkGrid& grid, int x, int y)
 {
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
@@ -110,7 +188,7 @@ void updateFire(ChunkGrid& grid, int x, int y)
         int ny = y + d[1];
 
         Element::Pixel& neighbor = grid.getPixelRef(nx, ny);
-        if (neighbor.type == Element::EMPTY || neighbor.type == Element::FIRE || neighbor.isBurning)
+        if (neighbor.type == Element::EMPTY || neighbor.isBurning)
             continue;
 
         ElementDefinition& nDef = g_elements[neighbor.type];
@@ -143,6 +221,7 @@ void Simulation::initElements()
     g_elements[Element::EMPTY] = {"Empty", {}, 0, SOLID_STATIC, 0, fireBehavior{}, nullptr, -1};
     g_elements[Element::SAND]  = {"Sand", {}, 5, SOLID_DYNAMIC, 1, fireBehavior{}, updateSand, -1};
     g_elements[Element::WATER] = {"Water", {}, 2, LIQUID, 5, fireBehavior{}, updateWater, -1};
+    g_elements[Element::LAVA]  = {"Lava", {}, 3, LIQUID, 2, fireBehavior{}, updateLava, -1};
     g_elements[Element::FIRE]  = {"Fire", {}, 1, GAS, 1, fireBehavior{}, updateFire, -1};
     g_elements[Element::STONE] = {"Stone",        {},          255, SOLID_STATIC, 0,
                                   fireBehavior{}, updateStone, -1};
@@ -155,6 +234,8 @@ void Simulation::initElements()
         {{194, 178, 128}, {206, 188, 140}, {182, 164, 116}, {216, 198, 150}}};
     g_elements[Element::WATER].colorPalette = {
         {{30, 90, 200}, {50, 120, 220}, {70, 150, 240}, {20, 70, 180}}};
+    g_elements[Element::LAVA].colorPalette = {
+        {{255, 50, 0}, {255, 100, 0}, {255, 150, 50}, {200, 30, 0}}};
     g_elements[Element::FIRE].colorPalette = {
         {{255, 80, 0}, {255, 120, 0}, {255, 180, 50}, {200, 40, 0}}};
     g_elements[Element::STONE].colorPalette = {
@@ -166,7 +247,8 @@ void Simulation::initElements()
     g_elements[Element::DEBUG].colorPalette = {
         {{255, 0, 255}, {200, 0, 200}, {150, 0, 150}, {255, 100, 255}}};
 
-    g_elements[Element::FIRE].fireParams = {200, 10, 50, Element::EMPTY};
+    g_elements[Element::LAVA].fireParams = {0, 0, 50, Element::STONE};
+    g_elements[Element::FIRE].fireParams = {0, 6, 50, Element::EMPTY};
     g_elements[Element::WOOD].fireParams = {150, 30, 30, Element::EMPTY};
 }
 
@@ -174,9 +256,6 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
 {
     Element::Pixel&    p          = grid.getPixelRef(x, y);
     ElementDefinition& elementDef = g_elements[p.type];
-
-    if (p.type == Element::FIRE)
-        return;
 
     if (p.burnTimer > 0)
         p.burnTimer--;
@@ -194,7 +273,7 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
         int ny = y + d[1];
 
         Element::Pixel& n = grid.getPixelRef(nx, ny);
-        if (n.type == Element::EMPTY || n.isBurning || n.type == Element::FIRE)
+        if (n.type == Element::EMPTY || n.isBurning)
             continue;
         ElementDefinition& nDef = g_elements[n.type];
         if (nDef.fireParams.flammability == 0)
@@ -210,9 +289,9 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
         }
     }
 
-    if (rand() % 255 < elementDef.fireParams.burnSpreadChance)
+    if (rand() % 255 < elementDef.fireParams.burnSpreadChance / 5)
     {
-        Element::Pixel& p = grid.getPixelRef(x, y - 1);
+        Element::Pixel& p = grid.getPixelRef(x, y + 1);
         if (p.type != Element::EMPTY)
             return;
         p.type             = Element::FIRE;

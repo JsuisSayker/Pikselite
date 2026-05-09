@@ -68,6 +68,15 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny);
 void updateWater(ChunkGrid& grid, int x, int y);
 
 /**
+ * @brief Updates one fire pixel behavior.
+ * @param grid Simulation grid.
+ * @param x Global X coordinate.
+ * @param y Global Y coordinate.
+ * @return void
+ */
+void updateLava(ChunkGrid& grid, int x, int y);
+
+/**
  * @brief Updates one sand pixel behavior.
  * @param grid Simulation grid.
  * @param x Global X coordinate.

@@ -39,7 +39,6 @@ namespace
 
 namespace engine
 {
-
     void Core::mainLoop()
     {
         graphics::InputEvent event;
@@ -322,4 +321,117 @@ namespace engine
     }
 
 
+    void Core::drawSpritesBelowLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr) continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled) continue;
+            if (sprite.layer >= layer) continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+        {
+            if (a.layer != b.layer) return a.layer < b.layer;
+            return a.entityId < b.entityId;
+        });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = renderer.loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0) continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            renderer.drawSprite(s2d, _camera);
+        }
+    }
+
+    void Core::drawSpritesAboveLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr) continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled) continue;
+            if (sprite.layer <= layer) continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+        {
+            if (a.layer != b.layer) return a.layer < b.layer;
+            return a.entityId < b.entityId;
+        });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = renderer.loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0) continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            renderer.drawSprite(s2d, _camera);
+        }
+    }
 } // namespace engine
