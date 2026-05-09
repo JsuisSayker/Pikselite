@@ -934,8 +934,7 @@ namespace graphics {
                 openNewPopup = true;
             } else if (result == NFD_ERROR)
             {
-                std::cout << "Error: " << NFD::GetError() << std::endl;
-                // std::cerr << "Error: " << NFD::GetError() << std::endl;
+                std::cerr << "Error: " << NFD::GetError() << std::endl;
             }
         }
 

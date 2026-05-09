@@ -102,6 +102,7 @@ namespace engine
     {
         _boxWorld.init({0.0f, -500.0f});
 
+        getJsonVariables();
         loadProjects(_projects);
 
         // Register ECS components
@@ -769,6 +770,86 @@ namespace engine
         }
 
         file << j.dump(4);
+    }
+
+    void Core::getProjectsFolderPath()
+    {
+        std::filesystem::path exeDir = std::filesystem::current_path();
+        std::filesystem::path projectsPath = exeDir / "Projects";
+        std::filesystem::path infoPath = "config/info.json";
+
+        json j;
+
+        if (std::filesystem::exists(infoPath))
+        {
+            std::ifstream inFile(infoPath);
+
+            if (inFile.is_open())
+            {
+                inFile >> j;
+                inFile.close();
+            }
+        }
+
+        _projectsPath = projectsPath.string();
+        j["defaultPath"] = _projectsPath;
+
+        std::ofstream outFile(infoPath);
+
+        if (outFile.is_open())
+        {
+            outFile << j.dump(4);
+            outFile.close();
+        }
+    }
+
+    void Core::getJsonVariables()
+    {
+        std::filesystem::path configDir = "config";
+        std::filesystem::path infoPath = configDir / "info.json";
+
+        if (!std::filesystem::exists(configDir))
+        {
+            std::filesystem::create_directories(configDir);
+        }
+
+        if (!std::filesystem::exists(infoPath))
+        {
+            json j;
+
+            j["defaultPath"] = "";
+
+            std::ofstream outFile(infoPath);
+
+            if (outFile.is_open())
+            {
+                outFile << j.dump(4);
+                outFile.close();
+            }
+
+            getProjectsFolderPath();
+            return;
+        }
+
+        json j;
+
+        std::ifstream inFile(infoPath);
+
+        if (inFile.is_open())
+        {
+            inFile >> j;
+            inFile.close();
+        }
+
+        if (!j.contains("defaultPath") ||
+            j["defaultPath"].is_null() ||
+            j["defaultPath"].get<std::string>().empty())
+        {
+            getProjectsFolderPath();
+            return;
+        }
+
+        _projectsPath = j["defaultPath"].get<std::string>();
     }
 
     void Core::loadProjects(std::vector<projects::Project> &projects)

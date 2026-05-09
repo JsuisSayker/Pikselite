@@ -2,6 +2,8 @@
 
 build/
 
+config/
+
 imgui.ini
 
 pikselite

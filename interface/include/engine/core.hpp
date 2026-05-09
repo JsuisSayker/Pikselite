@@ -18,6 +18,7 @@
 #include <box2d/box2d.h>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <filesystem>
 #include <chrono>
@@ -109,6 +110,8 @@ namespace engine
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>> _gameObjectOccupiedCells;
         std::string _sceneFilename = "assets/scene.json";
 
+        std::string _projectsPath;
+
         /**
          * @brief Initializes subsystems, ECS registration, and editors.
          * @return void
@@ -188,9 +191,11 @@ namespace engine
          */
         void shutdown();
 
+        void getProjectsFolderPath();
+        void getJsonVariables();
         void openProject(int index);
         void sortProjects(std::vector<projects::Project>& projects);
-        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface); ///////////////////////////
+        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface);
 
         bool copyProjectEditorDataToCore();
 
