@@ -897,7 +897,7 @@ namespace graphics {
         });
     }
 
-    int ImguiInterface::projectOptionsBar(std::vector<projects::Project> &projects)
+    int ImguiInterface::projectOptionsBar(std::vector<projects::Project> &projects, std::string projectsPath)
     {
         float buttonHeight = 40.0f;
         float buttonWidth = 95.0f;
@@ -906,7 +906,7 @@ namespace graphics {
 
         static bool openNewPopup = false;
         static char projectName[128] = "NewProject";
-        static std::filesystem::path selectedPath;
+        static std::filesystem::path selectedPath = projectsPath;
         int resultIndex = -1;
 
         ImGui::PushFont(fontRegularBig);
@@ -923,30 +923,46 @@ namespace graphics {
 
         if (HoverChangeButton("New", buttonHeight, buttonWidth, fontBoldSmall))
         {
-            NFD::UniquePath outPath;
-
-            nfdresult_t result = NFD::PickFolder(outPath);
-
-            if (result == NFD_OKAY)
-            {
-                selectedPath = outPath.get();
-
-                openNewPopup = true;
-            } else if (result == NFD_ERROR)
-            {
-                std::cerr << "Error: " << NFD::GetError() << std::endl;
-            }
+            openNewPopup = true;
         }
 
         if (openNewPopup)
         {
-            ImGui::OpenPopup("Create Project");
+            ImGui::OpenPopup("Create New Project");
             openNewPopup = false;
         }
         
-        if (ImGui::BeginPopupModal("Create Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal("Create New Project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::InputText("Project Name", projectName, sizeof(projectName));
+
+            ImGui::Text("Path:\n%s", selectedPath.string().c_str());
+
+            ImGui::SameLine();
+
+            PopupButton("Select Project Path", [&](){
+                NFD::UniquePath outPath;
+
+                nfdresult_t result = NFD::PickFolder(outPath);
+
+                if (result == NFD_OKAY)
+                {
+                    selectedPath = outPath.get();
+
+                } else if (result == NFD_ERROR)
+                {
+                    std::cerr << "Error: " << NFD::GetError() << std::endl;
+                }
+
+                ImGui::CloseCurrentPopup();
+            }, buttonHeight, buttonWidth, fontRegularSmall);
+
+            if (ImGui::Button("Cancel"))
+            {
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SameLine();
         
             if (ImGui::Button("Save"))
             {
@@ -957,7 +973,7 @@ namespace graphics {
                     std::filesystem::create_directory(fullPath);
                     std::filesystem::create_directory(fullPath / "Assets");
                     std::filesystem::create_directory(fullPath / "Scenes");
-                    std::ofstream(fullPath / "scene.json") << "{}";
+                    //std::ofstream(fullPath / "scene.json") << "{}";
 
                     projects::Project newProject;
                     newProject.name = projectName;
@@ -975,13 +991,6 @@ namespace graphics {
             {
                 newProjectCreated = false;
                 resultIndex = projects.size() - 1;
-            }
-        
-            ImGui::SameLine();
-        
-            if (ImGui::Button("Cancel"))
-            {
-                ImGui::CloseCurrentPopup();
             }
         
             ImGui::EndPopup();
@@ -1049,14 +1058,14 @@ namespace graphics {
         return resultIndex;
     }
 
-    int ImguiInterface::recentProjectsDisplay(std::vector<projects::Project> &projects)
+    int ImguiInterface::projectsDisplay(std::vector<projects::Project> &projects)
     {
         float buttonHeight = 20.0f;
         float buttonWidth = 80.0f;
         float windowWidth = ImGui::GetContentRegionAvail().x;
 
         ImGui::PushFont(fontRegularBig);
-        ImGui::Text("Recent Projects");
+        ImGui::Text("Projects");
         ImGui::PopFont();
 
         ImGui::SameLine(windowWidth);
@@ -1083,7 +1092,7 @@ namespace graphics {
 
         if (projects.empty())
         {
-            ImGui::Text("No recent projects found.");
+            ImGui::Text("No projects found.");
 
             ImGui::EndChild();
             ImGui::PopStyleVar(2);
@@ -1092,7 +1101,7 @@ namespace graphics {
             return -1;
         }
 
-       for (int i = 0; i < 4 && i < static_cast<int>(projects.size()); i++)
+       for (int i = 0; i < static_cast<int>(projects.size()); i++)
         {
             ImVec2 size(ImGui::GetContentRegionAvail().x - 20, 200);
 

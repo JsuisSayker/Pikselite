@@ -333,7 +333,7 @@ namespace engine
         ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(170, 100));
         ImGui::BeginChild("projectOptions", ImVec2(0, 250), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-        int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects);
+        int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects, _projectsPath);
         if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
             openProject(selectedProjectIndex);
         }
@@ -350,7 +350,7 @@ namespace engine
         ImGui::BeginChild("projectDisplaySection", ImVec2(0, remainingHeight), true);
         if (!switchToProjectEditor)
         {
-            selectedProjectIndex = imguiInterface.recentProjectsDisplay(_projects);
+            selectedProjectIndex = imguiInterface.projectsDisplay(_projects);
         
             if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
                 openProject(selectedProjectIndex);
@@ -854,55 +854,39 @@ namespace engine
 
     void Core::loadProjects(std::vector<projects::Project> &projects)
     {
-        std::filesystem::path projectsPath ="config/projects.json";
-        std::ifstream file(projectsPath);
-
-        if (!file.is_open()) {
-            std::cout << "No projects.json found, starting with empty project list.\n";
-            return;
-        }
-        
-
-        nlohmann::json j;
-
-        try
-        {
-            file >> j;
-        }
-        catch (const std::exception& e)
-        {
-            std::cout << "Failed to parse projects.json: " << e.what() << std::endl;
-            return;
-        }
-        
         projects.clear();
 
-        for (const auto& item : j)
+        std::filesystem::path projectsPath = _projectsPath;
+
+        if (!std::filesystem::exists(projectsPath))
         {
-            projects::Project p;
-
-            if (!item.contains("name") || !item.contains("path"))
-                continue;
-
-            p.name = item["name"].get<std::string>();
-            p.path = item["path"].get<std::string>();
-
-            std::time_t t = item.value("lastOpened", 0);
-            if (t != 0)
-            {
-                p.lastOpened = std::chrono::system_clock::from_time_t(t);
-            }
-
-            if (!std::filesystem::exists(p.path))
-            {
-                std::cout << "Skipping missing project: " << p.path << std::endl;
-                continue;
-            }
-
-            projects.push_back(p);
+            std::filesystem::create_directories(projectsPath);
+            return;
         }
-        
-        sortProjects(projects);
+
+        if (std::filesystem::is_empty(projectsPath))
+        {
+            return;
+        }
+
+        for (const auto& entry : std::filesystem::directory_iterator(projectsPath))
+        {
+            if (!entry.is_directory())
+            {
+                continue;
+            }
+
+            projects::Project project;
+
+            auto fileTime = std::filesystem::last_write_time(entry.path());
+            auto systemTime = std::chrono::system_clock::now() + (fileTime - std::filesystem::file_time_type::clock::now());
+
+            project.lastOpened = std::chrono::time_point_cast<std::chrono::system_clock::duration>(systemTime);
+            project.name = entry.path().filename().string();
+            project.path = entry.path();
+
+            projects.push_back(project);
+        }
     }
 
     void Core::saveScene(const std::string &filename)

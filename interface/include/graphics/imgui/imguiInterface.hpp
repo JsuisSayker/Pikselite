@@ -62,8 +62,8 @@ namespace graphics {
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject);
 
         void fileToolBar();
-        int projectOptionsBar(std::vector<projects::Project> &projects);
-        int recentProjectsDisplay(std::vector<projects::Project> &projects);
+        int projectOptionsBar(std::vector<projects::Project> &projects, std::string projectsPath);
+        int projectsDisplay(std::vector<projects::Project> &projects);
         void clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
 
         void startFrame();
