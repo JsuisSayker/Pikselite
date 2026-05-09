@@ -43,6 +43,7 @@ find_package(imgui_backends CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 
 find_package(box2d CONFIG REQUIRED)
+find_package(nfd CONFIG REQUIRED)
 # find_package(imgui CONFIG REQUIRED)
 
 # -------------------------------------------------
@@ -122,4 +123,5 @@ target_link_libraries(${PROJECT_NAME}
     engine
     editor
     nlohmann_json::nlohmann_json
+    nfd::nfd
 )
