@@ -21,6 +21,12 @@
 #include <iostream>
 #include <limits>
 #include <unordered_map>
+#include <filesystem>
+#include <editors/aEditor.hpp>
+
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <projects.hpp>
 
 /**
  * @brief The editors namespace contains classes related to editing and managing the project,
@@ -122,9 +128,13 @@ namespace editors
          * determine which sprite is currently selected for placement in the scene.
          * @return A std::string containing the filename of the currently selected sprite, or an
          */
-        void setSceneData(const std::vector<graphics::Pixel>&   renderPixels,
-                          const std::vector<Pixel::GameObject>& gameObjects,
-                          const ChunkGrid& chunkGrid, uint32_t nextGameObjectId);
+        void setSceneData(const std::vector<graphics::Pixel> &renderPixels,
+                          const std::vector<Pixel::GameObject> &gameObjects,
+                          const ChunkGrid &chunkGrid,
+                          uint32_t nextGameObjectId);
+        
+        
+        void setCurrentProject(const projects::Project& project);
 
       private:
         struct PendingTexture
@@ -146,9 +156,9 @@ namespace editors
         int                                     _selectedGameObjectIndex = -1;
         std::unordered_map<std::string, GLuint> _textureCache;
 
-        bool           _isPlacingTexture = false;
-        PendingTexture _pendingTexture   = {};
-
+        bool _isPlacingTexture = false;
+        PendingTexture _pendingTexture = {};
+        projects::Project _currentProject;
         std::string _currentSceneFilename = "assets/default.scene";
 
         /**

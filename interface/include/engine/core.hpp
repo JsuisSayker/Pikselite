@@ -5,6 +5,7 @@
 #include <editors/project/projectEditor.hpp>
 #include <editors/sprite/spriteEditor.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/systems/scriptSystem.hpp>
 #include <engine/events/eventBus.hpp>
 #include <engine/events/events.hpp>
 #include <engine/managers/componentManager.hpp>
@@ -15,6 +16,15 @@
 #include <engine/pixels/simulation/simulation.hpp>
 #include <engine/time.hpp>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
+#include <chrono>
+#include <algorithm>
+#include <SDL2/SDL.h>
+
+#include <projects.hpp>
+
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
@@ -82,12 +92,17 @@ namespace engine
         editors::SpriteEditor *spriteEditor = nullptr;
         editors::ProjectEditor *projectEditor = nullptr;
 
-        bool isProjectEditorActive = false;
+        std::vector<projects::Project> _projects;
+        projects::Project _currentProject;
 
-        bool                     running;
-        bool                     isGamePreviewActive = false;
-        graphics::Interface      sdlInterface;
-        graphics::Renderer       renderer;
+        bool running;
+        bool isProjectsListPageActive = true;
+        bool isGamePreviewActive = false;
+        bool isProjectEditorActive = false;
+        bool isSpriteEditorActive = false;
+        bool switchToProjectEditor = false;
+        graphics::Interface sdlInterface;
+        graphics::Renderer renderer;
         graphics::ImguiInterface imguiInterface;
         Timer                    timer;
         events::EventBus         eventBus;
@@ -114,6 +129,8 @@ namespace engine
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
                     _gameObjectOccupiedCells;
         std::string _sceneFilename = "assets/default.scene";
+
+        std::string _projectsPath;
 
         /**
          * @brief Initializes subsystems, ECS registration, and editors.
@@ -198,10 +215,12 @@ namespace engine
          */
         void shutdown();
 
-        /**
-         * @brief Copies project editor data into core runtime state.
-         * @return `true` if copy happened, otherwise `false`.
-         */
+        void getProjectsFolderPath();
+        void getJsonVariables();
+        void openProject(int index);
+        void sortProjects(std::vector<projects::Project>& projects);
+        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface);
+
         bool copyProjectEditorDataToCore();
 
         // Creates an ECS entity for each Pixel::GameObject,
@@ -233,6 +252,9 @@ namespace engine
          */
         std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
 
+        void saveProjects(const std::vector<projects::Project> &projects);
+        void loadProjects(std::vector<projects::Project> &projects);
+
         // save scene and load scene functions for project editor
         /**
          * @brief Saves current scene to disk.
@@ -248,4 +270,5 @@ namespace engine
          */
         bool loadScene(const std::string& filename);
     };
+
 } // namespace engine
