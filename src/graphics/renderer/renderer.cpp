@@ -1,6 +1,6 @@
-#include <graphics/renderer/renderer.hpp>
 #include <box2d/collision.h>
 #include <box2d/math_functions.h>
+#include <graphics/renderer/renderer.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -31,7 +31,6 @@ void main() {
     vColor = aColor;
 }
 )";
-
 
 const char* fragmentShaderSrc = R"(
 #version 330 core
@@ -74,9 +73,10 @@ void main() {
 }
 )";
 
-namespace graphics {
+namespace graphics
+{
     Renderer::Renderer(SDL_Window* window, SDL_GLContext glContext)
-    : _window(window), _glContext(glContext)
+        : _window(window), _glContext(glContext)
     {
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
@@ -93,7 +93,6 @@ namespace graphics {
         initSpriteShader();
     }
 
-
     Renderer::~Renderer()
     {
         glDeleteProgram(_shader);
@@ -104,20 +103,24 @@ namespace graphics {
         glDeleteVertexArrays(1, &_spriteVao);
     }
 
-    void checkShaderCompile(GLuint shader, const char* name) {
+    void checkShaderCompile(GLuint shader, const char* name)
+    {
         GLint success;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        if (!success) {
+        if (!success)
+        {
             char infoLog[512];
             glGetShaderInfoLog(shader, 512, NULL, infoLog);
             std::cerr << "Shader compilation failed (" << name << "):\n" << infoLog << std::endl;
         }
     }
 
-    void checkProgramLink(GLuint program) {
+    void checkProgramLink(GLuint program)
+    {
         GLint success;
         glGetProgramiv(program, GL_LINK_STATUS, &success);
-        if (!success) {
+        if (!success)
+        {
             char infoLog[512];
             glGetProgramInfoLog(program, 512, NULL, infoLog);
             std::cerr << "Program linking failed:\n" << infoLog << std::endl;
@@ -171,13 +174,13 @@ namespace graphics {
         // position (vec2) + texcoord (vec2)
         float quadVertices[] = {
             // pos      // tex
-            -0.5f,  0.5f,  0.0f, 1.0f,  // top-left
-            -0.5f, -0.5f,  0.0f, 0.0f,  // bottom-left
-             0.5f, -0.5f,  1.0f, 0.0f,  // bottom-right
-             0.5f,  0.5f,  1.0f, 1.0f   // top-right
+            -0.5f, 0.5f,  0.0f, 1.0f, // top-left
+            -0.5f, -0.5f, 0.0f, 0.0f, // bottom-left
+            0.5f,  -0.5f, 1.0f, 0.0f, // bottom-right
+            0.5f,  0.5f,  1.0f, 1.0f  // top-right
         };
 
-        unsigned int indices[] = { 0, 1, 2,  0, 2, 3 };
+        unsigned int indices[] = {0, 1, 2, 0, 2, 3};
 
         GLuint ebo;
         glGenVertexArrays(1, &_spriteVao);
@@ -197,22 +200,28 @@ namespace graphics {
         glEnableVertexAttribArray(0);
 
         // texcoord attribute
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                              (void*)(2 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
         glBindVertexArray(0);
     }
 
-    void Renderer::clear() {
+    void Renderer::clear()
+    {
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    void Renderer::present(SDL_Window* window) {
+    void Renderer::present(SDL_Window* window)
+    {
         SDL_GL_SwapWindow(window);
     }
 
-    void Renderer::drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D& camera, float pixelSize) {
-        if (pixels.empty()) return;
+    void Renderer::drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D& camera,
+                                     float pixelSize)
+    {
+        if (pixels.empty())
+            return;
 
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
@@ -221,32 +230,39 @@ namespace graphics {
 
         // set uniforms for camera mode
         GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
-        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_TRUE);
+        if (useCamLoc != -1)
+            glUniform1i(useCamLoc, GL_TRUE);
 
         // Upload VP matrix
-        glm::mat4 vp = camera.getViewProjection(width, height);
-        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
-        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+        glm::mat4 vp    = camera.getViewProjection(width, height);
+        GLint     vpLoc = glGetUniformLocation(_shader, "uVP");
+        if (vpLoc != -1)
+            glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
         // Screen size (for fallback pass-through mode, but still good to set it)
         GLint screenLoc = glGetUniformLocation(_shader, "uScreenSize");
-        if (screenLoc != -1) glUniform2f(screenLoc, (float)width, (float)height);
+        if (screenLoc != -1)
+            glUniform2f(screenLoc, (float)width, (float)height);
 
         // Point size
         float effectivePointSize = pixelSize * camera.getZoom();
-        GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
-        if (sizeLoc != -1) glUniform1f(sizeLoc, effectivePointSize);
+        GLint sizeLoc            = glGetUniformLocation(_shader, "uPointSize");
+        if (sizeLoc != -1)
+            glUniform1f(sizeLoc, effectivePointSize);
 
         // Upload vertex data
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-        glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(),
+                     GL_DYNAMIC_DRAW);
 
         // Attribute layout
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, position));
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel),
+                              reinterpret_cast<void*>(offsetof(Pixel, position)));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, color));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel),
+                              reinterpret_cast<void*>(offsetof(Pixel, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
@@ -254,8 +270,10 @@ namespace graphics {
         glBindVertexArray(0);
     }
 
-    void Renderer::drawPixelsOverlay(const std::vector<Pixel>& pixels, float pixelSize) {
-        if (pixels.empty()) return;
+    void Renderer::drawPixelsOverlay(const std::vector<Pixel>& pixels, float pixelSize)
+    {
+        if (pixels.empty())
+            return;
 
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
@@ -264,26 +282,32 @@ namespace graphics {
 
         // set uniforms for overlay mode
         GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
-        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_FALSE);
+        if (useCamLoc != -1)
+            glUniform1i(useCamLoc, GL_FALSE);
 
         // We may skip setting uVP (not used when uUseCamera = false) but it's safe to provide
         // Also set screen size so the pass-through code works
         GLint screenLoc = glGetUniformLocation(_shader, "uScreenSize");
-        if (screenLoc != -1) glUniform2f(screenLoc, (float)width, (float)height);
+        if (screenLoc != -1)
+            glUniform2f(screenLoc, (float)width, (float)height);
 
         // Set point size
         GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
-        if (sizeLoc != -1) glUniform1f(sizeLoc, pixelSize);
+        if (sizeLoc != -1)
+            glUniform1f(sizeLoc, pixelSize);
 
         // Upload vertex data
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-        glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, pixels.size() * sizeof(Pixel), pixels.data(),
+                     GL_DYNAMIC_DRAW);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, position));
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Pixel),
+                              reinterpret_cast<void*>(offsetof(Pixel, position)));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel), (void*)offsetof(Pixel, color));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Pixel),
+                              reinterpret_cast<void*>(offsetof(Pixel, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_POINTS, 0, (GLsizei)pixels.size());
@@ -291,14 +315,14 @@ namespace graphics {
         glBindVertexArray(0);
     }
 
-
-    void Renderer::drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color) {
+    void Renderer::drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color)
+    {
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
 
         // Compute world bounds visible through the camera
-        float halfW = (width * 0.5f) / camera.getZoom();
-        float halfH = (height * 0.5f) / camera.getZoom();
+        float     halfW  = (width * 0.5f) / camera.getZoom();
+        float     halfH  = (height * 0.5f) / camera.getZoom();
         glm::vec2 camPos = camera.getPosition();
 
         float left   = camPos.x - halfW;
@@ -315,47 +339,57 @@ namespace graphics {
         std::vector<LineVertex> vertices;
 
         // Vertical lines
-        for (float x = startX; x <= endX; x += cellSize) {
+        for (float x = startX; x <= endX; x += cellSize)
+        {
             vertices.push_back({{x, bottom}, color});
             vertices.push_back({{x, top}, color});
         }
 
         // Horizontal lines
-        for (float y = startY; y <= endY; y += cellSize) {
+        for (float y = startY; y <= endY; y += cellSize)
+        {
             vertices.push_back({{left, y}, color});
             vertices.push_back({{right, y}, color});
         }
 
-        if (vertices.empty()) return;
+        if (vertices.empty())
+            return;
 
         glUseProgram(_shader);
 
         // Set camera mode
         GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
-        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_TRUE);
+        if (useCamLoc != -1)
+            glUniform1i(useCamLoc, GL_TRUE);
 
         // Upload camera VP matrix
-        glm::mat4 vp = camera.getViewProjection(width, height);
-        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
-        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+        glm::mat4 vp    = camera.getViewProjection(width, height);
+        GLint     vpLoc = glGetUniformLocation(_shader, "uVP");
+        if (vpLoc != -1)
+            glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
         // Upload vertices
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(LineVertex), vertices.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(LineVertex), vertices.data(),
+                     GL_DYNAMIC_DRAW);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, position));
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
+                              reinterpret_cast<void*>(offsetof(LineVertex, position)));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, color));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
+                              reinterpret_cast<void*>(offsetof(LineVertex, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_LINES, 0, (GLsizei)vertices.size());
         glBindVertexArray(0);
     }
 
-    void Renderer::drawSegments(const std::vector<LineVertex>& segments, const Camera2D& camera) {
-        if (segments.empty()) return;
+    void Renderer::drawSegments(const std::vector<LineVertex>& segments, const Camera2D& camera)
+    {
+        if (segments.empty())
+            return;
 
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
@@ -363,66 +397,88 @@ namespace graphics {
         glUseProgram(_shader);
 
         GLint useCamLoc = glGetUniformLocation(_shader, "uUseCamera");
-        if (useCamLoc != -1) glUniform1i(useCamLoc, GL_TRUE);
+        if (useCamLoc != -1)
+            glUniform1i(useCamLoc, GL_TRUE);
 
-        glm::mat4 vp = camera.getViewProjection(width, height);
-        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
-        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+        glm::mat4 vp    = camera.getViewProjection(width, height);
+        GLint     vpLoc = glGetUniformLocation(_shader, "uVP");
+        if (vpLoc != -1)
+            glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
         glBindVertexArray(_vao);
         glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-        glBufferData(GL_ARRAY_BUFFER, segments.size() * sizeof(LineVertex), segments.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, segments.size() * sizeof(LineVertex), segments.data(),
+                     GL_DYNAMIC_DRAW);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, position));
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
+                              reinterpret_cast<void*>(offsetof(LineVertex, position)));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex), (void*)offsetof(LineVertex, color));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(LineVertex),
+                              reinterpret_cast<void*>(offsetof(LineVertex, color)));
         glEnableVertexAttribArray(1);
 
         glDrawArrays(GL_LINES, 0, (GLsizei)segments.size());
         glBindVertexArray(0);
     }
 
-    void Renderer::drawBox2DDebug(b2WorldId worldId, const std::vector<b2BodyId>& bodies, const Camera2D& camera, float pixelsPerMeter, glm::vec3 color) {
-        if (!b2World_IsValid(worldId)) return;
-        if (bodies.empty()) return;
+    void Renderer::drawBox2DDebug(b2WorldId worldId, const std::vector<b2BodyId>& bodies,
+                                  const Camera2D& camera, float pixelsPerMeter, glm::vec3 color)
+    {
+        if (!b2World_IsValid(worldId))
+            return;
+        if (bodies.empty())
+            return;
 
         std::vector<LineVertex> segments;
         segments.reserve(bodies.size() * 16);
 
-        for (b2BodyId bodyId : bodies) {
-            if (!b2Body_IsValid(bodyId)) continue;
+        for (b2BodyId bodyId : bodies)
+        {
+            if (!b2Body_IsValid(bodyId))
+                continue;
 
             int shapeCount = b2Body_GetShapeCount(bodyId);
-            if (shapeCount <= 0) continue;
+            if (shapeCount <= 0)
+                continue;
 
             std::vector<b2ShapeId> shapes(shapeCount);
-            int actualCount = b2Body_GetShapes(bodyId, shapes.data(), shapeCount);
-            b2Transform xf = b2Body_GetTransform(bodyId);
+            int         actualCount = b2Body_GetShapes(bodyId, shapes.data(), shapeCount);
+            b2Transform xf          = b2Body_GetTransform(bodyId);
 
-            for (int i = 0; i < actualCount; ++i) {
+            for (int i = 0; i < actualCount; ++i)
+            {
                 b2ShapeId shapeId = shapes[i];
-                if (!b2Shape_IsValid(shapeId)) continue;
+                if (!b2Shape_IsValid(shapeId))
+                    continue;
 
                 b2ShapeType type = b2Shape_GetType(shapeId);
-                if (type == b2_polygonShape) {
-                    b2Polygon poly = b2Shape_GetPolygon(shapeId);
+                if (type == b2_polygonShape)
+                {
+                    b2Polygon poly      = b2Shape_GetPolygon(shapeId);
                     b2Polygon worldPoly = b2TransformPolygon(xf, &poly);
 
-                    for (int v = 0; v < worldPoly.count; ++v) {
+                    for (int v = 0; v < worldPoly.count; ++v)
+                    {
                         b2Vec2 p1 = worldPoly.vertices[v];
                         b2Vec2 p2 = worldPoly.vertices[(v + 1) % worldPoly.count];
 
-                        segments.push_back({glm::vec2(p1.x * pixelsPerMeter, p1.y * pixelsPerMeter), color});
-                        segments.push_back({glm::vec2(p2.x * pixelsPerMeter, p2.y * pixelsPerMeter), color});
+                        segments.push_back(
+                            {glm::vec2(p1.x * pixelsPerMeter, p1.y * pixelsPerMeter), color});
+                        segments.push_back(
+                            {glm::vec2(p2.x * pixelsPerMeter, p2.y * pixelsPerMeter), color});
                     }
-                } else if (type == b2_segmentShape) {
+                }
+                else if (type == b2_segmentShape)
+                {
                     b2Segment seg = b2Shape_GetSegment(shapeId);
-                    b2Vec2 p1 = b2TransformPoint(xf, seg.point1);
-                    b2Vec2 p2 = b2TransformPoint(xf, seg.point2);
+                    b2Vec2    p1  = b2TransformPoint(xf, seg.point1);
+                    b2Vec2    p2  = b2TransformPoint(xf, seg.point2);
 
-                    segments.push_back({glm::vec2(p1.x * pixelsPerMeter, p1.y * pixelsPerMeter), color});
-                    segments.push_back({glm::vec2(p2.x * pixelsPerMeter, p2.y * pixelsPerMeter), color});
+                    segments.push_back(
+                        {glm::vec2(p1.x * pixelsPerMeter, p1.y * pixelsPerMeter), color});
+                    segments.push_back(
+                        {glm::vec2(p2.x * pixelsPerMeter, p2.y * pixelsPerMeter), color});
                 }
             }
         }
@@ -447,7 +503,8 @@ namespace graphics {
         stbi_set_flip_vertically_on_load(true); // Flip to match OpenGL Y-up
         unsigned char* data = stbi_load(filePath.c_str(), &width, &height, &channels, 0);
 
-        if (!data) {
+        if (!data)
+        {
             std::cerr << "Failed to load texture: " << filePath << std::endl;
             glDeleteTextures(1, &textureID);
             return 0;
@@ -460,13 +517,15 @@ namespace graphics {
         stbi_image_free(data);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        std::cout << "Loaded texture: " << filePath << " (" << width << "x" << height << ", " << channels << " channels)\n";
+        std::cout << "Loaded texture: " << filePath << " (" << width << "x" << height << ", "
+                  << channels << " channels)\n";
         return textureID;
     }
 
     void Renderer::drawSprite(const Sprite2D& sprite, const Camera2D& camera)
     {
-        if (sprite.textureID == 0) return;
+        if (sprite.textureID == 0)
+            return;
 
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
@@ -478,23 +537,26 @@ namespace graphics {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // VP matrix
-        glm::mat4 vp = camera.getViewProjection(width, height);
-        GLint vpLoc = glGetUniformLocation(_spriteShader, "uVP");
-        if (vpLoc != -1) glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+        glm::mat4 vp    = camera.getViewProjection(width, height);
+        GLint     vpLoc = glGetUniformLocation(_spriteShader, "uVP");
+        if (vpLoc != -1)
+            glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
         // Model matrix: translate to position, scale to size
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(sprite.position, 0.0f));
-        model = glm::scale(model, glm::vec3(sprite.size, 1.0f));
+        model           = glm::translate(model, glm::vec3(sprite.position, 0.0f));
+        model           = glm::scale(model, glm::vec3(sprite.size, 1.0f));
 
         GLint modelLoc = glGetUniformLocation(_spriteShader, "uModel");
-        if (modelLoc != -1) glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        if (modelLoc != -1)
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         // Bind texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, sprite.textureID);
         GLint texLoc = glGetUniformLocation(_spriteShader, "uTexture");
-        if (texLoc != -1) glUniform1i(texLoc, 0);
+        if (texLoc != -1)
+            glUniform1i(texLoc, 0);
 
         // Draw quad
         glBindVertexArray(_spriteVao);
@@ -509,4 +571,4 @@ namespace graphics {
         if (textureID != 0)
             glDeleteTextures(1, &textureID);
     }
-}
+} // namespace graphics

@@ -1,5 +1,7 @@
 add_library(engine
     core.cpp
+    core_scene.cpp
+    core_ecs.cpp
     events/eventBus.cpp
     time.cpp
     managers/entityManager.cpp
@@ -8,6 +10,7 @@ add_library(engine
     pixels/simulation/element.cpp
     ecs/systems/spriteSystem.cpp
     physics/boxWorld.cpp
+    scene/sceneSerializer.cpp
 )
 
 target_include_directories(engine
@@ -25,6 +28,7 @@ target_link_libraries(engine
     box2d::box2d
     ${LUA_LIBRARIES}
     box2d::box2d
+    ZLIB::ZLIB
 )
 
 target_include_directories(engine

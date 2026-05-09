@@ -9,7 +9,7 @@ namespace engine::events
 {
     /**
      * @brief The QuitEvent is an event that signals the application to quit.
-     * 
+     *
      */
     struct QuitEvent : IEvent
     {
@@ -37,4 +37,4 @@ namespace engine::events
     {
         std::string reason;
     };
-} // namespace events
+} // namespace engine::events

@@ -8,8 +8,11 @@ set "BUILD_DIR=build"
 set "CONFIG_TYPE=Release"
 set "CACHE_ENABLED=0"
 set "BUILD_COVERAGE=OFF"
+set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
+if "%VCPKG_CACHE_KEY%"=="" set "VCPKG_CACHE_KEY=local-default"
 set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
+set "CI=false"
 
 if "%~1" neq "" if /I not "%~1"=="Cache" (
     set "CONFIG_TYPE=%~1"
@@ -23,10 +26,15 @@ if "%~1" neq "" if /I not "%~1"=="Cache" (
 
 
 :: Use CI-provided env if available, fallback to local
-if "%VCPKG_ROOT%"=="" set "VCPKG_ROOT=%CD%\vcpkg"
+if "%VCPKG_ROOT%"=="" (
+    for %%p in (%VCPKG_PATHS%) do (
+        if exist "%%p\vcpkg.exe" (
+            set "VCPKG_ROOT=%%p"
+        )
+    )
+)
 if "%VCPKG_OVERLAY_PORTS%"=="" set "VCPKG_OVERLAY_PORTS=%CD%\external\overlay-ports"
 if "%VCPKG_DEFAULT_TRIPLET%"=="" set "VCPKG_DEFAULT_TRIPLET=x64-windows"
-if "%VCPKG_CACHE_KEY%"=="" set "VCPKG_CACHE_KEY=local-default"
 
 :: -------------------------------------------------
 :: CACHE: Restore from cache
@@ -51,6 +59,7 @@ echo CD=%CD%
 echo VCPKG_ROOT=%VCPKG_ROOT%
 echo VCPKG_OVERLAY_PORTS=%VCPKG_OVERLAY_PORTS%
 echo CACHE_KEY=%VCPKG_CACHE_KEY%
+echo CI=%CI%
 echo.
 
 :: -------------------------------------------------
@@ -65,8 +74,14 @@ if not exist "%VCPKG_OVERLAY_PORTS%" (
 :: SETUP MSVC
 :: -------------------------------------------------
 echo === Setup MSVC ===
-call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-if %ERRORLEVEL% neq 0 exit /b 1
+:: check if CI is false(boolean) or not set, then setup MSVC here
+if "%CI%"== "false" (
+    echo === Setup MSVC ===
+    call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    if %ERRORLEVEL% neq 0 exit /b 1
+)
+
+
 
 :: -------------------------------------------------
 :: SETUP VCPKG (local, reproducible)
@@ -87,7 +102,8 @@ cmake -B "%BUILD_DIR%" -S . ^
   -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" ^
   -DVCPKG_TARGET_TRIPLET=%VCPKG_DEFAULT_TRIPLET% ^
   -DCMAKE_BUILD_TYPE=%CONFIG_TYPE% ^
-  -DENABLE_COVERAGE=%BUILD_COVERAGE%
+  -DENABLE_COVERAGE=%BUILD_COVERAGE% ^
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 if %ERRORLEVEL% neq 0 (
     echo CMake configuration failed!

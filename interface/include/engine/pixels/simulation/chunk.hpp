@@ -9,13 +9,15 @@ constexpr int CHUNK_SIZE = 32;
 /**
  * @brief Fixed-size chunk of pixels.
  */
-struct Chunk {
+struct Chunk
+{
     Element::Pixel pixels[CHUNK_SIZE * CHUNK_SIZE];
 
     /**
      * @brief Initializes all pixels as empty.
      */
-    Chunk() {
+    Chunk()
+    {
         for (int i = 0; i < CHUNK_SIZE * CHUNK_SIZE; ++i)
             pixels[i].type = Element::EMPTY;
     }
@@ -44,11 +46,11 @@ struct Chunk {
     }
 };
 
-
 /**
  * @brief Sparse world grid split into chunks.
  */
-struct ChunkGrid {
+struct ChunkGrid
+{
     std::unordered_map<int64_t, Chunk> chunks;
 
     /**
@@ -91,7 +93,8 @@ struct ChunkGrid {
     Chunk* getChunkIfExists(int cx, int cy)
     {
         auto it = chunks.find(makeKey(cx, cy));
-        if (it == chunks.end()) return nullptr;
+        if (it == chunks.end())
+            return nullptr;
         return &it->second;
     }
 
@@ -105,7 +108,6 @@ struct ChunkGrid {
     {
         return chunks[makeKey(cx, cy)];
     }
-
 
     /**
      * @brief Reads a pixel in global coordinates.
@@ -122,7 +124,8 @@ struct ChunkGrid {
         int ly = mod(y);
 
         Chunk* chunk = getChunkIfExists(cx, cy);
-        if (!chunk) {
+        if (!chunk)
+        {
             return Element::Pixel{Element::EMPTY};
         }
 

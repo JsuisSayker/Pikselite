@@ -1,12 +1,13 @@
-/** 
+/**
  * @file buttons.cpp
  * @brief Implementation of button components for the ImGui interface.
- * This file contains the definitions for various button types that can be used in the Pixel Engine's UI.
+ * This file contains the definitions for various button types that can be used in the Pixel
+ * Engine's UI.
  */
 
 #include <graphics/imgui/components/buttons.hpp>
 
-/** 
+/**
  * @brief Draws a basic button that returns true when clicked.
  * @param label The text label for the button.
  * @param height The height of the button.
@@ -30,7 +31,7 @@ bool graphics::BasicButton(const std::string &label, float height, float width, 
     return clicked;
 }
 
-/** 
+/**
  * @brief Draws a toggle button (checkbox) that modifies the provided boolean value.
  * @param label The text label for the button.
  * @param value A reference to the boolean value to be modified.
@@ -46,7 +47,7 @@ bool graphics::ToggleButton(const std::string &label, bool &value, ImFont* font)
     return result;
 }
 
-/** 
+/**
  * @brief Draws a button that, when clicked, shows a dropdown menu with the provided options.
  * @param label The text label for the button.
  * @param currentIndex A reference to the index of the currently selected option.
@@ -92,7 +93,7 @@ bool graphics::DropdownButton(const std::string& label, int& selectedIndex, cons
     return selectedIndex != -1;
 }
 
-/** 
+/**
  * @brief Draws a color button that opens a color picker popup when clicked.
  * @param label The text label for the button.
  * @param color A reference to the ImVec4 value representing the selected color.
@@ -121,8 +122,9 @@ void graphics::ColorButton(const std::string &label, ImVec4 &color, ImFont* font
     }
 }
 
-/** 
- * @brief Draws a button that opens a popup when clicked. The content of the popup is defined by the provided contentFunction.
+/**
+ * @brief Draws a button that opens a popup when clicked. The content of the popup is defined by the
+ * provided contentFunction.
  * @param label The text label for the button.
  * @param contentFunction A function that defines the content to be displayed in the popup.
  */
@@ -142,7 +144,8 @@ void graphics::PopupButton(const std::string& label, const std::function<void()>
 
         if (font) ImGui::PushFont(font);
 
-        if (contentFunction) {
+        if (contentFunction)
+        {
             contentFunction();
         }
 
