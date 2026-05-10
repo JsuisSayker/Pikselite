@@ -1,16 +1,14 @@
+#include <atomic>
 #include <cmath>
+#include <cstdio> // for _popen, _pclose
 #include <engine/core.hpp>
-#include <tracy/Tracy.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <engine/scene/sceneSerializer.hpp>
-
-#include <atomic>
 #include <fstream>
 #include <mutex>
 #include <thread>
+#include <tracy/Tracy.hpp>
 #include <unordered_set>
-
-#include <cstdio> // for _popen, _pclose
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -24,24 +22,23 @@
 namespace
 {
 
-    graphics::Pixel pixelFromJson(const json &j)
+    graphics::Pixel pixelFromJson(const json& j)
     {
-        return {
-            {j.value("x", 0.0f), j.value("y", 0.0f)},
-            {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}};
+        return {{j.value("x", 0.0f), j.value("y", 0.0f)},
+                {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}};
     }
 
-    json gameObjectToJson(const Pixel::GameObject &go)
-    {
-        // TODO
-    }
-
-    Pixel::GameObject gameObjectFromJson(const json &j)
+    json gameObjectToJson(const Pixel::GameObject& go)
     {
         // TODO
     }
 
-}
+    Pixel::GameObject gameObjectFromJson(const json& j)
+    {
+        // TODO
+    }
+
+} // namespace
 
 namespace engine
 {
@@ -61,11 +58,13 @@ namespace engine
             {
                 ZoneScopedN("GamePreview");
                 runGamePreview();
-            } else if (isProjectsListPageActive) {
+            }
+            else if (isProjectsListPageActive)
+            {
                 ZoneScopedN("ProjectsListPage");
                 runProjectsListPage(sdlInterface, renderer, imguiInterface);
-
-            } else if (isProjectEditorActive)
+            }
+            else if (isProjectEditorActive)
             {
                 ZoneScopedN("ProjectEditor");
 
@@ -73,9 +72,9 @@ namespace engine
                 if (projectEditor->consumeBuildGameRequest())
                 {
                     BuildSettings settings;
-                    settings.gameTitle = _currentProject.name;
+                    settings.gameTitle  = _currentProject.name;
                     settings.targetName = _currentProject.name;
-                    settings.scenePath = _sceneFilename;
+                    settings.scenePath  = _sceneFilename;
                     projectEditor->showBuildSettings(settings);
                 }
 
@@ -86,8 +85,8 @@ namespace engine
                         std::lock_guard<std::mutex> lock(_buildOutputMutex);
                         snapshot = _buildOutput;
                     }
-                    projectEditor->setBuildProgress(
-                        _isBuilding, _buildDone, _buildSuccess, snapshot);
+                    projectEditor->setBuildProgress(_isBuilding, _buildDone, _buildSuccess,
+                                                    snapshot);
                 }
 
                 // Render frame (ImGui rendering inside ProjectEditor::run)
@@ -101,7 +100,7 @@ namespace engine
                     copyProjectEditorDataToCore();
 
                     const std::string& targetName = confirmedSettings.targetName;
-                    const std::string assetsDir = "games/" + targetName + "/assets";
+                    const std::string  assetsDir  = "games/" + targetName + "/assets";
 
                     // Save scene
                     std::filesystem::create_directories(assetsDir);
@@ -119,23 +118,25 @@ namespace engine
                     if (_buildThread.joinable())
                         _buildThread.join();
 
-                    _isBuilding = true;
-                    _buildDone = false;
+                    _isBuilding   = true;
+                    _buildDone    = false;
                     _buildSuccess = false;
                     {
                         std::lock_guard<std::mutex> lock(_buildOutputMutex);
                         _buildOutput.clear();
                     }
-                    _buildThread = std::thread([this, confirmedSettings, neededDats]()
-                    {
-                        bool success = buildGame(confirmedSettings, neededDats);
+                    _buildThread = std::thread(
+                        [this, confirmedSettings, neededDats]()
                         {
-                            std::lock_guard<std::mutex> lock(_buildOutputMutex);
-                            _buildOutput += success ? "Build completed successfully.\n" : "Build failed.\n";
-                        }
-                        _buildSuccess = success;
-                        _buildDone = true;
-                    });
+                            bool success = buildGame(confirmedSettings, neededDats);
+                            {
+                                std::lock_guard<std::mutex> lock(_buildOutputMutex);
+                                _buildOutput +=
+                                    success ? "Build completed successfully.\n" : "Build failed.\n";
+                            }
+                            _buildSuccess = success;
+                            _buildDone    = true;
+                        });
                 }
 
                 // Handle build progress dismissed
@@ -163,8 +164,8 @@ namespace engine
                                                     gameObjectCounter);
                     }
                 }
-
-            } else if (isSpriteEditorActive)
+            }
+            else if (isSpriteEditorActive)
             {
                 ZoneScopedN("SpriteEditor");
                 spriteEditor->run(event);
@@ -248,18 +249,16 @@ namespace engine
     void Core::sortProjects(std::vector<projects::Project>& projects)
     {
         std::sort(projects.begin(), projects.end(),
-            [](const projects::Project& a, const projects::Project& b)
-            {
-                return a.lastOpened > b.lastOpened;
-            });
+                  [](const projects::Project& a, const projects::Project& b)
+                  { return a.lastOpened > b.lastOpened; });
     }
 
     void Core::openProject(int index)
     {
         _currentProject = _projects[index];
 
-        auto now = std::chrono::system_clock::now();
-        _currentProject.lastOpened = now;
+        auto now                    = std::chrono::system_clock::now();
+        _currentProject.lastOpened  = now;
         _projects[index].lastOpened = now;
 
         sortProjects(_projects);
@@ -268,7 +267,8 @@ namespace engine
         switchToProjectEditor = true;
     }
 
-    void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface)
+    void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer,
+                                   graphics::ImguiInterface& imguiInterface)
     {
         renderer.clear();
         imguiInterface.startFrame();
@@ -281,20 +281,19 @@ namespace engine
         ImGui::SetNextWindowPos(ImVec2(0, toolbarHeight));
         ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - toolbarHeight));
 
-        ImGuiWindowFlags flags =
-            ImGuiWindowFlags_NoDecoration |
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoSavedSettings;
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("MainWindow", nullptr, flags);
 
         ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(170, 100));
-        ImGui::BeginChild("projectOptions", ImVec2(0, 250), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::BeginChild("projectOptions", ImVec2(0, 250), true,
+                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects, _projectsPath);
-        if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
+        if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size())
+        {
             openProject(selectedProjectIndex);
         }
         ImGui::EndChild();
@@ -312,7 +311,8 @@ namespace engine
         {
             selectedProjectIndex = imguiInterface.projectsDisplay(_projects);
 
-            if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
+            if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size())
+            {
                 openProject(selectedProjectIndex);
             }
         }
@@ -326,10 +326,11 @@ namespace engine
         imguiInterface.endFrame(sdlInterface.getWindow());
         renderer.present(sdlInterface.getWindow());
 
-        if (switchToProjectEditor) {
+        if (switchToProjectEditor)
+        {
             isProjectsListPageActive = false;
-            isProjectEditorActive = true;
-            switchToProjectEditor = false;
+            isProjectEditorActive    = true;
+            switchToProjectEditor    = false;
             projectEditor->setCurrentProject(_currentProject);
         }
     }
@@ -347,38 +348,38 @@ namespace engine
 
         switch (event.type)
         {
-        case graphics::QUIT:
-            running = false;
-            break;
-        case graphics::WINDOW_CLOSE:
-        {
-            uint32_t mainWindowID = sdlInterface.getWindowID();
-            if (event.windowID == mainWindowID)
-            {
+            case graphics::QUIT:
                 running = false;
-            }
-            break;
-        }
-        case graphics::KEY_TAB:
-            if (!isProjectsListPageActive)
+                break;
+            case graphics::WINDOW_CLOSE:
             {
-                isProjectEditorActive = !isProjectEditorActive;
-                isSpriteEditorActive = !isSpriteEditorActive;
+                uint32_t mainWindowID = sdlInterface.getWindowID();
+                if (event.windowID == mainWindowID)
+                {
+                    running = false;
+                }
+                break;
             }
-            break;
-        case graphics::KEY_F5:
-            if (!isGamePreviewActive)
-            {
-                // Ensure preview reads the latest pixels/chunks from the editor state.
-                copyProjectEditorDataToCore();
-                isGamePreviewActive = true;
-                graphics::Camera2D editorCamera = projectEditor->getCamera();
-                setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
-                setCameraZoom(editorCamera.getZoom());
-            }
-            break;
-        default:
-            break;
+            case graphics::KEY_TAB:
+                if (!isProjectsListPageActive)
+                {
+                    isProjectEditorActive = !isProjectEditorActive;
+                    isSpriteEditorActive  = !isSpriteEditorActive;
+                }
+                break;
+            case graphics::KEY_F5:
+                if (!isGamePreviewActive)
+                {
+                    // Ensure preview reads the latest pixels/chunks from the editor state.
+                    copyProjectEditorDataToCore();
+                    isGamePreviewActive             = true;
+                    graphics::Camera2D editorCamera = projectEditor->getCamera();
+                    setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
+                    setCameraZoom(editorCamera.getZoom());
+                }
+                break;
+            default:
+                break;
         }
         return event;
     }
@@ -432,7 +433,6 @@ namespace engine
         _boxWorld.shutdown();
         SDL_Quit();
     }
-
 
     std::vector<graphics::Pixel> Core::buildRenderPixels(ChunkGrid grid) const
     {
@@ -502,9 +502,9 @@ namespace engine
     bool Core::buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats)
     {
         const std::string targetName = settings.targetName;
-        const std::string gameDir = "games/" + targetName;
-        const std::string srcDir = gameDir + "/src";
-        const std::string assetsDir = gameDir + "/assets";
+        const std::string gameDir    = "games/" + targetName;
+        const std::string srcDir     = gameDir + "/src";
+        const std::string assetsDir  = gameDir + "/assets";
 
         auto appendOutput = [this](const std::string& msg)
         {
@@ -521,17 +521,25 @@ namespace engine
         {
             const std::string cmakeContent =
                 "# -------------------------------------------------\n"
-                "# " + targetName + " - Auto-generated game project\n"
+                "# " +
+                targetName +
+                " - Auto-generated game project\n"
                 "# -------------------------------------------------\n"
-                "add_executable(" + targetName + " src/main.cpp)\n"
+                "add_executable(" +
+                targetName +
+                " src/main.cpp)\n"
                 "\n"
-                "target_include_directories(" + targetName + "\n"
+                "target_include_directories(" +
+                targetName +
+                "\n"
                 "    PRIVATE\n"
                 "        ${CMAKE_SOURCE_DIR}/src\n"
                 "        ${CMAKE_SOURCE_DIR}/interface/include\n"
                 ")\n"
                 "\n"
-                "target_link_libraries(" + targetName + "\n"
+                "target_link_libraries(" +
+                targetName +
+                "\n"
                 "    PRIVATE\n"
                 "        engine\n"
                 "        graphics\n"
@@ -548,10 +556,14 @@ namespace engine
                 ")\n"
                 "\n"
                 "# Copy assets to output directory\n"
-                "add_custom_command(TARGET " + targetName + " POST_BUILD\n"
+                "add_custom_command(TARGET " +
+                targetName +
+                " POST_BUILD\n"
                 "    COMMAND ${CMAKE_COMMAND} -E copy_directory\n"
                 "        ${CMAKE_CURRENT_SOURCE_DIR}/assets\n"
-                "        $<TARGET_FILE_DIR:" + targetName + ">/assets\n"
+                "        $<TARGET_FILE_DIR:" +
+                targetName +
+                ">/assets\n"
                 "    COMMENT \"Copying game assets to output directory\"\n"
                 ")\n";
 
@@ -576,9 +588,10 @@ namespace engine
                 "{\n"
                 "    std::filesystem::current_path(\n"
                 "        std::filesystem::absolute(argv[0]).parent_path());\n"
-                "    engine::Game game(" + std::to_string(settings.windowWidth) + ", "
-                                   + std::to_string(settings.windowHeight) + ", \""
-                                   + settings.gameTitle + "\");\n"
+                "    engine::Game game(" +
+                std::to_string(settings.windowWidth) + ", " +
+                std::to_string(settings.windowHeight) + ", \"" + settings.gameTitle +
+                "\");\n"
                 "    if (!game.loadScene(\"assets/scene.scene\"))\n"
                 "        return 1;\n"
                 "    game.run();\n"
@@ -600,8 +613,9 @@ namespace engine
         {
             std::filesystem::path src = datPath;
             std::filesystem::path dst = std::filesystem::path(assetsDir) / src.filename();
-            std::error_code ec;
-            std::filesystem::copy_file(src, dst, std::filesystem::copy_options::overwrite_existing, ec);
+            std::error_code       ec;
+            std::filesystem::copy_file(src, dst, std::filesystem::copy_options::overwrite_existing,
+                                       ec);
             if (ec)
             {
                 appendOutput("WARNING: Failed to copy " + datPath + ": " + ec.message());
@@ -616,13 +630,13 @@ namespace engine
         {
             appendOutput("Re-configuring CMake...");
             std::string configureCmd = "cmake -B build 2>&1";
-            FILE* pipe = _popen(configureCmd.c_str(), "r");
+            FILE*       pipe         = _popen(configureCmd.c_str(), "r");
             if (!pipe)
             {
                 appendOutput("ERROR: Failed to run cmake configure");
                 return false;
             }
-            char buffer[128];
+            char buffer[128]; // needs to be reworked
             while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
             {
                 std::string line(buffer);
@@ -634,7 +648,8 @@ namespace engine
             int exitCode = _pclose(pipe);
             if (exitCode != 0)
             {
-                appendOutput("ERROR: CMake configure failed with exit code " + std::to_string(exitCode));
+                appendOutput("ERROR: CMake configure failed with exit code " +
+                             std::to_string(exitCode));
                 return false;
             }
             appendOutput("CMake configure succeeded.");
@@ -643,7 +658,8 @@ namespace engine
         // Build the game target
         {
             appendOutput("Building target " + targetName + "...");
-            std::string buildCmd = "cmake --build build --target " + targetName + " --config Release 2>&1";
+            std::string buildCmd =
+                "cmake --build build --target " + targetName + " --config Release 2>&1";
             FILE* pipe = _popen(buildCmd.c_str(), "r");
             if (!pipe)
             {
@@ -667,11 +683,12 @@ namespace engine
             appendOutput("Build succeeded.");
         }
 
-        appendOutput("Game build complete! Output: build/" + targetName + "/Release/" + targetName + ".exe");
+        appendOutput("Game build complete! Output: build/" + targetName + "/Release/" + targetName +
+                     ".exe");
         return true;
     }
 
-    void Core::saveProjects(const std::vector<projects::Project> &projects)
+    void Core::saveProjects(const std::vector<projects::Project>& projects)
     {
         std::filesystem::create_directories("config");
 
@@ -689,11 +706,7 @@ namespace engine
         {
             std::time_t t = std::chrono::system_clock::to_time_t(p.lastOpened);
 
-            j.push_back({
-                {"name", p.name},
-                {"path", p.path.string()},
-                {"lastOpened", t}
-            });
+            j.push_back({{"name", p.name}, {"path", p.path.string()}, {"lastOpened", t}});
         }
 
         file << j.dump(4);
@@ -701,9 +714,9 @@ namespace engine
 
     void Core::getProjectsFolderPath()
     {
-        std::filesystem::path exeDir = std::filesystem::current_path();
+        std::filesystem::path exeDir       = std::filesystem::current_path();
         std::filesystem::path projectsPath = exeDir / "Projects";
-        std::filesystem::path infoPath = "config/info.json";
+        std::filesystem::path infoPath     = "config/info.json";
 
         json j;
 
@@ -718,7 +731,7 @@ namespace engine
             }
         }
 
-        _projectsPath = projectsPath.string();
+        _projectsPath    = projectsPath.string();
         j["defaultPath"] = _projectsPath;
 
         std::ofstream outFile(infoPath);
@@ -733,7 +746,7 @@ namespace engine
     void Core::getJsonVariables()
     {
         std::filesystem::path configDir = "config";
-        std::filesystem::path infoPath = configDir / "info.json";
+        std::filesystem::path infoPath  = configDir / "info.json";
 
         if (!std::filesystem::exists(configDir))
         {
@@ -768,8 +781,7 @@ namespace engine
             inFile.close();
         }
 
-        if (!j.contains("defaultPath") ||
-            j["defaultPath"].is_null() ||
+        if (!j.contains("defaultPath") || j["defaultPath"].is_null() ||
             j["defaultPath"].get<std::string>().empty())
         {
             getProjectsFolderPath();
@@ -779,7 +791,7 @@ namespace engine
         _projectsPath = j["defaultPath"].get<std::string>();
     }
 
-    void Core::loadProjects(std::vector<projects::Project> &projects)
+    void Core::loadProjects(std::vector<projects::Project>& projects)
     {
         projects.clear();
 
@@ -805,10 +817,12 @@ namespace engine
 
             projects::Project project;
 
-            auto fileTime = std::filesystem::last_write_time(entry.path());
-            auto systemTime = std::chrono::system_clock::now() + (fileTime - std::filesystem::file_time_type::clock::now());
+            auto fileTime   = std::filesystem::last_write_time(entry.path());
+            auto systemTime = std::chrono::system_clock::now() +
+                              (fileTime - std::filesystem::file_time_type::clock::now());
 
-            project.lastOpened = std::chrono::time_point_cast<std::chrono::system_clock::duration>(systemTime);
+            project.lastOpened =
+                std::chrono::time_point_cast<std::chrono::system_clock::duration>(systemTime);
             project.name = entry.path().filename().string();
             project.path = entry.path();
 

@@ -26,11 +26,9 @@ namespace editors
         _imguiInterface->projectTopBar(_currentProject.name);
         _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _currentProject);
         _imguiInterface->setFileExplorerDataOnly(false);
-        _imguiInterface->projectNavbar(_currentSpriteFilename,
-                   _currentSceneFilename,
-                   _saveSceneRequested,
-                   _loadSceneRequested,
-                   _buildGameRequested);
+        _imguiInterface->projectNavbar(_currentSpriteFilename, _currentSceneFilename,
+                                       _saveSceneRequested, _loadSceneRequested,
+                                       _buildGameRequested);
 
         if (!_currentSpriteFilename.empty())
         {
@@ -65,7 +63,7 @@ namespace editors
             if (confirmed)
             {
                 _buildDialogConfirmed = true;
-                _showBuildDialog = false;
+                _showBuildDialog      = false;
             }
             if (cancelled)
             {
@@ -82,7 +80,7 @@ namespace editors
                 float progress = _buildProgressDone ? 1.0f : -1.0f;
                 _imguiInterface->showBuildProgressModal(
                     _buildProgressDone ? (_buildProgressSuccess ? "Build complete" : "Build failed")
-                                      : "Building...",
+                                       : "Building...",
                     progress, _buildProgressDone, _buildProgressSuccess,
                     _buildProgressOutput.empty() ? nullptr : _buildProgressOutput.c_str());
             }
@@ -138,14 +136,15 @@ namespace editors
             case graphics::FILE_DROPPED:
                 if (!event.droppedFilePath.empty())
                 {
-                    const std::string ext = std::filesystem::path(event.droppedFilePath).extension().string();
+                    const std::string ext =
+                        std::filesystem::path(event.droppedFilePath).extension().string();
                     std::string lowerExt = ext;
                     std::transform(lowerExt.begin(), lowerExt.end(), lowerExt.begin(), ::tolower);
 
                     if (lowerExt == ".scene")
                     {
                         _currentSceneFilename = event.droppedFilePath;
-                        _loadSceneRequested = true;
+                        _loadSceneRequested   = true;
                     }
                     else if (isTextureFile(event.droppedFilePath))
                     {
@@ -158,7 +157,8 @@ namespace editors
         }
     }
 
-    void ProjectEditor::setCurrentProject(const projects::Project& project) {
+    void ProjectEditor::setCurrentProject(const projects::Project& project)
+    {
         _currentProject = project;
     }
 
@@ -168,8 +168,8 @@ namespace editors
             return;
 
         Pixel::GameObject newObject;
-        newObject.id   = gameObjectCounter++;
-        newObject.name = "GameObject_" + std::to_string(newObject.id);
+        newObject.id            = gameObjectCounter++;
+        newObject.name          = "GameObject_" + std::to_string(newObject.id);
         newObject.sourceDatPath = _pendingSprite.sourceDatPath;
 
         // Convert world position to grid coords
@@ -366,8 +366,8 @@ namespace editors
 
     void ProjectEditor::showBuildSettings(const BuildSettings& settings)
     {
-        _buildDialogSettings = settings;
-        _showBuildDialog = true;
+        _buildDialogSettings  = settings;
+        _showBuildDialog      = true;
         _buildDialogConfirmed = false;
     }
 
@@ -376,16 +376,17 @@ namespace editors
         if (!_buildDialogConfirmed)
             return false;
         _buildDialogConfirmed = false;
-        outSettings = _buildDialogSettings;
+        outSettings           = _buildDialogSettings;
         return true;
     }
 
-    void ProjectEditor::setBuildProgress(bool visible, bool done, bool success, const std::string& output)
+    void ProjectEditor::setBuildProgress(bool visible, bool done, bool success,
+                                         const std::string& output)
     {
-        _showBuildProgress = visible;
-        _buildProgressDone = done;
+        _showBuildProgress    = visible;
+        _buildProgressDone    = done;
         _buildProgressSuccess = success;
-        _buildProgressOutput = output;
+        _buildProgressOutput  = output;
     }
 
     bool ProjectEditor::consumeBuildProgressDismissed()
@@ -393,7 +394,7 @@ namespace editors
         if (!_buildProgressDismissed)
             return false;
         _buildProgressDismissed = false;
-        _showBuildProgress = false;
+        _showBuildProgress      = false;
         return true;
     }
 

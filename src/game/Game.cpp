@@ -1,53 +1,58 @@
-#include <game/Game.hpp>
-#include <engine/ecs/components/transformComponent.hpp>
-#include <engine/ecs/components/velocityComponent.hpp>
-#include <engine/ecs/components/spriteComponent.hpp>
-#include <engine/ecs/components/physicsComponent.hpp>
-#include <engine/ecs/components/scriptComponent.hpp>
-#include <engine/ecs/systems/movementSystem.hpp>
-#include <engine/ecs/systems/spriteRenderSystem.hpp>
-#include <engine/ecs/systems/scriptSystem.hpp>
-#include <engine/ecs/systems/physicsSystem.hpp>
-#include <engine/scene/sceneSerializer.hpp>
-
 #include <GL/glew.h>
 #include <algorithm>
 #include <cmath>
+#include <engine/ecs/components/physicsComponent.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/ecs/systems/movementSystem.hpp>
+#include <engine/ecs/systems/physicsSystem.hpp>
+#include <engine/ecs/systems/scriptSystem.hpp>
+#include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/scene/sceneSerializer.hpp>
+#include <game/Game.hpp>
 #include <iostream>
 #include <typeindex>
 
 namespace
 {
-    bool buildPhysicsTrianglesFromGameObjectPixels(const Pixel::GameObject& go,
-                                                    Simulation& simulation,
-                                                    std::vector<ecs::components::PhysicsTriangle>& outTriangles)
+    bool buildPhysicsTrianglesFromGameObjectPixels(
+        const Pixel::GameObject& go, Simulation& simulation,
+        std::vector<ecs::components::PhysicsTriangle>& outTriangles)
     {
         outTriangles.clear();
-        if (go.pixelLocalCoords.empty()) return false;
+        if (go.pixelLocalCoords.empty())
+            return false;
 
         Element::Region region;
-        const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
-        if (pairCount == 0) return false;
+        const size_t    pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
+        if (pairCount == 0)
+            return false;
 
         region.pixels.reserve(pairCount);
         for (size_t i = 0; i < pairCount; ++i)
         {
             const auto& srcPixel = go.pixels[i];
-            if (srcPixel.type == Element::EMPTY) continue;
+            if (srcPixel.type == Element::EMPTY)
+                continue;
 
             const auto& def = g_elements[srcPixel.type];
-            if (def.state != SOLID_STATIC) continue;
+            if (def.state != SOLID_STATIC)
+                continue;
 
             region.pixels.push_back(go.pixelLocalCoords[i]);
         }
 
-        if (region.pixels.empty()) return false;
+        if (region.pixels.empty())
+            return false;
 
         simulation.buildRegionContoursMarchingSquare(region);
         simulation.simplifyRegionContours(region, 0.6f);
         simulation.triangulateRegion(region);
 
-        if (region.triangles.empty()) return false;
+        if (region.triangles.empty())
+            return false;
 
         outTriangles.reserve(region.triangles.size());
         for (const auto& tri : region.triangles)
@@ -61,12 +66,11 @@ namespace
 
         return true;
     }
-}
+} // namespace
 
 namespace engine
 {
-    Game::Game(int width, int height, const std::string& title)
-        : _pixelSimulation(_chunkGrid)
+    Game::Game(int width, int height, const std::string& title) : _pixelSimulation(_chunkGrid)
     {
         initSDL(width, height, title);
         _renderer = new graphics::Renderer(_window, _glContext);
@@ -93,9 +97,9 @@ namespace engine
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-        _window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                    width, height,
-                                    SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        _window =
+            SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width,
+                             height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
         if (!_window)
         {
             std::cerr << "Game: SDL_CreateWindow failed: " << SDL_GetError() << std::endl;
@@ -125,8 +129,10 @@ namespace engine
 
     void Game::shutdownSDL()
     {
-        if (_glContext) SDL_GL_DeleteContext(_glContext);
-        if (_window) SDL_DestroyWindow(_window);
+        if (_glContext)
+            SDL_GL_DeleteContext(_glContext);
+        if (_window)
+            SDL_DestroyWindow(_window);
         SDL_Quit();
     }
 
@@ -138,24 +144,27 @@ namespace engine
         _componentManager.registerComponent<ecs::components::PhysicsBody>();
         _componentManager.registerComponent<ecs::components::Script>();
 
-        auto& movementSys = _systemManager.addSystem<ecs::systems::MovementSystem>();
+        auto&          movementSys = _systemManager.addSystem<ecs::systems::MovementSystem>();
         ecs::Signature movementSig;
         movementSig.set(_componentManager.getComponentType<ecs::components::Transform>());
         movementSig.set(_componentManager.getComponentType<ecs::components::Velocity>());
         _systemManager.setSignature<ecs::systems::MovementSystem>(movementSig);
 
-        auto& spriteRenderSys = _systemManager.addSystem<ecs::systems::SpriteRenderSystem>(_renderer, &_camera);
+        auto& spriteRenderSys =
+            _systemManager.addSystem<ecs::systems::SpriteRenderSystem>(_renderer, &_camera);
         ecs::Signature spriteSig;
         spriteSig.set(_componentManager.getComponentType<ecs::components::Transform>());
         spriteSig.set(_componentManager.getComponentType<ecs::components::Sprite>());
         _systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
 
-        auto& scriptSys = _systemManager.addSystem<ecs::systems::ScriptSystem>(&_entityManager, &_systemManager, &_eventBus, &_chunkGrid, &_camera);
+        auto& scriptSys = _systemManager.addSystem<ecs::systems::ScriptSystem>(
+            &_entityManager, &_systemManager, &_eventBus, &_chunkGrid, &_camera);
         ecs::Signature scriptSig;
         scriptSig.set(_componentManager.getComponentType<ecs::components::Script>());
         _systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
 
-        auto& physicsSys = _systemManager.addSystem<ecs::systems::PhysicsSystem>(&_boxWorld, &_eventBus);
+        auto& physicsSys =
+            _systemManager.addSystem<ecs::systems::PhysicsSystem>(&_boxWorld, &_eventBus);
         ecs::Signature physicsSig;
         physicsSig.set(_componentManager.getComponentType<ecs::components::Transform>());
         physicsSig.set(_componentManager.getComponentType<ecs::components::PhysicsBody>());
@@ -164,16 +173,17 @@ namespace engine
         _componentManager.setEntityMutationCallback([this](ecs::EntityID entityId)
                                                     { refreshEntitySignature(entityId); });
 
-        _componentManager.setComponentRemovalCallback([this](ecs::EntityID entityId, const std::type_index& componentType)
-        {
-            if (componentType == typeid(ecs::components::PhysicsBody))
+        _componentManager.setComponentRemovalCallback(
+            [this](ecs::EntityID entityId, const std::type_index& componentType)
             {
-                if (auto* physicsSys = _systemManager.getSystem<ecs::systems::PhysicsSystem>())
+                if (componentType == typeid(ecs::components::PhysicsBody))
                 {
-                    physicsSys->entityDestroyed(entityId);
+                    if (auto* physicsSys = _systemManager.getSystem<ecs::systems::PhysicsSystem>())
+                    {
+                        physicsSys->entityDestroyed(entityId);
+                    }
                 }
-            }
-        });
+            });
 
         scriptSys.init();
     }
@@ -187,7 +197,7 @@ namespace engine
             return false;
         }
 
-        _gameObjects = std::move(data.gameObjects);
+        _gameObjects       = std::move(data.gameObjects);
         _gameObjectCounter = data.nextGameObjectId;
 
         _chunkGrid.chunks.clear();
@@ -201,9 +211,9 @@ namespace engine
             if (!transform)
                 continue;
 
-            const int anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
-            const int anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
-            const size_t count = std::min(go.pixels.size(), go.pixelLocalCoords.size());
+            const int    anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
+            const int    anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
+            const size_t count    = std::min(go.pixels.size(), go.pixelLocalCoords.size());
 
             for (size_t i = 0; i < count; ++i)
             {
@@ -212,17 +222,17 @@ namespace engine
                 if (pixel.type == Element::EMPTY)
                     continue;
 
-                const int gridX = anchorGX + local.x;
-                const int gridY = anchorGY + local.y;
+                const int      gridX = anchorGX + local.x;
+                const int      gridY = anchorGY + local.y;
                 Element::Pixel scenePixel;
-                scenePixel.type = pixel.type;
+                scenePixel.type       = pixel.type;
                 scenePixel.colorIndex = _renderer->generatePixelColorIndex(gridX, gridY);
-                scenePixel.isBurning = pixel.isBurning;
+                scenePixel.isBurning  = pixel.isBurning;
                 if (pixel.type == Element::FIRE)
                 {
                     scenePixel.burnTimer = pixel.burnTimer != 0
-                        ? pixel.burnTimer
-                        : g_elements[Element::FIRE].fireParams.burnDuration;
+                                               ? pixel.burnTimer
+                                               : g_elements[Element::FIRE].fireParams.burnDuration;
                 }
                 else
                 {
@@ -241,7 +251,7 @@ namespace engine
     {
         _systemManager.shutdownAll();
 
-        const auto& allEntities = _entityManager.getEntities();
+        const auto&                allEntities = _entityManager.getEntities();
         std::vector<ecs::EntityID> entitiesToDestroy;
         for (const auto& entityPtr : allEntities)
         {
@@ -261,12 +271,13 @@ namespace engine
 
         for (const auto& go : _gameObjects)
         {
-            ecs::Entity entity = _entityManager.createEntity();
-            ecs::EntityID eid = entity.id;
+            ecs::Entity   entity = _entityManager.createEntity();
+            ecs::EntityID eid    = entity.id;
 
             if (auto* scriptSys = _systemManager.getSystem<ecs::systems::ScriptSystem>())
             {
-                const std::string runtimeName = go.name.empty() ? ("GameObject_" + std::to_string(go.id)) : go.name;
+                const std::string runtimeName =
+                    go.name.empty() ? ("GameObject_" + std::to_string(go.id)) : go.name;
                 scriptSys->setEntityName(eid, runtimeName);
             }
 
@@ -293,7 +304,8 @@ namespace engine
                     if (p.triangles.empty())
                     {
                         std::vector<ecs::components::PhysicsTriangle> generatedTriangles;
-                        if (buildPhysicsTrianglesFromGameObjectPixels(go, _pixelSimulation, generatedTriangles))
+                        if (buildPhysicsTrianglesFromGameObjectPixels(go, _pixelSimulation,
+                                                                      generatedTriangles))
                         {
                             p.triangles = std::move(generatedTriangles);
                         }
@@ -328,23 +340,32 @@ namespace engine
 
         for (const auto& go : _gameObjects)
         {
-            if (!go.isActive) continue;
-            if (go.pixelLocalCoords.empty() || go.pixels.empty()) continue;
+            if (!go.isActive)
+                continue;
+            if (go.pixelLocalCoords.empty() || go.pixels.empty())
+                continue;
 
             auto entityIt = _gameObjectToEntity.find(go.id);
-            if (entityIt == _gameObjectToEntity.end()) continue;
+            if (entityIt == _gameObjectToEntity.end())
+                continue;
 
             const ecs::EntityID entityId = entityIt->second;
-            if (!_componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
-            if (!_componentManager.hasComponent<ecs::components::PhysicsBody>(entityId)) continue;
+            if (!_componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!_componentManager.hasComponent<ecs::components::PhysicsBody>(entityId))
+                continue;
 
-            const auto& physics = _componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
-            if (!physics.enabled) continue;
-            if (physics.bodyType != b2_dynamicBody) continue;
+            const auto& physics =
+                _componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
+            if (!physics.enabled)
+                continue;
+            if (physics.bodyType != b2_dynamicBody)
+                continue;
 
-            const auto& transform = _componentManager.getComponent<ecs::components::Transform>(entityId);
+            const auto& transform =
+                _componentManager.getComponent<ecs::components::Transform>(entityId);
             const float cosine = std::cos(transform.rotation);
-            const float sine = std::sin(transform.rotation);
+            const float sine   = std::sin(transform.rotation);
 
             const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
             std::vector<Element::Vec2i> occupiedCells;
@@ -353,13 +374,17 @@ namespace engine
             for (size_t i = 0; i < pairCount; ++i)
             {
                 const auto& srcPixel = go.pixels[i];
-                if (srcPixel.type == Element::EMPTY) continue;
+                if (srcPixel.type == Element::EMPTY)
+                    continue;
 
                 const auto& def = g_elements[srcPixel.type];
-                if (def.state != SOLID_STATIC) continue;
+                if (def.state != SOLID_STATIC)
+                    continue;
 
-                const float localX = (static_cast<float>(go.pixelLocalCoords[i].x) + 0.5f) * PIXEL_SIZE;
-                const float localY = (static_cast<float>(go.pixelLocalCoords[i].y) + 0.5f) * PIXEL_SIZE;
+                const float localX =
+                    (static_cast<float>(go.pixelLocalCoords[i].x) + 0.5f) * PIXEL_SIZE;
+                const float localY =
+                    (static_cast<float>(go.pixelLocalCoords[i].y) + 0.5f) * PIXEL_SIZE;
 
                 const float worldX = transform.x + (localX * cosine - localY * sine);
                 const float worldY = transform.y + (localX * sine + localY * cosine);
@@ -382,7 +407,8 @@ namespace engine
 
     void Game::refreshEntitySignature(ecs::EntityID entityId)
     {
-        if (!_entityManager.hasEntity(entityId)) return;
+        if (!_entityManager.hasEntity(entityId))
+            return;
 
         ecs::Signature sig = _componentManager.getEntitySignature(entityId);
         _entityManager.setSignature(entityId, sig);
@@ -410,8 +436,8 @@ namespace engine
                     const auto& def = g_elements[simPixel.type];
 
                     graphics::Pixel renderPixel;
-                    const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
-                    const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
+                    const float     gx   = static_cast<float>(cx * CHUNK_SIZE + x);
+                    const float     gy   = static_cast<float>(cy * CHUNK_SIZE + y);
                     renderPixel.position = glm::vec2(gx * PIXEL_SIZE, gy * PIXEL_SIZE);
 
                     if (simPixel.isBurning)
@@ -421,16 +447,18 @@ namespace engine
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
                         ElementDefinition& fireDef = g_elements[Element::FIRE];
-                        glm::vec3 fColor = glm::vec3(
+                        glm::vec3          fColor  = glm::vec3(
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        float progress = (def.fireParams.burnDuration > 0)
-                            ? 1.0f - (static_cast<float>(simPixel.burnTimer) / def.fireParams.burnDuration)
-                            : 1.0f;
-                        progress = glm::clamp(progress, 0.0f, 1.0f);
+                        float progress    = (def.fireParams.burnDuration > 0)
+                                                ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
+                                                          def.fireParams.burnDuration)
+                                                : 1.0f;
+                        progress          = glm::clamp(progress, 0.0f, 1.0f);
                         renderPixel.color = glm::mix(pColor, fColor, progress);
-                        renderPixel.color = glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
+                        renderPixel.color =
+                            glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
                     }
                     else
                     {
@@ -520,4 +548,4 @@ namespace engine
             render();
         }
     }
-}
+} // namespace engine

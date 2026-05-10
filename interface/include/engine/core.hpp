@@ -1,10 +1,10 @@
 #pragma once
 
-#include <build/BuildSettings.hpp>
 #include <SDL2/SDL.h>
-#include <mutex>
-#include <thread>
+#include <algorithm>
 #include <box2d/box2d.h>
+#include <build/BuildSettings.hpp>
+#include <chrono>
 #include <editors/project/projectEditor.hpp>
 #include <editors/sprite/spriteEditor.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
@@ -18,18 +18,14 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
 #include <engine/time.hpp>
-#include <iostream>
-#include <fstream>
-#include <string>
 #include <filesystem>
-#include <chrono>
-#include <algorithm>
-#include <SDL2/SDL.h>
-
-#include <projects.hpp>
-
+#include <fstream>
+#include <iostream>
+#include <mutex>
 #include <nlohmann/json.hpp>
+#include <projects.hpp>
 #include <string>
+#include <thread>
 #include <vector>
 using json = nlohmann::json;
 
@@ -79,21 +75,21 @@ namespace engine
             _camera.setZoom(zoom);
         }
 
-    private:
-        editors::SpriteEditor *spriteEditor = nullptr;
-        editors::ProjectEditor *projectEditor = nullptr;
+      private:
+        editors::SpriteEditor*  spriteEditor  = nullptr;
+        editors::ProjectEditor* projectEditor = nullptr;
 
         std::vector<projects::Project> _projects;
-        projects::Project _currentProject;
+        projects::Project              _currentProject;
 
-        bool running;
-        bool isProjectsListPageActive = true;
-        bool isGamePreviewActive = false;
-        bool isProjectEditorActive = false;
-        bool isSpriteEditorActive = false;
-        bool switchToProjectEditor = false;
-        graphics::Interface sdlInterface;
-        graphics::Renderer renderer;
+        bool                     running;
+        bool                     isProjectsListPageActive = true;
+        bool                     isGamePreviewActive      = false;
+        bool                     isProjectEditorActive    = false;
+        bool                     isSpriteEditorActive     = false;
+        bool                     switchToProjectEditor    = false;
+        graphics::Interface      sdlInterface;
+        graphics::Renderer       renderer;
         graphics::ImguiInterface imguiInterface;
         Timer                    timer;
         events::EventBus         eventBus;
@@ -210,7 +206,8 @@ namespace engine
         void getJsonVariables();
         void openProject(int index);
         void sortProjects(std::vector<projects::Project>& projects);
-        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface);
+        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer,
+                                 graphics::ImguiInterface& imguiInterface);
 
         bool copyProjectEditorDataToCore();
 
@@ -243,19 +240,19 @@ namespace engine
          */
         std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
 
-        void saveProjects(const std::vector<projects::Project> &projects);
-        void loadProjects(std::vector<projects::Project> &projects);
+        void saveProjects(const std::vector<projects::Project>& projects);
+        void loadProjects(std::vector<projects::Project>& projects);
 
         // Build game pipeline (called from build thread; must not touch editor/Core data)
         bool buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats);
 
         // Build thread + state
-        std::thread _buildThread;
+        std::thread       _buildThread;
         std::atomic<bool> _buildDone{true};
         std::atomic<bool> _buildSuccess{false};
-        std::mutex _buildOutputMutex;
-        std::string _buildOutput;
-        bool _isBuilding = false;
+        std::mutex        _buildOutputMutex;
+        std::string       _buildOutput;
+        bool              _isBuilding = false;
 
         // save scene and load scene functions for project editor
         /**
