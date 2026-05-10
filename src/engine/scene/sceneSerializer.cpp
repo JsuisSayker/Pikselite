@@ -19,7 +19,7 @@ namespace engine::scene
     namespace
     {
         constexpr uint32_t kSceneMagic = 0x5343534E; // 'SCSN'
-        constexpr uint16_t kSceneVersion = 1;
+        constexpr uint16_t kSceneVersion = 2;
 
         enum ComponentMask : uint32_t
         {
@@ -345,6 +345,8 @@ namespace engine::scene
                 writeI32(out, local.y);
                 writeU16(out, static_cast<uint16_t>(pixel.type));
                 writeU8(out, pixel.colorIndex);
+                writeU8(out, pixel.burnTimer);
+                writeBool(out, pixel.isBurning);
             }
         }
 
@@ -403,15 +405,21 @@ namespace engine::scene
                 int32_t localY = 0;
                 uint16_t type = 0;
                 uint8_t colorIndex = 0;
+                uint8_t burnTimer = 0;
+                bool    isBurning = false;
                 if (!readI32(data, offset, localX)) return false;
                 if (!readI32(data, offset, localY)) return false;
                 if (!readU16(data, offset, type)) return false;
                 if (!readU8(data, offset, colorIndex)) return false;
+                if (!readU8(data, offset, burnTimer)) return false;
+                if (!readBool(data, offset, isBurning)) return false;
 
                 outGo.pixelLocalCoords.push_back({localX, localY});
                 Element::Pixel px;
                 px.type = static_cast<Element::ElementType>(type);
                 px.colorIndex = colorIndex;
+                px.burnTimer = burnTimer;
+                px.isBurning = isBurning;
                 outGo.pixels.push_back(px);
             }
 

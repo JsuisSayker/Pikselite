@@ -5,6 +5,7 @@
  * the application.
  */
 
+#include <algorithm>
 #include <cstdio>
 #include <fstream>
 #include <graphics/imgui/imguiInterface.hpp>
@@ -15,6 +16,7 @@
 #include <chrono>
 #include <system_error>
 #include <engine/scene/sceneSerializer.hpp>
+#include <graphics/imgui/components/bars.hpp>
 #include <stb_image.h>
 
 namespace
@@ -91,12 +93,36 @@ namespace graphics
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
+        // ── DPI / resolution scaling ──────────────────────────────────────────
+        // Use display height as the proxy for "how big should UI be" (1080p = 1.0).
+        // Clamp to a sensible band so a tiny window or a wall-sized display
+        // doesn't produce unusable extremes.
+        float uiScale = 1.0f;
+        SDL_DisplayMode dm{};
+        const int displayIndex = (window != nullptr) ? SDL_GetWindowDisplayIndex(window) : 0;
+        if (SDL_GetCurrentDisplayMode(displayIndex >= 0 ? displayIndex : 0, &dm) == 0 && dm.h > 0)
+        {
+            uiScale = std::clamp(static_cast<float>(dm.h) / 1080.0f, 1.0f, 3.0f);
+        }
+        _uiScale = uiScale;
+
+        // Scale shared layout constants used by the toolbars/sidebars so they
+        // track font/UI sizing on high-DPI screens.
+        LAYOUT_TOP_H    = 40.0f * uiScale;
+        LAYOUT_BOTTOM_H = 180.0f * uiScale;
+        LAYOUT_LEFT_W   = 220.0f * uiScale;
+        LAYOUT_RIGHT_W  = 260.0f * uiScale;
+
         ImGuiIO& io = ImGui::GetIO();
-        fontLight = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Light.ttf", 10.0f);
-        fontRegularSmall = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", 15.0f);
-        fontRegularBig = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", 28.0f);
-        fontBoldSmall = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", 25.0f);
-        fontBoldBig = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", 35.0f);
+        auto scaledPx = [uiScale](float baseSize)
+        {
+            return std::max(1.0f, std::floor(baseSize * uiScale));
+        };
+        fontLight        = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Light.ttf",   scaledPx(13.0f));
+        fontRegularSmall = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", scaledPx(15.0f));
+        fontRegularBig   = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", scaledPx(28.0f));
+        fontBoldSmall    = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf",    scaledPx(25.0f));
+        fontBoldBig      = io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf",    scaledPx(35.0f));
 
         ImGui::StyleColorsDark();
 
@@ -150,6 +176,10 @@ namespace graphics
         c[ImGuiCol_TabActive]            = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
         c[ImGuiCol_PlotLines]            = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
         c[ImGuiCol_PlotHistogram]        = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
+
+        // Scale paddings/spacing/rounding/etc. by the same UI scale we used for fonts.
+        // Done last so it applies uniformly to all values configured above.
+        style.ScaleAllSizes(uiScale);
 
         ImGui_ImplSDL2_InitForOpenGL(_window, _glContext);
         ImGui_ImplOpenGL3_Init("#version 330 core");

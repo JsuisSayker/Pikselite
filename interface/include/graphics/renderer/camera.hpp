@@ -46,6 +46,12 @@ namespace graphics
             zoom /= factor;
         }
 
+        /**
+         * @brief Zooms the camera while keeping the world point under the given screen position
+         * stable. Useful for mouse-wheel zoom that focuses on the cursor.
+         */
+        void zoomAt(float factor, const glm::vec2& screenPos, int screenWidth, int screenHeight);
+
         // Accessor and mutator methods for camera position and zoom level
         void setPosition(float x, float y);
         void setZoom(float zoom);

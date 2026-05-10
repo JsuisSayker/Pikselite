@@ -27,6 +27,24 @@ namespace editors
         return _camera.screenToWorld(screenPos, w, h);
     }
 
+    void AbstractEditor::zoomAroundMouse(float factor)
+    {
+        int w = 0, h = 0;
+        SDL_GetWindowSize(_graphicsInterface->getWindow(), &w, &h);
+        const glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+        _camera.zoomAt(factor, mousePos, w, h);
+    }
+
+    void AbstractEditor::panCameraScreenDelta(const glm::vec2& screenDelta)
+    {
+        const float zoom = _camera.getZoom();
+        if (zoom <= 0.0f)
+            return;
+        // Drag follows the cursor: world point under the mouse stays under the mouse.
+        // Screen Y is down-positive; world Y is up-positive (see Camera2D::screenToWorld).
+        _camera.move(glm::vec2(-screenDelta.x / zoom, screenDelta.y / zoom));
+    }
+
     bool AbstractEditor::loadSpriteForPlacement(const std::string& filename)
     {
         _pendingSprite   = {};
