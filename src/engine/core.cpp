@@ -276,7 +276,7 @@ namespace engine
         imguiInterface.fileToolBar();
 
         float toolbarHeight = 40.0f;
-        
+
         ImGuiIO& io = ImGui::GetIO();
         ImGui::SetNextWindowPos(ImVec2(0, toolbarHeight));
         ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - toolbarHeight));
@@ -311,7 +311,7 @@ namespace engine
         if (!switchToProjectEditor)
         {
             selectedProjectIndex = imguiInterface.projectsDisplay(_projects);
-        
+
             if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size()) {
                 openProject(selectedProjectIndex);
             }
@@ -322,7 +322,7 @@ namespace engine
 
         ImGui::End();
         ImGui::PopStyleVar();
-        
+
         imguiInterface.endFrame(sdlInterface.getWindow());
         renderer.present(sdlInterface.getWindow());
 
@@ -512,12 +512,12 @@ namespace engine
             _buildOutput += msg + "\n";
         };
 
-        // Step 1: Create directories
+        // Create directories
         appendOutput("Creating game directory: " + gameDir);
         std::filesystem::create_directories(srcDir);
         std::filesystem::create_directories(assetsDir);
 
-        // Step 2: Generate CMakeLists.txt
+        // Generate CMakeLists.txt
         {
             const std::string cmakeContent =
                 "# -------------------------------------------------\n"
@@ -565,14 +565,17 @@ namespace engine
             appendOutput("Generated CMakeLists.txt");
         }
 
-        // Step 3: Generate main.cpp
+        // Generate main.cpp
         {
             const std::string mainContent =
                 "#define SDL_MAIN_HANDLED\n"
                 "#include <game/Game.hpp>\n"
+                "#include <filesystem>\n"
                 "\n"
-                "int main()\n"
+                "int main(int argc, char* argv[])\n"
                 "{\n"
+                "    std::filesystem::current_path(\n"
+                "        std::filesystem::absolute(argv[0]).parent_path());\n"
                 "    engine::Game game(" + std::to_string(settings.windowWidth) + ", "
                                    + std::to_string(settings.windowHeight) + ", \""
                                    + settings.gameTitle + "\");\n"
@@ -592,7 +595,7 @@ namespace engine
             appendOutput("Generated main.cpp");
         }
 
-        // Step 4: Copy .dat files used by the scene
+        // Copy .dat files used by the scene
         for (const auto& datPath : neededDats)
         {
             std::filesystem::path src = datPath;
@@ -609,7 +612,7 @@ namespace engine
             }
         }
 
-        // Step 6: Re-configure CMake to pick up the new target
+        // Re-configure CMake to pick up the new target
         {
             appendOutput("Re-configuring CMake...");
             std::string configureCmd = "cmake -B build 2>&1";
@@ -637,7 +640,7 @@ namespace engine
             appendOutput("CMake configure succeeded.");
         }
 
-        // Step 7: Build the game target
+        // Build the game target
         {
             appendOutput("Building target " + targetName + "...");
             std::string buildCmd = "cmake --build build --target " + targetName + " --config Release 2>&1";
