@@ -103,6 +103,7 @@ namespace editors
             }
         }
 
+        pending.sourceDatPath = filename;
         pending.valid  = !pending.cells.empty();
         _pendingSprite = std::move(pending);
         return _pendingSprite.valid;

@@ -121,6 +121,12 @@ namespace editors
             _loadSceneRequested  = false;
             return requested;
         }
+        bool consumeBuildGameRequest()
+        {
+            const bool requested = _buildGameRequested;
+            _buildGameRequested  = false;
+            return requested;
+        }
 
         /**
          * @brief Retrieves the filename of the currently selected sprite for placement, if any.
@@ -135,6 +141,12 @@ namespace editors
         
         
         void setCurrentProject(const projects::Project& project);
+
+        // Build settings dialog (rendered inside ImGui frame)
+        void showBuildSettings(const BuildSettings& settings);
+        bool consumeBuildConfirmed(BuildSettings& outSettings);
+        void setBuildProgress(bool visible, bool done, bool success, const std::string& output);
+        bool consumeBuildProgressDismissed();
 
       private:
         struct PendingTexture
@@ -153,8 +165,21 @@ namespace editors
         bool                                    _leftMouseDownLastFrame  = false;
         bool                                    _saveSceneRequested      = false;
         bool                                    _loadSceneRequested      = false;
+        bool                                    _buildGameRequested      = false;
         int                                     _selectedGameObjectIndex = -1;
         std::unordered_map<std::string, GLuint> _textureCache;
+
+        // Build dialog state (rendered inside run() ImGui frame)
+        bool _showBuildDialog = false;
+        bool _buildDialogConfirmed = false;
+        BuildSettings _buildDialogSettings;
+
+        // Build progress state (rendered inside run() ImGui frame)
+        bool _showBuildProgress = false;
+        bool _buildProgressDone = false;
+        bool _buildProgressSuccess = false;
+        std::string _buildProgressOutput;
+        bool _buildProgressDismissed = false;
 
         bool _isPlacingTexture = false;
         PendingTexture _pendingTexture = {};

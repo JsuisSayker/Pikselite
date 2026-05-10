@@ -562,6 +562,15 @@ namespace graphics
                                        std::string& currentSceneFilename, bool& saveSceneRequested,
                                        bool& loadSceneRequested)
     {
+        bool dummyBuildRequest = false;
+        projectNavbar(currentSpriteFilename, currentSceneFilename, saveSceneRequested,
+                      loadSceneRequested, dummyBuildRequest);
+    }
+
+    void ImguiInterface::projectNavbar(std::string& currentSpriteFilename,
+                                       std::string& currentSceneFilename, bool& saveSceneRequested,
+                                       bool& loadSceneRequested, bool& buildGameRequested)
+    {
         static BarConfig bottomBarConfig{BarOrientation::Horizontal, "Project Navbar",
                                          ImVec2(0.0f, LAYOUT_BOTTOM_H), true,
                                          GetDesiredPosition("bottom")};
@@ -601,6 +610,10 @@ namespace graphics
                 ImGui::SameLine();
                 if (BasicButton("Save Scene"))
                     saveSceneRequested = true;
+
+                ImGui::SameLine();
+                if (BasicButton("Build Game"))
+                    buildGameRequested = true;
 
                 const std::string relativeDir =
                     fs::relative(_fileExplorerCurrentDir, rootPath).generic_string();
@@ -1810,6 +1823,100 @@ namespace graphics
         if (infoFont) ImGui::PushFont(infoFont);
         ImGui::TextDisabled("Last opened: %s", buffer);
         if (infoFont) ImGui::PopFont();
+    }
+
+    void ImguiInterface::buildGameSettingsDialog(BuildSettings& settings, bool& confirmed, bool& cancelled)
+    {
+        if (!ImGui::IsPopupOpen("Build Game Settings"))
+        {
+            settings.syncToBuffers();
+            ImGui::OpenPopup("Build Game Settings");
+        }
+
+        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+        bool open = true;
+        if (ImGui::BeginPopupModal("Build Game Settings", &open, ImGuiWindowFlags_None))
+        {
+            ImGui::Text("Configure your game build:");
+            ImGui::Separator();
+
+            ImGui::InputText("Game Title", settings.gameTitleBuf, sizeof(settings.gameTitleBuf));
+            ImGui::InputInt("Window Width", &settings.windowWidth);
+            ImGui::InputInt("Window Height", &settings.windowHeight);
+            ImGui::InputText("Target Name", settings.targetNameBuf, sizeof(settings.targetNameBuf));
+
+            ImGui::Separator();
+            ImGui::Text("Output: games/%s/", settings.targetNameBuf);
+
+            ImGui::Separator();
+            if (ImGui::Button("Build", ImVec2(120, 0)))
+            {
+                settings.syncFromBuffers();
+                confirmed = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            {
+                cancelled = true;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void ImguiInterface::showBuildProgressModal(const char* status, float progress, bool isComplete,
+                                                  bool isSuccess, const char* detail)
+    {
+        ImGui::SetNextWindowSize(ImVec2(450, 200), ImGuiCond_FirstUseEver);
+        bool open = true;
+        if (ImGui::BeginPopupModal("Build Progress", &open,
+                                   ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+        {
+            ImGui::Text("%s", status);
+            ImGui::Separator();
+
+            if (progress >= 0.0f)
+            {
+                ImGui::ProgressBar(progress, ImVec2(-1, 0));
+            }
+            else
+            {
+                ImGui::ProgressBar(-1.0f * (float)ImGui::GetTime(), ImVec2(-1, 0), "");
+            }
+
+            if (detail && detail[0] != '\0')
+            {
+                ImGui::Separator();
+                ImGui::BeginChild("BuildOutput", ImVec2(0, 80), true,
+                                  ImGuiWindowFlags_HorizontalScrollbar);
+                ImGui::TextWrapped("%s", detail);
+                if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+                    ImGui::SetScrollHereY(1.0f);
+                ImGui::EndChild();
+            }
+
+            ImGui::Separator();
+            if (isComplete)
+            {
+                if (isSuccess)
+                {
+                    ImGui::TextColored(ImVec4(0.2f, 0.9f, 0.2f, 1.0f), "Build successful!");
+                }
+                else
+                {
+                    ImGui::TextColored(ImVec4(0.9f, 0.2f, 0.2f, 1.0f), "Build failed.");
+                }
+
+                if (ImGui::Button("Close", ImVec2(120, 0)))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndPopup();
+        }
     }
 
 } // namespace graphics

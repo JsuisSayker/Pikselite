@@ -1,6 +1,9 @@
 #pragma once
 
+#include <build/BuildSettings.hpp>
 #include <SDL2/SDL.h>
+#include <mutex>
+#include <thread>
 #include <box2d/box2d.h>
 #include <editors/project/projectEditor.hpp>
 #include <editors/sprite/spriteEditor.hpp>
@@ -242,6 +245,17 @@ namespace engine
 
         void saveProjects(const std::vector<projects::Project> &projects);
         void loadProjects(std::vector<projects::Project> &projects);
+
+        // Build game pipeline (called from build thread; must not touch editor/Core data)
+        bool buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats);
+
+        // Build thread + state
+        std::thread _buildThread;
+        std::atomic<bool> _buildDone{true};
+        std::atomic<bool> _buildSuccess{false};
+        std::mutex _buildOutputMutex;
+        std::string _buildOutput;
+        bool _isBuilding = false;
 
         // save scene and load scene functions for project editor
         /**

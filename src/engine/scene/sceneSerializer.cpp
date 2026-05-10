@@ -19,7 +19,7 @@ namespace engine::scene
     namespace
     {
         constexpr uint32_t kSceneMagic = 0x5343534E; // 'SCSN'
-        constexpr uint16_t kSceneVersion = 2;
+        constexpr uint16_t kSceneVersion = 3;
 
         enum ComponentMask : uint32_t
         {
@@ -305,6 +305,7 @@ namespace engine::scene
             writeU32(out, go.id);
             writeBool(out, go.isActive);
             writeString(out, go.name);
+            writeString(out, go.sourceDatPath);
 
             const uint32_t componentMask = buildComponentMask(go);
             writeU32(out, componentMask);
@@ -355,6 +356,7 @@ namespace engine::scene
             if (!readU32(data, offset, outGo.id)) return false;
             if (!readBool(data, offset, outGo.isActive)) return false;
             if (!readString(data, offset, outGo.name)) return false;
+            if (!readString(data, offset, outGo.sourceDatPath)) return false;
 
             uint32_t componentMask = 0;
             if (!readU32(data, offset, componentMask)) return false;

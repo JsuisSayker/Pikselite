@@ -2,6 +2,15 @@
 #include <engine/core.hpp>
 #include <tracy/Tracy.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/scene/sceneSerializer.hpp>
+
+#include <atomic>
+#include <fstream>
+#include <mutex>
+#include <thread>
+#include <unordered_set>
+
+#include <cstdio> // for _popen, _pclose
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -59,8 +68,85 @@ namespace engine
             } else if (isProjectEditorActive)
             {
                 ZoneScopedN("ProjectEditor");
+
+                // Handle build request (before frame)
+                if (projectEditor->consumeBuildGameRequest())
+                {
+                    BuildSettings settings;
+                    settings.gameTitle = _currentProject.name;
+                    settings.targetName = _currentProject.name;
+                    settings.scenePath = _sceneFilename;
+                    projectEditor->showBuildSettings(settings);
+                }
+
+                // Snapshot build progress state (before frame)
+                {
+                    std::string snapshot;
+                    {
+                        std::lock_guard<std::mutex> lock(_buildOutputMutex);
+                        snapshot = _buildOutput;
+                    }
+                    projectEditor->setBuildProgress(
+                        _isBuilding, _buildDone, _buildSuccess, snapshot);
+                }
+
+                // Render frame (ImGui rendering inside ProjectEditor::run)
                 projectEditor->run(event);
 
+                // Handle build confirmed (after frame — start the build thread)
+                BuildSettings confirmedSettings;
+                if (projectEditor->consumeBuildConfirmed(confirmedSettings))
+                {
+                    // Snapshot editor data before spawning thread
+                    copyProjectEditorDataToCore();
+
+                    const std::string& targetName = confirmedSettings.targetName;
+                    const std::string assetsDir = "games/" + targetName + "/assets";
+
+                    // Save scene
+                    std::filesystem::create_directories(assetsDir);
+                    const std::string scenePath = assetsDir + "/scene.scene";
+                    saveScene(scenePath);
+
+                    // Collect used .dat files
+                    std::vector<std::string> neededDats;
+                    for (const auto& go : _gameObjects)
+                    {
+                        if (!go.sourceDatPath.empty())
+                            neededDats.push_back(go.sourceDatPath);
+                    }
+
+                    if (_buildThread.joinable())
+                        _buildThread.join();
+
+                    _isBuilding = true;
+                    _buildDone = false;
+                    _buildSuccess = false;
+                    {
+                        std::lock_guard<std::mutex> lock(_buildOutputMutex);
+                        _buildOutput.clear();
+                    }
+                    _buildThread = std::thread([this, confirmedSettings, neededDats]()
+                    {
+                        bool success = buildGame(confirmedSettings, neededDats);
+                        {
+                            std::lock_guard<std::mutex> lock(_buildOutputMutex);
+                            _buildOutput += success ? "Build completed successfully.\n" : "Build failed.\n";
+                        }
+                        _buildSuccess = success;
+                        _buildDone = true;
+                    });
+                }
+
+                // Handle build progress dismissed
+                if (projectEditor->consumeBuildProgressDismissed())
+                {
+                    if (_buildThread.joinable())
+                        _buildThread.join();
+                    _isBuilding = false;
+                }
+
+                // Save/load scene
                 if (projectEditor->consumeSaveSceneRequest())
                 {
                     copyProjectEditorDataToCore();
@@ -77,6 +163,7 @@ namespace engine
                                                     gameObjectCounter);
                     }
                 }
+
             } else if (isSpriteEditorActive)
             {
                 ZoneScopedN("SpriteEditor");
@@ -337,6 +424,11 @@ namespace engine
         {
             copyProjectEditorDataToCore();
         }
+        if (_buildThread.joinable())
+        {
+            _buildDone = true;
+            _buildThread.join();
+        }
         _boxWorld.shutdown();
         SDL_Quit();
     }
@@ -405,6 +497,175 @@ namespace engine
         }
 
         return result;
+    }
+
+    bool Core::buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats)
+    {
+        const std::string targetName = settings.targetName;
+        const std::string gameDir = "games/" + targetName;
+        const std::string srcDir = gameDir + "/src";
+        const std::string assetsDir = gameDir + "/assets";
+
+        auto appendOutput = [this](const std::string& msg)
+        {
+            std::lock_guard<std::mutex> lock(_buildOutputMutex);
+            _buildOutput += msg + "\n";
+        };
+
+        // Step 1: Create directories
+        appendOutput("Creating game directory: " + gameDir);
+        std::filesystem::create_directories(srcDir);
+        std::filesystem::create_directories(assetsDir);
+
+        // Step 2: Generate CMakeLists.txt
+        {
+            const std::string cmakeContent =
+                "# -------------------------------------------------\n"
+                "# " + targetName + " - Auto-generated game project\n"
+                "# -------------------------------------------------\n"
+                "add_executable(" + targetName + " src/main.cpp)\n"
+                "\n"
+                "target_include_directories(" + targetName + "\n"
+                "    PRIVATE\n"
+                "        ${CMAKE_SOURCE_DIR}/src\n"
+                "        ${CMAKE_SOURCE_DIR}/interface/include\n"
+                ")\n"
+                "\n"
+                "target_link_libraries(" + targetName + "\n"
+                "    PRIVATE\n"
+                "        engine\n"
+                "        graphics\n"
+                "        game\n"
+                "        pikselite_interface\n"
+                "        SDL2::SDL2\n"
+                "        SDL2::SDL2main\n"
+                "        GLEW::GLEW\n"
+                "        OpenGL::GL\n"
+                "        box2d::box2d\n"
+                "        ZLIB::ZLIB\n"
+                "        ${LUA_LIBRARIES}\n"
+                "        nlohmann_json::nlohmann_json\n"
+                ")\n"
+                "\n"
+                "# Copy assets to output directory\n"
+                "add_custom_command(TARGET " + targetName + " POST_BUILD\n"
+                "    COMMAND ${CMAKE_COMMAND} -E copy_directory\n"
+                "        ${CMAKE_CURRENT_SOURCE_DIR}/assets\n"
+                "        $<TARGET_FILE_DIR:" + targetName + ">/assets\n"
+                "    COMMENT \"Copying game assets to output directory\"\n"
+                ")\n";
+
+            std::ofstream cmakeFile(gameDir + "/CMakeLists.txt");
+            if (!cmakeFile)
+            {
+                appendOutput("ERROR: Failed to create CMakeLists.txt");
+                return false;
+            }
+            cmakeFile << cmakeContent;
+            appendOutput("Generated CMakeLists.txt");
+        }
+
+        // Step 3: Generate main.cpp
+        {
+            const std::string mainContent =
+                "#define SDL_MAIN_HANDLED\n"
+                "#include <game/Game.hpp>\n"
+                "\n"
+                "int main()\n"
+                "{\n"
+                "    engine::Game game(" + std::to_string(settings.windowWidth) + ", "
+                                   + std::to_string(settings.windowHeight) + ", \""
+                                   + settings.gameTitle + "\");\n"
+                "    if (!game.loadScene(\"assets/scene.scene\"))\n"
+                "        return 1;\n"
+                "    game.run();\n"
+                "    return 0;\n"
+                "}\n";
+
+            std::ofstream mainFile(srcDir + "/main.cpp");
+            if (!mainFile)
+            {
+                appendOutput("ERROR: Failed to create main.cpp");
+                return false;
+            }
+            mainFile << mainContent;
+            appendOutput("Generated main.cpp");
+        }
+
+        // Step 4: Copy .dat files used by the scene
+        for (const auto& datPath : neededDats)
+        {
+            std::filesystem::path src = datPath;
+            std::filesystem::path dst = std::filesystem::path(assetsDir) / src.filename();
+            std::error_code ec;
+            std::filesystem::copy_file(src, dst, std::filesystem::copy_options::overwrite_existing, ec);
+            if (ec)
+            {
+                appendOutput("WARNING: Failed to copy " + datPath + ": " + ec.message());
+            }
+            else
+            {
+                appendOutput("Copied " + src.filename().string());
+            }
+        }
+
+        // Step 6: Re-configure CMake to pick up the new target
+        {
+            appendOutput("Re-configuring CMake...");
+            std::string configureCmd = "cmake -B build 2>&1";
+            FILE* pipe = _popen(configureCmd.c_str(), "r");
+            if (!pipe)
+            {
+                appendOutput("ERROR: Failed to run cmake configure");
+                return false;
+            }
+            char buffer[128];
+            while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+            {
+                std::string line(buffer);
+                // Trim newline
+                if (!line.empty() && line.back() == '\n')
+                    line.pop_back();
+                appendOutput("  " + line);
+            }
+            int exitCode = _pclose(pipe);
+            if (exitCode != 0)
+            {
+                appendOutput("ERROR: CMake configure failed with exit code " + std::to_string(exitCode));
+                return false;
+            }
+            appendOutput("CMake configure succeeded.");
+        }
+
+        // Step 7: Build the game target
+        {
+            appendOutput("Building target " + targetName + "...");
+            std::string buildCmd = "cmake --build build --target " + targetName + " --config Release 2>&1";
+            FILE* pipe = _popen(buildCmd.c_str(), "r");
+            if (!pipe)
+            {
+                appendOutput("ERROR: Failed to run cmake build");
+                return false;
+            }
+            char buffer[256];
+            while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+            {
+                std::string line(buffer);
+                if (!line.empty() && line.back() == '\n')
+                    line.pop_back();
+                appendOutput("  " + line);
+            }
+            int exitCode = _pclose(pipe);
+            if (exitCode != 0)
+            {
+                appendOutput("ERROR: Build failed with exit code " + std::to_string(exitCode));
+                return false;
+            }
+            appendOutput("Build succeeded.");
+        }
+
+        appendOutput("Game build complete! Output: build/" + targetName + "/Release/" + targetName + ".exe");
+        return true;
     }
 
     void Core::saveProjects(const std::vector<projects::Project> &projects)

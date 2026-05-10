@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <build/BuildSettings.hpp>
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL_opengl.h>
@@ -57,12 +58,21 @@ namespace graphics
         void projectNavbar(::std::string &currentSpriteFilename);
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void projectNavbar(::std::string &currentSpriteFilename, ::std::string &currentSceneFilename, bool &saveSceneRequested, bool &loadSceneRequested);
+        void projectNavbar(::std::string &currentSpriteFilename, ::std::string &currentSceneFilename,
+                           bool &saveSceneRequested, bool &loadSceneRequested,
+                           bool &buildGameRequested);
         void scanSprites();
         void setFileExplorerDataOnly(bool dataOnly);
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject);
 
         void fileToolBar();
+
+        // Build game dialog — renders the settings modal; sets confirmed=true when user clicks Build
+        void buildGameSettingsDialog(BuildSettings& settings, bool& confirmed, bool& cancelled);
+
+        // Build progress modal — call each frame while building
+        void showBuildProgressModal(const char* status, float progress, bool isComplete, bool isSuccess, const char* detail = nullptr);
         int projectOptionsBar(std::vector<projects::Project> &projects, std::string projectsPath);
         int projectsDisplay(std::vector<projects::Project> &projects);
         void clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
