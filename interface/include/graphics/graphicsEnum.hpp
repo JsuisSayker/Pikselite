@@ -93,6 +93,8 @@ namespace graphics
         MOUSE_LEFT_DRAG,
         MOUSE_RIGHT_CLICK,
         MOUSE_RIGHT_DRAG,
+        MOUSE_MIDDLE_DRAG,
+        MOUSE_WHEEL,
         FILE_DROPPED,
         WINDOW_CLOSE,
         QUIT,
@@ -113,5 +115,7 @@ namespace graphics
         InputEventType type     = NO_EVENT;
         uint32_t       windowID = 0;
         std::string    droppedFilePath;
+        float          wheelY     = 0.0f;
+        glm::vec2      mouseDelta = {0.0f, 0.0f};
     };
 } // namespace graphics

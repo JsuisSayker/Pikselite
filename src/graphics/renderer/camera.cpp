@@ -34,6 +34,20 @@ namespace graphics
         this->zoom = zoom;
     }
 
+    void Camera2D::zoomAt(float factor, const glm::vec2& screenPos, int screenWidth,
+                          int screenHeight)
+    {
+        glm::vec2 worldBefore = screenToWorld(screenPos, screenWidth, screenHeight);
+        zoom *= factor;
+        if (zoom < 0.05f)
+            zoom = 0.05f;
+        if (zoom > 50.0f)
+            zoom = 50.0f;
+        glm::vec2 worldAfter = screenToWorld(screenPos, screenWidth, screenHeight);
+        x += worldBefore.x - worldAfter.x;
+        y += worldBefore.y - worldAfter.y;
+    }
+
     glm::vec2 Camera2D::screenToWorld(const glm::vec2& screenPos, int screenWidth,
                                       int screenHeight) const
     {
