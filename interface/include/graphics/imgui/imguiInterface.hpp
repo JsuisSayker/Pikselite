@@ -84,6 +84,7 @@ namespace graphics
 
         SDL_Window*   _window;
         SDL_GLContext _glContext;
+        float         _uiScale = 1.0f;
         bool newProjectCreated = false;
         ImFont* fontLight = nullptr;
         ImFont* fontRegularSmall = nullptr;

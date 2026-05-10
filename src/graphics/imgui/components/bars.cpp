@@ -10,8 +10,7 @@
 
 #include <graphics/imgui/components/bars.hpp>
 
-// ── Layout constants (shared with interface.cpp via bars.hpp) ──────────────
-static constexpr float BOTTOM_H = 180.0f;
+// Bottom-bar height pulls from the (DPI-scaled) shared layout constant.
 
 /**
  * @brief Draws the bar using ImGui, applying the appropriate layout and styling based on the bar's
@@ -42,8 +41,8 @@ void graphics::Bar::Draw(const std::function<void()>& contentFunction)
         if (isBottom)
         {
             // Bottom bar: full width, fixed height, snapped to bottom
-            finalPos  = ImVec2(0.0f, winH - BOTTOM_H);
-            finalSize = ImVec2(winW, BOTTOM_H);
+            finalPos  = ImVec2(0.0f, winH - LAYOUT_BOTTOM_H);
+            finalSize = ImVec2(winW, LAYOUT_BOTTOM_H);
         }
         else
         {
@@ -55,7 +54,7 @@ void graphics::Bar::Draw(const std::function<void()>& contentFunction)
     else
     {
         // Vertical sidebar: fixed width, height stops above the bottom bar
-        float sideH = winH - BOTTOM_H - LAYOUT_TOP_H;
+        float sideH = winH - LAYOUT_BOTTOM_H - LAYOUT_TOP_H;
         if (finalPos.x < 0.0f)
             finalPos.x = winW - finalSize.x; // right side
         finalPos.y  = LAYOUT_TOP_H;

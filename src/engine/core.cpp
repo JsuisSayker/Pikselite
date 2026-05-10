@@ -552,15 +552,4 @@ namespace engine
         }
     }
 
-    void Core::saveScene(const std::string &filename)
-    {
-        // TODO
-    }
-
-    bool Core::loadScene(const std::string &filename)
-    {
-        // TODO
-        return false;
-    }
-
 } // namespace engine
