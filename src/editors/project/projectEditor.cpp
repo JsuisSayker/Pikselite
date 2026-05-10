@@ -52,7 +52,7 @@ namespace editors
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
         drawGameObjectSprites();
         drawPendingTexturePreview();
-        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
+        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.55f, 0.55f, 0.55f});
         imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
@@ -77,26 +77,17 @@ namespace editors
     {
         switch (event.type)
         {
-            case graphics::KEY_W:
-                _camera.move(glm::vec2(0.0f, -10.0f));
-                break;
             case graphics::MOUSE_LEFT_CLICK:
                 mouseLeftClick();
                 break;
-            case graphics::KEY_S:
-                _camera.move(glm::vec2(0.0f, 10.0f));
+            case graphics::MOUSE_MIDDLE_DRAG:
+                panCameraScreenDelta(event.mouseDelta);
                 break;
-            case graphics::KEY_A:
-                _camera.move(glm::vec2(10.0f, 0.0f));
-                break;
-            case graphics::KEY_D:
-                _camera.move(glm::vec2(-10.0f, 0.0f));
-                break;
-            case graphics::KEY_I:
-                _camera.zoomIn(1.1f);
-                break;
-            case graphics::KEY_O:
-                _camera.zoomOut(1.1f);
+            case graphics::MOUSE_WHEEL:
+                if (event.wheelY > 0.0f)
+                    zoomAroundMouse(1.1f);
+                else if (event.wheelY < 0.0f)
+                    zoomAroundMouse(1.0f / 1.1f);
                 break;
             case graphics::KEY_ESCAPE:
                 _isPlacingTexture = false;

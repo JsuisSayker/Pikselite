@@ -42,6 +42,8 @@ namespace editors
                        graphics::ImguiInterface* ii);
 
         glm::vec2                    screenToWorld(const glm::vec2& screenPos) const;
+        void                         zoomAroundMouse(float factor);
+        void                         panCameraScreenDelta(const glm::vec2& screenDelta);
         bool                         loadSpriteForPlacement(const std::string& filename);
         std::vector<graphics::Pixel> addPendingSpriteToRenderPixels();
         std::vector<graphics::Pixel> buildRenderPixels() const;

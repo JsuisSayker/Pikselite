@@ -166,6 +166,14 @@ namespace graphics
                     }
                     break;
                 case SDL_MOUSEMOTION:
+                    if (event.motion.state & SDL_BUTTON_MMASK)
+                    {
+                        result.type       = MOUSE_MIDDLE_DRAG;
+                        result.windowID   = event.motion.windowID;
+                        result.mouseDelta = {static_cast<float>(event.motion.xrel),
+                                             static_cast<float>(event.motion.yrel)};
+                        return result;
+                    }
                     if (event.motion.state & SDL_BUTTON_LMASK)
                     {
                         result.type     = MOUSE_LEFT_DRAG;
@@ -179,6 +187,11 @@ namespace graphics
                         return result;
                     }
                     break;
+                case SDL_MOUSEWHEEL:
+                    result.type     = MOUSE_WHEEL;
+                    result.windowID = event.wheel.windowID;
+                    result.wheelY   = static_cast<float>(event.wheel.y);
+                    return result;
                 case SDL_QUIT:
                     result.type     = QUIT;
                     result.windowID = 0;

@@ -1,4 +1,5 @@
 #include <engine/core.hpp>
+#include <engine/pixels/simulation/element.hpp>
 #include <engine/scene/sceneSerializer.hpp>
 
 #include <cmath>
@@ -73,6 +74,18 @@ namespace engine
                 Element::Pixel scenePixel;
                 scenePixel.type = pixel.type;
                 scenePixel.colorIndex = renderer.generatePixelColorIndex(gridX, gridY);
+                scenePixel.isBurning = pixel.isBurning;
+                // FIRE: restore burn timer from save; if zero (legacy/empty), seed from element definition.
+                if (pixel.type == Element::FIRE)
+                {
+                    scenePixel.burnTimer = pixel.burnTimer != 0
+                                               ? pixel.burnTimer
+                                               : g_elements[Element::FIRE].fireParams.burnDuration;
+                }
+                else
+                {
+                    scenePixel.burnTimer = pixel.burnTimer;
+                }
                 _chunkGrid.setPixel(gridX, gridY, scenePixel);
             }
         }
