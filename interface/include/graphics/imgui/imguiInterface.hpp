@@ -29,6 +29,10 @@
 #include <imgui/backends/imgui_impl_sdl2.h>
 #include <string>
 #include <vector>
+#include <string>
+#include <cstring>
+
+#include <projects.hpp>
 
 namespace graphics
 {
@@ -46,21 +50,22 @@ namespace graphics
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
                                 Element::ElementType& selectedElementType); // updated signature
         void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive);
-        void projectTopBarEmpty();
+        void projectTopBar(std::string title = "");
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
         void projectNavbar(::std::string &currentSpriteFilename);
         void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
-        void projectNavbar(::std::string &currentSpriteFilename,
-                   ::std::string &currentSceneFilename,
-                   bool &saveSceneRequested,
-                   bool &loadSceneRequested);
+        void projectNavbar(::std::string &currentSpriteFilename, ::std::string &currentSceneFilename, bool &saveSceneRequested, bool &loadSceneRequested);
         void scanSprites();
         void setFileExplorerDataOnly(bool dataOnly);
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
-                            int&                              selectedGameObjectIndex);
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject);
+
+        void fileToolBar();
+        int projectOptionsBar(std::vector<projects::Project> &projects, std::string projectsPath);
+        int projectsDisplay(std::vector<projects::Project> &projects);
+        void clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
 
         void startFrame();
         void endFrame(SDL_Window* window);
@@ -79,6 +84,13 @@ namespace graphics
 
         SDL_Window*   _window;
         SDL_GLContext _glContext;
+        bool newProjectCreated = false;
+        ImFont* fontLight = nullptr;
+        ImFont* fontRegularSmall = nullptr;
+        ImFont* fontRegularBig = nullptr;
+        ImFont* fontBoldSmall = nullptr;
+        ImFont* fontBoldBig = nullptr;
+        ImTextureID thumbnail;
         std::string   _fileExplorerCurrentDir;
         std::vector<FileEntry> _fileExplorerEntries;
         bool _fileExplorerDataOnly = false;

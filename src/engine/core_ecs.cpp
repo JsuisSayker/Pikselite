@@ -82,6 +82,9 @@ namespace engine
     {
         _boxWorld.init({0.0f, -500.0f});
 
+        getJsonVariables();
+        loadProjects(_projects);
+
         // Register ECS components
         componentManager.registerComponent<ecs::components::Transform>();
         componentManager.registerComponent<ecs::components::Velocity>();
