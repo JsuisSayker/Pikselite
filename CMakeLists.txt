@@ -69,7 +69,11 @@ if(PIKSELITE_ENABLE_PROFILING)
     message(STATUS "TRACY PROFILING ENABLED")
     find_package(tracy CONFIG REQUIRED)
     target_link_libraries(engine PRIVATE Tracy::TracyClient)
+    target_link_libraries(game PRIVATE Tracy::TracyClient)
     target_compile_definitions(engine PRIVATE
+        $<$<CONFIG:Debug>:TRACY_ENABLE>
+    )
+    target_compile_definitions(game PRIVATE
         $<$<CONFIG:Debug>:TRACY_ENABLE>
     )
 endif()
