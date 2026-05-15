@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 #include <tests/testHelpers.hpp>
 
-
 //
 // Coordinate system: GRAVITY_DIR = -1, so "down" = decreasing y.
 // y=0 is the bottom of the simulation space.
@@ -14,9 +13,9 @@ TEST(SimulationScenarioTests, WaterFlowsThroughChannel)
     Simulation sim(grid);
 
     // U-shaped stone channel
-    fillRect(grid, 0, 0, 10, 1, Element::STONE);    // floor at y=0
-    fillRect(grid, 0, 1, 1, 8, Element::STONE);      // left wall
-    fillRect(grid, 9, 1, 1, 8, Element::STONE);      // right wall
+    fillRect(grid, 0, 0, 10, 1, Element::STONE); // floor at y=0
+    fillRect(grid, 0, 1, 1, 8, Element::STONE);  // left wall
+    fillRect(grid, 9, 1, 1, 8, Element::STONE);  // right wall
 
     // Water placed at top center
     placePixelG(grid, 5, 8, Element::WATER);
@@ -104,9 +103,9 @@ TEST(SimulationScenarioTests, SandSinksThroughWater)
     Simulation sim(grid);
 
     // Stone container
-    fillRect(grid, 0, 0, 6, 1, Element::STONE);       // floor
-    fillRect(grid, 0, 1, 1, 10, Element::STONE);       // left wall
-    fillRect(grid, 5, 1, 1, 10, Element::STONE);       // right wall
+    fillRect(grid, 0, 0, 6, 1, Element::STONE);  // floor
+    fillRect(grid, 0, 1, 1, 10, Element::STONE); // left wall
+    fillRect(grid, 5, 1, 1, 10, Element::STONE); // right wall
 
     // Water filling bottom half
     fillRect(grid, 1, 1, 4, 5, Element::WATER);
@@ -145,9 +144,9 @@ TEST(SimulationScenarioTests, LavaInStonePool)
     Simulation sim(grid);
 
     // Stone pool
-    fillRect(grid, 0, 0, 6, 1, Element::STONE);      // floor
-    fillRect(grid, 0, 1, 1, 5, Element::STONE);       // left wall
-    fillRect(grid, 5, 1, 1, 5, Element::STONE);       // right wall
+    fillRect(grid, 0, 0, 6, 1, Element::STONE); // floor
+    fillRect(grid, 0, 1, 1, 5, Element::STONE); // left wall
+    fillRect(grid, 5, 1, 1, 5, Element::STONE); // right wall
 
     // Lava in the pool
     placePixelG(grid, 3, 5, Element::LAVA);
@@ -175,11 +174,11 @@ TEST(SimulationScenarioTests, RainFillsTerrainPits)
     Simulation sim(grid);
 
     // Stone ground with a pit at x=3..7 where y=0 is lowered to y=-2
-    fillRect(grid, 0, 0, 3, 1, Element::STONE);       // left ground (x=0..2)
-    fillRect(grid, 8, 0, 3, 1, Element::STONE);       // right ground (x=8..10)
-    fillRect(grid, 3, -2, 5, 1, Element::STONE);       // pit floor at y=-2 (x=3..7)
-    placePixelG(grid, 3, -1, Element::STONE);          // left pit wall
-    placePixelG(grid, 7, -1, Element::STONE);          // right pit wall
+    fillRect(grid, 0, 0, 3, 1, Element::STONE);  // left ground (x=0..2)
+    fillRect(grid, 8, 0, 3, 1, Element::STONE);  // right ground (x=8..10)
+    fillRect(grid, 3, -2, 5, 1, Element::STONE); // pit floor at y=-2 (x=3..7)
+    placePixelG(grid, 3, -1, Element::STONE);    // left pit wall
+    placePixelG(grid, 7, -1, Element::STONE);    // right pit wall
 
     // Sand "rain" from above
     placePixelG(grid, 5, 10, Element::SAND);
@@ -188,8 +187,8 @@ TEST(SimulationScenarioTests, RainFillsTerrainPits)
         sim.update();
 
     // Sand should have fallen into the pit (air gap at y=-1, floor at y=-2)
-    bool sandInPit = (grid.getPixel(5, -1).type == Element::SAND ||
-                      grid.getPixel(5, -2).type == Element::SAND);
+    bool sandInPit =
+        (grid.getPixel(5, -1).type == Element::SAND || grid.getPixel(5, -2).type == Element::SAND);
     EXPECT_TRUE(sandInPit) << "Sand did not fill the terrain pit";
 }
 
@@ -201,7 +200,7 @@ TEST(SimulationScenarioTests, FirebreakStopsSpread)
     // Left wood line (0..9), firebreak at x=10, right wood line (11..20)
     for (int x = 0; x <= 9; ++x)
         placePixelG(grid, x, 0, Element::WOOD);
-    placePixelG(grid, 10, 0, Element::STONE);  // firebreak
+    placePixelG(grid, 10, 0, Element::STONE); // firebreak
     for (int x = 11; x <= 20; ++x)
         placePixelG(grid, x, 0, Element::WOOD);
 

@@ -10,9 +10,7 @@ struct TimedScope
     double maxSeconds;
 
     TimedScope(const char* name_, double maxSec)
-        : start(std::chrono::high_resolution_clock::now())
-        , name(name_)
-        , maxSeconds(maxSec)
+        : start(std::chrono::high_resolution_clock::now()), name(name_), maxSeconds(maxSec)
     {
     }
 

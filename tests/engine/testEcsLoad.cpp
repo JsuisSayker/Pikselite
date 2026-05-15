@@ -172,10 +172,10 @@ TEST(EcsLoadTests, MultipleComponentTypesOnManyEntities)
     for (ecs::EntityID id = 1; id <= 500; ++id)
     {
         ecs::Entity entity = entityManager.createEntity();
-        componentManager.addComponent<ecs::components::Transform>(id,
-                                                                  makeTransform(static_cast<float>(id), 0.0f));
-        componentManager.addComponent<ecs::components::Velocity>(id,
-                                                                 makeVelocity(1.0f, static_cast<float>(id)));
+        componentManager.addComponent<ecs::components::Transform>(
+            id, makeTransform(static_cast<float>(id), 0.0f));
+        componentManager.addComponent<ecs::components::Velocity>(
+            id, makeVelocity(1.0f, static_cast<float>(id)));
     }
 
     for (ecs::EntityID id = 1; id <= 500; ++id)
@@ -203,7 +203,10 @@ TEST(EcsLoadTests, SystemUpdateWithManyEntities)
     struct TrackingSystem : public ecs::ISystem
     {
         int updateCount = 0;
-        void update(double, engine::ComponentManager&) override { ++updateCount; }
+        void update(double, engine::ComponentManager&) override
+        {
+            ++updateCount;
+        }
         void init() override {}
     };
 
@@ -279,6 +282,7 @@ TEST(EcsLoadTests, NearCapacityComponentArray)
     EXPECT_FALSE(componentManager.hasComponent<ecs::components::Transform>(ecs::MAX_ENTITIES));
 
     ecs::Entity newEntity = entityManager.createEntity();
-    componentManager.addComponent<ecs::components::Transform>(newEntity.id, makeTransform(1.0f, 1.0f));
+    componentManager.addComponent<ecs::components::Transform>(newEntity.id,
+                                                              makeTransform(1.0f, 1.0f));
     EXPECT_TRUE(componentManager.hasComponent<ecs::components::Transform>(newEntity.id));
 }

@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 #include <tests/testHelpers.hpp>
 
-
 TEST(SimulationLoadTests, MediumGridMixedElements)
 {
     ChunkGrid grid;
