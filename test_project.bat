@@ -19,6 +19,11 @@ find src interface tests -name "*.cpp" \
 find src interface -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) \
   -exec clang-format -i {} +
 
+or
+while IFS= read -r file; do
+    clang-format -i --style=file "$file"
+done < <(git ls-files '*.cpp' '*.hpp' '*.h')
+
 
 
 cppcheck --enable=all --inconclusive --std=c++20 --force --quiet --error-exitcode=1 --template=gcc --suppress=missingIncludeSystem --check-level=exhaustive -I interface/include src interface tests 2> cppcheck_report.txt
