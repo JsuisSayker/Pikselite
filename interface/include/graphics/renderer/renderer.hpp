@@ -81,7 +81,7 @@ namespace graphics
          */
         void drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D& camera,
                                float pixelSize = PIXEL_SIZE);
-          void drawParticlesWCamera(const std::vector<Element::Particle>& particles, const Camera2D &camera, float pixelSize = PIXEL_SIZE);
+        void drawParticlesWCamera(const std::vector<Element::Particle>& particles, const Camera2D &camera, float pixelSize = PIXEL_SIZE);
         /**
          * @brief Draws a grid overlay on the screen, with lines spaced according to the specified
          * cell size and colored based on the provided color.

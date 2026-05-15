@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <cstdint>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -318,6 +319,8 @@ namespace engine
             {
                 ZoneScopedN("PixelSimulation");
                 _pixelSimulation.update();
+                syncRegionBodiesToECS();
+
             }
 
             accumulator -= fixedDt;
@@ -330,6 +333,57 @@ namespace engine
         }
 
         syncGameObjectPixelsFromPhysics();
+    }
+
+    void Core::syncRegionBodiesToECS()
+    {
+        for (ecs::EntityID entityId : _regionBodyEntities)
+        {
+            componentManager.entityDestroyed(entityId);
+            systemManager.entityDestroyed(entityId);
+            entityManager.destroyEntity(ecs::Entity(entityId));
+        }
+        _regionBodyEntities.clear();
+
+        const std::vector<b2BodyId> regionBodies = _pixelSimulation.getRegionBodies();
+        if (regionBodies.empty())
+        {
+            return;
+        }
+
+        _regionBodyEntities.reserve(regionBodies.size());
+
+        for (const b2BodyId bodyId : regionBodies)
+        {
+            if (!b2Body_IsValid(bodyId))
+            {
+                continue;
+            }
+
+            const b2Transform transform = b2Body_GetTransform(bodyId);
+
+            ecs::Entity entity = entityManager.createEntity();
+            const ecs::EntityID entityId = entity.id;
+
+            ecs::components::Transform transformComponent{};
+            transformComponent.x = transform.p.x;
+            transformComponent.y = transform.p.y;
+            transformComponent.rotation = b2Rot_GetAngle(transform.q);
+            transformComponent.scaleX = 1.0f;
+            transformComponent.scaleY = 1.0f;
+
+            ecs::components::PhysicsBody physicsComponent{};
+            physicsComponent.bodyId = bodyId;
+            physicsComponent.bodyType = b2_staticBody;
+            physicsComponent.fixedRotation = true;
+
+            componentManager.addComponent(entityId, transformComponent);
+            componentManager.addComponent(entityId, physicsComponent);
+
+            b2Body_SetUserData(bodyId, reinterpret_cast<void*>(static_cast<std::uintptr_t>(entityId)));
+
+            _regionBodyEntities.push_back(entityId);
+        }
     }
 
     void Core::render()

@@ -159,6 +159,12 @@ class Simulation
     void triangulateRegion(Element::Region& region);
 
     /**
+     * @brief Detects connected regions of solid elements and creates Box2D bodies.
+     * @return void
+     */
+    void detectRegions();
+
+    /**
      * @brief Assigns Box2D world and scaling used by physics sync.
      * @param worldId Box2D world id.
      * @param pixelsPerMeter Scale factor between grid cells and world units.
@@ -173,6 +179,15 @@ class Simulation
     float getPixelsPerMeter() const
     {
         return pixelsPerMeter;
+    }
+
+    /**
+     * @brief Returns the list of Box2D bodies corresponding to detected regions.
+     * @return Vector of `b2BodyId` for region bodies.
+     */
+    std::vector<b2BodyId> getRegionBodies() const
+    {
+        return regionBodies;
     }
     
     bool tryDisplacePixel(int x, int y, int range);
