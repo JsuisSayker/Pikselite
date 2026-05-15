@@ -14,7 +14,7 @@
  * @param width The width of the button.
  * @return true if the button was clicked, false otherwise.
  */
-bool graphics::BasicButton(const std::string &label, float height, float width, ImFont* font)
+bool graphics::BasicButton(const std::string& label, float height, float width, ImFont* font)
 {
     if (font)
         ImGui::PushFont(font);
@@ -37,7 +37,7 @@ bool graphics::BasicButton(const std::string &label, float height, float width, 
  * @param value A reference to the boolean value to be modified.
  * @return true if the button was clicked, false otherwise.
  */
-bool graphics::ToggleButton(const std::string &label, bool &value, ImFont* font)
+bool graphics::ToggleButton(const std::string& label, bool& value, ImFont* font)
 {
     if (font)
         ImGui::PushFont(font);
@@ -54,7 +54,8 @@ bool graphics::ToggleButton(const std::string &label, bool &value, ImFont* font)
  * @param options A vector of strings representing the available options.
  * @return true if the selected option was changed, false otherwise.
  */
-bool graphics::DropdownButton(const std::string& label, int& selectedIndex, const std::vector<std::string>& options, ImFont* font)
+bool graphics::DropdownButton(const std::string& label, int& selectedIndex,
+                              const std::vector<std::string>& options, ImFont* font)
 {
     if (options.empty())
         return false;
@@ -63,18 +64,21 @@ bool graphics::DropdownButton(const std::string& label, int& selectedIndex, cons
 
     std::string popupId = label + "##dropdown";
 
-    if (font) ImGui::PushFont(font);
+    if (font)
+        ImGui::PushFont(font);
 
     if (ImGui::Button(label.c_str()))
     {
         ImGui::OpenPopup(popupId.c_str());
     }
 
-    if (font) ImGui::PopFont();
+    if (font)
+        ImGui::PopFont();
 
     if (ImGui::BeginPopup(popupId.c_str()))
     {
-        if (font) ImGui::PushFont(font);
+        if (font)
+            ImGui::PushFont(font);
 
         for (int i = 0; i < (int)options.size(); i++)
         {
@@ -85,7 +89,8 @@ bool graphics::DropdownButton(const std::string& label, int& selectedIndex, cons
             }
         }
 
-        if (font) ImGui::PopFont();
+        if (font)
+            ImGui::PopFont();
 
         ImGui::EndPopup();
     }
@@ -98,25 +103,31 @@ bool graphics::DropdownButton(const std::string& label, int& selectedIndex, cons
  * @param label The text label for the button.
  * @param color A reference to the ImVec4 value representing the selected color.
  */
-void graphics::ColorButton(const std::string &label, ImVec4 &color, ImFont* font)
+void graphics::ColorButton(const std::string& label, ImVec4& color, ImFont* font)
 {
     std::string popupId = label + " Color Picker";
 
-    if (font) ImGui::PushFont(font);
+    if (font)
+        ImGui::PushFont(font);
 
-    if (ImGui::ColorButton(label.c_str(), color)) {
+    if (ImGui::ColorButton(label.c_str(), color))
+    {
         ImGui::OpenPopup(popupId.c_str());
     }
 
-    if (font) ImGui::PopFont();
+    if (font)
+        ImGui::PopFont();
 
-    if (ImGui::BeginPopup(popupId.c_str())) {
+    if (ImGui::BeginPopup(popupId.c_str()))
+    {
 
-        if (font) ImGui::PushFont(font);
+        if (font)
+            ImGui::PushFont(font);
 
         ImGui::ColorPicker4("##picker", (float*)&color);
 
-        if (font) ImGui::PopFont();
+        if (font)
+            ImGui::PopFont();
 
         ImGui::EndPopup();
     }
@@ -128,28 +139,35 @@ void graphics::ColorButton(const std::string &label, ImVec4 &color, ImFont* font
  * @param label The text label for the button.
  * @param contentFunction A function that defines the content to be displayed in the popup.
  */
-void graphics::PopupButton(const std::string& label, const std::function<void()> &contentFunction, float height, float width, ImFont* font)
+void graphics::PopupButton(const std::string& label, const std::function<void()>& contentFunction,
+                           float height, float width, ImFont* font)
 {
     std::string popupId = label + "##popup";
 
-    if (font) ImGui::PushFont(font);
+    if (font)
+        ImGui::PushFont(font);
 
-    if (ImGui::Button(label.c_str())) {
+    if (ImGui::Button(label.c_str()))
+    {
         ImGui::OpenPopup(popupId.c_str());
     }
 
-    if (font) ImGui::PopFont();
+    if (font)
+        ImGui::PopFont();
 
-    if (ImGui::BeginPopup(popupId.c_str())) {
+    if (ImGui::BeginPopup(popupId.c_str()))
+    {
 
-        if (font) ImGui::PushFont(font);
+        if (font)
+            ImGui::PushFont(font);
 
         if (contentFunction)
         {
             contentFunction();
         }
 
-        if (font) ImGui::PopFont();
+        if (font)
+            ImGui::PopFont();
 
         ImGui::EndPopup();
     }
@@ -160,9 +178,9 @@ bool graphics::HoverChangeButton(const std::string& label, float height, float w
     if (font)
         ImGui::PushFont(font);
 
-    ImVec4 bgNormal  = ImVec4(0, 0, 0, 0);
-    ImVec4 bgHover   = ImVec4(1, 1, 1, 1);
-    ImVec4 bgActive  = ImVec4(0.85f, 0.85f, 0.85f, 1);
+    ImVec4 bgNormal = ImVec4(0, 0, 0, 0);
+    ImVec4 bgHover  = ImVec4(1, 1, 1, 1);
+    ImVec4 bgActive = ImVec4(0.85f, 0.85f, 0.85f, 1);
 
     ImVec4 borderCol = ImVec4(0.6f, 0.6f, 0.6f, 1);
 
@@ -179,18 +197,14 @@ bool graphics::HoverChangeButton(const std::string& label, float height, float w
 
     bool clicked = ImGui::Button(label.c_str(), ImVec2(width, height));
 
-    ImU32 textColor = ImGui::GetColorU32(
-        ImGui::IsItemHovered() ? textHover : textNormal
-    );
+    ImU32 textColor = ImGui::GetColorU32(ImGui::IsItemHovered() ? textHover : textNormal);
 
-    ImVec2 min = ImGui::GetItemRectMin();
-    ImVec2 max = ImGui::GetItemRectMax();
+    ImVec2 min      = ImGui::GetItemRectMin();
+    ImVec2 max      = ImGui::GetItemRectMax();
     ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
 
-    ImVec2 center = ImVec2(
-        min.x + (max.x - min.x - textSize.x) * 0.5f,
-        min.y + (max.y - min.y - textSize.y) * 0.5f
-    );
+    ImVec2 center = ImVec2(min.x + (max.x - min.x - textSize.x) * 0.5f,
+                           min.y + (max.y - min.y - textSize.y) * 0.5f);
 
     ImGui::GetWindowDrawList()->AddText(center, textColor, label.c_str());
 
