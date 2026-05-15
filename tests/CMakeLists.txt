@@ -7,7 +7,10 @@ add_executable(pikselite_tests
     # renderer/testProjectEditor.cpp
     renderer/testDrawOnEditor.cpp
     engine/testEcs.cpp
+    engine/testEcsResilience.cpp
     engine/testPhysics.cpp
+    engine/testSceneSerialization.cpp
+    engine/testSimulationResilience.cpp
     # engine/testEcsMigration.cpp
     # engine/testChunk.cpp
     graphics/testWindowSize.cpp
