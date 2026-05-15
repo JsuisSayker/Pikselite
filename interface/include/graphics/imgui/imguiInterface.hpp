@@ -48,7 +48,9 @@ namespace graphics
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
                                 Element::ElementType& selectedElementType); // updated signature
         void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive);
-        void projectTopBar(std::string title = "");
+        // Top-left "Save" button writes through `saveSceneRequested` — the caller treats
+        // it the same way it did the now-removed bottom "Save Scene" button.
+        void projectTopBar(bool& saveSceneRequested, std::string title = "");
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
@@ -64,8 +66,13 @@ namespace graphics
         void scanSprites();
         void setFileExplorerDataOnly(bool dataOnly);
 
+        // `deleteRequestIndex` is an out-param: when the user right-clicks a row and chooses
+        // "Delete", the widget writes the row index there. The caller is responsible for
+        // freeing the associated grid pixels / ECS data and then erasing the GameObject;
+        // -1 means "no deletion requested this frame".
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
-                            int& selectedGameObjectIndex, const projects::Project& currentProject);
+                            int& selectedGameObjectIndex, const projects::Project& currentProject,
+                            int& deleteRequestIndex);
 
         void fileToolBar();
 

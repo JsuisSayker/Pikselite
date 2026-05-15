@@ -156,6 +156,10 @@ namespace engine
                 {
                     copyProjectEditorDataToCore();
                     _sceneFilename = projectEditor->getSceneFilename();
+                    // Top-left Save can fire before any scene has been opened/created.
+                    // In that case fall back to a default file in the project's assets dir.
+                    if (_sceneFilename.empty())
+                        _sceneFilename = "assets/default.scene";
                     saveScene(_sceneFilename);
                 }
 
@@ -218,6 +222,20 @@ namespace engine
             }
 
             update(timer.getDeltaTime());
+
+            // Honor reload_scene() / load_scene(path) calls dispatched on the event bus
+            // during this frame's script update.
+            if (_pendingSceneLoadPath)
+            {
+                const std::string target =
+                    _pendingSceneLoadPath->empty() ? _sceneFilename : *_pendingSceneLoadPath;
+                _pendingSceneLoadPath.reset();
+                if (loadScene(target))
+                {
+                    _sceneFilename = target;
+                    accumulator    = 0.0f; // discard physics catch-up from the old scene
+                }
+            }
 
             renderer.clear();
 
@@ -890,17 +908,6 @@ namespace engine
 
             projects.push_back(project);
         }
-    }
-
-    void Core::saveScene(const std::string &filename)
-    {
-        // TODO
-    }
-
-    bool Core::loadScene(const std::string &filename)
-    {
-        // TODO
-        return false;
     }
 
     void Core::drawSpritesBelowLayer(int layer)

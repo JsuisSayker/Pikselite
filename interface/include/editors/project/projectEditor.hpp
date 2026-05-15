@@ -224,5 +224,13 @@ namespace editors
         void drawPendingTexturePreview();
 
         void mouseLeftClick();
+
+        /**
+         * @brief Fully removes the GameObject at `index`: clears its pixels from the chunk
+         * grid (using transform anchor + pixelLocalCoords), erases it from `_gameObjects`,
+         * and adjusts `_selectedGameObjectIndex` so the inspector doesn't dangle.
+         * Triggered by the right-click "Delete" entry in the Hierarchy panel.
+         */
+        void deleteGameObjectAt(int index);
     };
 } // namespace editors

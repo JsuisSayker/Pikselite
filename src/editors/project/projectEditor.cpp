@@ -23,8 +23,16 @@ namespace editors
         _renderer->clear();
 
         _imguiInterface->startFrame();
-        _imguiInterface->projectTopBar(_currentProject.name);
-        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _currentProject);
+        _imguiInterface->projectTopBar(_saveSceneRequested, _currentProject.name);
+
+        int deleteRequestIndex = -1;
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _currentProject,
+                                        deleteRequestIndex);
+        if (deleteRequestIndex >= 0 &&
+            deleteRequestIndex < static_cast<int>(_gameObjects.size()))
+        {
+            deleteGameObjectAt(deleteRequestIndex);
+        }
         _imguiInterface->setFileExplorerDataOnly(false);
         _imguiInterface->projectNavbar(_currentSpriteFilename, _currentSceneFilename,
                                        _saveSceneRequested, _loadSceneRequested,
@@ -263,6 +271,41 @@ namespace editors
         newObject.addComponent(sprite);
 
         _gameObjects.push_back(std::move(newObject));
+    }
+
+    void ProjectEditor::deleteGameObjectAt(int index)
+    {
+        if (index < 0 || index >= static_cast<int>(_gameObjects.size()))
+            return;
+
+        const Pixel::GameObject& go = _gameObjects[index];
+
+        // Clear the pixels this GameObject occupies in the chunk grid. Pixels are
+        // anchored at floor(transform.x / PIXEL_SIZE) — same convention used during
+        // placement (see placePendingSpriteAtWorldInGameObject) and load.
+        if (const auto* transform = go.getComponent<ecs::components::Transform>())
+        {
+            const int anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
+            const int anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
+            const size_t pairCount =
+                std::min(go.pixels.size(), go.pixelLocalCoords.size());
+
+            for (size_t i = 0; i < pairCount; ++i)
+            {
+                const auto& local = go.pixelLocalCoords[i];
+                const int   gridX = anchorGX + local.x;
+                const int   gridY = anchorGY + local.y;
+                _chunkGrid.setPixel(gridX, gridY, Element::Pixel{Element::EMPTY, false});
+            }
+        }
+
+        _gameObjects.erase(_gameObjects.begin() + index);
+
+        // Keep the inspector's selection consistent with the new vector layout.
+        if (_selectedGameObjectIndex == index)
+            _selectedGameObjectIndex = -1;
+        else if (_selectedGameObjectIndex > index)
+            _selectedGameObjectIndex--;
     }
 
     void ProjectEditor::drawGameObjectSprites()

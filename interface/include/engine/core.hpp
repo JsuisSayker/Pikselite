@@ -23,6 +23,7 @@
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <projects.hpp>
 #include <string>
 #include <thread>
@@ -135,6 +136,11 @@ namespace engine
                     _gameObjectOccupiedCells;
         std::vector<ecs::EntityID> _regionBodyEntities;
         std::string _sceneFilename = "assets/default.scene";
+
+        // Queue populated by the SceneLoadRequestedEvent subscriber; drained
+        // between frames by runGamePreview so loadScene never fires while the
+        // ECS is iterating entities.
+        std::optional<std::string> _pendingSceneLoadPath;
 
         std::string _projectsPath;
 

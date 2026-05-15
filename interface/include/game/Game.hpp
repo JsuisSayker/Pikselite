@@ -18,6 +18,7 @@
 #include <engine/time.hpp>
 #include <graphics/renderer/camera.hpp>
 #include <graphics/renderer/renderer.hpp>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -55,6 +56,9 @@ namespace engine
         engine::SystemManager    _systemManager;
         engine::events::EventBus _eventBus;
 
+        std::string                                            _currentScenePath;
+        // Set by the SceneLoadRequestedEvent subscriber, drained in run().
+        std::optional<std::string>                             _pendingSceneLoadPath;
         std::vector<Pixel::GameObject>                         _gameObjects;
         uint32_t                                               _gameObjectCounter = 1;
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
