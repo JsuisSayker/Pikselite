@@ -1,10 +1,14 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <algorithm>
 #include <box2d/box2d.h>
+#include <build/BuildSettings.hpp>
+#include <chrono>
 #include <editors/project/projectEditor.hpp>
 #include <editors/sprite/spriteEditor.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/systems/scriptSystem.hpp>
 #include <engine/events/eventBus.hpp>
 #include <engine/events/events.hpp>
 #include <engine/managers/componentManager.hpp>
@@ -14,9 +18,14 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
 #include <engine/time.hpp>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <mutex>
 #include <nlohmann/json.hpp>
+#include <projects.hpp>
 #include <string>
+#include <thread>
 #include <vector>
 using json = nlohmann::json;
 
@@ -66,14 +75,37 @@ namespace engine
             _camera.setZoom(zoom);
         }
 
-      private:
-        editors::SpriteEditor*  spriteEditor  = nullptr;
-        editors::ProjectEditor* projectEditor = nullptr;
+        /**
+         * @brief Draws sprites with layer strictly below the given value.
+         * @param layer Upper bound (exclusive).
+         */
+        void drawSpritesBelowLayer(int layer);
 
-        bool isProjectEditorActive = false;
+        /**
+         * @brief Draws sprites with layer strictly above the given value.
+         * @param layer Lower bound (exclusive).
+         */
+        void drawSpritesAboveLayer(int layer);
+
+        /**
+         * @brief Rebuilds ECS entities for detected region bodies.
+         * @return void
+         */
+        void syncRegionBodiesToECS();
+
+    private:
+        editors::SpriteEditor *spriteEditor = nullptr;
+        editors::ProjectEditor *projectEditor = nullptr;
+
+        std::vector<projects::Project> _projects;
+        projects::Project              _currentProject;
 
         bool                     running;
-        bool                     isGamePreviewActive = false;
+        bool                     isProjectsListPageActive = true;
+        bool                     isGamePreviewActive      = false;
+        bool                     isProjectEditorActive    = false;
+        bool                     isSpriteEditorActive     = false;
+        bool                     switchToProjectEditor    = false;
         graphics::Interface      sdlInterface;
         graphics::Renderer       renderer;
         graphics::ImguiInterface imguiInterface;
@@ -101,7 +133,10 @@ namespace engine
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
                     _gameObjectOccupiedCells;
-        std::string _sceneFilename = "assets/scene.json";
+        std::vector<ecs::EntityID> _regionBodyEntities;
+        std::string _sceneFilename = "assets/default.scene";
+
+        std::string _projectsPath;
 
         /**
          * @brief Initializes subsystems, ECS registration, and editors.
@@ -186,10 +221,13 @@ namespace engine
          */
         void shutdown();
 
-        /**
-         * @brief Copies project editor data into core runtime state.
-         * @return `true` if copy happened, otherwise `false`.
-         */
+        void getProjectsFolderPath();
+        void getJsonVariables();
+        void openProject(int index);
+        void sortProjects(std::vector<projects::Project>& projects);
+        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer,
+                                 graphics::ImguiInterface& imguiInterface);
+
         bool copyProjectEditorDataToCore();
 
         // Creates an ECS entity for each Pixel::GameObject,
@@ -221,6 +259,20 @@ namespace engine
          */
         std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
 
+        void saveProjects(const std::vector<projects::Project>& projects);
+        void loadProjects(std::vector<projects::Project>& projects);
+
+        // Build game pipeline (called from build thread; must not touch editor/Core data)
+        bool buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats);
+
+        // Build thread + state
+        std::thread       _buildThread;
+        std::atomic<bool> _buildDone{true};
+        std::atomic<bool> _buildSuccess{false};
+        std::mutex        _buildOutputMutex;
+        std::string       _buildOutput;
+        bool              _isBuilding = false;
+
         // save scene and load scene functions for project editor
         /**
          * @brief Saves current scene to disk.
@@ -236,4 +288,5 @@ namespace engine
          */
         bool loadScene(const std::string& filename);
     };
+
 } // namespace engine

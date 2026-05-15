@@ -34,8 +34,9 @@ namespace Pixel
     {
         bool isActive = true;
 
-        GameObjectID                id;
-        std::string                 name;
+        GameObjectID id;
+        std::string  name;
+        std::string  sourceDatPath; // .dat file this was placed from (empty if directly edited)
         std::vector<Element::Pixel> pixels;
         std::vector<Element::Vec2i> pixelLocalCoords;
 
@@ -44,6 +45,16 @@ namespace Pixel
 
         // get component of type T, returns nullptr if not found
         template <typename T> T* getComponent()
+        {
+            auto it = components.find(std::type_index(typeid(T)));
+            if (it != components.end())
+            {
+                return std::any_cast<T>(&(it->second));
+            }
+            return nullptr;
+        }
+
+        template <typename T> const T* getComponent() const
         {
             auto it = components.find(std::type_index(typeid(T)));
             if (it != components.end())

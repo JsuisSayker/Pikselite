@@ -270,6 +270,32 @@ namespace graphics
         glBindVertexArray(0);
     }
 
+    void Renderer::drawParticlesWCamera(const std::vector<Element::Particle>& particles,
+                                        const Camera2D& camera, float pixelSize)
+    {
+        if (particles.empty())
+            return;
+
+        std::vector<Pixel> pixels;
+        pixels.reserve(particles.size());
+
+        for (const auto& particle : particles)
+        {
+            if (particle.type == Element::EMPTY)
+                continue;
+
+            const auto& def = g_elements[particle.type];
+            const auto& palette = def.colorPalette[particle.colorIndex % PALETTE_SIZE];
+
+            Pixel p;
+            p.position = {particle.position.x * PIXEL_SIZE, particle.position.y * PIXEL_SIZE};
+            p.color = {palette.r / 255.0f, palette.g / 255.0f, palette.b / 255.0f};
+            pixels.push_back(p);
+        }
+
+        drawPixelsWCamera(pixels, camera, pixelSize);
+    }
+
     void Renderer::drawPixelsOverlay(const std::vector<Pixel>& pixels, float pixelSize)
     {
         if (pixels.empty())
@@ -317,39 +343,72 @@ namespace graphics
 
     void Renderer::drawGrid(const Camera2D& camera, float cellSize, glm::vec3 color)
     {
+        const float zoom = camera.getZoom();
+        if (zoom <= 0.0f)
+            return;
+
+        // When cells become too small on screen, the fine grid becomes visual noise
+        // that obscures the work. Switch to a power-of-two coarser grid so the
+        // spatial reference is preserved without overwhelming the view.
+        constexpr float FINE_THRESHOLD_PX = 6.0f;
+        constexpr float COARSE_TARGET_PX  = 24.0f;
+
+        float drawCellSize = cellSize;
+        if (cellSize * zoom < FINE_THRESHOLD_PX)
+        {
+            int multiplier = 1;
+            while ((cellSize * static_cast<float>(multiplier) * zoom) < COARSE_TARGET_PX &&
+                   multiplier < 4096)
+            {
+                multiplier *= 2;
+            }
+            drawCellSize = cellSize * static_cast<float>(multiplier);
+        }
+
         int width, height;
         SDL_GetWindowSize(_window, &width, &height);
 
         // Compute world bounds visible through the camera
-        float     halfW  = (width * 0.5f) / camera.getZoom();
-        float     halfH  = (height * 0.5f) / camera.getZoom();
-        glm::vec2 camPos = camera.getPosition();
+        const float     halfW  = (width * 0.5f) / zoom;
+        const float     halfH  = (height * 0.5f) / zoom;
+        const glm::vec2 camPos = camera.getPosition();
 
-        float left   = camPos.x - halfW;
-        float right  = camPos.x + halfW;
-        float bottom = camPos.y - halfH;
-        float top    = camPos.y + halfH;
+        const float left   = camPos.x - halfW;
+        const float right  = camPos.x + halfW;
+        const float bottom = camPos.y - halfH;
+        const float top    = camPos.y + halfH;
 
-        // Align grid start to nearest cell boundary
-        float startX = std::floor(left / cellSize) * cellSize + cellSize / 2.0f;
-        float endX   = std::ceil(right / cellSize) * cellSize + cellSize / 2.0f;
-        float startY = std::floor(bottom / cellSize) * cellSize + cellSize / 2.0f;
-        float endY   = std::ceil(top / cellSize) * cellSize + cellSize / 2.0f;
+        // Iterate by integer cell index to avoid float-accumulation drift during zoom,
+        // and pad by one cell on each side so lines don't pop in/out at the visible edges.
+        const int startCellX = static_cast<int>(std::floor(left / drawCellSize)) - 1;
+        const int endCellX   = static_cast<int>(std::ceil(right / drawCellSize)) + 1;
+        const int startCellY = static_cast<int>(std::floor(bottom / drawCellSize)) - 1;
+        const int endCellY   = static_cast<int>(std::ceil(top / drawCellSize)) + 1;
+
+        const float lineTop    = top + drawCellSize;
+        const float lineBottom = bottom - drawCellSize;
+        const float lineLeft   = left - drawCellSize;
+        const float lineRight  = right + drawCellSize;
+
+        // Use fine cellSize/2 offset (not drawCellSize/2) so coarse grid lines still
+        // sit on fine pixel boundaries when the user zooms back in.
+        const float lineOffset = cellSize * 0.5f;
 
         std::vector<LineVertex> vertices;
+        vertices.reserve(static_cast<size_t>((endCellX - startCellX + endCellY - startCellY) * 2));
 
-        // Vertical lines
-        for (float x = startX; x <= endX; x += cellSize)
+        for (int i = startCellX; i <= endCellX; ++i)
         {
-            vertices.push_back({{x, bottom}, color});
-            vertices.push_back({{x, top}, color});
+            float x = static_cast<float>(i) * drawCellSize + lineOffset;
+            vertices.push_back({{x, lineBottom}, color});
+            vertices.push_back({{x, lineTop}, color});
         }
 
-        // Horizontal lines
-        for (float y = startY; y <= endY; y += cellSize)
+        for (int i = startCellY; i <= endCellY; ++i)
         {
-            vertices.push_back({{left, y}, color});
-            vertices.push_back({{right, y}, color});
+            float y = static_cast<float>(i) * drawCellSize + lineOffset;
+            vertices.push_back({{lineLeft, y}, color});
+            vertices.push_back({{lineRight, y}, color});
         }
 
         if (vertices.empty())

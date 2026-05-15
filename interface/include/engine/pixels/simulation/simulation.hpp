@@ -54,14 +54,39 @@ class Simulation
      */
     void update();
 
-    /**
-     * @brief Updates one sand pixel behavior.
-     * @param grid Simulation grid.
-     * @param x Global X coordinate.
-     * @param y Global Y coordinate.
-     * @return void
-     */
-    inline void updateBurning(ChunkGrid& grid, int x, int y);
+        /**
+         * @brief Updates particle behaviors and lifetimes, removing expired particles.
+         * @return void
+         */
+        void updateParticles();
+
+        /**
+         * @brief Spawns a new particle with given properties.
+         * @param type Particle element type.
+         * @param x Initial X position in world coordinates.
+         * @param y Initial Y position in world coordinates.
+         * @param vx Initial X velocity in world units per second.
+         * @param vy Initial Y velocity in world units per second.
+         * @return void
+         */
+        void spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime);
+
+        /**
+         * @brief Returns the list of active particles in the simulation.
+         * @return Reference to the vector of `Element::Particle`.
+         */
+        std::vector<Element::Particle>& getParticles() {
+            return particles;
+        }
+
+        /**
+         * @brief Updates one sand pixel behavior.
+         * @param grid Simulation grid.
+         * @param x Global X coordinate.
+         * @param y Global Y coordinate.
+         * @return void
+         */
+        inline void updateBurning(ChunkGrid& grid, int x, int y);
 
     /**
      * @brief Resets per-pixel update flags for the current frame.
@@ -134,6 +159,12 @@ class Simulation
     void triangulateRegion(Element::Region& region);
 
     /**
+     * @brief Detects connected regions of solid elements and creates Box2D bodies.
+     * @return void
+     */
+    void detectRegions();
+
+    /**
      * @brief Assigns Box2D world and scaling used by physics sync.
      * @param worldId Box2D world id.
      * @param pixelsPerMeter Scale factor between grid cells and world units.
@@ -150,12 +181,22 @@ class Simulation
         return pixelsPerMeter;
     }
 
+    /**
+     * @brief Returns the list of Box2D bodies corresponding to detected regions.
+     * @return Vector of `b2BodyId` for region bodies.
+     */
+    std::vector<b2BodyId> getRegionBodies() const
+    {
+        return regionBodies;
+    }
+    
     bool tryDisplacePixel(int x, int y, int range);
 
-  private:
-    uint64_t   frame = 0;
-    ChunkGrid& grid;
 
+private:
+    uint64_t frame = 0;
+    ChunkGrid &grid;
+    std::vector<Element::Particle> particles;
     struct ChunkEntry
     {
         int    cx;

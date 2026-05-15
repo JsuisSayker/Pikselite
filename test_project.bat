@@ -16,7 +16,7 @@ find src interface tests -name "*.cpp" \
 --quiet
 
 
-find src include -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) \
+find src interface -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) \
   -exec clang-format -i {} +
 
 

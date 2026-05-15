@@ -26,7 +26,7 @@ namespace editors
         _renderPixels = framePixels; // cache for editing
 
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
-        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
+        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.55f, 0.55f, 0.55f});
 
         imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
@@ -44,23 +44,14 @@ namespace editors
             case graphics::MOUSE_LEFT_DRAG:
                 mouseLeftDrag();
                 break;
-            case graphics::KEY_W:
-                _camera.move(glm::vec2(0.0f, -PIXEL_SIZE));
+            case graphics::MOUSE_MIDDLE_DRAG:
+                panCameraScreenDelta(event.mouseDelta);
                 break;
-            case graphics::KEY_S:
-                _camera.move(glm::vec2(0.0f, PIXEL_SIZE));
-                break;
-            case graphics::KEY_A:
-                _camera.move(glm::vec2(PIXEL_SIZE, 0.0f));
-                break;
-            case graphics::KEY_D:
-                _camera.move(glm::vec2(-PIXEL_SIZE, 0.0f));
-                break;
-            case graphics::KEY_I:
-                _camera.zoomIn(1.1f);
-                break;
-            case graphics::KEY_O:
-                _camera.zoomOut(1.1f);
+            case graphics::MOUSE_WHEEL:
+                if (event.wheelY > 0.0f)
+                    zoomAroundMouse(1.1f);
+                else if (event.wheelY < 0.0f)
+                    zoomAroundMouse(1.0f / 1.1f);
                 break;
             default:
                 break;
@@ -76,6 +67,7 @@ namespace editors
         _imguiInterface->pixelSpriteHandler(unusedDefaultPropertiesEditor, _newSpritePath,
                                             _currentElementType);
 
+        _imguiInterface->setFileExplorerDataOnly(true);
         _imguiInterface->projectNavbar(_currentSpriteFilename);
 
         if (!_currentSpriteFilename.empty())

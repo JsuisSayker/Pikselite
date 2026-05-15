@@ -12,6 +12,8 @@
     "gtest",
     "nlohmann-json",
     "box2d",
+    "zlib",
+    "nativefiledialog-extended",
     {
       "name": "tracy",
       "version>=": "0.13.1"

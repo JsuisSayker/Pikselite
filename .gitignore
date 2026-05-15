@@ -2,11 +2,16 @@
 
 build/
 
+config/
+
+Projects/
+
 imgui.ini
 
 pikselite
 
 *.png
+!assets/ui/icons/*.png
 *.json
 
 *.vs

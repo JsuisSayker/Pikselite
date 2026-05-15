@@ -12,6 +12,7 @@ set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
 if "%VCPKG_CACHE_KEY%"=="" set "VCPKG_CACHE_KEY=local-default"
 set "CACHE_ZIP=%CACHE_DIR%\%VCPKG_CACHE_KEY%.zip"
+set "CI=false"
 
 if "%~1" neq "" if /I not "%~1"=="Cache" (
     set "CONFIG_TYPE=%~1"

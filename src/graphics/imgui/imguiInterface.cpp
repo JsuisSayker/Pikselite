@@ -5,7 +5,78 @@
  * the application.
  */
 
+#include <algorithm>
+#include <chrono>
+#include <cstdio>
+#include <engine/scene/sceneSerializer.hpp>
+#include <filesystem>
+#include <fstream>
+#include <graphics/imgui/components/bars.hpp>
 #include <graphics/imgui/imguiInterface.hpp>
+#include <nfd.hpp>
+#include <stb_image.h>
+#include <system_error>
+
+namespace
+{
+    std::string toLowerCopy(std::string value)
+    {
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+        return value;
+    }
+
+    std::filesystem::path getAssetsRoot()
+    {
+        return std::filesystem::absolute("assets");
+    }
+
+    std::filesystem::path makeUniqueCopyPath(const std::filesystem::path& targetDir,
+                                             const std::filesystem::path& sourceName)
+    {
+        std::filesystem::path candidate = targetDir / sourceName;
+        if (!std::filesystem::exists(candidate))
+            return candidate;
+
+        const std::string stem = sourceName.stem().string();
+        const std::string ext  = sourceName.extension().string();
+
+        for (int i = 1; i < 1000; ++i)
+        {
+            std::filesystem::path next = targetDir / (stem + "_copy" + std::to_string(i) + ext);
+            if (!std::filesystem::exists(next))
+                return next;
+        }
+
+        return candidate;
+    }
+
+    GLuint loadIconTexture(const std::string& filePath)
+    {
+        int width    = 0;
+        int height   = 0;
+        int channels = 0;
+
+        stbi_set_flip_vertically_on_load(false);
+        unsigned char* data =
+            stbi_load(filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        if (!data)
+            return 0;
+
+        GLuint textureID = 0;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        stbi_image_free(data);
+
+        stbi_set_flip_vertically_on_load(true);
+        return textureID;
+    }
+} // namespace
 
 namespace graphics
 {
@@ -19,6 +90,41 @@ namespace graphics
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
+
+        // ── DPI / resolution scaling ──────────────────────────────────────────
+        // Use display height as the proxy for "how big should UI be" (1080p = 1.0).
+        // Clamp to a sensible band so a tiny window or a wall-sized display
+        // doesn't produce unusable extremes.
+        float           uiScale = 1.0f;
+        SDL_DisplayMode dm{};
+        const int       displayIndex = (window != nullptr) ? SDL_GetWindowDisplayIndex(window) : 0;
+        if (SDL_GetCurrentDisplayMode(displayIndex >= 0 ? displayIndex : 0, &dm) == 0 && dm.h > 0)
+        {
+            uiScale = std::clamp(static_cast<float>(dm.h) / 1080.0f, 1.0f, 3.0f);
+        }
+        _uiScale = uiScale;
+
+        // Scale shared layout constants used by the toolbars/sidebars so they
+        // track font/UI sizing on high-DPI screens.
+        LAYOUT_TOP_H    = 40.0f * uiScale;
+        LAYOUT_BOTTOM_H = 180.0f * uiScale;
+        LAYOUT_LEFT_W   = 220.0f * uiScale;
+        LAYOUT_RIGHT_W  = 260.0f * uiScale;
+
+        ImGuiIO& io       = ImGui::GetIO();
+        auto     scaledPx = [uiScale](float baseSize)
+        { return std::max(1.0f, std::floor(baseSize * uiScale)); };
+        fontLight =
+            io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Light.ttf", scaledPx(13.0f));
+        fontRegularSmall =
+            io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", scaledPx(15.0f));
+        fontRegularBig =
+            io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", scaledPx(28.0f));
+        fontBoldSmall =
+            io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", scaledPx(25.0f));
+        fontBoldBig =
+            io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", scaledPx(35.0f));
+
         ImGui::StyleColorsDark();
 
         // ── Global Unity-like style overrides ─────────────────────────────────
@@ -72,10 +178,16 @@ namespace graphics
         c[ImGuiCol_PlotLines]            = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
         c[ImGuiCol_PlotHistogram]        = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
 
+        // Scale paddings/spacing/rounding/etc. by the same UI scale we used for fonts.
+        // Done last so it applies uniformly to all values configured above.
+        style.ScaleAllSizes(uiScale);
+
         ImGui_ImplSDL2_InitForOpenGL(_window, _glContext);
         ImGui_ImplOpenGL3_Init("#version 330 core");
 
+        _fileExplorerCurrentDir = getAssetsRoot().generic_string();
         scanSprites();
+        loadExplorerIcons();
     }
 
     /**
@@ -84,9 +196,39 @@ namespace graphics
      */
     ImguiInterface::~ImguiInterface()
     {
+        unloadExplorerIcons();
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplSDL2_Shutdown();
         ImGui::DestroyContext();
+    }
+
+    void ImguiInterface::loadExplorerIcons()
+    {
+        if (_iconDirTexture || _iconSceneTexture || _iconDataTexture)
+            return;
+
+        _iconDirTexture   = loadIconTexture("assets/ui/icons/dir.png");
+        _iconSceneTexture = loadIconTexture("assets/ui/icons/scene.png");
+        _iconDataTexture  = loadIconTexture("assets/ui/icons/sprite.png");
+    }
+
+    void ImguiInterface::unloadExplorerIcons()
+    {
+        if (_iconDirTexture)
+        {
+            glDeleteTextures(1, &_iconDirTexture);
+            _iconDirTexture = 0;
+        }
+        if (_iconSceneTexture)
+        {
+            glDeleteTextures(1, &_iconSceneTexture);
+            _iconSceneTexture = 0;
+        }
+        if (_iconDataTexture)
+        {
+            glDeleteTextures(1, &_iconDataTexture);
+            _iconDataTexture = 0;
+        }
     }
 
     /**
@@ -109,6 +251,11 @@ namespace graphics
     {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
+
+    void ImguiInterface::setFileExplorerDataOnly(bool dataOnly)
+    {
+        _fileExplorerDataOnly = dataOnly;
     }
 
     /**
@@ -295,7 +442,7 @@ namespace graphics
     /**
      * @brief Displays an empty top toolbar for the project editor.
      */
-    void ImguiInterface::projectTopBarEmpty()
+    void ImguiInterface::projectTopBar(std::string title)
     {
         static BarConfig topBarConfig{BarOrientation::Horizontal, "Project Top Bar",
                                       ImVec2(0.0f, LAYOUT_TOP_H), true, GetDesiredPosition("top")};
@@ -304,7 +451,18 @@ namespace graphics
         topBar.Draw(
             [&]()
             {
-                // Intentionally empty top bar for Project Editor mode.
+                if (BasicButton("Save"))
+                {
+                    //
+                }
+
+                ImVec2 textSize   = ImGui::CalcTextSize(title.c_str());
+                ImVec2 windowSize = ImGui::GetWindowSize();
+
+                ImGui::SetCursorPos(
+                    ImVec2((windowSize.x - textSize.x) * 0.5f, (windowSize.y - textSize.y) * 0.5f));
+
+                ImGui::Text("%s", title.c_str());
             });
     }
 
@@ -327,36 +485,44 @@ namespace graphics
     }
 
     namespace fs = std::filesystem;
-    std::vector<std::string> spriteFiles;
 
     /**
-     * @brief Scans the "assets" directory for sprite files (PNG, JPG, DAT) and updates the list of
-     * available sprites. This function is called when the user clicks the "Refresh" button in the
-     * project navbar to ensure that any new or removed sprite files are reflected in the interface.
+     * @brief Scans the current assets directory for files and subfolders.
      */
     void ImguiInterface::scanSprites()
     {
-        spriteFiles.clear();
+        _fileExplorerEntries.clear();
 
-        std::string folder = "assets";
-
-        if (!fs::exists(folder))
+        const fs::path rootPath = getAssetsRoot();
+        if (!fs::exists(rootPath))
             return;
 
-        for (const auto& entry : fs::directory_iterator(folder))
-        {
-            if (entry.is_regular_file())
-            {
-                std::filesystem::path p   = entry.path();
-                std::string           ext = p.extension().string();
-                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        if (_fileExplorerCurrentDir.empty())
+            _fileExplorerCurrentDir = rootPath.generic_string();
 
-                if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" ||
-                    ext == ".webp" || ext == ".dat")
-                {
-                    spriteFiles.push_back(p.string());
-                }
-            }
+        std::error_code ec;
+        fs::path        currentPath   = fs::weakly_canonical(fs::path(_fileExplorerCurrentDir), ec);
+        fs::path        canonicalRoot = fs::weakly_canonical(rootPath, ec);
+
+        if (ec || currentPath.empty() ||
+            currentPath.generic_string().find(canonicalRoot.generic_string()) != 0)
+        {
+            currentPath = canonicalRoot;
+        }
+
+        if (!fs::exists(currentPath))
+            currentPath = canonicalRoot;
+
+        _fileExplorerCurrentDir = currentPath.generic_string();
+
+        for (const auto& entry : fs::directory_iterator(currentPath))
+        {
+            FileEntry item;
+            item.path  = entry.path().string();
+            item.name  = entry.path().filename().string();
+            item.isDir = entry.is_directory();
+            item.ext   = toLowerCopy(entry.path().extension().string());
+            _fileExplorerEntries.push_back(std::move(item));
         }
     }
 
@@ -388,6 +554,24 @@ namespace graphics
     void ImguiInterface::projectNavbar(std::string& currentSpriteFilename, bool& saveSceneRequested,
                                        bool& loadSceneRequested)
     {
+        static std::string dummySceneFilename;
+        projectNavbar(currentSpriteFilename, dummySceneFilename, saveSceneRequested,
+                      loadSceneRequested);
+    }
+
+    void ImguiInterface::projectNavbar(std::string& currentSpriteFilename,
+                                       std::string& currentSceneFilename, bool& saveSceneRequested,
+                                       bool& loadSceneRequested)
+    {
+        bool dummyBuildRequest = false;
+        projectNavbar(currentSpriteFilename, currentSceneFilename, saveSceneRequested,
+                      loadSceneRequested, dummyBuildRequest);
+    }
+
+    void ImguiInterface::projectNavbar(std::string& currentSpriteFilename,
+                                       std::string& currentSceneFilename, bool& saveSceneRequested,
+                                       bool& loadSceneRequested, bool& buildGameRequested)
+    {
         static BarConfig bottomBarConfig{BarOrientation::Horizontal, "Project Navbar",
                                          ImVec2(0.0f, LAYOUT_BOTTOM_H), true,
                                          GetDesiredPosition("bottom")};
@@ -397,24 +581,197 @@ namespace graphics
         bottomBar.Draw(
             [&]()
             {
-                if (BasicButton("Refresh"))
-                {
+                const fs::path rootPath = getAssetsRoot();
+                if (_fileExplorerEntries.empty())
                     scanSprites();
+
+                bool canGoUp = fs::path(_fileExplorerCurrentDir) != rootPath;
+                if (!canGoUp)
+                    ImGui::BeginDisabled();
+                if (BasicButton("Up"))
+                {
+                    fs::path parent = fs::path(_fileExplorerCurrentDir).parent_path();
+                    if (!parent.empty())
+                    {
+                        _fileExplorerCurrentDir = parent.generic_string();
+                        scanSprites();
+                    }
                 }
+                if (!canGoUp)
+                    ImGui::EndDisabled();
+
+                ImGui::SameLine();
+                if (BasicButton("Refresh"))
+                    scanSprites();
+
+                ImGui::SameLine();
+                if (BasicButton("New File"))
+                    ImGui::OpenPopup("NewFilePopup");
 
                 ImGui::SameLine();
                 if (BasicButton("Save Scene"))
-                {
                     saveSceneRequested = true;
-                }
 
                 ImGui::SameLine();
-                if (BasicButton("Load Scene"))
-                {
-                    loadSceneRequested = true;
-                }
+                if (BasicButton("Build Game"))
+                    buildGameRequested = true;
+
+                const std::string relativeDir =
+                    fs::relative(_fileExplorerCurrentDir, rootPath).generic_string();
+                ImGui::SameLine();
+                ImGui::Text("Dir: assets/%s", relativeDir == "." ? "" : relativeDir.c_str());
 
                 ImGui::Separator();
+
+                static char        renameBuffer[128] = "";
+                static std::string renameTargetPath;
+                static bool        openRenamePopup = false;
+
+                static char newFileBuffer[128]   = "";
+                static char newSceneBuffer[128]  = "";
+                static bool openCreateScenePopup = false;
+
+                auto pasteIntoDirectory = [&](const fs::path& targetDir)
+                {
+                    if (_fileClipboardPath.empty() || !fs::exists(_fileClipboardPath))
+                        return;
+
+                    const fs::path sourcePath = fs::path(_fileClipboardPath);
+                    const fs::path sourceName = sourcePath.filename();
+                    const fs::path targetPath = makeUniqueCopyPath(targetDir, sourceName);
+
+                    std::error_code ec;
+                    if (fs::is_directory(sourcePath))
+                    {
+                        fs::path canonicalSource = fs::weakly_canonical(sourcePath, ec);
+                        fs::path canonicalTarget = fs::weakly_canonical(targetDir, ec);
+                        if (!ec && canonicalTarget.string().find(canonicalSource.string()) == 0)
+                            return;
+
+                        fs::copy(sourcePath, targetPath,
+                                 fs::copy_options::recursive | fs::copy_options::overwrite_existing,
+                                 ec);
+                    }
+                    else
+                    {
+                        fs::copy_file(sourcePath, targetPath, fs::copy_options::overwrite_existing,
+                                      ec);
+                    }
+
+                    if (!ec && _fileClipboardCut)
+                    {
+                        if (fs::is_directory(sourcePath))
+                            fs::remove_all(sourcePath, ec);
+                        else
+                            fs::remove(sourcePath, ec);
+                        _fileClipboardPath.clear();
+                        _fileClipboardCut = false;
+                    }
+
+                    scanSprites();
+                };
+
+                if (ImGui::BeginPopupContextWindow("ProjectNavbarContext",
+                                                   ImGuiPopupFlags_MouseButtonRight |
+                                                       ImGuiPopupFlags_NoOpenOverItems))
+                {
+                    if (ImGui::MenuItem("Create Scene"))
+                    {
+                        openCreateScenePopup = true;
+                    }
+
+                    const bool hasClipboard = !_fileClipboardPath.empty();
+                    if (ImGui::MenuItem("Paste", NULL, false, hasClipboard))
+                    {
+                        pasteIntoDirectory(fs::path(_fileExplorerCurrentDir));
+                    }
+                    ImGui::EndPopup();
+                }
+
+                if (openCreateScenePopup)
+                {
+                    ImGui::OpenPopup("CreateScenePopup");
+                    openCreateScenePopup = false;
+                }
+
+                bool createScenePopupOpen = true;
+                if (ImGui::BeginPopupModal("CreateScenePopup", &createScenePopupOpen,
+                                           ImGuiWindowFlags_AlwaysAutoResize))
+                {
+                    ImGui::Text("Create new scene in current folder");
+                    ImGui::InputText("Name", newSceneBuffer, sizeof(newSceneBuffer));
+
+                    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+                    {
+                        newSceneBuffer[0] = '\0';
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    if (ImGui::Button("Create"))
+                    {
+                        if (newSceneBuffer[0] != '\0')
+                        {
+                            fs::path newPath = fs::path(_fileExplorerCurrentDir) / newSceneBuffer;
+                            if (newPath.extension().empty())
+                                newPath.replace_extension(".scene");
+
+                            engine::scene::SceneData emptyScene;
+                            emptyScene.nextGameObjectId = 1;
+                            engine::scene::saveSceneToFile(newPath.string(), emptyScene);
+
+                            currentSceneFilename = newPath.string();
+                            currentSpriteFilename.clear();
+                            loadSceneRequested = true;
+
+                            newSceneBuffer[0] = '\0';
+                            scanSprites();
+                        }
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel"))
+                    {
+                        newSceneBuffer[0] = '\0';
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::EndPopup();
+                }
+
+                if (!createScenePopupOpen)
+                {
+                    newSceneBuffer[0] = '\0';
+                    ImGui::CloseCurrentPopup();
+                }
+
+                if (ImGui::BeginPopupModal("NewFilePopup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+                {
+                    ImGui::Text("Create file in current folder");
+                    ImGui::InputText("Name", newFileBuffer, sizeof(newFileBuffer));
+
+                    if (ImGui::Button("Create"))
+                    {
+                        if (newFileBuffer[0] != '\0')
+                        {
+                            fs::path newPath = fs::path(_fileExplorerCurrentDir) / newFileBuffer;
+                            std::ofstream outFile(newPath.string());
+                            outFile.close();
+                            newFileBuffer[0] = '\0';
+                            scanSprites();
+                        }
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel"))
+                    {
+                        newFileBuffer[0] = '\0';
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::EndPopup();
+                }
 
                 float thumbnailSize = 65.0f;
                 float padding       = 15.0f;
@@ -426,13 +783,24 @@ namespace graphics
                 if (columns < 1)
                     columns = 1;
 
+                std::sort(_fileExplorerEntries.begin(), _fileExplorerEntries.end(),
+                          [](const FileEntry& a, const FileEntry& b)
+                          {
+                              if (a.isDir != b.isDir)
+                                  return a.isDir > b.isDir;
+                              return a.name < b.name;
+                          });
+
                 ImGui::Columns(columns, 0, false);
 
-                for (const auto& sprite : spriteFiles)
+                for (const auto& entry : _fileExplorerEntries)
                 {
-                    ImGui::PushID(sprite.c_str());
+                    if (_fileExplorerDataOnly && !entry.isDir && entry.ext != ".dat")
+                    {
+                        continue;
+                    }
 
-                    std::string name = std::filesystem::path(sprite).filename().string();
+                    ImGui::PushID(entry.path.c_str());
 
                     ImGui::BeginGroup();
 
@@ -442,18 +810,116 @@ namespace graphics
                     if (offset > 0)
                         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
 
-                    if (ImGui::Button("##thumb", ImVec2(thumbnailSize, thumbnailSize)))
+                    ImGui::InvisibleButton("##icon", ImVec2(thumbnailSize, thumbnailSize));
+                    const bool clicked       = ImGui::IsItemClicked();
+                    const bool doubleClicked = ImGui::IsItemHovered() &&
+                                               ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
+
+                    ImDrawList*  drawList = ImGui::GetWindowDrawList();
+                    const ImVec2 rectMin  = ImGui::GetItemRectMin();
+                    const ImVec2 rectMax  = ImGui::GetItemRectMax();
+                    const ImU32  bgColor  = ImGui::GetColorU32(
+                        ImGui::IsItemHovered() ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+                    const ImU32 lineColor   = ImGui::GetColorU32(ImGuiCol_Text);
+                    const ImU32 accentColor = ImGui::GetColorU32(ImGuiCol_ButtonActive);
+
+                    drawList->AddRectFilled(rectMin, rectMax, bgColor, 4.0f);
+
+                    const float  iconPad = 12.0f;
+                    const ImVec2 iconMin(rectMin.x + iconPad, rectMin.y + iconPad);
+                    const ImVec2 iconMax(rectMax.x - iconPad, rectMax.y - iconPad);
+
+                    const bool isScene = entry.ext == ".scene";
+                    const bool isData  = entry.ext == ".dat" || entry.ext == ".data";
+
+                    GLuint iconTexture = 0;
+                    if (entry.isDir)
+                        iconTexture = _iconDirTexture;
+                    else if (isScene)
+                        iconTexture = _iconSceneTexture;
+                    else if (isData)
+                        iconTexture = _iconDataTexture;
+
+                    if (iconTexture != 0)
                     {
-                        currentSpriteFilename = sprite;
+                        drawList->AddImage(static_cast<ImTextureID>(iconTexture), iconMin, iconMax);
+                    }
+                    else
+                    {
+                        drawList->AddRect(iconMin, iconMax, lineColor, 3.0f, 0, 1.5f);
                     }
 
-                    float textWidth  = ImGui::CalcTextSize(name.c_str()).x;
+                    if (ImGui::BeginPopupContextItem("FileContext"))
+                    {
+                        if (ImGui::MenuItem("Rename"))
+                        {
+                            strncpy(renameBuffer, entry.name.c_str(), sizeof(renameBuffer));
+                            renameBuffer[sizeof(renameBuffer) - 1] = '\0';
+                            renameTargetPath                       = entry.path;
+                            openRenamePopup                        = true;
+                        }
+
+                        if (ImGui::MenuItem("Copy"))
+                        {
+                            _fileClipboardPath = entry.path;
+                            _fileClipboardCut  = false;
+                        }
+
+                        if (ImGui::MenuItem("Cut"))
+                        {
+                            _fileClipboardPath = entry.path;
+                            _fileClipboardCut  = true;
+                        }
+
+                        if (entry.isDir)
+                        {
+                            const bool hasClipboard = !_fileClipboardPath.empty();
+                            if (ImGui::MenuItem("Paste Into", NULL, false, hasClipboard))
+                            {
+                                pasteIntoDirectory(fs::path(entry.path));
+                            }
+                        }
+                        ImGui::EndPopup();
+                    }
+
+                    if (entry.isDir)
+                    {
+                        if (doubleClicked)
+                        {
+                            _fileExplorerCurrentDir = fs::path(entry.path).generic_string();
+                            scanSprites();
+                        }
+                    }
+                    else
+                    {
+                        if (clicked)
+                        {
+                            if (!_fileExplorerDataOnly && entry.ext == ".scene")
+                            {
+                                currentSceneFilename = entry.path;
+                                currentSpriteFilename.clear();
+                            }
+                            else
+                            {
+                                currentSpriteFilename = entry.path;
+                            }
+                        }
+
+                        if (!_fileExplorerDataOnly && doubleClicked && entry.ext == ".scene")
+                        {
+                            currentSceneFilename = entry.path;
+                            loadSceneRequested   = true;
+                            currentSpriteFilename.clear();
+                        }
+                    }
+
+                    float textWidth  = ImGui::CalcTextSize(entry.name.c_str()).x;
                     float textOffset = (columnWidth - textWidth) * 0.5f;
 
                     if (textOffset > 0)
                         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textOffset);
 
-                    ImGui::TextWrapped("%s", name.c_str());
+                    ImGui::TextWrapped("%s", entry.name.c_str());
 
                     ImGui::EndGroup();
 
@@ -463,6 +929,44 @@ namespace graphics
                 }
 
                 ImGui::Columns(1);
+
+                if (openRenamePopup)
+                {
+                    ImGui::OpenPopup("RenameFilePopup");
+                    openRenamePopup = false;
+                }
+
+                if (ImGui::BeginPopupModal("RenameFilePopup", NULL,
+                                           ImGuiWindowFlags_AlwaysAutoResize))
+                {
+                    ImGui::Text("Rename file or folder");
+                    ImGui::InputText("New Name", renameBuffer, sizeof(renameBuffer));
+
+                    if (ImGui::Button("Save"))
+                    {
+                        if (!renameTargetPath.empty() && renameBuffer[0] != '\0')
+                        {
+                            fs::path        oldPath = renameTargetPath;
+                            fs::path        newPath = oldPath.parent_path() / renameBuffer;
+                            std::error_code renameError;
+                            fs::rename(oldPath, newPath, renameError);
+                            scanSprites();
+                        }
+                        renameBuffer[0] = '\0';
+                        renameTargetPath.clear();
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel"))
+                    {
+                        renameBuffer[0] = '\0';
+                        renameTargetPath.clear();
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::EndPopup();
+                }
             });
     }
 
@@ -474,9 +978,11 @@ namespace graphics
      * @param gameObjects A reference to a vector of game objects to be displayed in the hierarchy.
      * @param selectedGameObjectIndex A reference to an integer that indicates the index of the
      * currently selected game object in the hierarchy.
+     * @param currentProject A reference to the current project.
      */
     void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
-                                        int&                              selectedGameObjectIndex)
+                                        int&                              selectedGameObjectIndex,
+                                        const projects::Project&          currentProject)
     {
         static BarConfig sideBarConfig{BarOrientation::Vertical, "Hierarchy",
                                        ImVec2(LAYOUT_LEFT_W, 0.0f), true,
@@ -500,64 +1006,61 @@ namespace graphics
                 std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(),
                                ::tolower);
 
-                if (ImGui::BeginChild("GameObjectList", ImVec2(0, 0), true))
+                ImGui::BeginChild("GameObjectList", ImVec2(0, 0), true);
+                for (size_t i = 0; i < gameObjects.size(); ++i)
                 {
-                    for (size_t i = 0; i < gameObjects.size(); ++i)
+                    const std::string objName =
+                        gameObjects[i].name.empty()
+                            ? ("GameObject " + std::to_string(gameObjects[i].id))
+                            : gameObjects[i].name;
+
+                    if (!lowerSearch.empty())
                     {
-                        const std::string objName =
-                            gameObjects[i].name.empty()
-                                ? ("GameObject " + std::to_string(gameObjects[i].id))
-                                : gameObjects[i].name;
+                        std::string lowerName = objName;
+                        std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(),
+                                       ::tolower);
 
-                        if (!lowerSearch.empty())
-                        {
-                            std::string lowerName = objName;
-                            std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(),
-                                           ::tolower);
-
-                            if (lowerName.find(lowerSearch) == std::string::npos)
-                                continue;
-                        }
-
-                        ImGui::PushID((int)i);
-
-                        if (ImGui::Selectable(objName.c_str(), selectedGameObjectIndex == (int)i))
-                            selectedGameObjectIndex = (int)i;
-
-                        // If right-clicked
-                        if (ImGui::BeginPopupContextItem())
-                        {
-                            if (ImGui::MenuItem("Rename"))
-                            {
-                                strncpy(renameBuffer, objName.c_str(), sizeof(renameBuffer));
-                                renameBuffer[sizeof(renameBuffer) - 1] = '\0';
-
-                                renameIndex     = (int)i;
-                                openRenamePopup = true;
-                            }
-
-                            if (ImGui::MenuItem("Delete"))
-                            {
-                                if (selectedGameObjectIndex == (int)i)
-                                    selectedGameObjectIndex = -1;
-                                else if (selectedGameObjectIndex > (int)i)
-                                    selectedGameObjectIndex--;
-
-                                gameObjects.erase(gameObjects.begin() + i);
-
-                                ImGui::EndPopup();
-                                ImGui::PopID();
-                                break;
-                            }
-
-                            ImGui::EndPopup();
-                        }
-
-                        ImGui::PopID();
+                        if (lowerName.find(lowerSearch) == std::string::npos)
+                            continue;
                     }
 
-                    ImGui::EndChild();
+                    ImGui::PushID((int)i);
+
+                    if (ImGui::Selectable(objName.c_str(), selectedGameObjectIndex == (int)i))
+                        selectedGameObjectIndex = (int)i;
+
+                    // If right-clicked
+                    if (ImGui::BeginPopupContextItem())
+                    {
+                        if (ImGui::MenuItem("Rename"))
+                        {
+                            strncpy(renameBuffer, objName.c_str(), sizeof(renameBuffer));
+                            renameBuffer[sizeof(renameBuffer) - 1] = '\0';
+
+                            renameIndex     = (int)i;
+                            openRenamePopup = true;
+                        }
+
+                        if (ImGui::MenuItem("Delete"))
+                        {
+                            if (selectedGameObjectIndex == (int)i)
+                                selectedGameObjectIndex = -1;
+                            else if (selectedGameObjectIndex > (int)i)
+                                selectedGameObjectIndex--;
+
+                            gameObjects.erase(gameObjects.begin() + i);
+
+                            ImGui::EndPopup();
+                            ImGui::PopID();
+                            break;
+                        }
+
+                        ImGui::EndPopup();
+                    }
+
+                    ImGui::PopID();
                 }
+                ImGui::EndChild();
 
                 if (openRenamePopup)
                 {
@@ -678,6 +1181,7 @@ namespace graphics
                         }
                         ImGui::DragFloat2("Width", &s->width, 640.0f);
                         ImGui::DragFloat2("Height", &s->height, 640.0f);
+                        ImGui::DragInt("Layer", &s->layer, 1.0f, -100, 100);            
 
                         ImGui::EndDisabled();
 
@@ -933,4 +1437,479 @@ namespace graphics
                     });
             });
     }
+
+    void ImguiInterface::fileToolBar()
+    {
+        static BarConfig topBarConfig{BarOrientation::Horizontal, "File Toolbar",
+                                      ImVec2(0.0f, LAYOUT_TOP_H), true, GetDesiredPosition("top")};
+
+        static Bar topBar(topBarConfig);
+
+        topBar.Draw(
+            [&]()
+            {
+                static int               fileIndex   = 0;
+                std::vector<std::string> fileOptions = {"Save", "Exit"};
+                if (DropdownButton("File", fileIndex, fileOptions, fontRegularSmall))
+                {
+                    switch (fileIndex)
+                    {
+                        case 0:
+                            // Save
+                            break;
+                        case 1:
+                            // Exit
+                            break;
+                    }
+                }
+
+                ImGui::SameLine();
+
+                static int               editIndex   = 0;
+                std::vector<std::string> editOptions = {"Placeholder1", "Placeholder2"}; // temp
+                if (DropdownButton("Edit", editIndex, editOptions, fontRegularSmall))
+                {
+                    switch (editIndex)
+                    {
+                        case 0:
+                            // Placeholder1
+                            break;
+                        case 1:
+                            // Placeholder2
+                            break;
+                    }
+                }
+
+                ImGui::SameLine();
+
+                if (BasicButton("Help", 0.0f, 0.0f, fontRegularSmall))
+                {
+                    // TODO
+                }
+            });
+    }
+
+    int ImguiInterface::projectOptionsBar(std::vector<projects::Project>& projects,
+                                          std::string                     projectsPath)
+    {
+        float buttonHeight    = 40.0f;
+        float buttonWidth     = 95.0f;
+        float windowWidth     = ImGui::GetContentRegionAvail().x;
+        float verticalSpacing = 20.0f;
+
+        static bool                  openNewPopup     = false;
+        static char                  projectName[128] = "NewProject";
+        static std::filesystem::path selectedPath     = projectsPath;
+        int                          resultIndex      = -1;
+
+        ImGui::PushFont(fontRegularBig);
+        ImGui::Text("Get Started");
+        ImGui::PopFont();
+        ImGui::Spacing();
+
+        ImGui::PushStyleColor(ImGuiCol_Separator, IM_COL32(255, 255, 255, 255));
+        ImGui::Separator();
+        ImGui::PopStyleColor();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        if (HoverChangeButton("New", buttonHeight, buttonWidth, fontBoldSmall))
+        {
+            openNewPopup = true;
+        }
+
+        if (openNewPopup)
+        {
+            ImGui::OpenPopup("Create New Project");
+            openNewPopup = false;
+        }
+
+        if (ImGui::BeginPopupModal("Create New Project", nullptr,
+                                   ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::InputText("Project Name", projectName, sizeof(projectName));
+
+            ImGui::Text("Path:\n%s", selectedPath.string().c_str());
+
+            ImGui::SameLine();
+
+            PopupButton(
+                "Select Project Path",
+                [&]()
+                {
+                    NFD::UniquePath outPath;
+
+                    nfdresult_t result = NFD::PickFolder(outPath);
+
+                    if (result == NFD_OKAY)
+                    {
+                        selectedPath = outPath.get();
+                    }
+                    else if (result == NFD_ERROR)
+                    {
+                        std::cerr << "Error: " << NFD::GetError() << std::endl;
+                    }
+
+                    ImGui::CloseCurrentPopup();
+                },
+                buttonHeight, buttonWidth, fontRegularSmall);
+
+            if (ImGui::Button("Cancel"))
+            {
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Save"))
+            {
+                std::filesystem::path fullPath = selectedPath / projectName;
+
+                if (!std::filesystem::exists(fullPath))
+                {
+                    std::filesystem::create_directory(fullPath);
+                    std::filesystem::create_directory(fullPath / "Assets");
+                    std::filesystem::create_directory(fullPath / "Scenes");
+                    // std::ofstream(fullPath / "scene.json") << "{}";
+
+                    projects::Project newProject;
+                    newProject.name = projectName;
+                    newProject.path = fullPath;
+
+                    projects.push_back(newProject);
+
+                    newProjectCreated = true;
+                }
+
+                ImGui::CloseCurrentPopup();
+            }
+
+            if (newProjectCreated)
+            {
+                newProjectCreated = false;
+                resultIndex       = projects.size() - 1;
+            }
+
+            ImGui::EndPopup();
+        }
+
+        ImGui::SameLine(0.0f, verticalSpacing);
+
+        if (HoverChangeButton("Open", buttonHeight, buttonWidth, fontBoldSmall))
+        {
+            NFD::UniquePath outPath;
+
+            nfdresult_t result = NFD::PickFolder(outPath);
+
+            if (result == NFD_OKAY)
+            {
+                selectedPath = outPath.get();
+            }
+            else if (result == NFD_ERROR)
+            {
+                std::cerr << "Error: " << NFD::GetError() << std::endl;
+            }
+
+            projects::Project openedProject;
+            openedProject.name = selectedPath.filename().string();
+            openedProject.path = selectedPath;
+            projects.push_back(openedProject);
+
+            resultIndex = projects.size() - 1;
+        }
+
+        ImGui::SameLine(0.0f, verticalSpacing);
+
+        if (HoverChangeButton("Import", buttonHeight, buttonWidth, fontBoldSmall))
+        {
+            NFD::UniquePath outPath;
+
+            nfdresult_t result = NFD::PickFolder(outPath);
+
+            if (result == NFD_OKAY)
+            {
+                selectedPath = outPath.get();
+
+                // TODO: check if it's a valid project
+
+                std::filesystem::path destination =
+                    std::filesystem::path(projectsPath) / selectedPath.filename();
+                if (std::filesystem::exists(destination))
+                {
+                    std::cout << "Project already exists in Projects folder.\n";
+                    return resultIndex;
+                }
+
+                try
+                {
+                    std::filesystem::rename(selectedPath, destination);
+
+                    projects::Project importedProject;
+                    importedProject.name = destination.filename().string();
+                    importedProject.path = destination;
+                    projects.push_back(importedProject);
+
+                    resultIndex = projects.size() - 1;
+                }
+                catch (const std::exception& e)
+                {
+                    std::cout << "Import failed: " << e.what() << std::endl;
+                    return resultIndex;
+                }
+            }
+            else if (result == NFD_ERROR)
+            {
+                std::cout << "Error: " << NFD::GetError() << std::endl;
+                return resultIndex;
+            }
+        }
+
+        ImGui::SameLine(windowWidth);
+
+        if (HoverChangeButton("Tutorial", buttonHeight, buttonWidth, fontBoldSmall))
+        {
+            // TODO
+        }
+
+        return resultIndex;
+    }
+
+    int ImguiInterface::projectsDisplay(std::vector<projects::Project>& projects)
+    {
+        float buttonHeight = 20.0f;
+        float buttonWidth  = 80.0f;
+        float windowWidth  = ImGui::GetContentRegionAvail().x;
+
+        ImGui::PushFont(fontRegularBig);
+        ImGui::Text("Projects");
+        ImGui::PopFont();
+
+        ImGui::SameLine(windowWidth);
+
+        if (BasicButton("ListView", buttonHeight, buttonWidth))
+        {
+            // TODO
+        }
+
+        ImGui::SameLine();
+
+        if (BasicButton("SquareView", buttonHeight, buttonWidth))
+        {
+            // TODO
+        }
+
+        ImGui::Spacing();
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(15, 15));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(40, 40, 40, 255));
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(70, 70, 70, 255));
+        ImGui::BeginChild("ProjectsList", ImVec2(0, 0), true);
+
+        if (projects.empty())
+        {
+            ImGui::Text("No projects found.");
+
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
+
+            return -1;
+        }
+
+        for (int i = 0; i < static_cast<int>(projects.size()); i++)
+        {
+            ImVec2 size(ImGui::GetContentRegionAvail().x - 20, 200);
+
+            ImVec2      pos  = ImGui::GetCursorScreenPos();
+            ImDrawList* draw = ImGui::GetWindowDrawList();
+
+            float rounding = 8.0f;
+
+            draw->AddRectFilled( // shadow
+                ImVec2(pos.x + 2, pos.y + 10), ImVec2(pos.x + size.x + 1, pos.y + size.y + 6),
+                IM_COL32(0, 0, 0, 30), rounding);
+
+            draw->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y),
+                                IM_COL32(55, 55, 55, 255), // lighter bg color
+                                rounding);
+
+            draw->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y), IM_COL32(80, 80, 80, 255),
+                          rounding);
+
+            ImGui::InvisibleButton(("ProjectBtn_" + std::to_string(i)).c_str(), size);
+
+            ImGui::SetCursorScreenPos(ImVec2(pos.x, pos.y));
+
+            clickableProjectOverview(projects[i], fontBoldBig, fontRegularSmall);
+
+            if (ImGui::IsItemClicked())
+            {
+                projects[i].lastOpened = std::chrono::system_clock::now();
+
+                ImGui::EndChild();
+                ImGui::PopStyleVar(2);
+                ImGui::PopStyleColor(2);
+
+                return i;
+            }
+        }
+
+        ImGui::EndChild();
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(2);
+
+        return -1;
+    }
+
+    void ImguiInterface::clickableProjectOverview(projects::Project& project, ImFont* nameFont,
+                                                  ImFont* infoFont)
+    {
+        // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent
+        // projects list.
+
+        float thumbSize = 120.0f;
+
+        ImGui::BeginGroup();
+
+        ImVec2      pos  = ImGui::GetCursorScreenPos();
+        ImDrawList* draw = ImGui::GetWindowDrawList();
+
+        if (thumbnail)
+        {
+            draw->AddImageRounded(thumbnail, pos, ImVec2(pos.x + thumbSize, pos.y + thumbSize),
+                                  ImVec2(0, 0), ImVec2(1, 1), IM_COL32_WHITE, 8.0f);
+        }
+        else
+        {
+            draw->AddRectFilled(pos, ImVec2(pos.x + thumbSize, pos.y + thumbSize),
+                                IM_COL32(80, 80, 80, 255), 8.0f);
+
+            draw->AddText(ImVec2(pos.x + 10, pos.y + 20), IM_COL32_WHITE, "No Img");
+        }
+
+        ImGui::Dummy(ImVec2(thumbSize, thumbSize));
+
+        ImGui::EndGroup();
+
+        ImGui::SameLine();
+
+        if (nameFont)
+            ImGui::PushFont(nameFont);
+        ImGui::Text("%s", project.name.c_str());
+        if (nameFont)
+            ImGui::PopFont();
+
+        if (infoFont)
+            ImGui::PushFont(infoFont);
+        ImGui::TextDisabled("%s", project.path.string().c_str());
+        if (infoFont)
+            ImGui::PopFont();
+
+        std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
+        char        buffer[64];
+        std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", std::localtime(&t));
+        if (infoFont)
+            ImGui::PushFont(infoFont);
+        ImGui::TextDisabled("Last opened: %s", buffer);
+        if (infoFont)
+            ImGui::PopFont();
+    }
+
+    void ImguiInterface::buildGameSettingsDialog(BuildSettings& settings, bool& confirmed,
+                                                 bool& cancelled)
+    {
+        if (!ImGui::IsPopupOpen("Build Game Settings"))
+        {
+            settings.syncToBuffers();
+            ImGui::OpenPopup("Build Game Settings");
+        }
+
+        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+        bool open = true;
+        if (ImGui::BeginPopupModal("Build Game Settings", &open, ImGuiWindowFlags_None))
+        {
+            ImGui::Text("Configure your game build:");
+            ImGui::Separator();
+
+            ImGui::InputText("Game Title", settings.gameTitleBuf, sizeof(settings.gameTitleBuf));
+            ImGui::InputInt("Window Width", &settings.windowWidth);
+            ImGui::InputInt("Window Height", &settings.windowHeight);
+            ImGui::InputText("Target Name", settings.targetNameBuf, sizeof(settings.targetNameBuf));
+
+            ImGui::Separator();
+            ImGui::Text("Output: games/%s/", settings.targetNameBuf);
+
+            ImGui::Separator();
+            if (ImGui::Button("Build", ImVec2(120, 0)))
+            {
+                settings.syncFromBuffers();
+                confirmed = true;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            {
+                cancelled = true;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void ImguiInterface::showBuildProgressModal(const char* status, float progress, bool isComplete,
+                                                bool isSuccess, const char* detail)
+    {
+        ImGui::SetNextWindowSize(ImVec2(450, 200), ImGuiCond_FirstUseEver);
+        bool open = true;
+        if (ImGui::BeginPopupModal("Build Progress", &open,
+                                   ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+        {
+            ImGui::Text("%s", status);
+            ImGui::Separator();
+
+            if (progress >= 0.0f)
+            {
+                ImGui::ProgressBar(progress, ImVec2(-1, 0));
+            }
+            else
+            {
+                ImGui::ProgressBar(-1.0f * (float)ImGui::GetTime(), ImVec2(-1, 0), "");
+            }
+
+            if (detail && detail[0] != '\0')
+            {
+                ImGui::Separator();
+                ImGui::BeginChild("BuildOutput", ImVec2(0, 80), true,
+                                  ImGuiWindowFlags_HorizontalScrollbar);
+                ImGui::TextWrapped("%s", detail);
+                if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+                    ImGui::SetScrollHereY(1.0f);
+                ImGui::EndChild();
+            }
+
+            ImGui::Separator();
+            if (isComplete)
+            {
+                if (isSuccess)
+                {
+                    ImGui::TextColored(ImVec4(0.2f, 0.9f, 0.2f, 1.0f), "Build successful!");
+                }
+                else
+                {
+                    ImGui::TextColored(ImVec4(0.9f, 0.2f, 0.2f, 1.0f), "Build failed.");
+                }
+
+                if (ImGui::Button("Close", ImVec2(120, 0)))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
 } // namespace graphics

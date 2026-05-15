@@ -23,9 +23,12 @@ namespace editors
         _renderer->clear();
 
         _imguiInterface->startFrame();
-        _imguiInterface->projectTopBarEmpty();
-        _imguiInterface->projectNavbar(_currentSpriteFilename, _saveSceneRequested,
-                                       _loadSceneRequested);
+        _imguiInterface->projectTopBar(_currentProject.name);
+        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _currentProject);
+        _imguiInterface->setFileExplorerDataOnly(false);
+        _imguiInterface->projectNavbar(_currentSpriteFilename, _currentSceneFilename,
+                                       _saveSceneRequested, _loadSceneRequested,
+                                       _buildGameRequested);
 
         if (!_currentSpriteFilename.empty())
         {
@@ -50,7 +53,47 @@ namespace editors
         drawGameObjectSprites();
         drawPendingTexturePreview();
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
-        imguiHandling();
+
+        // Build settings dialog (rendered inside the ImGui frame)
+        if (_showBuildDialog)
+        {
+            bool confirmed = false;
+            bool cancelled = false;
+            _imguiInterface->buildGameSettingsDialog(_buildDialogSettings, confirmed, cancelled);
+            if (confirmed)
+            {
+                _buildDialogConfirmed = true;
+                _showBuildDialog      = false;
+            }
+            if (cancelled)
+            {
+                _showBuildDialog = false;
+            }
+        }
+
+        // Build progress modal (rendered inside the ImGui frame)
+        if (_showBuildProgress && !_buildProgressDismissed)
+        {
+            const bool popupOpen = ImGui::IsPopupOpen("Build Progress");
+            if (popupOpen)
+            {
+                float progress = _buildProgressDone ? 1.0f : -1.0f;
+                _imguiInterface->showBuildProgressModal(
+                    _buildProgressDone ? (_buildProgressSuccess ? "Build complete" : "Build failed")
+                                       : "Building...",
+                    progress, _buildProgressDone, _buildProgressSuccess,
+                    _buildProgressOutput.empty() ? nullptr : _buildProgressOutput.c_str());
+            }
+            else if (!_buildProgressDone)
+            {
+                ImGui::OpenPopup("Build Progress");
+            }
+            if (_buildProgressDone && !ImGui::IsPopupOpen("Build Progress"))
+            {
+                _buildProgressDismissed = true;
+            }
+        }
+
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
     }
@@ -74,40 +117,49 @@ namespace editors
     {
         switch (event.type)
         {
-            case graphics::KEY_W:
-                _camera.move(glm::vec2(0.0f, -10.0f));
-                break;
             case graphics::MOUSE_LEFT_CLICK:
                 mouseLeftClick();
                 break;
-            case graphics::KEY_S:
-                _camera.move(glm::vec2(0.0f, 10.0f));
+            case graphics::MOUSE_MIDDLE_DRAG:
+                panCameraScreenDelta(event.mouseDelta);
                 break;
-            case graphics::KEY_A:
-                _camera.move(glm::vec2(10.0f, 0.0f));
-                break;
-            case graphics::KEY_D:
-                _camera.move(glm::vec2(-10.0f, 0.0f));
-                break;
-            case graphics::KEY_I:
-                _camera.zoomIn(1.1f);
-                break;
-            case graphics::KEY_O:
-                _camera.zoomOut(1.1f);
+            case graphics::MOUSE_WHEEL:
+                if (event.wheelY > 0.0f)
+                    zoomAroundMouse(1.1f);
+                else if (event.wheelY < 0.0f)
+                    zoomAroundMouse(1.0f / 1.1f);
                 break;
             case graphics::KEY_ESCAPE:
                 _isPlacingTexture = false;
                 _pendingTexture   = {};
                 break;
             case graphics::FILE_DROPPED:
-                if (!event.droppedFilePath.empty() && isTextureFile(event.droppedFilePath))
+                if (!event.droppedFilePath.empty())
                 {
-                    _isPlacingTexture = loadTextureForPlacement(event.droppedFilePath);
+                    const std::string ext =
+                        std::filesystem::path(event.droppedFilePath).extension().string();
+                    std::string lowerExt = ext;
+                    std::transform(lowerExt.begin(), lowerExt.end(), lowerExt.begin(), ::tolower);
+
+                    if (lowerExt == ".scene")
+                    {
+                        _currentSceneFilename = event.droppedFilePath;
+                        _loadSceneRequested   = true;
+                    }
+                    else if (isTextureFile(event.droppedFilePath))
+                    {
+                        _isPlacingTexture = loadTextureForPlacement(event.droppedFilePath);
+                    }
                 }
                 break;
             default:
                 break;
         }
+    }
+
+    void ProjectEditor::setCurrentProject(const projects::Project& project)
+    {
+        _currentProject = project;
     }
 
     void ProjectEditor::placePendingSpriteAtWorldInGameObject(glm::vec2 worldPos)
@@ -116,8 +168,9 @@ namespace editors
             return;
 
         Pixel::GameObject newObject;
-        newObject.id   = gameObjectCounter++;
-        newObject.name = "GameObject_" + std::to_string(newObject.id);
+        newObject.id            = gameObjectCounter++;
+        newObject.name          = "GameObject_" + std::to_string(newObject.id);
+        newObject.sourceDatPath = _pendingSprite.sourceDatPath;
 
         // Convert world position to grid coords
         int anchorGX = (int)std::floor(worldPos.x / PIXEL_SIZE);
@@ -243,11 +296,6 @@ namespace editors
         }
     }
 
-    void ProjectEditor::imguiHandling()
-    {
-        _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex);
-    }
-
     void ProjectEditor::mouseLeftClick()
     {
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
@@ -314,6 +362,40 @@ namespace editors
         sprite2d.textureID = _pendingTexture.textureID;
 
         _renderer->drawSprite(sprite2d, _camera);
+    }
+
+    void ProjectEditor::showBuildSettings(const BuildSettings& settings)
+    {
+        _buildDialogSettings  = settings;
+        _showBuildDialog      = true;
+        _buildDialogConfirmed = false;
+    }
+
+    bool ProjectEditor::consumeBuildConfirmed(BuildSettings& outSettings)
+    {
+        if (!_buildDialogConfirmed)
+            return false;
+        _buildDialogConfirmed = false;
+        outSettings           = _buildDialogSettings;
+        return true;
+    }
+
+    void ProjectEditor::setBuildProgress(bool visible, bool done, bool success,
+                                         const std::string& output)
+    {
+        _showBuildProgress    = visible;
+        _buildProgressDone    = done;
+        _buildProgressSuccess = success;
+        _buildProgressOutput  = output;
+    }
+
+    bool ProjectEditor::consumeBuildProgressDismissed()
+    {
+        if (!_buildProgressDismissed)
+            return false;
+        _buildProgressDismissed = false;
+        _showBuildProgress      = false;
+        return true;
     }
 
 } // namespace editors
