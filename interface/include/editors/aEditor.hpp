@@ -35,6 +35,7 @@ namespace editors
         struct PendingSprite
         {
             bool                     valid = false;
+            std::string              sourceDatPath;
             std::vector<PendingCell> cells;
         };
 

@@ -149,7 +149,7 @@ class Simulation
     {
         return pixelsPerMeter;
     }
-    
+
     bool tryDisplacePixel(int x, int y, int range);
 
   private:

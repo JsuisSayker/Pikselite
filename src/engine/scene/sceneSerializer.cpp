@@ -1,42 +1,39 @@
-#include <engine/scene/sceneSerializer.hpp>
-
-#include <engine/ecs/components/transformComponent.hpp>
-#include <engine/ecs/components/velocityComponent.hpp>
-#include <engine/ecs/components/spriteComponent.hpp>
-#include <engine/ecs/components/physicsComponent.hpp>
-#include <engine/ecs/components/scriptComponent.hpp>
-
-#include <zlib.h>
-
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
+#include <engine/ecs/components/physicsComponent.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/ecs/components/velocityComponent.hpp>
+#include <engine/scene/sceneSerializer.hpp>
 #include <fstream>
 #include <limits>
+#include <zlib.h>
 
 namespace engine::scene
 {
     namespace
     {
-        constexpr uint32_t kSceneMagic = 0x5343534E; // 'SCSN'
-        constexpr uint16_t kSceneVersion = 2;
+        constexpr uint32_t kSceneMagic   = 0x5343534E; // 'SCSN'
+        constexpr uint16_t kSceneVersion = 3;
 
         enum ComponentMask : uint32_t
         {
-            MaskTransform = 1u << 0,
-            MaskVelocity = 1u << 1,
-            MaskSprite = 1u << 2,
+            MaskTransform   = 1u << 0,
+            MaskVelocity    = 1u << 1,
+            MaskSprite      = 1u << 2,
             MaskPhysicsBody = 1u << 3,
-            MaskScript = 1u << 4
+            MaskScript      = 1u << 4
         };
 
         struct Header
         {
-            uint32_t magic = kSceneMagic;
-            uint16_t version = kSceneVersion;
-            uint16_t reserved = 0;
+            uint32_t magic            = kSceneMagic;
+            uint16_t version          = kSceneVersion;
+            uint16_t reserved         = 0;
             uint32_t uncompressedSize = 0;
-            uint32_t compressedSize = 0;
+            uint32_t compressedSize   = 0;
         };
 
         void writeBytes(std::vector<uint8_t>& out, const void* data, size_t size)
@@ -180,7 +177,8 @@ namespace engine::scene
             return mask;
         }
 
-        void serializeComponentTransform(std::vector<uint8_t>& out, const ecs::components::Transform& t)
+        void serializeComponentTransform(std::vector<uint8_t>&             out,
+                                         const ecs::components::Transform& t)
         {
             writeBool(out, t.enabled);
             writeF32(out, t.x);
@@ -190,7 +188,8 @@ namespace engine::scene
             writeF32(out, t.scaleY);
         }
 
-        void serializeComponentVelocity(std::vector<uint8_t>& out, const ecs::components::Velocity& v)
+        void serializeComponentVelocity(std::vector<uint8_t>&            out,
+                                        const ecs::components::Velocity& v)
         {
             writeBool(out, v.enabled);
             writeF32(out, v.vx);
@@ -205,7 +204,8 @@ namespace engine::scene
             writeF32(out, s.height);
         }
 
-        void serializeComponentPhysicsBody(std::vector<uint8_t>& out, const ecs::components::PhysicsBody& p)
+        void serializeComponentPhysicsBody(std::vector<uint8_t>&               out,
+                                           const ecs::components::PhysicsBody& p)
         {
             writeBool(out, p.enabled);
             writeU8(out, static_cast<uint8_t>(p.bodyType));
@@ -232,71 +232,104 @@ namespace engine::scene
             writeString(out, s.scriptPath);
         }
 
-        bool deserializeComponentTransform(const std::vector<uint8_t>& data, size_t& offset, ecs::components::Transform& t)
+        bool deserializeComponentTransform(const std::vector<uint8_t>& data, size_t& offset,
+                                           ecs::components::Transform& t)
         {
-            if (!readBool(data, offset, t.enabled)) return false;
-            if (!readF32(data, offset, t.x)) return false;
-            if (!readF32(data, offset, t.y)) return false;
-            if (!readF32(data, offset, t.rotation)) return false;
-            if (!readF32(data, offset, t.scaleX)) return false;
-            if (!readF32(data, offset, t.scaleY)) return false;
+            if (!readBool(data, offset, t.enabled))
+                return false;
+            if (!readF32(data, offset, t.x))
+                return false;
+            if (!readF32(data, offset, t.y))
+                return false;
+            if (!readF32(data, offset, t.rotation))
+                return false;
+            if (!readF32(data, offset, t.scaleX))
+                return false;
+            if (!readF32(data, offset, t.scaleY))
+                return false;
             t.prevX = t.x;
             t.prevY = t.y;
             return true;
         }
 
-        bool deserializeComponentVelocity(const std::vector<uint8_t>& data, size_t& offset, ecs::components::Velocity& v)
+        bool deserializeComponentVelocity(const std::vector<uint8_t>& data, size_t& offset,
+                                          ecs::components::Velocity& v)
         {
-            if (!readBool(data, offset, v.enabled)) return false;
-            if (!readF32(data, offset, v.vx)) return false;
-            if (!readF32(data, offset, v.vy)) return false;
+            if (!readBool(data, offset, v.enabled))
+                return false;
+            if (!readF32(data, offset, v.vx))
+                return false;
+            if (!readF32(data, offset, v.vy))
+                return false;
             return true;
         }
 
-        bool deserializeComponentSprite(const std::vector<uint8_t>& data, size_t& offset, ecs::components::Sprite& s)
+        bool deserializeComponentSprite(const std::vector<uint8_t>& data, size_t& offset,
+                                        ecs::components::Sprite& s)
         {
-            if (!readBool(data, offset, s.enabled)) return false;
-            if (!readString(data, offset, s.texturePath)) return false;
-            if (!readF32(data, offset, s.width)) return false;
-            if (!readF32(data, offset, s.height)) return false;
+            if (!readBool(data, offset, s.enabled))
+                return false;
+            if (!readString(data, offset, s.texturePath))
+                return false;
+            if (!readF32(data, offset, s.width))
+                return false;
+            if (!readF32(data, offset, s.height))
+                return false;
             s.textureID = 0;
-            s.loaded = false;
+            s.loaded    = false;
             return true;
         }
 
-        bool deserializeComponentPhysicsBody(const std::vector<uint8_t>& data, size_t& offset, ecs::components::PhysicsBody& p)
+        bool deserializeComponentPhysicsBody(const std::vector<uint8_t>& data, size_t& offset,
+                                             ecs::components::PhysicsBody& p)
         {
             uint8_t bodyType = 0;
-            if (!readBool(data, offset, p.enabled)) return false;
-            if (!readU8(data, offset, bodyType)) return false;
-            if (!readBool(data, offset, p.fixedRotation)) return false;
-            if (!readF32(data, offset, p.density)) return false;
-            if (!readF32(data, offset, p.friction)) return false;
-            if (!readF32(data, offset, p.restitution)) return false;
+            if (!readBool(data, offset, p.enabled))
+                return false;
+            if (!readU8(data, offset, bodyType))
+                return false;
+            if (!readBool(data, offset, p.fixedRotation))
+                return false;
+            if (!readF32(data, offset, p.density))
+                return false;
+            if (!readF32(data, offset, p.friction))
+                return false;
+            if (!readF32(data, offset, p.restitution))
+                return false;
             uint32_t count = 0;
-            if (!readU32(data, offset, count)) return false;
+            if (!readU32(data, offset, count))
+                return false;
             p.bodyType = static_cast<b2BodyType>(bodyType);
-            p.bodyId = b2_nullBodyId;
+            p.bodyId   = b2_nullBodyId;
             p.triangles.clear();
             p.triangles.reserve(count);
             for (uint32_t i = 0; i < count; ++i)
             {
                 ecs::components::PhysicsTriangle tri;
-                if (!readF32(data, offset, tri.a.x)) return false;
-                if (!readF32(data, offset, tri.a.y)) return false;
-                if (!readF32(data, offset, tri.b.x)) return false;
-                if (!readF32(data, offset, tri.b.y)) return false;
-                if (!readF32(data, offset, tri.c.x)) return false;
-                if (!readF32(data, offset, tri.c.y)) return false;
+                if (!readF32(data, offset, tri.a.x))
+                    return false;
+                if (!readF32(data, offset, tri.a.y))
+                    return false;
+                if (!readF32(data, offset, tri.b.x))
+                    return false;
+                if (!readF32(data, offset, tri.b.y))
+                    return false;
+                if (!readF32(data, offset, tri.c.x))
+                    return false;
+                if (!readF32(data, offset, tri.c.y))
+                    return false;
                 p.triangles.push_back(tri);
             }
             return true;
         }
 
-        bool deserializeComponentScript(const std::vector<uint8_t>& data, size_t& offset, ecs::components::Script& s)
+        bool deserializeComponentScript(const std::vector<uint8_t>& data, size_t& offset,
+                                        ecs::components::Script& s)
         {
-            if (!readBool(data, offset, s.enabled)) return false;
-            if (!readString(data, offset, s.scriptPath)) return false;
+            if (!readBool(data, offset, s.enabled))
+                return false;
+            if (!readString(data, offset, s.scriptPath))
+                return false;
             return true;
         }
 
@@ -305,6 +338,7 @@ namespace engine::scene
             writeU32(out, go.id);
             writeBool(out, go.isActive);
             writeString(out, go.name);
+            writeString(out, go.sourceDatPath);
 
             const uint32_t componentMask = buildComponentMask(go);
             writeU32(out, componentMask);
@@ -335,7 +369,8 @@ namespace engine::scene
                 serializeComponentScript(out, s ? *s : ecs::components::Script{});
             }
 
-            const uint32_t pixelCount = static_cast<uint32_t>(std::min(go.pixels.size(), go.pixelLocalCoords.size()));
+            const uint32_t pixelCount =
+                static_cast<uint32_t>(std::min(go.pixels.size(), go.pixelLocalCoords.size()));
             writeU32(out, pixelCount);
             for (uint32_t i = 0; i < pixelCount; ++i)
             {
@@ -350,50 +385,63 @@ namespace engine::scene
             }
         }
 
-        bool deserializeGameObject(const std::vector<uint8_t>& data, size_t& offset, Pixel::GameObject& outGo)
+        bool deserializeGameObject(const std::vector<uint8_t>& data, size_t& offset,
+                                   Pixel::GameObject& outGo)
         {
-            if (!readU32(data, offset, outGo.id)) return false;
-            if (!readBool(data, offset, outGo.isActive)) return false;
-            if (!readString(data, offset, outGo.name)) return false;
+            if (!readU32(data, offset, outGo.id))
+                return false;
+            if (!readBool(data, offset, outGo.isActive))
+                return false;
+            if (!readString(data, offset, outGo.name))
+                return false;
+            if (!readString(data, offset, outGo.sourceDatPath))
+                return false;
 
             uint32_t componentMask = 0;
-            if (!readU32(data, offset, componentMask)) return false;
+            if (!readU32(data, offset, componentMask))
+                return false;
 
             outGo.components.clear();
 
             if (componentMask & MaskTransform)
             {
                 ecs::components::Transform t;
-                if (!deserializeComponentTransform(data, offset, t)) return false;
+                if (!deserializeComponentTransform(data, offset, t))
+                    return false;
                 outGo.addComponent(t);
             }
             if (componentMask & MaskVelocity)
             {
                 ecs::components::Velocity v;
-                if (!deserializeComponentVelocity(data, offset, v)) return false;
+                if (!deserializeComponentVelocity(data, offset, v))
+                    return false;
                 outGo.addComponent(v);
             }
             if (componentMask & MaskSprite)
             {
                 ecs::components::Sprite s;
-                if (!deserializeComponentSprite(data, offset, s)) return false;
+                if (!deserializeComponentSprite(data, offset, s))
+                    return false;
                 outGo.addComponent(s);
             }
             if (componentMask & MaskPhysicsBody)
             {
                 ecs::components::PhysicsBody p;
-                if (!deserializeComponentPhysicsBody(data, offset, p)) return false;
+                if (!deserializeComponentPhysicsBody(data, offset, p))
+                    return false;
                 outGo.addComponent(p);
             }
             if (componentMask & MaskScript)
             {
                 ecs::components::Script s;
-                if (!deserializeComponentScript(data, offset, s)) return false;
+                if (!deserializeComponentScript(data, offset, s))
+                    return false;
                 outGo.addComponent(s);
             }
 
             uint32_t pixelCount = 0;
-            if (!readU32(data, offset, pixelCount)) return false;
+            if (!readU32(data, offset, pixelCount))
+                return false;
             outGo.pixels.clear();
             outGo.pixelLocalCoords.clear();
             outGo.pixels.reserve(pixelCount);
@@ -401,25 +449,31 @@ namespace engine::scene
 
             for (uint32_t i = 0; i < pixelCount; ++i)
             {
-                int32_t localX = 0;
-                int32_t localY = 0;
-                uint16_t type = 0;
-                uint8_t colorIndex = 0;
-                uint8_t burnTimer = 0;
-                bool    isBurning = false;
-                if (!readI32(data, offset, localX)) return false;
-                if (!readI32(data, offset, localY)) return false;
-                if (!readU16(data, offset, type)) return false;
-                if (!readU8(data, offset, colorIndex)) return false;
-                if (!readU8(data, offset, burnTimer)) return false;
-                if (!readBool(data, offset, isBurning)) return false;
+                int32_t  localX     = 0;
+                int32_t  localY     = 0;
+                uint16_t type       = 0;
+                uint8_t  colorIndex = 0;
+                uint8_t  burnTimer  = 0;
+                bool     isBurning  = false;
+                if (!readI32(data, offset, localX))
+                    return false;
+                if (!readI32(data, offset, localY))
+                    return false;
+                if (!readU16(data, offset, type))
+                    return false;
+                if (!readU8(data, offset, colorIndex))
+                    return false;
+                if (!readU8(data, offset, burnTimer))
+                    return false;
+                if (!readBool(data, offset, isBurning))
+                    return false;
 
                 outGo.pixelLocalCoords.push_back({localX, localY});
                 Element::Pixel px;
-                px.type = static_cast<Element::ElementType>(type);
+                px.type       = static_cast<Element::ElementType>(type);
                 px.colorIndex = colorIndex;
-                px.burnTimer = burnTimer;
-                px.isBurning = isBurning;
+                px.burnTimer  = burnTimer;
+                px.isBurning  = isBurning;
                 outGo.pixels.push_back(px);
             }
 
@@ -437,7 +491,8 @@ namespace engine::scene
             uLongf destLen = compressBound(static_cast<uLong>(input.size()));
             output.resize(destLen);
 
-            const int result = compress2(output.data(), &destLen, input.data(), static_cast<uLong>(input.size()), Z_BEST_COMPRESSION);
+            const int result = compress2(output.data(), &destLen, input.data(),
+                                         static_cast<uLong>(input.size()), Z_BEST_COMPRESSION);
             if (result != Z_OK)
             {
                 return false;
@@ -447,7 +502,8 @@ namespace engine::scene
             return true;
         }
 
-        bool decompressBuffer(const std::vector<uint8_t>& input, size_t expectedSize, std::vector<uint8_t>& output)
+        bool decompressBuffer(const std::vector<uint8_t>& input, size_t expectedSize,
+                              std::vector<uint8_t>& output)
         {
             output.resize(expectedSize);
             if (expectedSize == 0)
@@ -455,8 +511,9 @@ namespace engine::scene
                 return true;
             }
 
-            uLongf destLen = static_cast<uLongf>(expectedSize);
-            const int result = uncompress(output.data(), &destLen, input.data(), static_cast<uLong>(input.size()));
+            uLongf    destLen = static_cast<uLongf>(expectedSize);
+            const int result =
+                uncompress(output.data(), &destLen, input.data(), static_cast<uLong>(input.size()));
             if (result != Z_OK || destLen != expectedSize)
             {
                 return false;
@@ -464,7 +521,7 @@ namespace engine::scene
 
             return true;
         }
-    }
+    } // namespace
 
     bool saveSceneToFile(const std::string& filename, const SceneData& data)
     {
@@ -488,7 +545,7 @@ namespace engine::scene
 
         Header header;
         header.uncompressedSize = static_cast<uint32_t>(raw.size());
-        header.compressedSize = static_cast<uint32_t>(compressed.size());
+        header.compressedSize   = static_cast<uint32_t>(compressed.size());
 
         std::ofstream outFile(filename, std::ios::binary);
         if (!outFile)
@@ -499,7 +556,8 @@ namespace engine::scene
         outFile.write(reinterpret_cast<const char*>(&header), sizeof(header));
         if (!compressed.empty())
         {
-            outFile.write(reinterpret_cast<const char*>(compressed.data()), static_cast<std::streamsize>(compressed.size()));
+            outFile.write(reinterpret_cast<const char*>(compressed.data()),
+                          static_cast<std::streamsize>(compressed.size()));
         }
 
         return static_cast<bool>(outFile);
@@ -523,7 +581,8 @@ namespace engine::scene
         std::vector<uint8_t> compressed(header.compressedSize);
         if (header.compressedSize > 0)
         {
-            inFile.read(reinterpret_cast<char*>(compressed.data()), static_cast<std::streamsize>(compressed.size()));
+            inFile.read(reinterpret_cast<char*>(compressed.data()),
+                        static_cast<std::streamsize>(compressed.size()));
             if (!inFile)
             {
                 return false;
@@ -536,12 +595,14 @@ namespace engine::scene
             return false;
         }
 
-        size_t offset = 0;
+        size_t    offset = 0;
         SceneData temp;
-        if (!readU32(raw, offset, temp.nextGameObjectId)) return false;
+        if (!readU32(raw, offset, temp.nextGameObjectId))
+            return false;
 
         uint32_t count = 0;
-        if (!readU32(raw, offset, count)) return false;
+        if (!readU32(raw, offset, count))
+            return false;
 
         temp.gameObjects.clear();
         temp.gameObjects.reserve(count);
@@ -559,4 +620,4 @@ namespace engine::scene
         outData = std::move(temp);
         return true;
     }
-}
+} // namespace engine::scene
