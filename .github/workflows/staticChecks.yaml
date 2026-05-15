@@ -49,19 +49,13 @@ jobs:
             #   shell: cmd
             #   run: build.bat
 
-            - name: Check formatting
+            - name: Verify formatting
+              shell: bash
               run: |
-                choco install llvm --version=22.1.3 -y
-                for /r src %%f in (*.cpp *.hpp *.h) do (
-                  clang-format --dry-run --Werror "%%f"
-                )
-                for /r interface %%f in (*.cpp *.hpp *.h) do (
-                  clang-format --dry-run --Werror "%%f"
-                )
-                for /r tests %%f in (*.cpp *.hpp *.h) do (
-                  clang-format --dry-run --Werror "%%f"
-                )
-              shell: cmd
+                git ls-files '*.cpp' '*.hpp' '*.h' | \
+                xargs clang-format -i --style=file
+
+                git diff --exit-code
 
             # - name: Run clang-tidy
             #   run: |
