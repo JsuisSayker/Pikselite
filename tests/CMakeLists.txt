@@ -7,10 +7,14 @@ add_executable(pikselite_tests
     # renderer/testProjectEditor.cpp
     renderer/testDrawOnEditor.cpp
     engine/testEcs.cpp
+    engine/testEcsLoad.cpp
     engine/testEcsResilience.cpp
+    engine/testEcsStress.cpp
     engine/testPhysics.cpp
     engine/testSceneSerialization.cpp
+    engine/testSimulationLoad.cpp
     engine/testSimulationResilience.cpp
+    engine/testSimulationScenarios.cpp
     # engine/testEcsMigration.cpp
     # engine/testChunk.cpp
     graphics/testWindowSize.cpp
@@ -28,6 +32,8 @@ if(PIKSELITE_ENABLE_PROFILING)
 endif()
 
 target_compile_definitions(pikselite_tests PRIVATE UNIT_TEST)
+
+target_include_directories(pikselite_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(pikselite_tests
     PRIVATE
