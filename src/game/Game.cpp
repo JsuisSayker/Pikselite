@@ -14,6 +14,14 @@
 #include <game/Game.hpp>
 #include <iostream>
 #include <typeindex>
+#include <tracy/Tracy.hpp>
+
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
 
 namespace
 {
@@ -478,6 +486,7 @@ namespace engine
 
     void Game::handleEvents()
     {
+        ZoneScopedN("Game::Events");
         SDL_Event sdlEvent;
         while (SDL_PollEvent(&sdlEvent))
         {
@@ -502,12 +511,14 @@ namespace engine
 
     void Game::update(float deltaTime)
     {
+        ZoneScopedN("Game::Update");
         _accumulator += deltaTime;
         if (_accumulator > 0.25f)
             _accumulator = 0.25f;
 
         while (_accumulator >= _fixedDt)
         {
+            ZoneScopedN("Game::PixelSim");
             _pixelSimulation.update();
             _accumulator -= _fixedDt;
         }
@@ -518,6 +529,7 @@ namespace engine
 
     void Game::render()
     {
+        ZoneScopedN("Game::Render");
         std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
 
         _renderer->clear();
@@ -540,12 +552,14 @@ namespace engine
 
     void Game::run()
     {
+        ZoneScopedN("Game::Run");
         while (_running)
         {
             _timer.tick();
             handleEvents();
             update(_timer.getDeltaTime());
             render();
+            FrameMark;
         }
     }
 } // namespace engine

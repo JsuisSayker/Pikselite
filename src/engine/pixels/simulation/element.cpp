@@ -5,11 +5,20 @@
 #include <limits>
 #include <unordered_map>
 #include <unordered_set>
+#include <tracy/Tracy.hpp>
+
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
 
 ElementDefinition g_elements[256] = {};
 
 bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 {
+    ZoneScopedN("Sim::tryMove");
     Element::Pixel& src = grid.getPixelRef(x, y);
     Element::Pixel& dst = grid.getPixelRef(nx, ny);
 
@@ -41,6 +50,7 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
 void updateWater(ChunkGrid& grid, int x, int y)
 {
+    ZoneScopedN("Sim::Water");
     ElementDefinition& def = g_elements[Element::WATER];
 
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
@@ -71,6 +81,7 @@ void updateWater(ChunkGrid& grid, int x, int y)
 
 void updateSand(ChunkGrid& grid, int x, int y)
 {
+    ZoneScopedN("Sim::Sand");
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
         return;
 
@@ -91,6 +102,7 @@ void updateSand(ChunkGrid& grid, int x, int y)
 }
 void updateFire(ChunkGrid& grid, int x, int y)
 {
+    ZoneScopedN("Sim::Fire");
     Element::Pixel&    p   = grid.getPixelRef(x, y);
     ElementDefinition& def = g_elements[Element::FIRE];
 
@@ -172,6 +184,7 @@ void Simulation::initElements()
 
 inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
 {
+    ZoneScopedN("Sim::Burning");
     Element::Pixel&    p          = grid.getPixelRef(x, y);
     ElementDefinition& elementDef = g_elements[p.type];
 
