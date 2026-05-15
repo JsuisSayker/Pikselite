@@ -8,6 +8,11 @@
 
 ElementDefinition g_elements[256] = {};
 
+namespace
+{
+    bool g_stoneRegionsDirtyThisFrame = false;
+}
+
 bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 {
     Element::Pixel& src = grid.getPixelRef(x, y);
@@ -53,6 +58,7 @@ void updateWater(ChunkGrid& grid, int x, int y)
         {
             below.type             = Element::STONE;
             below.updatedThisFrame = true;
+            g_stoneRegionsDirtyThisFrame = true;
 
             grid.setPixel(x, y, {Element::FIRE, false});
             return;
@@ -261,8 +267,13 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
         p.burnTimer--;
     else
     {
+        const Element::ElementType previousType = p.type;
         p.type      = elementDef.fireParams.burnToElement;
         p.isBurning = false;
+        if (previousType == Element::STONE || p.type == Element::STONE)
+        {
+            g_stoneRegionsDirtyThisFrame = true;
+        }
     }
 
     const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
@@ -304,19 +315,20 @@ void Simulation::updateParticles()
 {
     for (auto it = particles.begin(); it != particles.end(); )
     {
-        it->lifetime--;
         if (it->lifetime == 0)
         {
             it = particles.erase(it);
+            continue;
         }
-        else
+
+        it->lifetime--;
         {
             // simple Euler integration, can be improved with substepping or Verlet if needed
             it->position.x += it->velocity.x;
             it->position.y += it->velocity.y;
 
             // apply gravity
-            it->velocity.y += 0.1f; // gravity strength, can be tuned
+            it->velocity.y -= 0.1f; // gravity strength, can be tuned
 
             // apply some damping to velocity
             it->velocity.x *= 0.98f;
@@ -326,6 +338,7 @@ void Simulation::updateParticles()
             int gridX = static_cast<int>(it->position.x);
             int gridY = static_cast<int>(it->position.y);
             Element::Pixel p = grid.getPixel(gridX, gridY);
+            bool erased = false;
             if (p.type == Element::EMPTY)
             {
                 // check if there is neighboring pixel
@@ -340,11 +353,15 @@ void Simulation::updateParticles()
                         // reinsert the particle in the grid and stop its movement
                         grid.setPixel(gridX, gridY, {it->type, false, 0, 0, false});
                         it = particles.erase(it);
+                        erased = true;
                         break;
                     }
                 }
             }
-            ++it;
+            if (!erased)
+            {
+                ++it;
+            }
         }
     }
 }
@@ -388,6 +405,109 @@ void Simulation::update()
             }
         }
     }
+
+    // if (g_stoneRegionsDirtyThisFrame)
+    // {
+    //     regionsDirty = true;
+    //     g_stoneRegionsDirtyThisFrame = false;
+    // }
+
+    // if (regionsDirty)
+    // {
+    //     if (!b2World_IsValid(physicsWorld))
+    //     {
+    //         regionsDirty = false;
+    //         return;
+    //     }
+
+    //     for (b2BodyId bodyId : regionBodies)
+    //     {
+    //         if (b2Body_IsValid(bodyId))
+    //             b2DestroyBody(bodyId);
+    //     }
+
+    //     detectedRegions.clear();
+    //     regionBodies.clear();
+    //     regionBodyBindings.clear();
+    //     visitedForRegions.clear();
+
+    //     for (const auto& [key, chunk] : grid.chunks)
+    //     {
+    //         const int cx = static_cast<int32_t>(key >> 32);
+    //         const int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
+
+    //         for (int y = 0; y < CHUNK_SIZE; ++y)
+    //         {
+    //             for (int x = 0; x < CHUNK_SIZE; ++x)
+    //             {
+    //                 const Element::Pixel& pixel = chunk.pixels[y * CHUNK_SIZE + x];
+    //                 if (pixel.type != Element::STONE)
+    //                     continue;
+
+    //                 const int gx = cx * CHUNK_SIZE + x;
+    //                 const int gy = cy * CHUNK_SIZE + y;
+    //                 const int64_t visitedKey = makeVisitedKey(gx, gy);
+    //                 if (visitedForRegions.count(visitedKey))
+    //                     continue;
+
+    //                 Element::Region region = regionFloodFill(gx, gy, Element::STONE);
+    //                 if (region.pixels.empty())
+    //                     continue;
+
+    //                 buildRegionContoursMarchingSquare(region);
+    //                 simplifyRegionContours(region, 0.6f);
+    //                 triangulateRegion(region);
+
+    //                 if (region.triangles.empty())
+    //                     continue;
+
+    //                 b2BodyDef bodyDef = b2DefaultBodyDef();
+    //                 bodyDef.type = b2_staticBody;
+    //                 bodyDef.position = {0.0f, 0.0f};
+
+    //                 b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
+    //                 b2ShapeDef shapeDef = b2DefaultShapeDef();
+    //                 shapeDef.material.friction = 0.8f;
+    //                 shapeDef.material.restitution = 0.0f;
+
+    //                 bool createdShape = false;
+    //                 for (const auto& tri : region.triangles)
+    //                 {
+    //                     b2Vec2 points[3] = {
+    //                         {tri.a.x * pixelsPerMeter, tri.a.y * pixelsPerMeter},
+    //                         {tri.b.x * pixelsPerMeter, tri.b.y * pixelsPerMeter},
+    //                         {tri.c.x * pixelsPerMeter, tri.c.y * pixelsPerMeter},
+    //                     };
+
+    //                     b2Hull hull = b2ComputeHull(points, 3);
+    //                     if (hull.count == 3)
+    //                     {
+    //                         b2Polygon polygon = b2MakePolygon(&hull, 0.0f);
+    //                         b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
+    //                         createdShape = true;
+    //                     }
+    //                 }
+
+    //                 if (!createdShape)
+    //                 {
+    //                     if (b2Body_IsValid(bodyId))
+    //                         b2DestroyBody(bodyId);
+    //                     continue;
+    //                 }
+
+    //                 detectedRegions.push_back(std::move(region));
+    //                 regionBodies.push_back(bodyId);
+    //             }
+    //         }
+    //     }
+
+    //     regionsDirty = false;
+    // }
+}
+
+void Simulation::spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime)
+{
+    particles.push_back(Element::Particle{position, velocity, type, colorIndex, lifetime});
 }
 
 void Simulation::setGrid(ChunkGrid& newGrid)

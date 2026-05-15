@@ -138,6 +138,7 @@ namespace engine
             _renderPixels = framePixels;
             drawSpritesBelowLayer(0);
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+            renderer.drawParticlesWCamera(_pixelSimulation.getParticles(), _camera, PIXEL_SIZE);
             drawSpritesAboveLayer(0);
 
             // debug draw Box2D bodies

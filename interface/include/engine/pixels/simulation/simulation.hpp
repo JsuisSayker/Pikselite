@@ -61,6 +61,25 @@ class Simulation
         void updateParticles();
 
         /**
+         * @brief Spawns a new particle with given properties.
+         * @param type Particle element type.
+         * @param x Initial X position in world coordinates.
+         * @param y Initial Y position in world coordinates.
+         * @param vx Initial X velocity in world units per second.
+         * @param vy Initial Y velocity in world units per second.
+         * @return void
+         */
+        void spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime);
+
+        /**
+         * @brief Returns the list of active particles in the simulation.
+         * @return Reference to the vector of `Element::Particle`.
+         */
+        std::vector<Element::Particle>& getParticles() {
+            return particles;
+        }
+
+        /**
          * @brief Updates one sand pixel behavior.
          * @param grid Simulation grid.
          * @param x Global X coordinate.
