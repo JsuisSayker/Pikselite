@@ -91,7 +91,7 @@ TEST(EcsResilienceTests, EntityManagerDestroyAlreadyDestroyed)
     engine::EntityManager entityManager;
 
     ecs::Entity entity = entityManager.createEntity();
-    entityManager.destroyEntity(entity); // first destroy
+    entityManager.destroyEntity(entity);                  // first destroy
     EXPECT_NO_THROW(entityManager.destroyEntity(entity)); // second destroy should be safe
 }
 
