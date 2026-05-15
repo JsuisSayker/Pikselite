@@ -38,7 +38,7 @@ namespace
             return candidate;
 
         const std::string stem = sourceName.stem().string();
-        const std::string ext  = sourceName.extension().string();
+        const std::string ext = sourceName.extension().string();
 
         for (int i = 1; i < 1000; ++i)
         {
@@ -52,8 +52,8 @@ namespace
 
     GLuint loadIconTexture(const std::string& filePath)
     {
-        int width    = 0;
-        int height   = 0;
+        int width = 0;
+        int height = 0;
         int channels = 0;
 
         stbi_set_flip_vertically_on_load(false);
@@ -95,9 +95,9 @@ namespace graphics
         // Use display height as the proxy for "how big should UI be" (1080p = 1.0).
         // Clamp to a sensible band so a tiny window or a wall-sized display
         // doesn't produce unusable extremes.
-        float           uiScale = 1.0f;
+        float uiScale = 1.0f;
         SDL_DisplayMode dm{};
-        const int       displayIndex = (window != nullptr) ? SDL_GetWindowDisplayIndex(window) : 0;
+        const int displayIndex = (window != nullptr) ? SDL_GetWindowDisplayIndex(window) : 0;
         if (SDL_GetCurrentDisplayMode(displayIndex >= 0 ? displayIndex : 0, &dm) == 0 && dm.h > 0)
         {
             uiScale = std::clamp(static_cast<float>(dm.h) / 1080.0f, 1.0f, 3.0f);
@@ -106,13 +106,13 @@ namespace graphics
 
         // Scale shared layout constants used by the toolbars/sidebars so they
         // track font/UI sizing on high-DPI screens.
-        LAYOUT_TOP_H    = 40.0f * uiScale;
+        LAYOUT_TOP_H = 40.0f * uiScale;
         LAYOUT_BOTTOM_H = 180.0f * uiScale;
-        LAYOUT_LEFT_W   = 220.0f * uiScale;
-        LAYOUT_RIGHT_W  = 260.0f * uiScale;
+        LAYOUT_LEFT_W = 220.0f * uiScale;
+        LAYOUT_RIGHT_W = 260.0f * uiScale;
 
-        ImGuiIO& io       = ImGui::GetIO();
-        auto     scaledPx = [uiScale](float baseSize)
+        ImGuiIO& io = ImGui::GetIO();
+        auto scaledPx = [uiScale](float baseSize)
         { return std::max(1.0f, std::floor(baseSize * uiScale)); };
         fontLight =
             io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Light.ttf", scaledPx(13.0f));
@@ -128,55 +128,55 @@ namespace graphics
         ImGui::StyleColorsDark();
 
         // ── Global Unity-like style overrides ─────────────────────────────────
-        ImGuiStyle& style       = ImGui::GetStyle();
-        style.WindowRounding    = 0.0f;
-        style.ChildRounding     = 4.0f;
-        style.FrameRounding     = 3.0f;
-        style.GrabRounding      = 3.0f;
-        style.PopupRounding     = 4.0f;
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.WindowRounding = 0.0f;
+        style.ChildRounding = 4.0f;
+        style.FrameRounding = 3.0f;
+        style.GrabRounding = 3.0f;
+        style.PopupRounding = 4.0f;
         style.ScrollbarRounding = 3.0f;
-        style.TabRounding       = 4.0f;
-        style.WindowBorderSize  = 1.0f;
-        style.FrameBorderSize   = 0.0f;
-        style.WindowPadding     = ImVec2(8.0f, 8.0f);
-        style.FramePadding      = ImVec2(6.0f, 4.0f);
-        style.ItemSpacing       = ImVec2(6.0f, 5.0f);
-        style.ScrollbarSize     = 12.0f;
-        style.GrabMinSize       = 8.0f;
+        style.TabRounding = 4.0f;
+        style.WindowBorderSize = 1.0f;
+        style.FrameBorderSize = 0.0f;
+        style.WindowPadding = ImVec2(8.0f, 8.0f);
+        style.FramePadding = ImVec2(6.0f, 4.0f);
+        style.ItemSpacing = ImVec2(6.0f, 5.0f);
+        style.ScrollbarSize = 12.0f;
+        style.GrabMinSize = 8.0f;
 
-        ImVec4* c                        = style.Colors;
-        c[ImGuiCol_Text]                 = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
-        c[ImGuiCol_TextDisabled]         = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
-        c[ImGuiCol_WindowBg]             = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-        c[ImGuiCol_ChildBg]              = ImVec4(0.13f, 0.13f, 0.13f, 1.00f);
-        c[ImGuiCol_PopupBg]              = ImVec4(0.14f, 0.14f, 0.14f, 0.98f);
-        c[ImGuiCol_Border]               = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
-        c[ImGuiCol_FrameBg]              = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-        c[ImGuiCol_FrameBgHovered]       = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-        c[ImGuiCol_FrameBgActive]        = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
-        c[ImGuiCol_TitleBg]              = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-        c[ImGuiCol_TitleBgActive]        = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
-        c[ImGuiCol_TitleBgCollapsed]     = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-        c[ImGuiCol_ScrollbarBg]          = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-        c[ImGuiCol_ScrollbarGrab]        = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+        ImVec4* c = style.Colors;
+        c[ImGuiCol_Text] = ImVec4(0.86f, 0.86f, 0.86f, 1.00f);
+        c[ImGuiCol_TextDisabled] = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+        c[ImGuiCol_WindowBg] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+        c[ImGuiCol_ChildBg] = ImVec4(0.13f, 0.13f, 0.13f, 1.00f);
+        c[ImGuiCol_PopupBg] = ImVec4(0.14f, 0.14f, 0.14f, 0.98f);
+        c[ImGuiCol_Border] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
+        c[ImGuiCol_FrameBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_FrameBgHovered] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+        c[ImGuiCol_FrameBgActive] = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
+        c[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+        c[ImGuiCol_TitleBgCollapsed] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+        c[ImGuiCol_ScrollbarGrab] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
         c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);
-        c[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
-        c[ImGuiCol_CheckMark]            = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-        c[ImGuiCol_SliderGrab]           = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-        c[ImGuiCol_SliderGrabActive]     = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-        c[ImGuiCol_Button]               = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
-        c[ImGuiCol_ButtonHovered]        = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
-        c[ImGuiCol_ButtonActive]         = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-        c[ImGuiCol_Header]               = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
-        c[ImGuiCol_HeaderHovered]        = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
-        c[ImGuiCol_HeaderActive]         = ImVec4(0.26f, 0.59f, 0.98f, 0.85f);
-        c[ImGuiCol_Separator]            = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-        c[ImGuiCol_ResizeGrip]           = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-        c[ImGuiCol_Tab]                  = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
-        c[ImGuiCol_TabHovered]           = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
-        c[ImGuiCol_TabActive]            = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-        c[ImGuiCol_PlotLines]            = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
-        c[ImGuiCol_PlotHistogram]        = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
+        c[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+        c[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        c[ImGuiCol_SliderGrab] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+        c[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
+        c[ImGuiCol_Button] = ImVec4(0.26f, 0.26f, 0.26f, 1.00f);
+        c[ImGuiCol_ButtonHovered] = ImVec4(0.36f, 0.36f, 0.36f, 1.00f);
+        c[ImGuiCol_ButtonActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
+        c[ImGuiCol_Header] = ImVec4(0.26f, 0.59f, 0.98f, 0.31f);
+        c[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
+        c[ImGuiCol_HeaderActive] = ImVec4(0.26f, 0.59f, 0.98f, 0.85f);
+        c[ImGuiCol_Separator] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+        c[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        c[ImGuiCol_Tab] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+        c[ImGuiCol_TabHovered] = ImVec4(0.26f, 0.59f, 0.98f, 0.50f);
+        c[ImGuiCol_TabActive] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+        c[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+        c[ImGuiCol_PlotHistogram] = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
 
         // Scale paddings/spacing/rounding/etc. by the same UI scale we used for fonts.
         // Done last so it applies uniformly to all values configured above.
@@ -207,9 +207,9 @@ namespace graphics
         if (_iconDirTexture || _iconSceneTexture || _iconDataTexture)
             return;
 
-        _iconDirTexture   = loadIconTexture("assets/ui/icons/dir.png");
+        _iconDirTexture = loadIconTexture("assets/ui/icons/dir.png");
         _iconSceneTexture = loadIconTexture("assets/ui/icons/scene.png");
-        _iconDataTexture  = loadIconTexture("assets/ui/icons/sprite.png");
+        _iconDataTexture = loadIconTexture("assets/ui/icons/sprite.png");
     }
 
     void ImguiInterface::unloadExplorerIcons()
@@ -293,10 +293,10 @@ namespace graphics
      * @param label The label for the color picker.
      */
     void ImguiInterface::defaultPixelElementEditor(Element::ElementType& elementType,
-                                                   const char*           label)
+                                                   const char* label)
     {
         const char* comboLabel = (label && label[0] != '\0') ? label : "Element Type";
-        int         current    = static_cast<int>(elementType);
+        int current = static_cast<int>(elementType);
 
         auto currentName = [&]() -> const char*
         {
@@ -317,7 +317,7 @@ namespace graphics
                 const bool isSelected = (i == current);
                 if (ImGui::Selectable(g_elements[i].name.c_str(), isSelected))
                 {
-                    current     = i;
+                    current = i;
                     elementType = static_cast<Element::ElementType>(i);
                 }
 
@@ -339,8 +339,8 @@ namespace graphics
      * @param saveSpritePath A reference to a string that will hold the path where the sprite should
      * be saved.
      */
-    void ImguiInterface::pixelSpriteHandler(bool&                 showDefaultPropertiesEditor,
-                                            std::string&          saveSpritePath,
+    void ImguiInterface::pixelSpriteHandler(bool& showDefaultPropertiesEditor,
+                                            std::string& saveSpritePath,
                                             Element::ElementType& selectedElementType)
     {
         static BarConfig sideBarConfig{BarOrientation::Vertical, "Pixel Sprite Handler",
@@ -372,8 +372,8 @@ namespace graphics
                     if (ImGui::Button("Save##SpriteButton", ImVec2(120, 0)))
                     {
                         std::string path = "assets/" + std::string(spriteName) + ".dat";
-                        saveSpritePath   = path;
-                        spriteName[0]    = '\0';
+                        saveSpritePath = path;
+                        spriteName[0] = '\0';
                         ImGui::CloseCurrentPopup();
                     }
 
@@ -415,13 +415,13 @@ namespace graphics
 
                 if (ImGui::Selectable("Paint", selectedTool == 0, 0, ImVec2(80, 0)))
                 {
-                    selectedTool   = 0;
+                    selectedTool = 0;
                     isEraserActive = false;
                 }
                 ImGui::SameLine();
                 if (ImGui::Selectable("Eraser", selectedTool == 1, 0, ImVec2(80, 0)))
                 {
-                    selectedTool   = 1;
+                    selectedTool = 1;
                     isEraserActive = true;
                 }
 
@@ -456,7 +456,7 @@ namespace graphics
                     //
                 }
 
-                ImVec2 textSize   = ImGui::CalcTextSize(title.c_str());
+                ImVec2 textSize = ImGui::CalcTextSize(title.c_str());
                 ImVec2 windowSize = ImGui::GetWindowSize();
 
                 ImGui::SetCursorPos(
@@ -501,8 +501,8 @@ namespace graphics
             _fileExplorerCurrentDir = rootPath.generic_string();
 
         std::error_code ec;
-        fs::path        currentPath   = fs::weakly_canonical(fs::path(_fileExplorerCurrentDir), ec);
-        fs::path        canonicalRoot = fs::weakly_canonical(rootPath, ec);
+        fs::path currentPath = fs::weakly_canonical(fs::path(_fileExplorerCurrentDir), ec);
+        fs::path canonicalRoot = fs::weakly_canonical(rootPath, ec);
 
         if (ec || currentPath.empty() ||
             currentPath.generic_string().find(canonicalRoot.generic_string()) != 0)
@@ -518,10 +518,10 @@ namespace graphics
         for (const auto& entry : fs::directory_iterator(currentPath))
         {
             FileEntry item;
-            item.path  = entry.path().string();
-            item.name  = entry.path().filename().string();
+            item.path = entry.path().string();
+            item.name = entry.path().filename().string();
             item.isDir = entry.is_directory();
-            item.ext   = toLowerCopy(entry.path().extension().string());
+            item.ext = toLowerCopy(entry.path().extension().string());
             _fileExplorerEntries.push_back(std::move(item));
         }
     }
@@ -623,12 +623,12 @@ namespace graphics
 
                 ImGui::Separator();
 
-                static char        renameBuffer[128] = "";
+                static char renameBuffer[128] = "";
                 static std::string renameTargetPath;
-                static bool        openRenamePopup = false;
+                static bool openRenamePopup = false;
 
-                static char newFileBuffer[128]   = "";
-                static char newSceneBuffer[128]  = "";
+                static char newFileBuffer[128] = "";
+                static char newSceneBuffer[128] = "";
                 static bool openCreateScenePopup = false;
 
                 auto pasteIntoDirectory = [&](const fs::path& targetDir)
@@ -774,8 +774,8 @@ namespace graphics
                 }
 
                 float thumbnailSize = 65.0f;
-                float padding       = 15.0f;
-                float cellSize      = thumbnailSize + padding;
+                float padding = 15.0f;
+                float cellSize = thumbnailSize + padding;
 
                 float panelWidth = ImGui::GetContentRegionAvail().x;
 
@@ -805,32 +805,32 @@ namespace graphics
                     ImGui::BeginGroup();
 
                     float columnWidth = ImGui::GetColumnWidth();
-                    float offset      = (columnWidth - thumbnailSize) * 0.5f;
+                    float offset = (columnWidth - thumbnailSize) * 0.5f;
 
                     if (offset > 0)
                         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
 
                     ImGui::InvisibleButton("##icon", ImVec2(thumbnailSize, thumbnailSize));
-                    const bool clicked       = ImGui::IsItemClicked();
+                    const bool clicked = ImGui::IsItemClicked();
                     const bool doubleClicked = ImGui::IsItemHovered() &&
                                                ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
 
-                    ImDrawList*  drawList = ImGui::GetWindowDrawList();
-                    const ImVec2 rectMin  = ImGui::GetItemRectMin();
-                    const ImVec2 rectMax  = ImGui::GetItemRectMax();
-                    const ImU32  bgColor  = ImGui::GetColorU32(
+                    ImDrawList* drawList = ImGui::GetWindowDrawList();
+                    const ImVec2 rectMin = ImGui::GetItemRectMin();
+                    const ImVec2 rectMax = ImGui::GetItemRectMax();
+                    const ImU32 bgColor = ImGui::GetColorU32(
                         ImGui::IsItemHovered() ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
-                    const ImU32 lineColor   = ImGui::GetColorU32(ImGuiCol_Text);
+                    const ImU32 lineColor = ImGui::GetColorU32(ImGuiCol_Text);
                     const ImU32 accentColor = ImGui::GetColorU32(ImGuiCol_ButtonActive);
 
                     drawList->AddRectFilled(rectMin, rectMax, bgColor, 4.0f);
 
-                    const float  iconPad = 12.0f;
+                    const float iconPad = 12.0f;
                     const ImVec2 iconMin(rectMin.x + iconPad, rectMin.y + iconPad);
                     const ImVec2 iconMax(rectMax.x - iconPad, rectMax.y - iconPad);
 
                     const bool isScene = entry.ext == ".scene";
-                    const bool isData  = entry.ext == ".dat" || entry.ext == ".data";
+                    const bool isData = entry.ext == ".dat" || entry.ext == ".data";
 
                     GLuint iconTexture = 0;
                     if (entry.isDir)
@@ -855,20 +855,20 @@ namespace graphics
                         {
                             strncpy(renameBuffer, entry.name.c_str(), sizeof(renameBuffer));
                             renameBuffer[sizeof(renameBuffer) - 1] = '\0';
-                            renameTargetPath                       = entry.path;
-                            openRenamePopup                        = true;
+                            renameTargetPath = entry.path;
+                            openRenamePopup = true;
                         }
 
                         if (ImGui::MenuItem("Copy"))
                         {
                             _fileClipboardPath = entry.path;
-                            _fileClipboardCut  = false;
+                            _fileClipboardCut = false;
                         }
 
                         if (ImGui::MenuItem("Cut"))
                         {
                             _fileClipboardPath = entry.path;
-                            _fileClipboardCut  = true;
+                            _fileClipboardCut = true;
                         }
 
                         if (entry.isDir)
@@ -908,12 +908,12 @@ namespace graphics
                         if (!_fileExplorerDataOnly && doubleClicked && entry.ext == ".scene")
                         {
                             currentSceneFilename = entry.path;
-                            loadSceneRequested   = true;
+                            loadSceneRequested = true;
                             currentSpriteFilename.clear();
                         }
                     }
 
-                    float textWidth  = ImGui::CalcTextSize(entry.name.c_str()).x;
+                    float textWidth = ImGui::CalcTextSize(entry.name.c_str()).x;
                     float textOffset = (columnWidth - textWidth) * 0.5f;
 
                     if (textOffset > 0)
@@ -946,8 +946,8 @@ namespace graphics
                     {
                         if (!renameTargetPath.empty() && renameBuffer[0] != '\0')
                         {
-                            fs::path        oldPath = renameTargetPath;
-                            fs::path        newPath = oldPath.parent_path() / renameBuffer;
+                            fs::path oldPath = renameTargetPath;
+                            fs::path newPath = oldPath.parent_path() / renameBuffer;
                             std::error_code renameError;
                             fs::rename(oldPath, newPath, renameError);
                             scanSprites();
@@ -981,8 +981,8 @@ namespace graphics
      * @param currentProject A reference to the current project.
      */
     void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
-                                        int&                              selectedGameObjectIndex,
-                                        const projects::Project&          currentProject)
+                                        int& selectedGameObjectIndex,
+                                        const projects::Project& currentProject)
     {
         static BarConfig sideBarConfig{BarOrientation::Vertical, "Hierarchy",
                                        ImVec2(LAYOUT_LEFT_W, 0.0f), true,
@@ -995,9 +995,9 @@ namespace graphics
             {
                 static char searchBuffer[128] = "";
                 static char renameBuffer[128] = "";
-                static int  renameIndex       = -1;
-                static bool openRenamePopup   = false;
-                static bool focusRename       = true;
+                static int renameIndex = -1;
+                static bool openRenamePopup = false;
+                static bool focusRename = true;
 
                 ImGui::InputTextWithHint("##SearchObjects", "Search objects...", searchBuffer,
                                          sizeof(searchBuffer));
@@ -1037,7 +1037,7 @@ namespace graphics
                             strncpy(renameBuffer, objName.c_str(), sizeof(renameBuffer));
                             renameBuffer[sizeof(renameBuffer) - 1] = '\0';
 
-                            renameIndex     = (int)i;
+                            renameIndex = (int)i;
                             openRenamePopup = true;
                         }
 
@@ -1087,8 +1087,8 @@ namespace graphics
                             gameObjects[renameIndex].name = renameBuffer;
 
                         renameBuffer[0] = '\0';
-                        renameIndex     = -1;
-                        focusRename     = true;
+                        renameIndex = -1;
+                        focusRename = true;
 
                         ImGui::CloseCurrentPopup();
                     }
@@ -1168,7 +1168,7 @@ namespace graphics
                         if (ImGui::Button("Reset##Sprite"))
                         {
                             // s.texturePath = "";
-                            s->width  = 640.0f;
+                            s->width = 640.0f;
                             s->height = 640.0f;
                         }
 
@@ -1211,11 +1211,11 @@ namespace graphics
 
                         if (ImGui::Button("Reset##Transform"))
                         {
-                            t->x        = 0.0f;
-                            t->y        = 0.0f;
+                            t->x = 0.0f;
+                            t->y = 0.0f;
                             t->rotation = 0.0f;
-                            t->scaleX   = 1.0f;
-                            t->scaleY   = 1.0f;
+                            t->scaleX = 1.0f;
+                            t->scaleY = 1.0f;
                         }
 
                         ImGui::DragFloat2("Position", &t->x, 0.1f);
@@ -1324,16 +1324,16 @@ namespace graphics
 
                         if (ImGui::Button("Reset##Physics"))
                         {
-                            p->bodyId        = b2_nullBodyId;
-                            p->bodyType      = b2_dynamicBody;
+                            p->bodyId = b2_nullBodyId;
+                            p->bodyType = b2_dynamicBody;
                             p->fixedRotation = false;
-                            p->density       = 1.0f;
-                            p->friction      = 0.4f;
-                            p->restitution   = 0.1f;
+                            p->density = 1.0f;
+                            p->friction = 0.4f;
+                            p->restitution = 0.1f;
                         }
 
-                        const char* bodyTypes[]   = {"Static", "Kinematic", "Dynamic"};
-                        int         bodyTypeIndex = 2;
+                        const char* bodyTypes[] = {"Static", "Kinematic", "Dynamic"};
+                        int bodyTypeIndex = 2;
                         if (p->bodyType == b2_staticBody)
                             bodyTypeIndex = 0;
                         else if (p->bodyType == b2_kinematicBody)
@@ -1448,7 +1448,7 @@ namespace graphics
         topBar.Draw(
             [&]()
             {
-                static int               fileIndex   = 0;
+                static int fileIndex = 0;
                 std::vector<std::string> fileOptions = {"Save", "Exit"};
                 if (DropdownButton("File", fileIndex, fileOptions, fontRegularSmall))
                 {
@@ -1465,7 +1465,7 @@ namespace graphics
 
                 ImGui::SameLine();
 
-                static int               editIndex   = 0;
+                static int editIndex = 0;
                 std::vector<std::string> editOptions = {"Placeholder1", "Placeholder2"}; // temp
                 if (DropdownButton("Edit", editIndex, editOptions, fontRegularSmall))
                 {
@@ -1490,17 +1490,17 @@ namespace graphics
     }
 
     int ImguiInterface::projectOptionsBar(std::vector<projects::Project>& projects,
-                                          std::string                     projectsPath)
+                                          std::string projectsPath)
     {
-        float buttonHeight    = 40.0f;
-        float buttonWidth     = 95.0f;
-        float windowWidth     = ImGui::GetContentRegionAvail().x;
+        float buttonHeight = 40.0f;
+        float buttonWidth = 95.0f;
+        float windowWidth = ImGui::GetContentRegionAvail().x;
         float verticalSpacing = 20.0f;
 
-        static bool                  openNewPopup     = false;
-        static char                  projectName[128] = "NewProject";
-        static std::filesystem::path selectedPath     = projectsPath;
-        int                          resultIndex      = -1;
+        static bool openNewPopup = false;
+        static char projectName[128] = "NewProject";
+        static std::filesystem::path selectedPath = projectsPath;
+        int resultIndex = -1;
 
         ImGui::PushFont(fontRegularBig);
         ImGui::Text("Get Started");
@@ -1588,7 +1588,7 @@ namespace graphics
             if (newProjectCreated)
             {
                 newProjectCreated = false;
-                resultIndex       = projects.size() - 1;
+                resultIndex = projects.size() - 1;
             }
 
             ImGui::EndPopup();
@@ -1678,8 +1678,8 @@ namespace graphics
     int ImguiInterface::projectsDisplay(std::vector<projects::Project>& projects)
     {
         float buttonHeight = 20.0f;
-        float buttonWidth  = 80.0f;
-        float windowWidth  = ImGui::GetContentRegionAvail().x;
+        float buttonWidth = 80.0f;
+        float windowWidth = ImGui::GetContentRegionAvail().x;
 
         ImGui::PushFont(fontRegularBig);
         ImGui::Text("Projects");
@@ -1722,7 +1722,7 @@ namespace graphics
         {
             ImVec2 size(ImGui::GetContentRegionAvail().x - 20, 200);
 
-            ImVec2      pos  = ImGui::GetCursorScreenPos();
+            ImVec2 pos = ImGui::GetCursorScreenPos();
             ImDrawList* draw = ImGui::GetWindowDrawList();
 
             float rounding = 8.0f;
@@ -1773,7 +1773,7 @@ namespace graphics
 
         ImGui::BeginGroup();
 
-        ImVec2      pos  = ImGui::GetCursorScreenPos();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
         ImDrawList* draw = ImGui::GetWindowDrawList();
 
         if (thumbnail)
@@ -1808,7 +1808,7 @@ namespace graphics
             ImGui::PopFont();
 
         std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
-        char        buffer[64];
+        char buffer[64];
         std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", std::localtime(&t));
         if (infoFont)
             ImGui::PushFont(infoFont);

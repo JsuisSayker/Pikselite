@@ -234,8 +234,8 @@ namespace graphics
             glUniform1i(useCamLoc, GL_TRUE);
 
         // Upload VP matrix
-        glm::mat4 vp    = camera.getViewProjection(width, height);
-        GLint     vpLoc = glGetUniformLocation(_shader, "uVP");
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
         if (vpLoc != -1)
             glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
@@ -246,7 +246,7 @@ namespace graphics
 
         // Point size
         float effectivePointSize = pixelSize * camera.getZoom();
-        GLint sizeLoc            = glGetUniformLocation(_shader, "uPointSize");
+        GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
         if (sizeLoc != -1)
             glUniform1f(sizeLoc, effectivePointSize);
 
@@ -284,12 +284,12 @@ namespace graphics
             if (particle.type == Element::EMPTY)
                 continue;
 
-            const auto& def     = g_elements[particle.type];
+            const auto& def = g_elements[particle.type];
             const auto& palette = def.colorPalette[particle.colorIndex % PALETTE_SIZE];
 
             Pixel p;
             p.position = {particle.position.x * PIXEL_SIZE, particle.position.y * PIXEL_SIZE};
-            p.color    = {palette.r / 255.0f, palette.g / 255.0f, palette.b / 255.0f};
+            p.color = {palette.r / 255.0f, palette.g / 255.0f, palette.b / 255.0f};
             pixels.push_back(p);
         }
 
@@ -351,7 +351,7 @@ namespace graphics
         // that obscures the work. Switch to a power-of-two coarser grid so the
         // spatial reference is preserved without overwhelming the view.
         constexpr float FINE_THRESHOLD_PX = 6.0f;
-        constexpr float COARSE_TARGET_PX  = 24.0f;
+        constexpr float COARSE_TARGET_PX = 24.0f;
 
         float drawCellSize = cellSize;
         if (cellSize * zoom < FINE_THRESHOLD_PX)
@@ -369,26 +369,26 @@ namespace graphics
         SDL_GetWindowSize(_window, &width, &height);
 
         // Compute world bounds visible through the camera
-        const float     halfW  = (width * 0.5f) / zoom;
-        const float     halfH  = (height * 0.5f) / zoom;
+        const float halfW = (width * 0.5f) / zoom;
+        const float halfH = (height * 0.5f) / zoom;
         const glm::vec2 camPos = camera.getPosition();
 
-        const float left   = camPos.x - halfW;
-        const float right  = camPos.x + halfW;
+        const float left = camPos.x - halfW;
+        const float right = camPos.x + halfW;
         const float bottom = camPos.y - halfH;
-        const float top    = camPos.y + halfH;
+        const float top = camPos.y + halfH;
 
         // Iterate by integer cell index to avoid float-accumulation drift during zoom,
         // and pad by one cell on each side so lines don't pop in/out at the visible edges.
         const int startCellX = static_cast<int>(std::floor(left / drawCellSize)) - 1;
-        const int endCellX   = static_cast<int>(std::ceil(right / drawCellSize)) + 1;
+        const int endCellX = static_cast<int>(std::ceil(right / drawCellSize)) + 1;
         const int startCellY = static_cast<int>(std::floor(bottom / drawCellSize)) - 1;
-        const int endCellY   = static_cast<int>(std::ceil(top / drawCellSize)) + 1;
+        const int endCellY = static_cast<int>(std::ceil(top / drawCellSize)) + 1;
 
-        const float lineTop    = top + drawCellSize;
+        const float lineTop = top + drawCellSize;
         const float lineBottom = bottom - drawCellSize;
-        const float lineLeft   = left - drawCellSize;
-        const float lineRight  = right + drawCellSize;
+        const float lineLeft = left - drawCellSize;
+        const float lineRight = right + drawCellSize;
 
         // Use fine cellSize/2 offset (not drawCellSize/2) so coarse grid lines still
         // sit on fine pixel boundaries when the user zooms back in.
@@ -422,8 +422,8 @@ namespace graphics
             glUniform1i(useCamLoc, GL_TRUE);
 
         // Upload camera VP matrix
-        glm::mat4 vp    = camera.getViewProjection(width, height);
-        GLint     vpLoc = glGetUniformLocation(_shader, "uVP");
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
         if (vpLoc != -1)
             glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
@@ -459,8 +459,8 @@ namespace graphics
         if (useCamLoc != -1)
             glUniform1i(useCamLoc, GL_TRUE);
 
-        glm::mat4 vp    = camera.getViewProjection(width, height);
-        GLint     vpLoc = glGetUniformLocation(_shader, "uVP");
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_shader, "uVP");
         if (vpLoc != -1)
             glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
@@ -502,8 +502,8 @@ namespace graphics
                 continue;
 
             std::vector<b2ShapeId> shapes(shapeCount);
-            int         actualCount = b2Body_GetShapes(bodyId, shapes.data(), shapeCount);
-            b2Transform xf          = b2Body_GetTransform(bodyId);
+            int actualCount = b2Body_GetShapes(bodyId, shapes.data(), shapeCount);
+            b2Transform xf = b2Body_GetTransform(bodyId);
 
             for (int i = 0; i < actualCount; ++i)
             {
@@ -514,7 +514,7 @@ namespace graphics
                 b2ShapeType type = b2Shape_GetType(shapeId);
                 if (type == b2_polygonShape)
                 {
-                    b2Polygon poly      = b2Shape_GetPolygon(shapeId);
+                    b2Polygon poly = b2Shape_GetPolygon(shapeId);
                     b2Polygon worldPoly = b2TransformPolygon(xf, &poly);
 
                     for (int v = 0; v < worldPoly.count; ++v)
@@ -531,8 +531,8 @@ namespace graphics
                 else if (type == b2_segmentShape)
                 {
                     b2Segment seg = b2Shape_GetSegment(shapeId);
-                    b2Vec2    p1  = b2TransformPoint(xf, seg.point1);
-                    b2Vec2    p2  = b2TransformPoint(xf, seg.point2);
+                    b2Vec2 p1 = b2TransformPoint(xf, seg.point1);
+                    b2Vec2 p2 = b2TransformPoint(xf, seg.point2);
 
                     segments.push_back(
                         {glm::vec2(p1.x * pixelsPerMeter, p1.y * pixelsPerMeter), color});
@@ -596,15 +596,15 @@ namespace graphics
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // VP matrix
-        glm::mat4 vp    = camera.getViewProjection(width, height);
-        GLint     vpLoc = glGetUniformLocation(_spriteShader, "uVP");
+        glm::mat4 vp = camera.getViewProjection(width, height);
+        GLint vpLoc = glGetUniformLocation(_spriteShader, "uVP");
         if (vpLoc != -1)
             glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
         // Model matrix: translate to position, scale to size
         glm::mat4 model = glm::mat4(1.0f);
-        model           = glm::translate(model, glm::vec3(sprite.position, 0.0f));
-        model           = glm::scale(model, glm::vec3(sprite.size, 1.0f));
+        model = glm::translate(model, glm::vec3(sprite.position, 0.0f));
+        model = glm::scale(model, glm::vec3(sprite.size, 1.0f));
 
         GLint modelLoc = glGetUniformLocation(_spriteShader, "uModel");
         if (modelLoc != -1)

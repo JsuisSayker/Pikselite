@@ -15,10 +15,10 @@ class Simulation
     struct BodyPixelBinding
     {
         Element::ElementType type;
-        Element::Vec2f       localUV;
-        Element::Vec2f       uv;
-        int                  gridX;
-        int                  gridY;
+        Element::Vec2f localUV;
+        Element::Vec2f uv;
+        int gridX;
+        int gridY;
     };
 
     /**
@@ -26,10 +26,10 @@ class Simulation
      */
     struct RegionBodyBinding
     {
-        b2BodyId                      bodyId;
+        b2BodyId bodyId;
         std::vector<BodyPixelBinding> pixels;
-        Element::ElementType          fillType = Element::STONE;
-        std::vector<Element::Vec2i>   occupiedCells;
+        Element::ElementType fillType = Element::STONE;
+        std::vector<Element::Vec2i> occupiedCells;
     };
 
     /**
@@ -195,23 +195,23 @@ class Simulation
     bool tryDisplacePixel(int x, int y, int range);
 
   private:
-    uint64_t                       frame = 0;
-    ChunkGrid&                     grid;
+    uint64_t frame = 0;
+    ChunkGrid& grid;
     std::vector<Element::Particle> particles;
     struct ChunkEntry
     {
-        int    cx;
-        int    cy;
+        int cx;
+        int cy;
         Chunk* chunk;
     };
 
-    std::vector<ChunkEntry>      orderedChunks;
+    std::vector<ChunkEntry> orderedChunks;
     std::vector<Element::Region> detectedRegions;
 
-    std::unordered_set<int64_t>    visitedForRegions;
-    b2WorldId                      physicsWorld   = b2_nullWorldId;
-    float                          pixelsPerMeter = 1.0f;
-    std::vector<b2BodyId>          regionBodies;
+    std::unordered_set<int64_t> visitedForRegions;
+    b2WorldId physicsWorld = b2_nullWorldId;
+    float pixelsPerMeter = 1.0f;
+    std::vector<b2BodyId> regionBodies;
     std::vector<RegionBodyBinding> regionBodyBindings;
-    bool                           regionsDirty = true;
+    bool regionsDirty = true;
 };

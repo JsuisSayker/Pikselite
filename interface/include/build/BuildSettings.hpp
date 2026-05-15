@@ -5,15 +5,15 @@
 
 struct BuildSettings
 {
-    std::string gameTitle    = "Pikselite Game";
-    int         windowWidth  = 1280;
-    int         windowHeight = 720;
-    std::string targetName   = "Game";
+    std::string gameTitle = "Pikselite Game";
+    int windowWidth = 1280;
+    int windowHeight = 720;
+    std::string targetName = "Game";
     std::string outputPath;
     std::string scenePath;
 
     // Char buffers for safe ImGui InputText editing
-    char gameTitleBuf[256]  = {};
+    char gameTitleBuf[256] = {};
     char targetNameBuf[256] = {};
 
     void syncToBuffers()
@@ -26,7 +26,7 @@ struct BuildSettings
 
     void syncFromBuffers()
     {
-        gameTitle  = gameTitleBuf;
+        gameTitle = gameTitleBuf;
         targetName = targetNameBuf;
     }
 };

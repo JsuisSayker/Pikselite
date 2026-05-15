@@ -179,13 +179,13 @@ bool graphics::HoverChangeButton(const std::string& label, float height, float w
         ImGui::PushFont(font);
 
     ImVec4 bgNormal = ImVec4(0, 0, 0, 0);
-    ImVec4 bgHover  = ImVec4(1, 1, 1, 1);
+    ImVec4 bgHover = ImVec4(1, 1, 1, 1);
     ImVec4 bgActive = ImVec4(0.85f, 0.85f, 0.85f, 1);
 
     ImVec4 borderCol = ImVec4(0.6f, 0.6f, 0.6f, 1);
 
     ImVec4 textNormal = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-    ImVec4 textHover  = ImVec4(0.1f, 0.1f, 0.1f, 1);
+    ImVec4 textHover = ImVec4(0.1f, 0.1f, 0.1f, 1);
 
     ImGui::PushStyleColor(ImGuiCol_Button, bgNormal);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, bgHover);
@@ -199,8 +199,8 @@ bool graphics::HoverChangeButton(const std::string& label, float height, float w
 
     ImU32 textColor = ImGui::GetColorU32(ImGui::IsItemHovered() ? textHover : textNormal);
 
-    ImVec2 min      = ImGui::GetItemRectMin();
-    ImVec2 max      = ImGui::GetItemRectMax();
+    ImVec2 min = ImGui::GetItemRectMin();
+    ImVec2 max = ImGui::GetItemRectMax();
     ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
 
     ImVec2 center = ImVec2(min.x + (max.x - min.x - textSize.x) * 0.5f,

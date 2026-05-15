@@ -10,12 +10,12 @@ TEST(GetDesiredSizeTests, NotFull)
 
 TEST(GetDesiredSizeTests, FullReturnsDisplaySize)
 {
-    SDL_Window*                window    = nullptr;
-    SDL_GLContext              glContext = nullptr;
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;
     testCommon.InitImGuiForTests(window, glContext);
 
-    ImGuiIO& io    = ImGui::GetIO();
+    ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(640, 480);
 
     EXPECT_EQ(graphics::GetDesiredSize("full", graphics::BarOrientation::Horizontal), 0);

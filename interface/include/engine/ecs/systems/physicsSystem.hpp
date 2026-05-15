@@ -22,7 +22,7 @@ namespace ecs::systems
     {
       public:
         explicit PhysicsSystem(engine::physics::BoxWorld* boxWorld,
-                               engine::events::EventBus*  eventBus = nullptr)
+                               engine::events::EventBus* eventBus = nullptr)
             : _boxWorld(boxWorld), _eventBus(eventBus)
         {
         }
@@ -77,7 +77,7 @@ namespace ecs::systems
             for (auto entity : entities)
             {
                 auto& transform = componentManager.getComponent<components::Transform>(entity);
-                auto& physics   = componentManager.getComponent<components::PhysicsBody>(entity);
+                auto& physics = componentManager.getComponent<components::PhysicsBody>(entity);
 
                 if (!physics.enabled)
                 {
@@ -91,24 +91,24 @@ namespace ecs::systems
                                 : nullptr;
 
                 const float desiredHorizontalVelocity = velocity ? velocity->vx : 0.0f;
-                const float desiredVerticalVelocity   = velocity ? velocity->vy : 0.0f;
+                const float desiredVerticalVelocity = velocity ? velocity->vy : 0.0f;
 
                 if (B2_IS_NULL(physics.bodyId))
                 {
-                    b2BodyDef bodyDef     = b2DefaultBodyDef();
-                    bodyDef.type          = physics.bodyType;
-                    bodyDef.position      = {transform.x, transform.y};
-                    bodyDef.rotation      = b2MakeRot(transform.rotation);
+                    b2BodyDef bodyDef = b2DefaultBodyDef();
+                    bodyDef.type = physics.bodyType;
+                    bodyDef.position = {transform.x, transform.y};
+                    bodyDef.rotation = b2MakeRot(transform.rotation);
                     bodyDef.fixedRotation = physics.fixedRotation;
-                    physics.bodyId        = b2CreateBody(worldId, &bodyDef);
+                    physics.bodyId = b2CreateBody(worldId, &bodyDef);
                     b2Body_SetUserData(physics.bodyId, reinterpret_cast<void*>(
                                                            static_cast<std::uintptr_t>(entity)));
                     _bodyByEntity[entity] = physics.bodyId;
 
-                    b2ShapeDef shapeDef           = b2DefaultShapeDef();
-                    shapeDef.enableContactEvents  = true;
-                    shapeDef.density              = physics.density;
-                    shapeDef.material.friction    = physics.friction;
+                    b2ShapeDef shapeDef = b2DefaultShapeDef();
+                    shapeDef.enableContactEvents = true;
+                    shapeDef.density = physics.density;
+                    shapeDef.material.friction = physics.friction;
                     shapeDef.material.restitution = physics.restitution;
 
                     bool createdShape = false;
@@ -134,18 +134,18 @@ namespace ecs::systems
                     // when no custom triangles are provided.
                     if (!createdShape)
                     {
-                        float width  = PIXEL_SIZE;
+                        float width = PIXEL_SIZE;
                         float height = PIXEL_SIZE;
 
                         if (componentManager.hasComponent<components::Sprite>(entity))
                         {
                             const auto& sprite =
                                 componentManager.getComponent<components::Sprite>(entity);
-                            width  = sprite.width;
+                            width = sprite.width;
                             height = sprite.height;
                         }
 
-                        const float halfWidth  = std::max(width * 0.5f, 0.01f);
+                        const float halfWidth = std::max(width * 0.5f, 0.01f);
                         const float halfHeight = std::max(height * 0.5f, 0.01f);
 
                         b2Polygon box = b2MakeBox(halfWidth, halfHeight);
@@ -165,7 +165,7 @@ namespace ecs::systems
                     if (desiredVerticalVelocity > 0.0f && std::abs(currentVelocity.y) < 0.01f)
                     {
                         currentVelocity.y = desiredVerticalVelocity;
-                        velocity->vy      = 0.0f;
+                        velocity->vy = 0.0f;
                     }
 
                     b2Body_SetLinearVelocity(physics.bodyId, currentVelocity);
@@ -178,7 +178,7 @@ namespace ecs::systems
             for (auto entity : entities)
             {
                 auto& transform = componentManager.getComponent<components::Transform>(entity);
-                auto& physics   = componentManager.getComponent<components::PhysicsBody>(entity);
+                auto& physics = componentManager.getComponent<components::PhysicsBody>(entity);
 
                 if (!physics.enabled || B2_IS_NULL(physics.bodyId))
                 {
@@ -186,11 +186,11 @@ namespace ecs::systems
                 }
 
                 const b2Transform bodyTransform = b2Body_GetTransform(physics.bodyId);
-                transform.prevX                 = transform.x;
-                transform.prevY                 = transform.y;
-                transform.x                     = bodyTransform.p.x;
-                transform.y                     = bodyTransform.p.y;
-                transform.rotation              = b2Rot_GetAngle(bodyTransform.q);
+                transform.prevX = transform.x;
+                transform.prevY = transform.y;
+                transform.x = bodyTransform.p.x;
+                transform.y = bodyTransform.p.y;
+                transform.rotation = b2Rot_GetAngle(bodyTransform.q);
             }
         }
 
@@ -229,7 +229,7 @@ namespace ecs::systems
 
             for (int i = 0; i < contactEvents.beginCount; ++i)
             {
-                const auto&         event   = contactEvents.beginEvents[i];
+                const auto& event = contactEvents.beginEvents[i];
                 const ecs::EntityID entityA = resolveEntityForShape(event.shapeIdA);
                 const ecs::EntityID entityB = resolveEntityForShape(event.shapeIdB);
                 if (entityA == 0 || entityB == 0 || entityA == entityB)
@@ -237,7 +237,7 @@ namespace ecs::systems
                     continue;
                 }
 
-                auto ev     = std::make_unique<engine::events::CollisionEnterEvent>();
+                auto ev = std::make_unique<engine::events::CollisionEnterEvent>();
                 ev->entityA = entityA;
                 ev->entityB = entityB;
                 _eventBus->publish(std::move(ev));
@@ -245,7 +245,7 @@ namespace ecs::systems
 
             for (int i = 0; i < contactEvents.endCount; ++i)
             {
-                const auto&         event   = contactEvents.endEvents[i];
+                const auto& event = contactEvents.endEvents[i];
                 const ecs::EntityID entityA = resolveEntityForShape(event.shapeIdA);
                 const ecs::EntityID entityB = resolveEntityForShape(event.shapeIdB);
                 if (entityA == 0 || entityB == 0 || entityA == entityB)
@@ -253,15 +253,15 @@ namespace ecs::systems
                     continue;
                 }
 
-                auto ev     = std::make_unique<engine::events::CollisionExitEvent>();
+                auto ev = std::make_unique<engine::events::CollisionExitEvent>();
                 ev->entityA = entityA;
                 ev->entityB = entityB;
                 _eventBus->publish(std::move(ev));
             }
         }
 
-        engine::physics::BoxWorld*                  _boxWorld = nullptr;
-        engine::events::EventBus*                   _eventBus = nullptr;
+        engine::physics::BoxWorld* _boxWorld = nullptr;
+        engine::events::EventBus* _eventBus = nullptr;
         std::unordered_map<ecs::EntityID, b2BodyId> _bodyByEntity;
     };
 } // namespace ecs::systems

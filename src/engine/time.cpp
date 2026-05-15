@@ -5,9 +5,9 @@ namespace engine
     void Timer::tick()
     {
         using namespace std::chrono;
-        auto now  = high_resolution_clock::now();
+        auto now = high_resolution_clock::now();
         deltaTime = duration<float>(now - last).count();
-        last      = now;
+        last = now;
     }
 
     float Timer::getDeltaTime() const

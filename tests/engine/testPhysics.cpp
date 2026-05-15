@@ -14,27 +14,27 @@ namespace
     ecs::components::Transform makeTransform(float x, float y)
     {
         ecs::components::Transform t{};
-        t.enabled  = true;
-        t.x        = x;
-        t.y        = y;
+        t.enabled = true;
+        t.x = x;
+        t.y = y;
         t.rotation = 0.0f;
-        t.scaleX   = 1.0f;
-        t.scaleY   = 1.0f;
-        t.prevX    = x;
-        t.prevY    = y;
+        t.scaleX = 1.0f;
+        t.scaleY = 1.0f;
+        t.prevX = x;
+        t.prevY = y;
         return t;
     }
 
     ecs::components::PhysicsBody makePhysicsBody(bool enabled = true)
     {
         ecs::components::PhysicsBody body{};
-        body.enabled       = enabled;
-        body.bodyId        = b2_nullBodyId;
-        body.bodyType      = b2_dynamicBody;
+        body.enabled = enabled;
+        body.bodyId = b2_nullBodyId;
+        body.bodyType = b2_dynamicBody;
         body.fixedRotation = false;
-        body.density       = 1.0f;
-        body.friction      = 0.4f;
-        body.restitution   = 0.1f;
+        body.density = 1.0f;
+        body.friction = 0.4f;
+        body.restitution = 0.1f;
         return body;
     }
 
@@ -92,7 +92,7 @@ TEST(PhysicsSystemTests, CreatesBodyAndSynchronizesTransformFromSimulation)
     componentManager.addComponent<ecs::components::PhysicsBody>(entity, makePhysicsBody(true));
 
     ecs::components::Sprite sprite{};
-    sprite.width  = 16.0f;
+    sprite.width = 16.0f;
     sprite.height = 24.0f;
     componentManager.addComponent<ecs::components::Sprite>(entity, sprite);
 
@@ -202,7 +202,7 @@ TEST(PhysicsSystemTests, HorizontalVelocityAndGravityWorkTogether)
     componentManager.addComponent<ecs::components::PhysicsBody>(entity, makePhysicsBody(true));
 
     ecs::components::Sprite sprite{};
-    sprite.width  = 16.0f;
+    sprite.width = 16.0f;
     sprite.height = 24.0f;
     componentManager.addComponent<ecs::components::Sprite>(entity, sprite);
 

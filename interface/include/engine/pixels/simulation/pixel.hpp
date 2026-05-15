@@ -97,10 +97,10 @@ namespace Element
 
     struct Particle
     {
-        Vec2f       position;
-        Vec2f       velocity;
+        Vec2f position;
+        Vec2f velocity;
         ElementType type;
-        uint8_t     colorIndex;
-        uint16_t    lifetime; // in frames
+        uint8_t colorIndex;
+        uint16_t lifetime; // in frames
     };
 } // namespace Element

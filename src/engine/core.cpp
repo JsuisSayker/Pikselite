@@ -74,9 +74,9 @@ namespace engine
                 if (projectEditor->consumeBuildGameRequest())
                 {
                     BuildSettings settings;
-                    settings.gameTitle  = _currentProject.name;
+                    settings.gameTitle = _currentProject.name;
                     settings.targetName = _currentProject.name;
-                    settings.scenePath  = _sceneFilename;
+                    settings.scenePath = _sceneFilename;
                     projectEditor->showBuildSettings(settings);
                 }
 
@@ -102,7 +102,7 @@ namespace engine
                     copyProjectEditorDataToCore();
 
                     const std::string& targetName = confirmedSettings.targetName;
-                    const std::string  assetsDir  = "games/" + targetName + "/assets";
+                    const std::string assetsDir = "games/" + targetName + "/assets";
 
                     // Save scene
                     std::filesystem::create_directories(assetsDir);
@@ -120,8 +120,8 @@ namespace engine
                     if (_buildThread.joinable())
                         _buildThread.join();
 
-                    _isBuilding   = true;
-                    _buildDone    = false;
+                    _isBuilding = true;
+                    _buildDone = false;
                     _buildSuccess = false;
                     {
                         std::lock_guard<std::mutex> lock(_buildOutputMutex);
@@ -137,7 +137,7 @@ namespace engine
                                     success ? "Build completed successfully.\n" : "Build failed.\n";
                             }
                             _buildSuccess = success;
-                            _buildDone    = true;
+                            _buildDone = true;
                         });
                 }
 
@@ -262,8 +262,8 @@ namespace engine
     {
         _currentProject = _projects[index];
 
-        auto now                    = std::chrono::system_clock::now();
-        _currentProject.lastOpened  = now;
+        auto now = std::chrono::system_clock::now();
+        _currentProject.lastOpened = now;
         _projects[index].lastOpened = now;
 
         sortProjects(_projects);
@@ -334,8 +334,8 @@ namespace engine
         if (switchToProjectEditor)
         {
             isProjectsListPageActive = false;
-            isProjectEditorActive    = true;
-            switchToProjectEditor    = false;
+            isProjectEditorActive = true;
+            switchToProjectEditor = false;
             projectEditor->setCurrentProject(_currentProject);
         }
     }
@@ -369,7 +369,7 @@ namespace engine
                 if (!isProjectsListPageActive)
                 {
                     isProjectEditorActive = !isProjectEditorActive;
-                    isSpriteEditorActive  = !isSpriteEditorActive;
+                    isSpriteEditorActive = !isSpriteEditorActive;
                 }
                 break;
             case graphics::KEY_F5:
@@ -377,7 +377,7 @@ namespace engine
                 {
                     // Ensure preview reads the latest pixels/chunks from the editor state.
                     copyProjectEditorDataToCore();
-                    isGamePreviewActive             = true;
+                    isGamePreviewActive = true;
                     graphics::Camera2D editorCamera = projectEditor->getCamera();
                     setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
                     setCameraZoom(editorCamera.getZoom());
@@ -445,19 +445,19 @@ namespace engine
 
             const b2Transform transform = b2Body_GetTransform(bodyId);
 
-            ecs::Entity         entity   = entityManager.createEntity();
+            ecs::Entity entity = entityManager.createEntity();
             const ecs::EntityID entityId = entity.id;
 
             ecs::components::Transform transformComponent{};
-            transformComponent.x        = transform.p.x;
-            transformComponent.y        = transform.p.y;
+            transformComponent.x = transform.p.x;
+            transformComponent.y = transform.p.y;
             transformComponent.rotation = b2Rot_GetAngle(transform.q);
-            transformComponent.scaleX   = 1.0f;
-            transformComponent.scaleY   = 1.0f;
+            transformComponent.scaleX = 1.0f;
+            transformComponent.scaleY = 1.0f;
 
             ecs::components::PhysicsBody physicsComponent{};
-            physicsComponent.bodyId        = bodyId;
-            physicsComponent.bodyType      = b2_staticBody;
+            physicsComponent.bodyId = bodyId;
+            physicsComponent.bodyType = b2_staticBody;
             physicsComponent.fixedRotation = true;
 
             componentManager.addComponent(entityId, transformComponent);
@@ -528,15 +528,15 @@ namespace engine
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
                         ElementDefinition& fireDef = g_elements[Element::FIRE];
-                        glm::vec3          fColor  = glm::vec3(
+                        glm::vec3 fColor = glm::vec3(
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        float progress    = (def.fireParams.burnDuration > 0)
-                                                ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
-                                                          def.fireParams.burnDuration)
-                                                : 1.0f;
-                        progress          = glm::clamp(progress, 0.0f, 1.0f);
+                        float progress = (def.fireParams.burnDuration > 0)
+                                             ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
+                                                       def.fireParams.burnDuration)
+                                             : 1.0f;
+                        progress = glm::clamp(progress, 0.0f, 1.0f);
                         renderPixel.color = glm::mix(pColor, fColor, progress);
                         renderPixel.color =
                             glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
@@ -560,9 +560,9 @@ namespace engine
     bool Core::buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats)
     {
         const std::string targetName = settings.targetName;
-        const std::string gameDir    = "games/" + targetName;
-        const std::string srcDir     = gameDir + "/src";
-        const std::string assetsDir  = gameDir + "/assets";
+        const std::string gameDir = "games/" + targetName;
+        const std::string srcDir = gameDir + "/src";
+        const std::string assetsDir = gameDir + "/assets";
 
         auto appendOutput = [this](const std::string& msg)
         {
@@ -671,7 +671,7 @@ namespace engine
         {
             std::filesystem::path src = datPath;
             std::filesystem::path dst = std::filesystem::path(assetsDir) / src.filename();
-            std::error_code       ec;
+            std::error_code ec;
             std::filesystem::copy_file(src, dst, std::filesystem::copy_options::overwrite_existing,
                                        ec);
             if (ec)
@@ -688,7 +688,7 @@ namespace engine
         {
             appendOutput("Re-configuring CMake...");
             std::string configureCmd = "cmake -B build 2>&1";
-            FILE*       pipe         = _popen(configureCmd.c_str(), "r");
+            FILE* pipe = _popen(configureCmd.c_str(), "r");
             if (!pipe)
             {
                 appendOutput("ERROR: Failed to run cmake configure");
@@ -772,9 +772,9 @@ namespace engine
 
     void Core::getProjectsFolderPath()
     {
-        std::filesystem::path exeDir       = std::filesystem::current_path();
+        std::filesystem::path exeDir = std::filesystem::current_path();
         std::filesystem::path projectsPath = exeDir / "Projects";
-        std::filesystem::path infoPath     = "config/info.json";
+        std::filesystem::path infoPath = "config/info.json";
 
         json j;
 
@@ -789,7 +789,7 @@ namespace engine
             }
         }
 
-        _projectsPath    = projectsPath.string();
+        _projectsPath = projectsPath.string();
         j["defaultPath"] = _projectsPath;
 
         std::ofstream outFile(infoPath);
@@ -804,7 +804,7 @@ namespace engine
     void Core::getJsonVariables()
     {
         std::filesystem::path configDir = "config";
-        std::filesystem::path infoPath  = configDir / "info.json";
+        std::filesystem::path infoPath = configDir / "info.json";
 
         if (!std::filesystem::exists(configDir))
         {
@@ -875,7 +875,7 @@ namespace engine
 
             projects::Project project;
 
-            auto fileTime   = std::filesystem::last_write_time(entry.path());
+            auto fileTime = std::filesystem::last_write_time(entry.path());
             auto systemTime = std::chrono::system_clock::now() +
                               (fileTime - std::filesystem::file_time_type::clock::now());
 
@@ -892,12 +892,12 @@ namespace engine
     {
         struct SpriteDrawItem
         {
-            int           layer;
+            int layer;
             ecs::EntityID entityId;
         };
 
         std::vector<SpriteDrawItem> drawList;
-        const auto&                 entities = entityManager.getEntities();
+        const auto& entities = entityManager.getEntities();
         drawList.reserve(entities.size());
 
         for (const auto& entityPtr : entities)
@@ -911,7 +911,7 @@ namespace engine
             if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
                 continue;
 
-            auto& sprite    = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
             auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
 
             if (!sprite.enabled || !transform.enabled)
@@ -939,15 +939,15 @@ namespace engine
             if (!sprite.loaded && !sprite.texturePath.empty())
             {
                 sprite.textureID = renderer.loadTexture(sprite.texturePath);
-                sprite.loaded    = true;
+                sprite.loaded = true;
             }
 
             if (sprite.textureID == 0)
                 continue;
 
             graphics::Sprite2D s2d;
-            s2d.position  = {transform.x, transform.y};
-            s2d.size      = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
             s2d.textureID = sprite.textureID;
 
             renderer.drawSprite(s2d, _camera);
@@ -958,12 +958,12 @@ namespace engine
     {
         struct SpriteDrawItem
         {
-            int           layer;
+            int layer;
             ecs::EntityID entityId;
         };
 
         std::vector<SpriteDrawItem> drawList;
-        const auto&                 entities = entityManager.getEntities();
+        const auto& entities = entityManager.getEntities();
         drawList.reserve(entities.size());
 
         for (const auto& entityPtr : entities)
@@ -977,7 +977,7 @@ namespace engine
             if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
                 continue;
 
-            auto& sprite    = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
             auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
 
             if (!sprite.enabled || !transform.enabled)
@@ -1005,15 +1005,15 @@ namespace engine
             if (!sprite.loaded && !sprite.texturePath.empty())
             {
                 sprite.textureID = renderer.loadTexture(sprite.texturePath);
-                sprite.loaded    = true;
+                sprite.loaded = true;
             }
 
             if (sprite.textureID == 0)
                 continue;
 
             graphics::Sprite2D s2d;
-            s2d.position  = {transform.x, transform.y};
-            s2d.size      = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
             s2d.textureID = sprite.textureID;
 
             renderer.drawSprite(s2d, _camera);

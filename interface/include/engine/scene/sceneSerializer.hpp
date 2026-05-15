@@ -10,7 +10,7 @@ namespace engine::scene
     struct SceneData
     {
         std::vector<Pixel::GameObject> gameObjects;
-        uint32_t                       nextGameObjectId = 1;
+        uint32_t nextGameObjectId = 1;
     };
 
     bool saveSceneToFile(const std::string& filename, const SceneData& data);

@@ -137,13 +137,13 @@ namespace graphics
         uint8_t generatePixelColorIndex(int x, int y) const
         {
             uint32_t h = x * 374761393u + y * 668265263u; // large primes
-            h          = (h ^ (h >> 13)) * 1274126177u;
-            h          = h ^ (h >> 16);
+            h = (h ^ (h >> 13)) * 1274126177u;
+            h = h ^ (h >> 16);
             return h % PALETTE_SIZE; // Modulo by the number of colors in the palette
         }
 
       private:
-        SDL_Window*   _window;
+        SDL_Window* _window;
         SDL_GLContext _glContext;
         // Pixel shader
         GLuint _vao, _vbo, _shader;
