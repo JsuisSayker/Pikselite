@@ -10,6 +10,10 @@
 #include <tracy/Tracy.hpp>
 #include <unordered_set>
 
+#include <cmath>
+#include <algorithm>
+#include <cstdint>
+
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
 #pragma message(                                                                                   \
@@ -221,7 +225,10 @@ namespace engine
                 buildRenderPixels(_pixelSimulation.getGrid());
 
             _renderPixels = framePixels;
+            drawSpritesBelowLayer(0);
             renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+            renderer.drawParticlesWCamera(_pixelSimulation.getParticles(), _camera, PIXEL_SIZE);
+            drawSpritesAboveLayer(0);
 
             // debug draw Box2D bodies
             if (auto* physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
@@ -231,10 +238,12 @@ namespace engine
                                         glm::vec3(1.0f, 0.8f, 0.2f));
             }
 
-            if (auto* spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
-            {
-                spriteSystem->update(0.0, componentManager);
-            }
+            
+
+            // if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
+            // {
+            //     spriteSystem->update(0.0, componentManager);
+            // }
 
             renderer.present(gameWindow);
         }
@@ -398,6 +407,8 @@ namespace engine
             {
                 ZoneScopedN("PixelSimulation");
                 _pixelSimulation.update();
+                syncRegionBodiesToECS();
+
             }
 
             accumulator -= fixedDt;
@@ -410,6 +421,57 @@ namespace engine
         }
 
         syncGameObjectPixelsFromPhysics();
+    }
+
+    void Core::syncRegionBodiesToECS()
+    {
+        for (ecs::EntityID entityId : _regionBodyEntities)
+        {
+            componentManager.entityDestroyed(entityId);
+            systemManager.entityDestroyed(entityId);
+            entityManager.destroyEntity(ecs::Entity(entityId));
+        }
+        _regionBodyEntities.clear();
+
+        const std::vector<b2BodyId> regionBodies = _pixelSimulation.getRegionBodies();
+        if (regionBodies.empty())
+        {
+            return;
+        }
+
+        _regionBodyEntities.reserve(regionBodies.size());
+
+        for (const b2BodyId bodyId : regionBodies)
+        {
+            if (!b2Body_IsValid(bodyId))
+            {
+                continue;
+            }
+
+            const b2Transform transform = b2Body_GetTransform(bodyId);
+
+            ecs::Entity entity = entityManager.createEntity();
+            const ecs::EntityID entityId = entity.id;
+
+            ecs::components::Transform transformComponent{};
+            transformComponent.x = transform.p.x;
+            transformComponent.y = transform.p.y;
+            transformComponent.rotation = b2Rot_GetAngle(transform.q);
+            transformComponent.scaleX = 1.0f;
+            transformComponent.scaleY = 1.0f;
+
+            ecs::components::PhysicsBody physicsComponent{};
+            physicsComponent.bodyId = bodyId;
+            physicsComponent.bodyType = b2_staticBody;
+            physicsComponent.fixedRotation = true;
+
+            componentManager.addComponent(entityId, transformComponent);
+            componentManager.addComponent(entityId, physicsComponent);
+
+            b2Body_SetUserData(bodyId, reinterpret_cast<void*>(static_cast<std::uintptr_t>(entityId)));
+
+            _regionBodyEntities.push_back(entityId);
+        }
     }
 
     void Core::render()
@@ -830,4 +892,128 @@ namespace engine
         }
     }
 
+    void Core::saveScene(const std::string &filename)
+    {
+        // TODO
+    }
+
+    bool Core::loadScene(const std::string &filename)
+    {
+        // TODO
+        return false;
+    }
+
+    void Core::drawSpritesBelowLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr) continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled) continue;
+            if (sprite.layer >= layer) continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+        {
+            if (a.layer != b.layer) return a.layer < b.layer;
+            return a.entityId < b.entityId;
+        });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = renderer.loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0) continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            renderer.drawSprite(s2d, _camera);
+        }
+    }
+
+    void Core::drawSpritesAboveLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr) continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled) continue;
+            if (sprite.layer <= layer) continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+        {
+            if (a.layer != b.layer) return a.layer < b.layer;
+            return a.entityId < b.entityId;
+        });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = renderer.loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0) continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            renderer.drawSprite(s2d, _camera);
+        }
+    }
 } // namespace engine

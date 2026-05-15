@@ -75,9 +75,27 @@ namespace engine
             _camera.setZoom(zoom);
         }
 
-      private:
-        editors::SpriteEditor*  spriteEditor  = nullptr;
-        editors::ProjectEditor* projectEditor = nullptr;
+        /**
+         * @brief Draws sprites with layer strictly below the given value.
+         * @param layer Upper bound (exclusive).
+         */
+        void drawSpritesBelowLayer(int layer);
+
+        /**
+         * @brief Draws sprites with layer strictly above the given value.
+         * @param layer Lower bound (exclusive).
+         */
+        void drawSpritesAboveLayer(int layer);
+
+        /**
+         * @brief Rebuilds ECS entities for detected region bodies.
+         * @return void
+         */
+        void syncRegionBodiesToECS();
+
+    private:
+        editors::SpriteEditor *spriteEditor = nullptr;
+        editors::ProjectEditor *projectEditor = nullptr;
 
         std::vector<projects::Project> _projects;
         projects::Project              _currentProject;
@@ -115,6 +133,7 @@ namespace engine
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
                     _gameObjectOccupiedCells;
+        std::vector<ecs::EntityID> _regionBodyEntities;
         std::string _sceneFilename = "assets/default.scene";
 
         std::string _projectsPath;
