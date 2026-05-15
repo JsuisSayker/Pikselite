@@ -95,11 +95,12 @@ namespace Element
         std::vector<Triangle> triangles; // triangulation output
     };
 
-    struct Particle {
-        Vec2f position;
-        Vec2f velocity;
+    struct Particle
+    {
+        Vec2f       position;
+        Vec2f       velocity;
         ElementType type;
-        uint8_t colorIndex;
-        uint16_t lifetime; // in frames
+        uint8_t     colorIndex;
+        uint16_t    lifetime; // in frames
     };
-}
+} // namespace Element

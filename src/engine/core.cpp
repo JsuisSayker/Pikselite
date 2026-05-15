@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cstdint>
 #include <cstdio> // for _popen, _pclose
 #include <engine/core.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
@@ -9,10 +11,6 @@
 #include <thread>
 #include <tracy/Tracy.hpp>
 #include <unordered_set>
-
-#include <cmath>
-#include <algorithm>
-#include <cstdint>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -238,8 +236,6 @@ namespace engine
                                         glm::vec3(1.0f, 0.8f, 0.2f));
             }
 
-            
-
             // if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
             // {
             //     spriteSystem->update(0.0, componentManager);
@@ -408,7 +404,6 @@ namespace engine
                 ZoneScopedN("Sim::Tick");
                 _pixelSimulation.update();
                 syncRegionBodiesToECS();
-
             }
 
             accumulator -= fixedDt;
@@ -450,25 +445,26 @@ namespace engine
 
             const b2Transform transform = b2Body_GetTransform(bodyId);
 
-            ecs::Entity entity = entityManager.createEntity();
+            ecs::Entity         entity   = entityManager.createEntity();
             const ecs::EntityID entityId = entity.id;
 
             ecs::components::Transform transformComponent{};
-            transformComponent.x = transform.p.x;
-            transformComponent.y = transform.p.y;
+            transformComponent.x        = transform.p.x;
+            transformComponent.y        = transform.p.y;
             transformComponent.rotation = b2Rot_GetAngle(transform.q);
-            transformComponent.scaleX = 1.0f;
-            transformComponent.scaleY = 1.0f;
+            transformComponent.scaleX   = 1.0f;
+            transformComponent.scaleY   = 1.0f;
 
             ecs::components::PhysicsBody physicsComponent{};
-            physicsComponent.bodyId = bodyId;
-            physicsComponent.bodyType = b2_staticBody;
+            physicsComponent.bodyId        = bodyId;
+            physicsComponent.bodyType      = b2_staticBody;
             physicsComponent.fixedRotation = true;
 
             componentManager.addComponent(entityId, transformComponent);
             componentManager.addComponent(entityId, physicsComponent);
 
-            b2Body_SetUserData(bodyId, reinterpret_cast<void*>(static_cast<std::uintptr_t>(entityId)));
+            b2Body_SetUserData(bodyId,
+                               reinterpret_cast<void*>(static_cast<std::uintptr_t>(entityId)));
 
             _regionBodyEntities.push_back(entityId);
         }
@@ -892,12 +888,12 @@ namespace engine
         }
     }
 
-    void Core::saveScene(const std::string &filename)
+    void Core::saveScene(const std::string& filename)
     {
         // TODO
     }
 
-    bool Core::loadScene(const std::string &filename)
+    bool Core::loadScene(const std::string& filename)
     {
         // TODO
         return false;
@@ -907,53 +903,62 @@ namespace engine
     {
         struct SpriteDrawItem
         {
-            int layer;
+            int           layer;
             ecs::EntityID entityId;
         };
 
         std::vector<SpriteDrawItem> drawList;
-        const auto& entities = entityManager.getEntities();
+        const auto&                 entities = entityManager.getEntities();
         drawList.reserve(entities.size());
 
         for (const auto& entityPtr : entities)
         {
-            if (!entityPtr) continue;
+            if (!entityPtr)
+                continue;
             const ecs::EntityID entityId = entityPtr->id;
 
-            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
-            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
 
-            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& sprite    = componentManager.getComponent<ecs::components::Sprite>(entityId);
             auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
 
-            if (!sprite.enabled || !transform.enabled) continue;
-            if (sprite.layer >= layer) continue;
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer >= layer)
+                continue;
 
             drawList.push_back({sprite.layer, entityId});
         }
 
-        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
-        {
-            if (a.layer != b.layer) return a.layer < b.layer;
-            return a.entityId < b.entityId;
-        });
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
 
         for (const auto& item : drawList)
         {
             auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
-            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+            auto& transform =
+                componentManager.getComponent<ecs::components::Transform>(item.entityId);
 
             if (!sprite.loaded && !sprite.texturePath.empty())
             {
                 sprite.textureID = renderer.loadTexture(sprite.texturePath);
-                sprite.loaded = true;
+                sprite.loaded    = true;
             }
 
-            if (sprite.textureID == 0) continue;
+            if (sprite.textureID == 0)
+                continue;
 
             graphics::Sprite2D s2d;
-            s2d.position = {transform.x, transform.y};
-            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.position  = {transform.x, transform.y};
+            s2d.size      = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
             s2d.textureID = sprite.textureID;
 
             renderer.drawSprite(s2d, _camera);
@@ -964,53 +969,62 @@ namespace engine
     {
         struct SpriteDrawItem
         {
-            int layer;
+            int           layer;
             ecs::EntityID entityId;
         };
 
         std::vector<SpriteDrawItem> drawList;
-        const auto& entities = entityManager.getEntities();
+        const auto&                 entities = entityManager.getEntities();
         drawList.reserve(entities.size());
 
         for (const auto& entityPtr : entities)
         {
-            if (!entityPtr) continue;
+            if (!entityPtr)
+                continue;
             const ecs::EntityID entityId = entityPtr->id;
 
-            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
-            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
 
-            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& sprite    = componentManager.getComponent<ecs::components::Sprite>(entityId);
             auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
 
-            if (!sprite.enabled || !transform.enabled) continue;
-            if (sprite.layer <= layer) continue;
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer <= layer)
+                continue;
 
             drawList.push_back({sprite.layer, entityId});
         }
 
-        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
-        {
-            if (a.layer != b.layer) return a.layer < b.layer;
-            return a.entityId < b.entityId;
-        });
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
 
         for (const auto& item : drawList)
         {
             auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
-            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+            auto& transform =
+                componentManager.getComponent<ecs::components::Transform>(item.entityId);
 
             if (!sprite.loaded && !sprite.texturePath.empty())
             {
                 sprite.textureID = renderer.loadTexture(sprite.texturePath);
-                sprite.loaded = true;
+                sprite.loaded    = true;
             }
 
-            if (sprite.textureID == 0) continue;
+            if (sprite.textureID == 0)
+                continue;
 
             graphics::Sprite2D s2d;
-            s2d.position = {transform.x, transform.y};
-            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.position  = {transform.x, transform.y};
+            s2d.size      = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
             s2d.textureID = sprite.textureID;
 
             renderer.drawSprite(s2d, _camera);

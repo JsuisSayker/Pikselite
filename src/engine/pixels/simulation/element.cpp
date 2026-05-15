@@ -3,9 +3,9 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
 #include <limits>
+#include <tracy/Tracy.hpp>
 #include <unordered_map>
 #include <unordered_set>
-#include <tracy/Tracy.hpp>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -66,8 +66,8 @@ void updateWater(ChunkGrid& grid, int x, int y)
         Element::Pixel& below = grid.getPixelRef(x, y - i);
         if (below.type == Element::LAVA)
         {
-            below.type             = Element::STONE;
-            below.updatedThisFrame = true;
+            below.type                   = Element::STONE;
+            below.updatedThisFrame       = true;
             g_stoneRegionsDirtyThisFrame = true;
 
             grid.setPixel(x, y, {Element::FIRE, false});
@@ -103,17 +103,18 @@ void updateWater(ChunkGrid& grid, int x, int y)
 void updateLava(ChunkGrid& grid, int x, int y)
 {
     ElementDefinition& def = g_elements[Element::LAVA];
-    
+
     if (rand() % 255 < def.fireParams.burnSpreadChance / 5)
     {
         Element::Pixel& p = grid.getPixelRef(x, y + 1);
-        if (p.type == Element::EMPTY) {
+        if (p.type == Element::EMPTY)
+        {
             p.type             = Element::FIRE;
             p.burnTimer        = g_elements[Element::FIRE].fireParams.burnDuration;
             p.updatedThisFrame = true;
         }
     }
-    
+
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
         return;
 
@@ -281,8 +282,8 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
     else
     {
         const Element::ElementType previousType = p.type;
-        p.type      = elementDef.fireParams.burnToElement;
-        p.isBurning = false;
+        p.type                                  = elementDef.fireParams.burnToElement;
+        p.isBurning                             = false;
         if (previousType == Element::STONE || p.type == Element::STONE)
         {
             g_stoneRegionsDirtyThisFrame = true;
@@ -326,7 +327,7 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
 
 void Simulation::updateParticles()
 {
-    for (auto it = particles.begin(); it != particles.end(); )
+    for (auto it = particles.begin(); it != particles.end();)
     {
         if (it->lifetime == 0)
         {
@@ -348,24 +349,24 @@ void Simulation::updateParticles()
             it->velocity.y *= 0.98f;
 
             // check for collisions with the grid and update velocity accordingly
-            int gridX = static_cast<int>(it->position.x);
-            int gridY = static_cast<int>(it->position.y);
-            Element::Pixel p = grid.getPixel(gridX, gridY);
-            bool erased = false;
+            int            gridX  = static_cast<int>(it->position.x);
+            int            gridY  = static_cast<int>(it->position.y);
+            Element::Pixel p      = grid.getPixel(gridX, gridY);
+            bool           erased = false;
             if (p.type == Element::EMPTY)
             {
                 // check if there is neighboring pixel
                 const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
                 for (auto& d : dirs)
                 {
-                    int nx = gridX + d[0];
-                    int ny = gridY + d[1];
+                    int            nx       = gridX + d[0];
+                    int            ny       = gridY + d[1];
                     Element::Pixel neighbor = grid.getPixel(nx, ny);
                     if (neighbor.type != Element::EMPTY)
                     {
                         // reinsert the particle in the grid and stop its movement
                         grid.setPixel(gridX, gridY, {it->type, false, 0, 0, false});
-                        it = particles.erase(it);
+                        it     = particles.erase(it);
                         erased = true;
                         break;
                     }
@@ -421,17 +422,18 @@ void Simulation::update()
 
     if (g_stoneRegionsDirtyThisFrame)
     {
-        regionsDirty = true;
+        regionsDirty                 = true;
         g_stoneRegionsDirtyThisFrame = false;
     }
 
     if (regionsDirty)
     {
-       detectRegions();
+        detectRegions();
     }
 }
 
-void Simulation::spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime)
+void Simulation::spawnParticle(Element::ElementType type, Element::Vec2f position,
+                               Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime)
 {
     particles.push_back(Element::Particle{position, velocity, type, colorIndex, lifetime});
 }
@@ -566,8 +568,8 @@ void Simulation::detectRegions()
                 if (pixel.type != Element::STONE)
                     continue;
 
-                const int gx = cx * CHUNK_SIZE + x;
-                const int gy = cy * CHUNK_SIZE + y;
+                const int     gx         = cx * CHUNK_SIZE + x;
+                const int     gy         = cy * CHUNK_SIZE + y;
                 const int64_t visitedKey = makeVisitedKey(gx, gy);
                 if (visitedForRegions.count(visitedKey))
                     continue;
@@ -584,12 +586,12 @@ void Simulation::detectRegions()
                     continue;
 
                 b2BodyDef bodyDef = b2DefaultBodyDef();
-                bodyDef.type = b2_staticBody;
-                bodyDef.position = {0.0f, 0.0f};
+                bodyDef.type      = b2_staticBody;
+                bodyDef.position  = {0.0f, 0.0f};
 
-                b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
-                b2ShapeDef shapeDef = b2DefaultShapeDef();
-                shapeDef.material.friction = 0.8f;
+                b2BodyId   bodyId             = b2CreateBody(physicsWorld, &bodyDef);
+                b2ShapeDef shapeDef           = b2DefaultShapeDef();
+                shapeDef.material.friction    = 0.8f;
                 shapeDef.material.restitution = 0.0f;
 
                 bool createdShape = false;

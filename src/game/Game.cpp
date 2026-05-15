@@ -13,8 +13,8 @@
 #include <engine/scene/sceneSerializer.hpp>
 #include <game/Game.hpp>
 #include <iostream>
-#include <typeindex>
 #include <tracy/Tracy.hpp>
+#include <typeindex>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled

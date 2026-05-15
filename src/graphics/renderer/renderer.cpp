@@ -284,12 +284,12 @@ namespace graphics
             if (particle.type == Element::EMPTY)
                 continue;
 
-            const auto& def = g_elements[particle.type];
+            const auto& def     = g_elements[particle.type];
             const auto& palette = def.colorPalette[particle.colorIndex % PALETTE_SIZE];
 
             Pixel p;
             p.position = {particle.position.x * PIXEL_SIZE, particle.position.y * PIXEL_SIZE};
-            p.color = {palette.r / 255.0f, palette.g / 255.0f, palette.b / 255.0f};
+            p.color    = {palette.r / 255.0f, palette.g / 255.0f, palette.b / 255.0f};
             pixels.push_back(p);
         }
 

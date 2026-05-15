@@ -1181,7 +1181,7 @@ namespace graphics
                         }
                         ImGui::DragFloat2("Width", &s->width, 640.0f);
                         ImGui::DragFloat2("Height", &s->height, 640.0f);
-                        ImGui::DragInt("Layer", &s->layer, 1.0f, -100, 100);            
+                        ImGui::DragInt("Layer", &s->layer, 1.0f, -100, 100);
 
                         ImGui::EndDisabled();
 

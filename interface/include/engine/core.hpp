@@ -93,9 +93,9 @@ namespace engine
          */
         void syncRegionBodiesToECS();
 
-    private:
-        editors::SpriteEditor *spriteEditor = nullptr;
-        editors::ProjectEditor *projectEditor = nullptr;
+      private:
+        editors::SpriteEditor*  spriteEditor  = nullptr;
+        editors::ProjectEditor* projectEditor = nullptr;
 
         std::vector<projects::Project> _projects;
         projects::Project              _currentProject;
@@ -132,9 +132,9 @@ namespace engine
         // Mapping from Pixel::GameObjectID to ecs::EntityID
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
-                    _gameObjectOccupiedCells;
+                                   _gameObjectOccupiedCells;
         std::vector<ecs::EntityID> _regionBodyEntities;
-        std::string _sceneFilename = "assets/default.scene";
+        std::string                _sceneFilename = "assets/default.scene";
 
         std::string _projectsPath;
 

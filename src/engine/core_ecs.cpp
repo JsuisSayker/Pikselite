@@ -303,7 +303,9 @@ namespace engine
                 const int gridX = static_cast<int>(std::floor(worldX / PIXEL_SIZE));
                 const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
 
-                grid.setPixel(gridX, gridY, {srcPixel.type, false, srcPixel.colorIndex, srcPixel.burnTimer, srcPixel.isBurning});
+                grid.setPixel(gridX, gridY,
+                              {srcPixel.type, false, srcPixel.colorIndex, srcPixel.burnTimer,
+                               srcPixel.isBurning});
                 occupiedCells.push_back({gridX, gridY});
             }
 
