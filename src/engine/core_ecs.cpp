@@ -229,7 +229,6 @@ namespace engine
                     componentManager.addComponent(eid, s);
                 }
             }
-
             _gameObjectToEntity[go.id] = eid;
         }
     }
@@ -238,18 +237,10 @@ namespace engine
     {
         ChunkGrid& grid = _pixelSimulation.getGrid();
 
-        for (const auto& [goId, occupiedCells] : _gameObjectOccupiedCells)
-        {
-            for (const auto& cell : occupiedCells)
-            {
-                grid.setPixel(cell.x, cell.y, {Element::EMPTY, false});
-            }
-        }
-
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>> nextOccupiedCells;
         nextOccupiedCells.reserve(_gameObjects.size());
 
-        for (const auto& go : _gameObjects)
+        for (auto& go : _gameObjects)
         {
             if (!go.isActive)
                 continue;
@@ -265,12 +256,11 @@ namespace engine
                 continue;
             if (!componentManager.hasComponent<ecs::components::PhysicsBody>(entityId))
                 continue;
+                
 
-            const auto& physics =
+            auto& physics =
                 componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
             if (!physics.enabled)
-                continue;
-            if (physics.bodyType != b2_dynamicBody)
                 continue;
 
             const auto& transform =
@@ -281,6 +271,16 @@ namespace engine
             const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
             std::vector<Element::Vec2i> occupiedCells;
             occupiedCells.reserve(pairCount);
+
+            std::vector<Element::Pixel> nextPixels;
+            std::vector<Element::Vec2i> nextLocalCoords;
+            nextPixels.reserve(pairCount);
+            nextLocalCoords.reserve(pairCount);
+
+            const auto prevIt = _gameObjectOccupiedCells.find(go.id);
+            const std::vector<Element::Vec2i>* prevCells =
+                (prevIt != _gameObjectOccupiedCells.end()) ? &prevIt->second : nullptr;
+            const size_t prevCount = prevCells ? prevCells->size() : 0;
 
             for (size_t i = 0; i < pairCount; ++i)
             {
@@ -303,16 +303,85 @@ namespace engine
                 const int gridX = static_cast<int>(std::floor(worldX / PIXEL_SIZE));
                 const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
 
-                grid.setPixel(gridX, gridY, {srcPixel.type, false, srcPixel.colorIndex, srcPixel.burnTimer, srcPixel.isBurning});
+                Element::Pixel stampedPixel{srcPixel.type, false, srcPixel.colorIndex,
+                                             srcPixel.burnTimer, srcPixel.isBurning};
+
+                const bool hasPrevCell = (prevCells && i < prevCount);
+                Element::Vec2i prevCell{};
+                Element::Pixel prevPixel{Element::EMPTY};
+                if (hasPrevCell)
+                {
+                    prevCell = (*prevCells)[i];
+                    prevPixel = grid.getPixel(prevCell.x, prevCell.y);
+                }
+
+                Element::Pixel currentPixel = grid.getPixel(gridX, gridY);
+                const bool pixelAlive = (currentPixel.type != Element::EMPTY) ||
+                                        (hasPrevCell && prevPixel.type != Element::EMPTY);
+                if (!pixelAlive)
+                {
+                    if (hasPrevCell && (prevCell.x != gridX || prevCell.y != gridY))
+                    {
+                        grid.setPixel(prevCell.x, prevCell.y, {Element::EMPTY, false});
+                    }
+                    continue;
+                }
+
+                if (hasPrevCell && prevPixel.type != Element::EMPTY)
+                {
+                    stampedPixel = prevPixel;
+                }
+
+                if (hasPrevCell && (prevCell.x != gridX || prevCell.y != gridY))
+                {
+                    grid.setPixel(prevCell.x, prevCell.y, {Element::EMPTY, false});
+                }
+
+                grid.setPixel(gridX, gridY, stampedPixel);
                 occupiedCells.push_back({gridX, gridY});
+                nextPixels.push_back(srcPixel);
+                nextLocalCoords.push_back(go.pixelLocalCoords[i]);
+            }
+
+            if (prevCells && prevCount > pairCount)
+            {
+                for (size_t i = pairCount; i < prevCount; ++i)
+                {
+                    const auto& prevCell = (*prevCells)[i];
+                    grid.setPixel(prevCell.x, prevCell.y, {Element::EMPTY, false});
+                }
             }
 
             if (!occupiedCells.empty())
             {
                 nextOccupiedCells[go.id] = std::move(occupiedCells);
             }
-        }
 
+            go.pixels = std::move(nextPixels);
+            go.pixelLocalCoords = std::move(nextLocalCoords);
+
+            if (go.pixelCount != go.pixels.size())
+            {
+                std::vector<ecs::components::PhysicsTriangle> generatedTriangles;
+                if (buildPhysicsTrianglesFromGameObjectPixels(go, _pixelSimulation,
+                                                              generatedTriangles))
+                {
+                    physics.triangles = std::move(generatedTriangles);
+                }
+                else
+                {
+                    physics.triangles.clear();
+                }
+
+                if (auto* physicsSys = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+                {
+                    physicsSys->entityDestroyed(entityId);
+                }
+                physics.bodyId = b2_nullBodyId;
+            }
+
+            go.pixelCount = go.pixels.size();
+        }
         _gameObjectOccupiedCells = std::move(nextOccupiedCells);
     }
 

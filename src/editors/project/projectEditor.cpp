@@ -209,6 +209,7 @@ namespace editors
         }
 
         newObject.pixels           = std::move(objectPixels);
+        newObject.pixelCount       = newObject.pixels.size();
         newObject.pixelLocalCoords = std::move(objectLocalCoords);
 
         ecs::components::Transform transform{};
@@ -261,6 +262,8 @@ namespace editors
 
         newObject.addComponent(transform);
         newObject.addComponent(sprite);
+
+        newObject.pixelCount = 0;
 
         _gameObjects.push_back(std::move(newObject));
     }
