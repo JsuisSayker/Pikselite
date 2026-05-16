@@ -24,12 +24,12 @@ void graphics::Bar::Draw(const std::function<void()>& contentFunction)
     if (!config.visible)
         return;
 
-    ImGuiIO&    io   = ImGui::GetIO();
+    ImGuiIO& io = ImGui::GetIO();
     const float winW = io.DisplaySize.x;
     const float winH = io.DisplaySize.y;
 
     // ── Compute non-overlapping position & size ──────────────────────────
-    ImVec2 finalPos  = config.position;
+    ImVec2 finalPos = config.position;
     ImVec2 finalSize = config.size;
 
     const bool isTopHorizontal =
@@ -41,13 +41,13 @@ void graphics::Bar::Draw(const std::function<void()>& contentFunction)
         if (isBottom)
         {
             // Bottom bar: full width, fixed height, snapped to bottom
-            finalPos  = ImVec2(0.0f, winH - LAYOUT_BOTTOM_H);
+            finalPos = ImVec2(0.0f, winH - LAYOUT_BOTTOM_H);
             finalSize = ImVec2(winW, LAYOUT_BOTTOM_H);
         }
         else
         {
             // Top toolbar: full width
-            finalPos  = ImVec2(0.0f, 0.0f);
+            finalPos = ImVec2(0.0f, 0.0f);
             finalSize = ImVec2(winW, LAYOUT_TOP_H);
         }
     }
@@ -57,7 +57,7 @@ void graphics::Bar::Draw(const std::function<void()>& contentFunction)
         float sideH = winH - LAYOUT_BOTTOM_H - LAYOUT_TOP_H;
         if (finalPos.x < 0.0f)
             finalPos.x = winW - finalSize.x; // right side
-        finalPos.y  = LAYOUT_TOP_H;
+        finalPos.y = LAYOUT_TOP_H;
         finalSize.y = sideH;
     }
 

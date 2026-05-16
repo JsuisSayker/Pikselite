@@ -26,8 +26,8 @@ TEST(BarTests, IsVisible)
 
 TEST(BarDrawTests, HorizontalOrientationWithoutOffset)
 {
-    SDL_Window*                window    = nullptr;
-    SDL_GLContext              glContext = nullptr;
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;
     testCommon.InitImGuiForTests(window, glContext);
     // InitImGuiForTests(window, glContext);
@@ -37,14 +37,14 @@ TEST(BarDrawTests, HorizontalOrientationWithoutOffset)
     ImGui::NewFrame();
 
     graphics::BarConfig cfg;
-    cfg.visible     = true;
-    cfg.label       = "test";
-    cfg.size        = ImVec2(200, 20);
-    cfg.position    = ImVec2(10, 10); // no negative offset
+    cfg.visible = true;
+    cfg.label = "test";
+    cfg.size = ImVec2(200, 20);
+    cfg.position = ImVec2(10, 10); // no negative offset
     cfg.orientation = graphics::BarOrientation::Horizontal;
 
     graphics::Bar bar(cfg);
-    bool          called = false;
+    bool called = false;
     bar.Draw([&] { called = true; });
     EXPECT_TRUE(called);
 
@@ -56,22 +56,22 @@ TEST(BarDrawTests, HorizontalOrientationWithoutOffset)
 
 TEST(BarDrawTests, InvisibleDoesNotRunContent)
 {
-    SDL_Window*                window    = nullptr;
-    SDL_GLContext              glContext = nullptr;
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;
     testCommon.InitImGuiForTests(window, glContext);
 
-    ImGuiIO& io    = ImGui::GetIO();
+    ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(800, 600);
 
     graphics::BarConfig cfg;
-    cfg.visible  = false;
-    cfg.label    = "test";
-    cfg.size     = ImVec2(100, 10);
+    cfg.visible = false;
+    cfg.label = "test";
+    cfg.size = ImVec2(100, 10);
     cfg.position = ImVec2(-1, -1);
 
     graphics::Bar bar(cfg);
-    bool          called = false;
+    bool called = false;
     bar.Draw([&] { called = true; });
     EXPECT_FALSE(called);
 
@@ -80,12 +80,12 @@ TEST(BarDrawTests, InvisibleDoesNotRunContent)
 
 TEST(BarDrawTests, VisibleRunsContentAndSupportsOrientation)
 {
-    SDL_Window*                window    = nullptr;
-    SDL_GLContext              glContext = nullptr;
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;
     testCommon.InitImGuiForTests(window, glContext);
 
-    ImGuiIO& io    = ImGui::GetIO();
+    ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(800, 600);
 
     ImGui_ImplSDL2_NewFrame();
@@ -93,14 +93,14 @@ TEST(BarDrawTests, VisibleRunsContentAndSupportsOrientation)
     ImGui::NewFrame();
 
     graphics::BarConfig cfg;
-    cfg.visible     = true;
-    cfg.label       = "test";
-    cfg.size        = ImVec2(200, 20);
-    cfg.position    = ImVec2(-1, -1);
+    cfg.visible = true;
+    cfg.label = "test";
+    cfg.size = ImVec2(200, 20);
+    cfg.position = ImVec2(-1, -1);
     cfg.orientation = graphics::BarOrientation::Vertical;
 
     graphics::Bar bar(cfg);
-    bool          called = false;
+    bool called = false;
     bar.Draw([&] { called = true; });
     EXPECT_TRUE(called);
 

@@ -35,8 +35,8 @@ namespace testsInfos
             // oldRenderIndex mapping
             uint32_t count = 1;
             fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
-            PixelEntityID id    = 1;
-            int           index = 0;
+            PixelEntityID id = 1;
+            int index = 0;
             fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
             fout.write(reinterpret_cast<const char*>(&index), sizeof(index));
 
