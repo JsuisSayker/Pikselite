@@ -405,7 +405,7 @@ namespace engine
         while (accumulator >= fixedDt)
         {
             {
-                ZoneScopedN("PixelSimulation");
+                ZoneScopedN("Sim::Tick");
                 _pixelSimulation.update();
                 syncRegionBodiesToECS();
 
