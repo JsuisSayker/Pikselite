@@ -19,7 +19,7 @@ namespace engine
         }
 
         engine::scene::SceneData data;
-        data.gameObjects      = _gameObjects;
+        data.gameObjects = _gameObjects;
         data.nextGameObjectId = gameObjectCounter;
 
         if (!engine::scene::saveSceneToFile(filename, data))
@@ -40,7 +40,7 @@ namespace engine
             return false;
         }
 
-        _gameObjects      = std::move(data.gameObjects);
+        _gameObjects = std::move(data.gameObjects);
         gameObjectCounter = data.nextGameObjectId;
 
         _chunkGrid.chunks.clear();
@@ -57,9 +57,9 @@ namespace engine
             if (!transform)
                 continue;
 
-            const int    anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
-            const int    anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
-            const size_t count    = std::min(go.pixels.size(), go.pixelLocalCoords.size());
+            const int anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
+            const int anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
+            const size_t count = std::min(go.pixels.size(), go.pixelLocalCoords.size());
 
             for (size_t i = 0; i < count; ++i)
             {
@@ -68,12 +68,12 @@ namespace engine
                 if (pixel.type == Element::EMPTY)
                     continue;
 
-                const int      gridX = anchorGX + local.x;
-                const int      gridY = anchorGY + local.y;
+                const int gridX = anchorGX + local.x;
+                const int gridY = anchorGY + local.y;
                 Element::Pixel scenePixel;
-                scenePixel.type       = pixel.type;
+                scenePixel.type = pixel.type;
                 scenePixel.colorIndex = renderer.generatePixelColorIndex(gridX, gridY);
-                scenePixel.isBurning  = pixel.isBurning;
+                scenePixel.isBurning = pixel.isBurning;
                 // FIRE: restore burn timer from save; if zero (legacy/empty), seed from element
                 // definition.
                 if (pixel.type == Element::FIRE)

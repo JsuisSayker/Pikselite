@@ -16,7 +16,7 @@ namespace ecs
     template <typename T> class ComponentArray final : public IComponentArray
     {
       public:
-        ComponentArray()           = default;
+        ComponentArray() = default;
         ~ComponentArray() override = default;
 
         /**
@@ -39,9 +39,9 @@ namespace ecs
             {
                 throw std::runtime_error("ComponentArray full");
             }
-            std::size_t newIndex    = size;
-            components[newIndex]    = component;
-            entityToIndex[id]       = newIndex;
+            std::size_t newIndex = size;
+            components[newIndex] = component;
+            entityToIndex[id] = newIndex;
             indexToEntity[newIndex] = id;
             ++size;
         }
@@ -59,14 +59,14 @@ namespace ecs
                 return;
 
             std::size_t indexOfRemoved = it->second;
-            std::size_t indexOfLast    = size - 1;
+            std::size_t indexOfLast = size - 1;
 
             if (indexOfRemoved != indexOfLast)
             {
                 components[indexOfRemoved] = components[indexOfLast];
 
-                ecs::EntityID lastEntity      = indexToEntity[indexOfLast];
-                entityToIndex[lastEntity]     = indexOfRemoved;
+                ecs::EntityID lastEntity = indexToEntity[indexOfLast];
+                entityToIndex[lastEntity] = indexOfRemoved;
                 indexToEntity[indexOfRemoved] = lastEntity;
             }
 

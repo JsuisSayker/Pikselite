@@ -29,9 +29,9 @@ namespace engine::events
          */
         template <typename EventT> HandlerId subscribe(std::function<void(const EventT&)> handler)
         {
-            auto      type    = std::type_index(typeid(EventT));
-            HandlerId id      = ++lastId;
-            auto      wrapper = [h = std::move(handler)](const IEvent& base)
+            auto type = std::type_index(typeid(EventT));
+            HandlerId id = ++lastId;
+            auto wrapper = [h = std::move(handler)](const IEvent& base)
             {
                 auto derived = dynamic_cast<const EventT*>(&base);
                 if (derived)
@@ -51,7 +51,7 @@ namespace engine::events
         template <typename EventT> void unsubscribe(HandlerId id)
         {
             auto type = std::type_index(typeid(EventT));
-            auto it   = handlers.find(type);
+            auto it = handlers.find(type);
             if (it == handlers.end())
                 return;
             auto& vec = it->second;
@@ -71,7 +71,7 @@ namespace engine::events
         // Internal struct to store handler information
         struct Handler
         {
-            HandlerId                          id;
+            HandlerId id;
             std::function<void(const IEvent&)> fn;
         };
 

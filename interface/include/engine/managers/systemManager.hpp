@@ -70,7 +70,7 @@ namespace engine
         template <typename T, typename... Args> T& addSystem(Args&&... args)
         {
             auto system = std::make_unique<T>(std::forward<Args>(args)...);
-            T&   ref    = *system;
+            T& ref = *system;
 
             systemsMap[typeid(T)] = system.get();
             systems.push_back(std::move(system));

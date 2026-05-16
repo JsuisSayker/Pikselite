@@ -5,8 +5,8 @@
 namespace editors
 {
 
-    ProjectEditor::ProjectEditor(graphics::Interface*      graphicsInterface,
-                                 graphics::Renderer*       renderer,
+    ProjectEditor::ProjectEditor(graphics::Interface* graphicsInterface,
+                                 graphics::Renderer* renderer,
                                  graphics::ImguiInterface* imguiInterface,
                                  engine::ComponentManager* componentManager)
         : AbstractEditor(graphicsInterface, renderer, imguiInterface),
@@ -43,7 +43,7 @@ namespace editors
             _currentSpriteFilename.clear();
         }
 
-        std::vector<graphics::Pixel> framePixels         = buildRenderPixels();
+        std::vector<graphics::Pixel> framePixels = buildRenderPixels();
         std::vector<graphics::Pixel> pendingSpritePixels = addPendingSpriteToRenderPixels();
         framePixels.insert(framePixels.end(), pendingSpritePixels.begin(),
                            pendingSpritePixels.end());
@@ -63,7 +63,7 @@ namespace editors
             if (confirmed)
             {
                 _buildDialogConfirmed = true;
-                _showBuildDialog      = false;
+                _showBuildDialog = false;
             }
             if (cancelled)
             {
@@ -98,18 +98,18 @@ namespace editors
         _renderer->present(_graphicsInterface->getWindow());
     }
 
-    void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>&   renderPixels,
+    void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>& renderPixels,
                                      const std::vector<Pixel::GameObject>& gameObjects,
                                      const ChunkGrid& chunkGrid, uint32_t nextGameObjectId)
     {
-        _renderPixels           = renderPixels;
-        _gameObjects            = gameObjects;
-        _chunkGrid              = chunkGrid;
-        gameObjectCounter       = nextGameObjectId;
-        _pendingSprite          = {};
-        _isPlacingSprite        = false;
-        _pendingTexture         = {};
-        _isPlacingTexture       = false;
+        _renderPixels = renderPixels;
+        _gameObjects = gameObjects;
+        _chunkGrid = chunkGrid;
+        gameObjectCounter = nextGameObjectId;
+        _pendingSprite = {};
+        _isPlacingSprite = false;
+        _pendingTexture = {};
+        _isPlacingTexture = false;
         _leftMouseDownLastFrame = false;
     }
 
@@ -131,7 +131,7 @@ namespace editors
                 break;
             case graphics::KEY_ESCAPE:
                 _isPlacingTexture = false;
-                _pendingTexture   = {};
+                _pendingTexture = {};
                 break;
             case graphics::FILE_DROPPED:
                 if (!event.droppedFilePath.empty())
@@ -144,7 +144,7 @@ namespace editors
                     if (lowerExt == ".scene")
                     {
                         _currentSceneFilename = event.droppedFilePath;
-                        _loadSceneRequested   = true;
+                        _loadSceneRequested = true;
                     }
                     else if (isTextureFile(event.droppedFilePath))
                     {
@@ -168,8 +168,8 @@ namespace editors
             return;
 
         Pixel::GameObject newObject;
-        newObject.id            = gameObjectCounter++;
-        newObject.name          = "GameObject_" + std::to_string(newObject.id);
+        newObject.id = gameObjectCounter++;
+        newObject.name = "GameObject_" + std::to_string(newObject.id);
         newObject.sourceDatPath = _pendingSprite.sourceDatPath;
 
         // Convert world position to grid coords
@@ -190,9 +190,9 @@ namespace editors
             int lx = toLocal(targetGX);
             int ly = toLocal(targetGY);
 
-            Chunk&  chunk          = _chunkGrid.getOrCreateChunk(cx, cy);
-            uint8_t colorIndex     = _renderer->generatePixelColorIndex(anchorGX + cell.localGX,
-                                                                        anchorGY + cell.localGY);
+            Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
+            uint8_t colorIndex = _renderer->generatePixelColorIndex(anchorGX + cell.localGX,
+                                                                    anchorGY + cell.localGY);
             ElementDefinition& def = g_elements[cell.type];
             if (cell.type == Element::FIRE)
             {
@@ -208,18 +208,18 @@ namespace editors
             objectLocalCoords.push_back({cell.localGX, cell.localGY});
         }
 
-        newObject.pixels           = std::move(objectPixels);
+        newObject.pixels = std::move(objectPixels);
         newObject.pixelLocalCoords = std::move(objectLocalCoords);
 
         ecs::components::Transform transform{};
-        transform.enabled  = true;
-        transform.x        = static_cast<float>(anchorGX) * PIXEL_SIZE;
-        transform.y        = static_cast<float>(anchorGY) * PIXEL_SIZE;
-        transform.prevX    = transform.x;
-        transform.prevY    = transform.y;
+        transform.enabled = true;
+        transform.x = static_cast<float>(anchorGX) * PIXEL_SIZE;
+        transform.y = static_cast<float>(anchorGY) * PIXEL_SIZE;
+        transform.prevX = transform.x;
+        transform.prevY = transform.y;
         transform.rotation = 0.0f;
-        transform.scaleX   = 1.0f;
-        transform.scaleY   = 1.0f;
+        transform.scaleX = 1.0f;
+        transform.scaleY = 1.0f;
         newObject.addComponent(transform);
 
         _gameObjects.push_back(std::move(newObject));
@@ -233,31 +233,31 @@ namespace editors
         return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".webp";
     }
 
-    void ProjectEditor::placeTextureAtWorldInGameObject(glm::vec2          worldPos,
+    void ProjectEditor::placeTextureAtWorldInGameObject(glm::vec2 worldPos,
                                                         const std::string& texturePath)
     {
         if (texturePath.empty())
             return;
 
         Pixel::GameObject newObject;
-        newObject.id   = gameObjectCounter++;
+        newObject.id = gameObjectCounter++;
         newObject.name = "Sprite_" + std::to_string(newObject.id);
 
         ecs::components::Transform transform{};
-        transform.enabled  = true;
-        transform.x        = worldPos.x;
-        transform.y        = worldPos.y;
+        transform.enabled = true;
+        transform.x = worldPos.x;
+        transform.y = worldPos.y;
         transform.rotation = 0.0f;
-        transform.scaleX   = 1.0f;
-        transform.scaleY   = 1.0f;
-        transform.prevX    = worldPos.x;
-        transform.prevY    = worldPos.y;
+        transform.scaleX = 1.0f;
+        transform.scaleY = 1.0f;
+        transform.prevX = worldPos.x;
+        transform.prevY = worldPos.y;
 
         ecs::components::Sprite sprite{};
-        sprite.enabled     = true;
+        sprite.enabled = true;
         sprite.texturePath = texturePath;
-        sprite.width       = 640.0f;
-        sprite.height      = 640.0f;
+        sprite.width = 640.0f;
+        sprite.height = 640.0f;
 
         newObject.addComponent(transform);
         newObject.addComponent(sprite);
@@ -272,7 +272,7 @@ namespace editors
             if (!go.isActive)
                 continue;
 
-            auto* sprite    = go.getComponent<ecs::components::Sprite>();
+            auto* sprite = go.getComponent<ecs::components::Sprite>();
             auto* transform = go.getComponent<ecs::components::Transform>();
             if (!sprite || !transform || !sprite->enabled)
                 continue;
@@ -280,9 +280,9 @@ namespace editors
             auto textureIt = _textureCache.find(sprite->texturePath);
             if (textureIt == _textureCache.end())
             {
-                const GLuint textureId             = _renderer->loadTexture(sprite->texturePath);
+                const GLuint textureId = _renderer->loadTexture(sprite->texturePath);
                 _textureCache[sprite->texturePath] = textureId;
-                textureIt                          = _textureCache.find(sprite->texturePath);
+                textureIt = _textureCache.find(sprite->texturePath);
             }
 
             if (textureIt == _textureCache.end() || textureIt->second == 0)
@@ -305,13 +305,13 @@ namespace editors
         {
             placeTextureAtWorldInGameObject(worldPos, _pendingTexture.texturePath);
             _isPlacingTexture = false;
-            _pendingTexture   = {};
+            _pendingTexture = {};
         }
         else if (_isPlacingSprite)
         {
             placePendingSpriteAtWorldInGameObject(worldPos);
             _isPlacingSprite = false;
-            _pendingSprite   = {};
+            _pendingSprite = {};
         }
         else
         {
@@ -325,7 +325,7 @@ namespace editors
             return false;
 
         // Check if already in cache, otherwise load it
-        auto   textureIt = _textureCache.find(texturePath);
+        auto textureIt = _textureCache.find(texturePath);
         GLuint textureID = 0;
         if (textureIt == _textureCache.end())
         {
@@ -339,11 +339,11 @@ namespace editors
             textureID = textureIt->second;
         }
 
-        _pendingTexture.valid       = true;
+        _pendingTexture.valid = true;
         _pendingTexture.texturePath = texturePath;
-        _pendingTexture.textureID   = textureID;
-        _pendingTexture.width       = 640.0f;
-        _pendingTexture.height      = 640.0f;
+        _pendingTexture.textureID = textureID;
+        _pendingTexture.width = 640.0f;
+        _pendingTexture.height = 640.0f;
 
         return true;
     }
@@ -357,8 +357,8 @@ namespace editors
         glm::vec2 worldPos = screenToWorld(mousePos);
 
         graphics::Sprite2D sprite2d;
-        sprite2d.position  = worldPos;
-        sprite2d.size      = {_pendingTexture.width, _pendingTexture.height};
+        sprite2d.position = worldPos;
+        sprite2d.size = {_pendingTexture.width, _pendingTexture.height};
         sprite2d.textureID = _pendingTexture.textureID;
 
         _renderer->drawSprite(sprite2d, _camera);
@@ -366,8 +366,8 @@ namespace editors
 
     void ProjectEditor::showBuildSettings(const BuildSettings& settings)
     {
-        _buildDialogSettings  = settings;
-        _showBuildDialog      = true;
+        _buildDialogSettings = settings;
+        _showBuildDialog = true;
         _buildDialogConfirmed = false;
     }
 
@@ -376,17 +376,17 @@ namespace editors
         if (!_buildDialogConfirmed)
             return false;
         _buildDialogConfirmed = false;
-        outSettings           = _buildDialogSettings;
+        outSettings = _buildDialogSettings;
         return true;
     }
 
     void ProjectEditor::setBuildProgress(bool visible, bool done, bool success,
                                          const std::string& output)
     {
-        _showBuildProgress    = visible;
-        _buildProgressDone    = done;
+        _showBuildProgress = visible;
+        _buildProgressDone = done;
         _buildProgressSuccess = success;
-        _buildProgressOutput  = output;
+        _buildProgressOutput = output;
     }
 
     bool ProjectEditor::consumeBuildProgressDismissed()
@@ -394,7 +394,7 @@ namespace editors
         if (!_buildProgressDismissed)
             return false;
         _buildProgressDismissed = false;
-        _showBuildProgress      = false;
+        _showBuildProgress = false;
         return true;
     }
 

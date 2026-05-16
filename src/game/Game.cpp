@@ -13,8 +13,8 @@
 #include <engine/scene/sceneSerializer.hpp>
 #include <game/Game.hpp>
 #include <iostream>
-#include <typeindex>
 #include <tracy/Tracy.hpp>
+#include <typeindex>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -34,7 +34,7 @@ namespace
             return false;
 
         Element::Region region;
-        const size_t    pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
+        const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
         if (pairCount == 0)
             return false;
 
@@ -152,7 +152,7 @@ namespace engine
         _componentManager.registerComponent<ecs::components::PhysicsBody>();
         _componentManager.registerComponent<ecs::components::Script>();
 
-        auto&          movementSys = _systemManager.addSystem<ecs::systems::MovementSystem>();
+        auto& movementSys = _systemManager.addSystem<ecs::systems::MovementSystem>();
         ecs::Signature movementSig;
         movementSig.set(_componentManager.getComponentType<ecs::components::Transform>());
         movementSig.set(_componentManager.getComponentType<ecs::components::Velocity>());
@@ -205,7 +205,7 @@ namespace engine
             return false;
         }
 
-        _gameObjects       = std::move(data.gameObjects);
+        _gameObjects = std::move(data.gameObjects);
         _gameObjectCounter = data.nextGameObjectId;
 
         _chunkGrid.chunks.clear();
@@ -219,9 +219,9 @@ namespace engine
             if (!transform)
                 continue;
 
-            const int    anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
-            const int    anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
-            const size_t count    = std::min(go.pixels.size(), go.pixelLocalCoords.size());
+            const int anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
+            const int anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
+            const size_t count = std::min(go.pixels.size(), go.pixelLocalCoords.size());
 
             for (size_t i = 0; i < count; ++i)
             {
@@ -230,12 +230,12 @@ namespace engine
                 if (pixel.type == Element::EMPTY)
                     continue;
 
-                const int      gridX = anchorGX + local.x;
-                const int      gridY = anchorGY + local.y;
+                const int gridX = anchorGX + local.x;
+                const int gridY = anchorGY + local.y;
                 Element::Pixel scenePixel;
-                scenePixel.type       = pixel.type;
+                scenePixel.type = pixel.type;
                 scenePixel.colorIndex = _renderer->generatePixelColorIndex(gridX, gridY);
-                scenePixel.isBurning  = pixel.isBurning;
+                scenePixel.isBurning = pixel.isBurning;
                 if (pixel.type == Element::FIRE)
                 {
                     scenePixel.burnTimer = pixel.burnTimer != 0
@@ -259,7 +259,7 @@ namespace engine
     {
         _systemManager.shutdownAll();
 
-        const auto&                allEntities = _entityManager.getEntities();
+        const auto& allEntities = _entityManager.getEntities();
         std::vector<ecs::EntityID> entitiesToDestroy;
         for (const auto& entityPtr : allEntities)
         {
@@ -279,8 +279,8 @@ namespace engine
 
         for (const auto& go : _gameObjects)
         {
-            ecs::Entity   entity = _entityManager.createEntity();
-            ecs::EntityID eid    = entity.id;
+            ecs::Entity entity = _entityManager.createEntity();
+            ecs::EntityID eid = entity.id;
 
             if (auto* scriptSys = _systemManager.getSystem<ecs::systems::ScriptSystem>())
             {
@@ -373,7 +373,7 @@ namespace engine
             const auto& transform =
                 _componentManager.getComponent<ecs::components::Transform>(entityId);
             const float cosine = std::cos(transform.rotation);
-            const float sine   = std::sin(transform.rotation);
+            const float sine = std::sin(transform.rotation);
 
             const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
             std::vector<Element::Vec2i> occupiedCells;
@@ -444,8 +444,8 @@ namespace engine
                     const auto& def = g_elements[simPixel.type];
 
                     graphics::Pixel renderPixel;
-                    const float     gx   = static_cast<float>(cx * CHUNK_SIZE + x);
-                    const float     gy   = static_cast<float>(cy * CHUNK_SIZE + y);
+                    const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
+                    const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
                     renderPixel.position = glm::vec2(gx * PIXEL_SIZE, gy * PIXEL_SIZE);
 
                     if (simPixel.isBurning)
@@ -455,15 +455,15 @@ namespace engine
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
                         ElementDefinition& fireDef = g_elements[Element::FIRE];
-                        glm::vec3          fColor  = glm::vec3(
+                        glm::vec3 fColor = glm::vec3(
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        float progress    = (def.fireParams.burnDuration > 0)
-                                                ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
-                                                          def.fireParams.burnDuration)
-                                                : 1.0f;
-                        progress          = glm::clamp(progress, 0.0f, 1.0f);
+                        float progress = (def.fireParams.burnDuration > 0)
+                                             ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
+                                                       def.fireParams.burnDuration)
+                                             : 1.0f;
+                        progress = glm::clamp(progress, 0.0f, 1.0f);
                         renderPixel.color = glm::mix(pColor, fColor, progress);
                         renderPixel.color =
                             glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));

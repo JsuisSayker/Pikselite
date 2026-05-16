@@ -48,7 +48,7 @@ namespace ecs::systems
                 }
 
                 auto& transform = componentManager.getComponent<components::Transform>(entity);
-                auto& velocity  = componentManager.getComponent<components::Velocity>(entity);
+                auto& velocity = componentManager.getComponent<components::Velocity>(entity);
 
                 transform.x += velocity.vx * dt;
                 transform.y += velocity.vy * dt;

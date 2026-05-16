@@ -23,7 +23,7 @@ namespace
             return false;
 
         Element::Region region;
-        const size_t    pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
+        const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
         if (pairCount == 0)
             return false;
 
@@ -73,8 +73,8 @@ namespace engine
             return false;
 
         _renderPixels = projectEditor->getPixels();
-        _gameObjects  = projectEditor->getGameObjects();
-        _chunkGrid    = projectEditor->getChunkGrid();
+        _gameObjects = projectEditor->getGameObjects();
+        _chunkGrid = projectEditor->getChunkGrid();
         _pixelSimulation.setGrid(_chunkGrid);
         gameObjectCounter = projectEditor->getGameObjectCounter();
 
@@ -98,7 +98,7 @@ namespace engine
         componentManager.registerComponent<ecs::components::Script>();
 
         // Register ECS systems
-        auto&          movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
+        auto& movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
         ecs::Signature movementSig;
         movementSig.set(componentManager.getComponentType<ecs::components::Transform>());
         movementSig.set(componentManager.getComponentType<ecs::components::Velocity>());
@@ -144,7 +144,7 @@ namespace engine
 
         scriptSys.init();
 
-        spriteEditor  = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
+        spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface,
                                                    &componentManager);
 
@@ -157,7 +157,7 @@ namespace engine
         systemManager.shutdownAll();
 
         // Destroy ALL entities (including dynamically created ones from Lua)
-        const auto&                allEntities = entityManager.getEntities();
+        const auto& allEntities = entityManager.getEntities();
         std::vector<ecs::EntityID> entitiesToDestroy;
         for (const auto& entityPtr : allEntities)
         {
@@ -179,8 +179,8 @@ namespace engine
 
         for (const auto& go : _gameObjects)
         {
-            ecs::Entity   entity = entityManager.createEntity();
-            ecs::EntityID eid    = entity.id;
+            ecs::Entity entity = entityManager.createEntity();
+            ecs::EntityID eid = entity.id;
 
             if (auto* scriptSys = systemManager.getSystem<ecs::systems::ScriptSystem>())
             {
@@ -276,7 +276,7 @@ namespace engine
             const auto& transform =
                 componentManager.getComponent<ecs::components::Transform>(entityId);
             const float cosine = std::cos(transform.rotation);
-            const float sine   = std::sin(transform.rotation);
+            const float sine = std::sin(transform.rotation);
 
             const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
             std::vector<Element::Vec2i> occupiedCells;
@@ -303,7 +303,9 @@ namespace engine
                 const int gridX = static_cast<int>(std::floor(worldX / PIXEL_SIZE));
                 const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
 
-                grid.setPixel(gridX, gridY, {srcPixel.type, false, srcPixel.colorIndex, srcPixel.burnTimer, srcPixel.isBurning});
+                grid.setPixel(gridX, gridY,
+                              {srcPixel.type, false, srcPixel.colorIndex, srcPixel.burnTimer,
+                               srcPixel.isBurning});
                 occupiedCells.push_back({gridX, gridY});
             }
 

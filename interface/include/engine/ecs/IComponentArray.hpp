@@ -10,7 +10,7 @@ namespace ecs
      */
     struct IComponentArray
     {
-        virtual ~IComponentArray()                     = default;
+        virtual ~IComponentArray() = default;
         virtual void entityDestroyed(ecs::EntityID id) = 0;
 
         /**

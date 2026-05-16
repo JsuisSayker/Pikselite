@@ -19,7 +19,7 @@ namespace editors
         _renderer->clear();
         _imguiInterface->startFrame();
 
-        std::vector<graphics::Pixel> framePixels         = buildRenderPixels();
+        std::vector<graphics::Pixel> framePixels = buildRenderPixels();
         std::vector<graphics::Pixel> pendingSpritePixels = addPendingSpriteToRenderPixels();
         framePixels.insert(framePixels.end(), pendingSpritePixels.begin(),
                            pendingSpritePixels.end());
@@ -101,7 +101,7 @@ namespace editors
         {
             placePendingSpriteAtWorld(worldPos);
             _isPlacingSprite = false;
-            _pendingSprite   = {};
+            _pendingSprite = {};
             return;
         }
 
@@ -117,16 +117,16 @@ namespace editors
             return;
         }
 
-        glm::vec2  mousePos = _graphicsInterface->getMousePosition();
-        glm::vec2  worldPos = screenToWorld(mousePos);
-        const bool erase    = (_selectedTool == 1) || _isEraserActive;
-        const bool drag     = true;
+        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+        glm::vec2 worldPos = screenToWorld(mousePos);
+        const bool erase = (_selectedTool == 1) || _isEraserActive;
+        const bool drag = true;
         applyBrushAt(worldPos, erase, drag);
     }
 
     void SpriteEditor::applyBrushAt(glm::vec2 worldPos, bool erase, bool drag)
     {
-        const int   half    = _brushSize / 2;
+        const int half = _brushSize / 2;
         const float centerX = std::round(worldPos.x / PIXEL_SIZE) * PIXEL_SIZE;
         const float centerY = std::round(worldPos.y / PIXEL_SIZE) * PIXEL_SIZE;
 
@@ -256,7 +256,7 @@ namespace editors
             int lx = toLocal(targetGX);
             int ly = toLocal(targetGY);
 
-            Chunk&  chunk      = _chunkGrid.getOrCreateChunk(cx, cy);
+            Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
             uint8_t colorIndex = _renderer->generatePixelColorIndex(targetGX, targetGY);
             chunk.set(lx, ly, Element::Pixel{cell.type, false, colorIndex});
         }

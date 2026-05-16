@@ -35,8 +35,8 @@ namespace Pixel
         bool isActive = true;
 
         GameObjectID id;
-        std::string  name;
-        std::string  sourceDatPath; // .dat file this was placed from (empty if directly edited)
+        std::string name;
+        std::string sourceDatPath; // .dat file this was placed from (empty if directly edited)
         std::vector<Element::Pixel> pixels;
         std::vector<Element::Vec2i> pixelLocalCoords;
 
