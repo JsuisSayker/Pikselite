@@ -256,10 +256,8 @@ namespace engine
                 continue;
             if (!componentManager.hasComponent<ecs::components::PhysicsBody>(entityId))
                 continue;
-                
 
-            auto& physics =
-                componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
+            auto& physics = componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
             if (!physics.enabled)
                 continue;
 
@@ -304,7 +302,7 @@ namespace engine
                 const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
 
                 Element::Pixel stampedPixel{srcPixel.type, false, srcPixel.colorIndex,
-                                             srcPixel.burnTimer, srcPixel.isBurning};
+                                            srcPixel.burnTimer, srcPixel.isBurning};
 
                 const bool hasPrevCell = (prevCells && i < prevCount);
                 Element::Vec2i prevCell{};

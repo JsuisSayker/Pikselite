@@ -208,8 +208,8 @@ namespace editors
             objectLocalCoords.push_back({cell.localGX, cell.localGY});
         }
 
-        newObject.pixels           = std::move(objectPixels);
-        newObject.pixelCount       = newObject.pixels.size();
+        newObject.pixels = std::move(objectPixels);
+        newObject.pixelCount = newObject.pixels.size();
         newObject.pixelLocalCoords = std::move(objectLocalCoords);
 
         ecs::components::Transform transform{};
