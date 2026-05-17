@@ -1,4 +1,5 @@
 #include "engine/ecs/systems/spriteRenderSystem.hpp"
+
 #include <tracy/Tracy.hpp>
 
 #ifndef TRACY_ENABLE

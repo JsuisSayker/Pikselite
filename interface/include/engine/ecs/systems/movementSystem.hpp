@@ -7,8 +7,8 @@
 #include "engine/managers/componentManager.hpp"
 
 #include <iostream>
-#include <vector>
 #include <tracy/Tracy.hpp>
+#include <vector>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled

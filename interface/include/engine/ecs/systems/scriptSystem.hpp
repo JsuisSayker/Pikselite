@@ -21,9 +21,9 @@
 #include <graphics/renderer/camera.hpp>
 #include <memory>
 #include <string>
+#include <tracy/Tracy.hpp>
 #include <unordered_map>
 #include <vector>
-#include <tracy/Tracy.hpp>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
