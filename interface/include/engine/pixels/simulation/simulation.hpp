@@ -15,10 +15,10 @@ class Simulation
     struct BodyPixelBinding
     {
         Element::ElementType type;
-        Element::Vec2f       localUV;
-        Element::Vec2f       uv;
-        int                  gridX;
-        int                  gridY;
+        Element::Vec2f localUV;
+        Element::Vec2f uv;
+        int gridX;
+        int gridY;
     };
 
     /**
@@ -26,10 +26,10 @@ class Simulation
      */
     struct RegionBodyBinding
     {
-        b2BodyId                      bodyId;
+        b2BodyId bodyId;
         std::vector<BodyPixelBinding> pixels;
-        Element::ElementType          fillType = Element::STONE;
-        std::vector<Element::Vec2i>   occupiedCells;
+        Element::ElementType fillType = Element::STONE;
+        std::vector<Element::Vec2i> occupiedCells;
     };
 
     /**
@@ -54,39 +54,41 @@ class Simulation
      */
     void update();
 
-        /**
-         * @brief Updates particle behaviors and lifetimes, removing expired particles.
-         * @return void
-         */
-        void updateParticles();
+    /**
+     * @brief Updates particle behaviors and lifetimes, removing expired particles.
+     * @return void
+     */
+    void updateParticles();
 
-        /**
-         * @brief Spawns a new particle with given properties.
-         * @param type Particle element type.
-         * @param x Initial X position in world coordinates.
-         * @param y Initial Y position in world coordinates.
-         * @param vx Initial X velocity in world units per second.
-         * @param vy Initial Y velocity in world units per second.
-         * @return void
-         */
-        void spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime);
+    /**
+     * @brief Spawns a new particle with given properties.
+     * @param type Particle element type.
+     * @param x Initial X position in world coordinates.
+     * @param y Initial Y position in world coordinates.
+     * @param vx Initial X velocity in world units per second.
+     * @param vy Initial Y velocity in world units per second.
+     * @return void
+     */
+    void spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity,
+                       uint8_t colorIndex, uint16_t lifetime);
 
-        /**
-         * @brief Returns the list of active particles in the simulation.
-         * @return Reference to the vector of `Element::Particle`.
-         */
-        std::vector<Element::Particle>& getParticles() {
-            return particles;
-        }
+    /**
+     * @brief Returns the list of active particles in the simulation.
+     * @return Reference to the vector of `Element::Particle`.
+     */
+    std::vector<Element::Particle>& getParticles()
+    {
+        return particles;
+    }
 
-        /**
-         * @brief Updates one sand pixel behavior.
-         * @param grid Simulation grid.
-         * @param x Global X coordinate.
-         * @param y Global Y coordinate.
-         * @return void
-         */
-        inline void updateBurning(ChunkGrid& grid, int x, int y);
+    /**
+     * @brief Updates one sand pixel behavior.
+     * @param grid Simulation grid.
+     * @param x Global X coordinate.
+     * @param y Global Y coordinate.
+     * @return void
+     */
+    inline void updateBurning(ChunkGrid& grid, int x, int y);
 
     /**
      * @brief Resets per-pixel update flags for the current frame.
@@ -189,28 +191,27 @@ class Simulation
     {
         return regionBodies;
     }
-    
+
     bool tryDisplacePixel(int x, int y, int range);
 
-
-private:
+  private:
     uint64_t frame = 0;
-    ChunkGrid &grid;
+    ChunkGrid& grid;
     std::vector<Element::Particle> particles;
     struct ChunkEntry
     {
-        int    cx;
-        int    cy;
+        int cx;
+        int cy;
         Chunk* chunk;
     };
 
-    std::vector<ChunkEntry>      orderedChunks;
+    std::vector<ChunkEntry> orderedChunks;
     std::vector<Element::Region> detectedRegions;
 
-    std::unordered_set<int64_t>    visitedForRegions;
-    b2WorldId                      physicsWorld   = b2_nullWorldId;
-    float                          pixelsPerMeter = 1.0f;
-    std::vector<b2BodyId>          regionBodies;
+    std::unordered_set<int64_t> visitedForRegions;
+    b2WorldId physicsWorld = b2_nullWorldId;
+    float pixelsPerMeter = 1.0f;
+    std::vector<b2BodyId> regionBodies;
     std::vector<RegionBodyBinding> regionBodyBindings;
-    bool                           regionsDirty = true;
+    bool regionsDirty = true;
 };

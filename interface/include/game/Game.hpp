@@ -46,14 +46,14 @@ namespace engine
       private:
         bool _running = true;
 
-        graphics::Camera2D        _camera;
+        graphics::Camera2D _camera;
         engine::physics::BoxWorld _boxWorld;
-        ChunkGrid                 _chunkGrid;
-        Simulation                _pixelSimulation;
+        ChunkGrid _chunkGrid;
+        Simulation _pixelSimulation;
 
-        engine::EntityManager    _entityManager;
+        engine::EntityManager _entityManager;
         engine::ComponentManager _componentManager;
-        engine::SystemManager    _systemManager;
+        engine::SystemManager _systemManager;
         engine::events::EventBus _eventBus;
 
         std::string                                            _currentScenePath;
@@ -65,13 +65,13 @@ namespace engine
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
             _gameObjectOccupiedCells;
 
-        SDL_Window*         _window    = nullptr;
-        SDL_GLContext       _glContext = nullptr;
-        graphics::Renderer* _renderer  = nullptr;
+        SDL_Window* _window = nullptr;
+        SDL_GLContext _glContext = nullptr;
+        graphics::Renderer* _renderer = nullptr;
 
-        Timer       _timer;
-        float       _accumulator = 0.0f;
-        const float _fixedDt     = 1.0f / 60.0f;
+        Timer _timer;
+        float _accumulator = 0.0f;
+        const float _fixedDt = 1.0f / 60.0f;
 
         void initSDL(int width, int height, const std::string& title);
         void shutdownSDL();
@@ -82,8 +82,8 @@ namespace engine
         void refreshEntitySignature(ecs::EntityID entityId);
 
         std::vector<graphics::Pixel> buildRenderPixels(const ChunkGrid& grid) const;
-        void                         handleEvents();
-        void                         update(float deltaTime);
-        void                         render();
+        void handleEvents();
+        void update(float deltaTime);
+        void render();
     };
 } // namespace engine

@@ -15,25 +15,25 @@ namespace engine::scene
 {
     namespace
     {
-        constexpr uint32_t kSceneMagic   = 0x5343534E; // 'SCSN'
+        constexpr uint32_t kSceneMagic = 0x5343534E; // 'SCSN'
         constexpr uint16_t kSceneVersion = 3;
 
         enum ComponentMask : uint32_t
         {
-            MaskTransform   = 1u << 0,
-            MaskVelocity    = 1u << 1,
-            MaskSprite      = 1u << 2,
+            MaskTransform = 1u << 0,
+            MaskVelocity = 1u << 1,
+            MaskSprite = 1u << 2,
             MaskPhysicsBody = 1u << 3,
-            MaskScript      = 1u << 4
+            MaskScript = 1u << 4
         };
 
         struct Header
         {
-            uint32_t magic            = kSceneMagic;
-            uint16_t version          = kSceneVersion;
-            uint16_t reserved         = 0;
+            uint32_t magic = kSceneMagic;
+            uint16_t version = kSceneVersion;
+            uint16_t reserved = 0;
             uint32_t uncompressedSize = 0;
-            uint32_t compressedSize   = 0;
+            uint32_t compressedSize = 0;
         };
 
         void writeBytes(std::vector<uint8_t>& out, const void* data, size_t size)
@@ -177,7 +177,7 @@ namespace engine::scene
             return mask;
         }
 
-        void serializeComponentTransform(std::vector<uint8_t>&             out,
+        void serializeComponentTransform(std::vector<uint8_t>& out,
                                          const ecs::components::Transform& t)
         {
             writeBool(out, t.enabled);
@@ -188,7 +188,7 @@ namespace engine::scene
             writeF32(out, t.scaleY);
         }
 
-        void serializeComponentVelocity(std::vector<uint8_t>&            out,
+        void serializeComponentVelocity(std::vector<uint8_t>& out,
                                         const ecs::components::Velocity& v)
         {
             writeBool(out, v.enabled);
@@ -204,7 +204,7 @@ namespace engine::scene
             writeF32(out, s.height);
         }
 
-        void serializeComponentPhysicsBody(std::vector<uint8_t>&               out,
+        void serializeComponentPhysicsBody(std::vector<uint8_t>& out,
                                            const ecs::components::PhysicsBody& p)
         {
             writeBool(out, p.enabled);
@@ -276,7 +276,7 @@ namespace engine::scene
             if (!readF32(data, offset, s.height))
                 return false;
             s.textureID = 0;
-            s.loaded    = false;
+            s.loaded = false;
             return true;
         }
 
@@ -300,7 +300,7 @@ namespace engine::scene
             if (!readU32(data, offset, count))
                 return false;
             p.bodyType = static_cast<b2BodyType>(bodyType);
-            p.bodyId   = b2_nullBodyId;
+            p.bodyId = b2_nullBodyId;
             p.triangles.clear();
             p.triangles.reserve(count);
             for (uint32_t i = 0; i < count; ++i)
@@ -449,12 +449,12 @@ namespace engine::scene
 
             for (uint32_t i = 0; i < pixelCount; ++i)
             {
-                int32_t  localX     = 0;
-                int32_t  localY     = 0;
-                uint16_t type       = 0;
-                uint8_t  colorIndex = 0;
-                uint8_t  burnTimer  = 0;
-                bool     isBurning  = false;
+                int32_t localX = 0;
+                int32_t localY = 0;
+                uint16_t type = 0;
+                uint8_t colorIndex = 0;
+                uint8_t burnTimer = 0;
+                bool isBurning = false;
                 if (!readI32(data, offset, localX))
                     return false;
                 if (!readI32(data, offset, localY))
@@ -470,10 +470,10 @@ namespace engine::scene
 
                 outGo.pixelLocalCoords.push_back({localX, localY});
                 Element::Pixel px;
-                px.type       = static_cast<Element::ElementType>(type);
+                px.type = static_cast<Element::ElementType>(type);
                 px.colorIndex = colorIndex;
-                px.burnTimer  = burnTimer;
-                px.isBurning  = isBurning;
+                px.burnTimer = burnTimer;
+                px.isBurning = isBurning;
                 outGo.pixels.push_back(px);
             }
 
@@ -511,7 +511,7 @@ namespace engine::scene
                 return true;
             }
 
-            uLongf    destLen = static_cast<uLongf>(expectedSize);
+            uLongf destLen = static_cast<uLongf>(expectedSize);
             const int result =
                 uncompress(output.data(), &destLen, input.data(), static_cast<uLong>(input.size()));
             if (result != Z_OK || destLen != expectedSize)
@@ -545,7 +545,7 @@ namespace engine::scene
 
         Header header;
         header.uncompressedSize = static_cast<uint32_t>(raw.size());
-        header.compressedSize   = static_cast<uint32_t>(compressed.size());
+        header.compressedSize = static_cast<uint32_t>(compressed.size());
 
         std::ofstream outFile(filename, std::ios::binary);
         if (!outFile)
@@ -595,7 +595,7 @@ namespace engine::scene
             return false;
         }
 
-        size_t    offset = 0;
+        size_t offset = 0;
         SceneData temp;
         if (!readU32(raw, offset, temp.nextGameObjectId))
             return false;

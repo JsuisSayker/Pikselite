@@ -32,8 +32,8 @@ static void writeSimpleSpriteData(const std::string& filename)
     // oldRenderIndex mapping
     uint32_t count = 1;
     fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
-    PixelEntityID id    = 1;
-    int           index = 0;
+    PixelEntityID id = 1;
+    int index = 0;
     fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
     fout.write(reinterpret_cast<const char*>(&index), sizeof(index));
 
@@ -72,7 +72,7 @@ TEST(ProjectEditorTests, LoadPlacementAndPlacePendingSprite)
     editors::ProjectEditor editor(nullptr, nullptr, nullptr, nullptr);
     EXPECT_TRUE(editor.testLoadSpriteForPlacement(tmp.string()));
 
-    auto pixels      = editor.getPixels();
+    auto pixels = editor.getPixels();
     auto gameObjects = editor.getGameObjects();
     EXPECT_EQ(pixels.size(), 1);
     EXPECT_EQ(gameObjects.size(), 1);
@@ -89,8 +89,8 @@ TEST(ProjectEditorTests, SetSceneDataReplacesEditorState)
     std::vector<graphics::Pixel> renderPixels{{{20.0f, 30.0f}, {0.9f, 0.1f, 0.2f}}};
 
     Pixel::GameObject object;
-    object.id            = 12;
-    object.name          = "LoadedObject";
+    object.id = 12;
+    object.name = "LoadedObject";
     object.pixelEntities = {77};
     std::vector<Pixel::GameObject> gameObjects{object};
 
@@ -98,9 +98,9 @@ TEST(ProjectEditorTests, SetSceneDataReplacesEditorState)
 
     editor.setSceneData(renderPixels, gameObjects, grid, 9);
 
-    const auto loadedPixels  = editor.getPixels();
+    const auto loadedPixels = editor.getPixels();
     const auto loadedObjects = editor.getGameObjects();
-    auto       loadedGrid    = editor.getChunkGrid();
+    auto loadedGrid = editor.getChunkGrid();
 
     ASSERT_EQ(loadedPixels.size(), 1u);
     EXPECT_FLOAT_EQ(loadedPixels[0].position.x, 20.0f);
@@ -145,14 +145,14 @@ TEST(ProjectEditorTests, SetSceneDataCountersAreUsedWhenPlacingSprite)
 
 TEST(ProjectEditorTests, RunExecutesAndPreservesSceneWithoutInput)
 {
-    graphics::Interface      iface(128, 128);
-    graphics::Renderer       renderer(iface.getWindow(), iface.getGLContext());
+    graphics::Interface iface(128, 128);
+    graphics::Renderer renderer(iface.getWindow(), iface.getGLContext());
     graphics::ImguiInterface imgui(iface.getWindow(), iface.getGLContext());
 
     editors::ProjectEditor editor(&iface, &renderer, &imgui, nullptr);
 
     std::vector<graphics::Pixel> renderPixels{{{0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}}};
-    Pixel::PixelAttributes       attributes;
+    Pixel::PixelAttributes attributes;
     attributes.renderIndex[5] = 0;
     ::ChunkGrid grid;
 

@@ -42,7 +42,7 @@ namespace graphics
 
         void showImGuiDemo();
 
-        void      pixelEditor(Pixel& pixel, ChunkGrid grid, const char* label);
+        void pixelEditor(Pixel& pixel, ChunkGrid grid, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
@@ -83,8 +83,8 @@ namespace graphics
         // Build progress modal — call each frame while building
         void showBuildProgressModal(const char* status, float progress, bool isComplete,
                                     bool isSuccess, const char* detail = nullptr);
-        int  projectOptionsBar(std::vector<projects::Project>& projects, std::string projectsPath);
-        int  projectsDisplay(std::vector<projects::Project>& projects);
+        int projectOptionsBar(std::vector<projects::Project>& projects, std::string projectsPath);
+        int projectsDisplay(std::vector<projects::Project>& projects);
         void clickableProjectOverview(projects::Project& project, ImFont* nameFont = nullptr,
                                       ImFont* infoFont = nullptr);
 
@@ -97,29 +97,29 @@ namespace graphics
             std::string path;
             std::string name;
             std::string ext;
-            bool        isDir = false;
+            bool isDir = false;
         };
 
         void loadExplorerIcons();
         void unloadExplorerIcons();
 
-        SDL_Window*            _window;
-        SDL_GLContext          _glContext;
-        float                  _uiScale          = 1.0f;
-        bool                   newProjectCreated = false;
-        ImFont*                fontLight         = nullptr;
-        ImFont*                fontRegularSmall  = nullptr;
-        ImFont*                fontRegularBig    = nullptr;
-        ImFont*                fontBoldSmall     = nullptr;
-        ImFont*                fontBoldBig       = nullptr;
-        ImTextureID            thumbnail;
-        std::string            _fileExplorerCurrentDir;
+        SDL_Window* _window;
+        SDL_GLContext _glContext;
+        float _uiScale = 1.0f;
+        bool newProjectCreated = false;
+        ImFont* fontLight = nullptr;
+        ImFont* fontRegularSmall = nullptr;
+        ImFont* fontRegularBig = nullptr;
+        ImFont* fontBoldSmall = nullptr;
+        ImFont* fontBoldBig = nullptr;
+        ImTextureID thumbnail;
+        std::string _fileExplorerCurrentDir;
         std::vector<FileEntry> _fileExplorerEntries;
-        bool                   _fileExplorerDataOnly = false;
-        std::string            _fileClipboardPath;
-        bool                   _fileClipboardCut = false;
-        GLuint                 _iconDirTexture   = 0;
-        GLuint                 _iconSceneTexture = 0;
-        GLuint                 _iconDataTexture  = 0;
+        bool _fileExplorerDataOnly = false;
+        std::string _fileClipboardPath;
+        bool _fileClipboardCut = false;
+        GLuint _iconDirTexture = 0;
+        GLuint _iconSceneTexture = 0;
+        GLuint _iconDataTexture = 0;
     };
 } // namespace graphics

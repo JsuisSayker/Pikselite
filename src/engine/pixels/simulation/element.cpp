@@ -3,9 +3,9 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
 #include <limits>
+#include <tracy/Tracy.hpp>
 #include <unordered_map>
 #include <unordered_set>
-#include <tracy/Tracy.hpp>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -35,7 +35,7 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
     if (dst.type == Element::EMPTY)
     {
-        dst                  = src;
+        dst = src;
         dst.updatedThisFrame = true;
 
         src = Element::Pixel{Element::EMPTY};
@@ -66,7 +66,7 @@ void updateWater(ChunkGrid& grid, int x, int y)
         Element::Pixel& below = grid.getPixelRef(x, y - i);
         if (below.type == Element::LAVA)
         {
-            below.type             = Element::STONE;
+            below.type = Element::STONE;
             below.updatedThisFrame = true;
             g_stoneRegionsDirtyThisFrame = true;
 
@@ -87,7 +87,7 @@ void updateWater(ChunkGrid& grid, int x, int y)
         int dx = (d == 0) ? dir : -dir;
         for (int i = 1; i <= maxDisp; ++i)
         {
-            int             nx  = x + dx * i;
+            int nx = x + dx * i;
             Element::Pixel& mid = grid.getPixelRef(x + dx * (i - 1), y);
             if (mid.type != Element::EMPTY && mid.type != Element::WATER)
                 break;
@@ -103,17 +103,18 @@ void updateWater(ChunkGrid& grid, int x, int y)
 void updateLava(ChunkGrid& grid, int x, int y)
 {
     ElementDefinition& def = g_elements[Element::LAVA];
-    
+
     if (rand() % 255 < def.fireParams.burnSpreadChance / 5)
     {
         Element::Pixel& p = grid.getPixelRef(x, y + 1);
-        if (p.type == Element::EMPTY) {
-            p.type             = Element::FIRE;
-            p.burnTimer        = g_elements[Element::FIRE].fireParams.burnDuration;
+        if (p.type == Element::EMPTY)
+        {
+            p.type = Element::FIRE;
+            p.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
             p.updatedThisFrame = true;
         }
     }
-    
+
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
         return;
 
@@ -126,7 +127,7 @@ void updateLava(ChunkGrid& grid, int x, int y)
         int dx = (d == 0) ? dir : -dir;
         for (int i = 1; i <= maxDisp; ++i)
         {
-            int             nx  = x + dx * i;
+            int nx = x + dx * i;
             Element::Pixel& mid = grid.getPixelRef(x + dx * (i - 1), y);
             if (mid.type != Element::EMPTY && mid.type != Element::LAVA)
                 break;
@@ -157,8 +158,8 @@ void updateLava(ChunkGrid& grid, int x, int y)
         uint16_t chance = (nDef.fireParams.flammability * def.fireParams.burnSpreadChance) / 255;
         if (rand() % 255 < chance)
         {
-            neighbor.isBurning        = true;
-            neighbor.burnTimer        = nDef.fireParams.burnDuration;
+            neighbor.isBurning = true;
+            neighbor.burnTimer = nDef.fireParams.burnDuration;
             neighbor.updatedThisFrame = true;
         }
     }
@@ -187,7 +188,7 @@ void updateSand(ChunkGrid& grid, int x, int y)
 void updateFire(ChunkGrid& grid, int x, int y)
 {
     ZoneScopedN("Sim::Fire");
-    Element::Pixel&    p   = grid.getPixelRef(x, y);
+    Element::Pixel& p = grid.getPixelRef(x, y);
     ElementDefinition& def = g_elements[Element::FIRE];
 
     if (p.burnTimer > 0)
@@ -216,8 +217,8 @@ void updateFire(ChunkGrid& grid, int x, int y)
         uint16_t chance = (nDef.fireParams.flammability * def.fireParams.burnSpreadChance) / 255;
         if (rand() % 255 < chance)
         {
-            neighbor.isBurning        = true;
-            neighbor.burnTimer        = nDef.fireParams.burnDuration;
+            neighbor.isBurning = true;
+            neighbor.burnTimer = nDef.fireParams.burnDuration;
             neighbor.updatedThisFrame = true;
         }
     }
@@ -237,14 +238,14 @@ void updateDebug(ChunkGrid& grid, int x, int y) {}
 void Simulation::initElements()
 {
     g_elements[Element::EMPTY] = {"Empty", {}, 0, SOLID_STATIC, 0, fireBehavior{}, nullptr, -1};
-    g_elements[Element::SAND]  = {"Sand", {}, 5, SOLID_DYNAMIC, 1, fireBehavior{}, updateSand, -1};
+    g_elements[Element::SAND] = {"Sand", {}, 5, SOLID_DYNAMIC, 1, fireBehavior{}, updateSand, -1};
     g_elements[Element::WATER] = {"Water", {}, 2, LIQUID, 5, fireBehavior{}, updateWater, -1};
-    g_elements[Element::LAVA]  = {"Lava", {}, 3, LIQUID, 2, fireBehavior{}, updateLava, -1};
-    g_elements[Element::FIRE]  = {"Fire", {}, 1, GAS, 1, fireBehavior{}, updateFire, -1};
+    g_elements[Element::LAVA] = {"Lava", {}, 3, LIQUID, 2, fireBehavior{}, updateLava, -1};
+    g_elements[Element::FIRE] = {"Fire", {}, 1, GAS, 1, fireBehavior{}, updateFire, -1};
     g_elements[Element::STONE] = {"Stone",        {},          255, SOLID_STATIC, 0,
                                   fireBehavior{}, updateStone, -1};
-    g_elements[Element::DIRT]  = {"Dirt", {}, 10, SOLID_STATIC, 1, fireBehavior{}, updateDirt, -1};
-    g_elements[Element::WOOD]  = {
+    g_elements[Element::DIRT] = {"Dirt", {}, 10, SOLID_STATIC, 1, fireBehavior{}, updateDirt, -1};
+    g_elements[Element::WOOD] = {
         "Wood", {}, 5, SOLID_STATIC, 1, fireBehavior{150, 20, 30, Element::FIRE}, nullptr, -1};
     g_elements[Element::DEBUG] = {"Debug", {}, 1, SOLID_STATIC, 0, fireBehavior{}, updateDebug, -1};
 
@@ -273,7 +274,7 @@ void Simulation::initElements()
 inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
 {
     ZoneScopedN("Sim::Burning");
-    Element::Pixel&    p          = grid.getPixelRef(x, y);
+    Element::Pixel& p = grid.getPixelRef(x, y);
     ElementDefinition& elementDef = g_elements[p.type];
 
     if (p.burnTimer > 0)
@@ -281,7 +282,7 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
     else
     {
         const Element::ElementType previousType = p.type;
-        p.type      = elementDef.fireParams.burnToElement;
+        p.type = elementDef.fireParams.burnToElement;
         p.isBurning = false;
         if (previousType == Element::STONE || p.type == Element::STONE)
         {
@@ -307,8 +308,8 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
             (nDef.fireParams.flammability * elementDef.fireParams.burnSpreadChance) / 255;
         if (rand() % 255 < chance)
         {
-            n.isBurning        = true;
-            n.burnTimer        = nDef.fireParams.burnDuration;
+            n.isBurning = true;
+            n.burnTimer = nDef.fireParams.burnDuration;
             n.updatedThisFrame = true;
         }
     }
@@ -318,15 +319,15 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
         Element::Pixel& p = grid.getPixelRef(x, y + 1);
         if (p.type != Element::EMPTY)
             return;
-        p.type             = Element::FIRE;
-        p.burnTimer        = g_elements[Element::FIRE].fireParams.burnDuration;
+        p.type = Element::FIRE;
+        p.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
         p.updatedThisFrame = true;
     }
 }
 
 void Simulation::updateParticles()
 {
-    for (auto it = particles.begin(); it != particles.end(); )
+    for (auto it = particles.begin(); it != particles.end();)
     {
         if (it->lifetime == 0)
         {
@@ -388,8 +389,8 @@ void Simulation::update()
 
     for (auto& entry : orderedChunks)
     {
-        int    cx    = entry.cx;
-        int    cy    = entry.cy;
+        int cx = entry.cx;
+        int cy = entry.cy;
         Chunk& chunk = *entry.chunk;
 
         bool flip = ((frame + cy) % 2 == 0);
@@ -427,11 +428,12 @@ void Simulation::update()
 
     if (regionsDirty)
     {
-       detectRegions();
+        detectRegions();
     }
 }
 
-void Simulation::spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime)
+void Simulation::spawnParticle(Element::ElementType type, Element::Vec2f position,
+                               Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime)
 {
     particles.push_back(Element::Particle{position, velocity, type, colorIndex, lifetime});
 }
@@ -461,9 +463,9 @@ void Simulation::setGrid(ChunkGrid& newGrid)
 
 void Simulation::setPhysicsWorld(b2WorldId worldId, float pixelsPerMeterValue)
 {
-    physicsWorld   = worldId;
+    physicsWorld = worldId;
     pixelsPerMeter = pixelsPerMeterValue;
-    regionsDirty   = true;
+    regionsDirty = true;
 }
 
 void Simulation::resetUpdatedFlags()
@@ -509,7 +511,7 @@ bool Simulation::tryDisplacePixel(int x, int y, int range)
         if (dst.type != Element::EMPTY)
             return false;
 
-        Element::Pixel moved   = existing;
+        Element::Pixel moved = existing;
         moved.updatedThisFrame = true;
         grid.setPixel(x, y, {Element::EMPTY, false});
         dst = moved;
@@ -675,7 +677,7 @@ void Simulation::buildRegionContoursMarchingSquare(Element::Region& region)
     int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
 
     std::unordered_set<int64_t> occ;
-    auto                        key = [](int x, int y) -> int64_t
+    auto key = [](int x, int y) -> int64_t
     { return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y); };
 
     for (const auto& p : region.pixels)
@@ -688,7 +690,7 @@ void Simulation::buildRegionContoursMarchingSquare(Element::Region& region)
     }
 
     auto filled = [&](int x, int y) { return occ.count(key(x, y)) > 0; };
-    auto P      = [&](float x, float y) { return Element::Vec2f{x, y}; };
+    auto P = [&](float x, float y) { return Element::Vec2f{x, y}; };
 
     for (int y = minY - 1; y <= maxY; ++y)
     {
@@ -800,11 +802,11 @@ namespace
             return std::sqrt(dx * dx + dy * dy);
         }
 
-        const float t     = c1 / c2;
+        const float t = c1 / c2;
         const float projx = a.x + t * vx;
         const float projy = a.y + t * vy;
-        const float dx    = p.x - projx;
-        const float dy    = p.y - projy;
+        const float dx = p.x - projx;
+        const float dy = p.y - projy;
         return std::sqrt(dx * dx + dy * dy);
     }
 
@@ -814,10 +816,10 @@ namespace
         if (end <= start + 1)
             return;
 
-        float                 maxDist = -1.0f;
-        int                   idx     = -1;
-        const Element::Vec2f& a       = pts[start];
-        const Element::Vec2f& b       = pts[end];
+        float maxDist = -1.0f;
+        int idx = -1;
+        const Element::Vec2f& a = pts[start];
+        const Element::Vec2f& b = pts[end];
 
         for (int i = start + 1; i < end; ++i)
         {
@@ -825,7 +827,7 @@ namespace
             if (d > maxDist)
             {
                 maxDist = d;
-                idx     = i;
+                idx = i;
             }
         }
 
@@ -844,7 +846,7 @@ namespace
 
         std::vector<bool> keep(pts.size(), false);
         keep.front() = true;
-        keep.back()  = true;
+        keep.back() = true;
 
         rdpRecursive(pts, 0, static_cast<int>(pts.size() - 1), eps, keep);
 
@@ -872,7 +874,7 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
 
     struct Node
     {
-        Element::Vec2f       p;
+        Element::Vec2f p;
         std::vector<int64_t> neighbors;
     };
 
@@ -892,8 +894,8 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
 
     for (const auto& seg : region.edges)
     {
-        IPoint  a  = quantize(seg.a);
-        IPoint  b  = quantize(seg.b);
+        IPoint a = quantize(seg.a);
+        IPoint b = quantize(seg.b);
         int64_t ka = makePointKey(a.x, a.y);
         int64_t kb = makePointKey(b.x, b.y);
 
@@ -904,7 +906,7 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
     }
 
     std::unordered_set<uint64_t> visitedEdges;
-    auto                         edgeKey = [](int64_t a, int64_t b) -> uint64_t
+    auto edgeKey = [](int64_t a, int64_t b) -> uint64_t
     {
         uint64_t ua = static_cast<uint64_t>(a);
         uint64_t ub = static_cast<uint64_t>(b);
@@ -922,8 +924,8 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
                 continue;
 
             std::vector<Element::Vec2f> loop;
-            int64_t                     prev = startKey;
-            int64_t                     curr = nextKey;
+            int64_t prev = startKey;
+            int64_t curr = nextKey;
 
             loop.push_back(nodes[startKey].p);
 

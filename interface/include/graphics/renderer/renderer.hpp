@@ -81,7 +81,8 @@ namespace graphics
          */
         void drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D& camera,
                                float pixelSize = PIXEL_SIZE);
-        void drawParticlesWCamera(const std::vector<Element::Particle>& particles, const Camera2D &camera, float pixelSize = PIXEL_SIZE);
+        void drawParticlesWCamera(const std::vector<Element::Particle>& particles,
+                                  const Camera2D& camera, float pixelSize = PIXEL_SIZE);
         /**
          * @brief Draws a grid overlay on the screen, with lines spaced according to the specified
          * cell size and colored based on the provided color.
@@ -136,13 +137,13 @@ namespace graphics
         uint8_t generatePixelColorIndex(int x, int y) const
         {
             uint32_t h = x * 374761393u + y * 668265263u; // large primes
-            h          = (h ^ (h >> 13)) * 1274126177u;
-            h          = h ^ (h >> 16);
+            h = (h ^ (h >> 13)) * 1274126177u;
+            h = h ^ (h >> 16);
             return h % PALETTE_SIZE; // Modulo by the number of colors in the palette
         }
 
       private:
-        SDL_Window*   _window;
+        SDL_Window* _window;
         SDL_GLContext _glContext;
         // Pixel shader
         GLuint _vao, _vbo, _shader;

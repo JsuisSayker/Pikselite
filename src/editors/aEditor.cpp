@@ -47,7 +47,7 @@ namespace editors
 
     bool AbstractEditor::loadSpriteForPlacement(const std::string& filename)
     {
-        _pendingSprite   = {};
+        _pendingSprite = {};
         _isPlacingSprite = false;
 
         std::ifstream fin(filename, std::ios::binary);
@@ -55,8 +55,8 @@ namespace editors
             return false;
 
         PendingSprite pending{};
-        int           minGX = std::numeric_limits<int>::max();
-        int           minGY = std::numeric_limits<int>::max();
+        int minGX = std::numeric_limits<int>::max();
+        int minGY = std::numeric_limits<int>::max();
         std::vector<std::pair<std::pair<int32_t, int32_t>,
                               std::vector<std::pair<int, Element::ElementType>>>>
             allChunks;
@@ -82,8 +82,8 @@ namespace editors
                 int ly = j / CHUNK_SIZE;
                 int gx = cx * CHUNK_SIZE + lx;
                 int gy = cy * CHUNK_SIZE + ly;
-                minGX  = std::min(minGX, gx);
-                minGY  = std::min(minGY, gy);
+                minGX = std::min(minGX, gx);
+                minGY = std::min(minGY, gy);
                 pixelsInChunk.push_back({j, type});
             }
             allChunks.push_back({{cx, cy}, std::move(pixelsInChunk)});
@@ -104,8 +104,8 @@ namespace editors
         }
 
         pending.sourceDatPath = filename;
-        pending.valid         = !pending.cells.empty();
-        _pendingSprite        = std::move(pending);
+        pending.valid = !pending.cells.empty();
+        _pendingSprite = std::move(pending);
         return _pendingSprite.valid;
     }
 
@@ -117,21 +117,21 @@ namespace editors
 
         glm::vec2 mousePos = _graphicsInterface->getMousePosition();
         glm::vec2 worldPos = screenToWorld(mousePos);
-        int       anchorGX = static_cast<int>(std::floor(worldPos.x / PIXEL_SIZE));
-        int       anchorGY = static_cast<int>(std::floor(worldPos.y / PIXEL_SIZE));
+        int anchorGX = static_cast<int>(std::floor(worldPos.x / PIXEL_SIZE));
+        int anchorGY = static_cast<int>(std::floor(worldPos.y / PIXEL_SIZE));
 
         out.reserve(_pendingSprite.cells.size());
         for (const auto& cell : _pendingSprite.cells)
         {
             graphics::Pixel p;
-            p.position      = {(anchorGX + cell.localGX) * PIXEL_SIZE,
-                               (anchorGY + cell.localGY) * PIXEL_SIZE};
+            p.position = {(anchorGX + cell.localGX) * PIXEL_SIZE,
+                          (anchorGY + cell.localGY) * PIXEL_SIZE};
             const auto& def = g_elements[cell.type];
-            uint8_t     i   = _renderer->generatePixelColorIndex(anchorGX + cell.localGX,
-                                                                 anchorGY + cell.localGY);
-            p.color         = {def.colorPalette[i % PALETTE_SIZE].r / 255.0f,
-                               def.colorPalette[i % PALETTE_SIZE].g / 255.0f,
-                               def.colorPalette[i % PALETTE_SIZE].b / 255.0f};
+            uint8_t i = _renderer->generatePixelColorIndex(anchorGX + cell.localGX,
+                                                           anchorGY + cell.localGY);
+            p.color = {def.colorPalette[i % PALETTE_SIZE].r / 255.0f,
+                       def.colorPalette[i % PALETTE_SIZE].g / 255.0f,
+                       def.colorPalette[i % PALETTE_SIZE].b / 255.0f};
             p.color *= 0.65f;
             out.push_back(p);
         }
@@ -154,13 +154,13 @@ namespace editors
                     if (sp.type == Element::EMPTY)
                         continue;
 
-                    const auto&     def = g_elements[sp.type];
+                    const auto& def = g_elements[sp.type];
                     graphics::Pixel rp;
                     rp.position = {(cx * CHUNK_SIZE + x) * PIXEL_SIZE,
                                    (cy * CHUNK_SIZE + y) * PIXEL_SIZE};
-                    rp.color    = {def.colorPalette[sp.colorIndex % PALETTE_SIZE].r / 255.0f,
-                                   def.colorPalette[sp.colorIndex % PALETTE_SIZE].g / 255.0f,
-                                   def.colorPalette[sp.colorIndex % PALETTE_SIZE].b / 255.0f};
+                    rp.color = {def.colorPalette[sp.colorIndex % PALETTE_SIZE].r / 255.0f,
+                                def.colorPalette[sp.colorIndex % PALETTE_SIZE].g / 255.0f,
+                                def.colorPalette[sp.colorIndex % PALETTE_SIZE].b / 255.0f};
                     result.push_back(rp);
                 }
             }

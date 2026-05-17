@@ -1,30 +1,31 @@
 #pragma once
 
-#include <vector>
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-
-#include <box2d/box2d.h>
-
 #include "engine/ecs/ISystem.hpp"
-#include "engine/managers/componentManager.hpp"
-#include "engine/physics/boxWorld.hpp"
-#include "engine/events/eventBus.hpp"
-#include "engine/events/events.hpp"
-#include "engine/ecs/components/transformComponent.hpp"
-#include "engine/ecs/components/velocityComponent.hpp"
 #include "engine/ecs/components/physicsComponent.hpp"
 #include "engine/ecs/components/spriteComponent.hpp"
+#include "engine/ecs/components/transformComponent.hpp"
+#include "engine/ecs/components/velocityComponent.hpp"
+#include "engine/events/eventBus.hpp"
+#include "engine/events/events.hpp"
+#include "engine/managers/componentManager.hpp"
+#include "engine/physics/boxWorld.hpp"
+
+#include <algorithm>
+#include <box2d/box2d.h>
+#include <cmath>
+#include <cstdint>
+#include <vector>
 
 namespace ecs::systems
 {
     class PhysicsSystem : public ISystem
     {
-    public:
+      public:
         explicit PhysicsSystem(engine::physics::BoxWorld* boxWorld,
                                engine::events::EventBus* eventBus = nullptr)
-            : _boxWorld(boxWorld), _eventBus(eventBus) {}
+            : _boxWorld(boxWorld), _eventBus(eventBus)
+        {
+        }
 
         std::vector<b2BodyId> getDebugBodies() const
         {
@@ -77,16 +78,17 @@ namespace ecs::systems
             {
                 auto& transform = componentManager.getComponent<components::Transform>(entity);
                 auto& physics = componentManager.getComponent<components::PhysicsBody>(entity);
-                
+
                 if (!physics.enabled)
                 {
                     continue;
                 }
 
-                const bool hasVelocity = componentManager.hasComponent<components::Velocity>(entity);
-                components::Velocity* velocity = hasVelocity
-                    ? &componentManager.getComponent<components::Velocity>(entity)
-                    : nullptr;
+                const bool hasVelocity =
+                    componentManager.hasComponent<components::Velocity>(entity);
+                components::Velocity* velocity =
+                    hasVelocity ? &componentManager.getComponent<components::Velocity>(entity)
+                                : nullptr;
 
                 const float desiredHorizontalVelocity = velocity ? velocity->vx : 0.0f;
                 const float desiredVerticalVelocity = velocity ? velocity->vy : 0.0f;
@@ -99,8 +101,8 @@ namespace ecs::systems
                     bodyDef.rotation = b2MakeRot(transform.rotation);
                     bodyDef.fixedRotation = physics.fixedRotation;
                     physics.bodyId = b2CreateBody(worldId, &bodyDef);
-                    b2Body_SetUserData(physics.bodyId,
-                                       reinterpret_cast<void*>(static_cast<std::uintptr_t>(entity)));
+                    b2Body_SetUserData(physics.bodyId, reinterpret_cast<void*>(
+                                                           static_cast<std::uintptr_t>(entity)));
                     _bodyByEntity[entity] = physics.bodyId;
 
                     b2ShapeDef shapeDef = b2DefaultShapeDef();
@@ -137,7 +139,8 @@ namespace ecs::systems
 
                         if (componentManager.hasComponent<components::Sprite>(entity))
                         {
-                            const auto& sprite = componentManager.getComponent<components::Sprite>(entity);
+                            const auto& sprite =
+                                componentManager.getComponent<components::Sprite>(entity);
                             width = sprite.width;
                             height = sprite.height;
                         }
@@ -191,7 +194,7 @@ namespace ecs::systems
             }
         }
 
-    private:
+      private:
         ecs::EntityID resolveEntityForShape(b2ShapeId shapeId) const
         {
             if (!b2Shape_IsValid(shapeId))

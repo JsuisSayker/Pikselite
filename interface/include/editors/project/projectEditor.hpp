@@ -107,19 +107,19 @@ namespace editors
         bool consumeSaveSceneRequest()
         {
             const bool requested = _saveSceneRequested;
-            _saveSceneRequested  = false;
+            _saveSceneRequested = false;
             return requested;
         }
         bool consumeLoadSceneRequest()
         {
             const bool requested = _loadSceneRequested;
-            _loadSceneRequested  = false;
+            _loadSceneRequested = false;
             return requested;
         }
         bool consumeBuildGameRequest()
         {
             const bool requested = _buildGameRequested;
-            _buildGameRequested  = false;
+            _buildGameRequested = false;
             return requested;
         }
 
@@ -129,7 +129,7 @@ namespace editors
          * determine which sprite is currently selected for placement in the scene.
          * @return A std::string containing the filename of the currently selected sprite, or an
          */
-        void setSceneData(const std::vector<graphics::Pixel>&   renderPixels,
+        void setSceneData(const std::vector<graphics::Pixel>& renderPixels,
                           const std::vector<Pixel::GameObject>& gameObjects,
                           const ChunkGrid& chunkGrid, uint32_t nextGameObjectId);
 
@@ -144,40 +144,40 @@ namespace editors
       private:
         struct PendingTexture
         {
-            bool        valid = false;
+            bool valid = false;
             std::string texturePath;
-            GLuint      textureID = 0;
-            float       width     = 640.0f;
-            float       height    = 640.0f;
+            GLuint textureID = 0;
+            float width = 640.0f;
+            float height = 640.0f;
         };
 
         engine::ComponentManager* _componentManager = nullptr;
 
-        uint32_t                                gameObjectCounter = 1;
-        std::vector<Pixel::GameObject>          _gameObjects;
-        bool                                    _leftMouseDownLastFrame  = false;
-        bool                                    _saveSceneRequested      = false;
-        bool                                    _loadSceneRequested      = false;
-        bool                                    _buildGameRequested      = false;
-        int                                     _selectedGameObjectIndex = -1;
+        uint32_t gameObjectCounter = 1;
+        std::vector<Pixel::GameObject> _gameObjects;
+        bool _leftMouseDownLastFrame = false;
+        bool _saveSceneRequested = false;
+        bool _loadSceneRequested = false;
+        bool _buildGameRequested = false;
+        int _selectedGameObjectIndex = -1;
         std::unordered_map<std::string, GLuint> _textureCache;
 
         // Build dialog state (rendered inside run() ImGui frame)
-        bool          _showBuildDialog      = false;
-        bool          _buildDialogConfirmed = false;
+        bool _showBuildDialog = false;
+        bool _buildDialogConfirmed = false;
         BuildSettings _buildDialogSettings;
 
         // Build progress state (rendered inside run() ImGui frame)
-        bool        _showBuildProgress    = false;
-        bool        _buildProgressDone    = false;
-        bool        _buildProgressSuccess = false;
+        bool _showBuildProgress = false;
+        bool _buildProgressDone = false;
+        bool _buildProgressSuccess = false;
         std::string _buildProgressOutput;
-        bool        _buildProgressDismissed = false;
+        bool _buildProgressDismissed = false;
 
-        bool              _isPlacingTexture = false;
-        PendingTexture    _pendingTexture   = {};
+        bool _isPlacingTexture = false;
+        PendingTexture _pendingTexture = {};
         projects::Project _currentProject;
-        std::string       _currentSceneFilename = "assets/default.scene";
+        std::string _currentSceneFilename = "assets/default.scene";
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event

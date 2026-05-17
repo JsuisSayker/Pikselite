@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cstdint>
 #include <cstdio> // for _popen, _pclose
 #include <engine/core.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
@@ -9,10 +11,6 @@
 #include <thread>
 #include <tracy/Tracy.hpp>
 #include <unordered_set>
-
-#include <cmath>
-#include <algorithm>
-#include <cstdint>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
@@ -76,9 +74,9 @@ namespace engine
                 if (projectEditor->consumeBuildGameRequest())
                 {
                     BuildSettings settings;
-                    settings.gameTitle  = _currentProject.name;
+                    settings.gameTitle = _currentProject.name;
                     settings.targetName = _currentProject.name;
-                    settings.scenePath  = _sceneFilename;
+                    settings.scenePath = _sceneFilename;
                     projectEditor->showBuildSettings(settings);
                 }
 
@@ -104,7 +102,7 @@ namespace engine
                     copyProjectEditorDataToCore();
 
                     const std::string& targetName = confirmedSettings.targetName;
-                    const std::string  assetsDir  = "games/" + targetName + "/assets";
+                    const std::string assetsDir = "games/" + targetName + "/assets";
 
                     // Save scene
                     std::filesystem::create_directories(assetsDir);
@@ -122,8 +120,8 @@ namespace engine
                     if (_buildThread.joinable())
                         _buildThread.join();
 
-                    _isBuilding   = true;
-                    _buildDone    = false;
+                    _isBuilding = true;
+                    _buildDone = false;
                     _buildSuccess = false;
                     {
                         std::lock_guard<std::mutex> lock(_buildOutputMutex);
@@ -139,7 +137,7 @@ namespace engine
                                     success ? "Build completed successfully.\n" : "Build failed.\n";
                             }
                             _buildSuccess = success;
-                            _buildDone    = true;
+                            _buildDone = true;
                         });
                 }
 
@@ -262,8 +260,6 @@ namespace engine
                                         glm::vec3(1.0f, 0.8f, 0.2f));
             }
 
-            
-
             // if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
             // {
             //     spriteSystem->update(0.0, componentManager);
@@ -290,8 +286,8 @@ namespace engine
     {
         _currentProject = _projects[index];
 
-        auto now                    = std::chrono::system_clock::now();
-        _currentProject.lastOpened  = now;
+        auto now = std::chrono::system_clock::now();
+        _currentProject.lastOpened = now;
         _projects[index].lastOpened = now;
 
         sortProjects(_projects);
@@ -362,8 +358,8 @@ namespace engine
         if (switchToProjectEditor)
         {
             isProjectsListPageActive = false;
-            isProjectEditorActive    = true;
-            switchToProjectEditor    = false;
+            isProjectEditorActive = true;
+            switchToProjectEditor = false;
             projectEditor->setCurrentProject(_currentProject);
         }
     }
@@ -397,7 +393,7 @@ namespace engine
                 if (!isProjectsListPageActive)
                 {
                     isProjectEditorActive = !isProjectEditorActive;
-                    isSpriteEditorActive  = !isSpriteEditorActive;
+                    isSpriteEditorActive = !isSpriteEditorActive;
                 }
                 break;
             case graphics::KEY_F5:
@@ -405,7 +401,7 @@ namespace engine
                 {
                     // Ensure preview reads the latest pixels/chunks from the editor state.
                     copyProjectEditorDataToCore();
-                    isGamePreviewActive             = true;
+                    isGamePreviewActive = true;
                     graphics::Camera2D editorCamera = projectEditor->getCamera();
                     setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
                     setCameraZoom(editorCamera.getZoom());
@@ -432,7 +428,6 @@ namespace engine
                 ZoneScopedN("Sim::Tick");
                 _pixelSimulation.update();
                 syncRegionBodiesToECS();
-
             }
 
             accumulator -= fixedDt;
@@ -492,7 +487,8 @@ namespace engine
             componentManager.addComponent(entityId, transformComponent);
             componentManager.addComponent(entityId, physicsComponent);
 
-            b2Body_SetUserData(bodyId, reinterpret_cast<void*>(static_cast<std::uintptr_t>(entityId)));
+            b2Body_SetUserData(bodyId,
+                               reinterpret_cast<void*>(static_cast<std::uintptr_t>(entityId)));
 
             _regionBodyEntities.push_back(entityId);
         }
@@ -556,15 +552,15 @@ namespace engine
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
                         ElementDefinition& fireDef = g_elements[Element::FIRE];
-                        glm::vec3          fColor  = glm::vec3(
+                        glm::vec3 fColor = glm::vec3(
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
                             fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        float progress    = (def.fireParams.burnDuration > 0)
-                                                ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
-                                                          def.fireParams.burnDuration)
-                                                : 1.0f;
-                        progress          = glm::clamp(progress, 0.0f, 1.0f);
+                        float progress = (def.fireParams.burnDuration > 0)
+                                             ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
+                                                       def.fireParams.burnDuration)
+                                             : 1.0f;
+                        progress = glm::clamp(progress, 0.0f, 1.0f);
                         renderPixel.color = glm::mix(pColor, fColor, progress);
                         renderPixel.color =
                             glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
@@ -588,9 +584,9 @@ namespace engine
     bool Core::buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats)
     {
         const std::string targetName = settings.targetName;
-        const std::string gameDir    = "games/" + targetName;
-        const std::string srcDir     = gameDir + "/src";
-        const std::string assetsDir  = gameDir + "/assets";
+        const std::string gameDir = "games/" + targetName;
+        const std::string srcDir = gameDir + "/src";
+        const std::string assetsDir = gameDir + "/assets";
 
         auto appendOutput = [this](const std::string& msg)
         {
@@ -699,7 +695,7 @@ namespace engine
         {
             std::filesystem::path src = datPath;
             std::filesystem::path dst = std::filesystem::path(assetsDir) / src.filename();
-            std::error_code       ec;
+            std::error_code ec;
             std::filesystem::copy_file(src, dst, std::filesystem::copy_options::overwrite_existing,
                                        ec);
             if (ec)
@@ -716,7 +712,7 @@ namespace engine
         {
             appendOutput("Re-configuring CMake...");
             std::string configureCmd = "cmake -B build 2>&1";
-            FILE*       pipe         = _popen(configureCmd.c_str(), "r");
+            FILE* pipe = _popen(configureCmd.c_str(), "r");
             if (!pipe)
             {
                 appendOutput("ERROR: Failed to run cmake configure");
@@ -800,9 +796,9 @@ namespace engine
 
     void Core::getProjectsFolderPath()
     {
-        std::filesystem::path exeDir       = std::filesystem::current_path();
+        std::filesystem::path exeDir = std::filesystem::current_path();
         std::filesystem::path projectsPath = exeDir / "Projects";
-        std::filesystem::path infoPath     = "config/info.json";
+        std::filesystem::path infoPath = "config/info.json";
 
         json j;
 
@@ -817,7 +813,7 @@ namespace engine
             }
         }
 
-        _projectsPath    = projectsPath.string();
+        _projectsPath = projectsPath.string();
         j["defaultPath"] = _projectsPath;
 
         std::ofstream outFile(infoPath);
@@ -832,7 +828,7 @@ namespace engine
     void Core::getJsonVariables()
     {
         std::filesystem::path configDir = "config";
-        std::filesystem::path infoPath  = configDir / "info.json";
+        std::filesystem::path infoPath = configDir / "info.json";
 
         if (!std::filesystem::exists(configDir))
         {
@@ -903,7 +899,7 @@ namespace engine
 
             projects::Project project;
 
-            auto fileTime   = std::filesystem::last_write_time(entry.path());
+            auto fileTime = std::filesystem::last_write_time(entry.path());
             auto systemTime = std::chrono::system_clock::now() +
                               (fileTime - std::filesystem::file_time_type::clock::now());
 
@@ -930,31 +926,39 @@ namespace engine
 
         for (const auto& entityPtr : entities)
         {
-            if (!entityPtr) continue;
+            if (!entityPtr)
+                continue;
             const ecs::EntityID entityId = entityPtr->id;
 
-            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
-            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
 
             auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
             auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
 
-            if (!sprite.enabled || !transform.enabled) continue;
-            if (sprite.layer >= layer) continue;
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer >= layer)
+                continue;
 
             drawList.push_back({sprite.layer, entityId});
         }
 
-        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
-        {
-            if (a.layer != b.layer) return a.layer < b.layer;
-            return a.entityId < b.entityId;
-        });
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
 
         for (const auto& item : drawList)
         {
             auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
-            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+            auto& transform =
+                componentManager.getComponent<ecs::components::Transform>(item.entityId);
 
             if (!sprite.loaded && !sprite.texturePath.empty())
             {
@@ -962,7 +966,8 @@ namespace engine
                 sprite.loaded = true;
             }
 
-            if (sprite.textureID == 0) continue;
+            if (sprite.textureID == 0)
+                continue;
 
             graphics::Sprite2D s2d;
             s2d.position = {transform.x, transform.y};
@@ -987,31 +992,39 @@ namespace engine
 
         for (const auto& entityPtr : entities)
         {
-            if (!entityPtr) continue;
+            if (!entityPtr)
+                continue;
             const ecs::EntityID entityId = entityPtr->id;
 
-            if (!componentManager.hasComponent<ecs::components::Transform>(entityId)) continue;
-            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId)) continue;
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
 
             auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
             auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
 
-            if (!sprite.enabled || !transform.enabled) continue;
-            if (sprite.layer <= layer) continue;
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer <= layer)
+                continue;
 
             drawList.push_back({sprite.layer, entityId});
         }
 
-        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
-        {
-            if (a.layer != b.layer) return a.layer < b.layer;
-            return a.entityId < b.entityId;
-        });
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
 
         for (const auto& item : drawList)
         {
             auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
-            auto& transform = componentManager.getComponent<ecs::components::Transform>(item.entityId);
+            auto& transform =
+                componentManager.getComponent<ecs::components::Transform>(item.entityId);
 
             if (!sprite.loaded && !sprite.texturePath.empty())
             {
@@ -1019,7 +1032,8 @@ namespace engine
                 sprite.loaded = true;
             }
 
-            if (sprite.textureID == 0) continue;
+            if (sprite.textureID == 0)
+                continue;
 
             graphics::Sprite2D s2d;
             s2d.position = {transform.x, transform.y};

@@ -13,14 +13,14 @@ namespace
     ecs::components::Transform makeTransform(float x, float y)
     {
         ecs::components::Transform t{};
-        t.enabled  = true;
-        t.x        = x;
-        t.y        = y;
+        t.enabled = true;
+        t.x = x;
+        t.y = y;
         t.rotation = 0.0f;
-        t.scaleX   = 1.0f;
-        t.scaleY   = 1.0f;
-        t.prevX    = 0.0f;
-        t.prevY    = 0.0f;
+        t.scaleX = 1.0f;
+        t.scaleY = 1.0f;
+        t.prevX = 0.0f;
+        t.prevY = 0.0f;
         return t;
     }
 
@@ -28,8 +28,8 @@ namespace
     {
         ecs::components::Velocity v{};
         v.enabled = true;
-        v.vx      = vx;
-        v.vy      = vy;
+        v.vx = vx;
+        v.vy = vy;
         return v;
     }
 
@@ -49,8 +49,8 @@ TEST(ComponentManagerTests, MutationCallbackIsTriggeredOnAddAndRemove)
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
-    int           callbackCount = 0;
-    ecs::EntityID lastEntity    = 0;
+    int callbackCount = 0;
+    ecs::EntityID lastEntity = 0;
 
     componentManager.setEntityMutationCallback(
         [&](ecs::EntityID entityId)
@@ -101,7 +101,7 @@ TEST(SystemManagerTests, MovementSystemMembershipFollowsSignature)
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
-    auto&                 movement = systemManager.addSystem<ecs::systems::MovementSystem>();
+    auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
     systemManager.setSignature<ecs::systems::MovementSystem>(
         makeMovementSignature(componentManager));
 
@@ -128,7 +128,7 @@ TEST(SystemManagerTests, SystemWithoutConfiguredSignatureDoesNotMatch)
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
-    auto&                 movement = systemManager.addSystem<ecs::systems::MovementSystem>();
+    auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
 
     constexpr ecs::EntityID entity = 9;
     systemManager.entitySignatureChanged(entity, makeMovementSignature(componentManager));
@@ -144,11 +144,11 @@ TEST(SystemManagerTests, UpdateAffectsOnlyMatchingEntities)
     componentManager.registerComponent<ecs::components::PhysicsBody>();
 
     engine::SystemManager systemManager;
-    auto&                 movement = systemManager.addSystem<ecs::systems::MovementSystem>();
+    auto& movement = systemManager.addSystem<ecs::systems::MovementSystem>();
     systemManager.setSignature<ecs::systems::MovementSystem>(
         makeMovementSignature(componentManager));
 
-    constexpr ecs::EntityID moving       = 1;
+    constexpr ecs::EntityID moving = 1;
     constexpr ecs::EntityID staticEntity = 2;
 
     componentManager.addComponent<ecs::components::Transform>(moving, makeTransform(0.0f, 0.0f));

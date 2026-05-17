@@ -31,8 +31,8 @@ static void writeSimpleSpriteData(const std::string& filename)
     // oldRenderIndex mapping
     uint32_t count = 1;
     fout.write(reinterpret_cast<const char*>(&count), sizeof(count));
-    PixelEntityID id    = 1;
-    int           index = 0;
+    PixelEntityID id = 1;
+    int index = 0;
     fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
     fout.write(reinterpret_cast<const char*>(&index), sizeof(index));
 
@@ -70,7 +70,7 @@ TEST(SpriteEditorTests, AddRemoveSaveLoadRoundtrip)
     editors::SpriteEditor loaded(nullptr, nullptr, nullptr);
 
     Pixel::DefaultPixelProperties props;
-    props.color   = glm::vec3(0.1f, 0.2f, 0.3f);
+    props.color = glm::vec3(0.1f, 0.2f, 0.3f);
     props.isSolid = true;
 
     editor.testAddPixel({0.0f, 0.0f}, props);
@@ -90,8 +90,8 @@ TEST(SpriteEditorTests, AddRemoveSaveLoadRoundtrip)
 TEST(SpriteEditorTests, RunHandlesMouseAndKeyboardAndImgui)
 {
     // Setup SDL/GL + ImGui via the project's graphics interface
-    graphics::Interface      iface(128, 128);
-    graphics::Renderer       renderer(iface.getWindow(), iface.getGLContext());
+    graphics::Interface iface(128, 128);
+    graphics::Renderer renderer(iface.getWindow(), iface.getGLContext());
     graphics::ImguiInterface imgui(iface.getWindow(), iface.getGLContext());
 
     editors::SpriteEditor editor(&iface, &renderer, &imgui);
@@ -149,8 +149,8 @@ TEST(SpriteEditorTests, RunHandlesMouseAndKeyboardAndImgui)
 
 TEST(SpriteEditorTests, KeyboardShortcutsLoadSaveViaImgui)
 {
-    graphics::Interface      iface(128, 128);
-    graphics::Renderer       renderer(iface.getWindow(), iface.getGLContext());
+    graphics::Interface iface(128, 128);
+    graphics::Renderer renderer(iface.getWindow(), iface.getGLContext());
     graphics::ImguiInterface imgui(iface.getWindow(), iface.getGLContext());
 
     editors::SpriteEditor editor(&iface, &renderer, &imgui);

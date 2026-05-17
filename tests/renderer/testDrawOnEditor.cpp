@@ -8,8 +8,8 @@
 
 TEST(RendererTests, BasicDrawPaths)
 {
-    SDL_Window*                window    = nullptr;
-    SDL_GLContext              glContext = nullptr;
+    SDL_Window* window = nullptr;
+    SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;
     testCommon.InitImGuiForTests(window, glContext);
 
@@ -34,15 +34,15 @@ TEST(RendererTests, BasicDrawPaths)
 
     // Create a small PNG 1x1 pixel (white) in a temp file.
     const std::string tmpPath = (std::filesystem::temp_directory_path() / "test_tex.png").string();
-    unsigned char     texPixels[3] = {255, 255, 255};
+    unsigned char texPixels[3] = {255, 255, 255};
     stbi_write_png(tmpPath.c_str(), 1, 1, 3, texPixels, 1 * 3);
 
     GLuint texId = renderer.loadTexture(tmpPath);
     EXPECT_NE(texId, 0u);
 
     graphics::Sprite2D sprite;
-    sprite.position  = glm::vec2(0.0f);
-    sprite.size      = glm::vec2(1.0f);
+    sprite.position = glm::vec2(0.0f);
+    sprite.size = glm::vec2(1.0f);
     sprite.textureID = texId;
 
     renderer.drawSprite(sprite, camera);
