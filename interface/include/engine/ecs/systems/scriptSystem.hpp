@@ -167,12 +167,16 @@ namespace ecs::systems
 
         struct PixelCommand
         {
-            int                  x        = 0;
-            int                  y        = 0;
-            Element::ElementType type     = Element::EMPTY;
-            float                vx       = 0.0f;
-            float                vy       = 0.0f;
-            uint16_t             lifetime = 600; // frames
+            int                  x          = 0;
+            int                  y          = 0;
+            Element::ElementType type       = Element::EMPTY;
+            // false -> write straight into the chunk grid (persistent cell, used for
+            // level building); true -> emit as a Simulation particle with the velocity
+            // and lifetime below (used by spawn_particle for hoses/throws).
+            bool                 isParticle = false;
+            float                vx         = 0.0f;
+            float                vy         = 0.0f;
+            uint16_t             lifetime   = 600; // frames
         };
 
         engine::EntityManager*    _entityManager      = nullptr;
@@ -620,7 +624,12 @@ namespace ecs::systems
                 return false;
 
             Element::ElementType type = parseElementType(element);
-            _pixelCommands.push_back(PixelCommand{x, y, type});
+            PixelCommand         cmd;
+            cmd.x          = x;
+            cmd.y          = y;
+            cmd.type       = type;
+            cmd.isParticle = false;
+            _pixelCommands.push_back(cmd);
             return true;
         }
 
@@ -631,7 +640,15 @@ namespace ecs::systems
                 return false;
 
             Element::ElementType type = parseElementType(element);
-            _pixelCommands.push_back(PixelCommand{x, y, type, vx, vy, lifetime});
+            PixelCommand         cmd;
+            cmd.x          = x;
+            cmd.y          = y;
+            cmd.type       = type;
+            cmd.isParticle = true;
+            cmd.vx         = vx;
+            cmd.vy         = vy;
+            cmd.lifetime   = lifetime;
+            _pixelCommands.push_back(cmd);
             return true;
         }
 
@@ -643,17 +660,34 @@ namespace ecs::systems
                 return;
             }
 
-            // Lua scripts request pixel placement in grid coordinates; route them through
-            // the simulation's particle system. Particle::position is stored in grid units
-            // (updateParticles indexes the grid by integer-casting position directly), so
-            // pass grid coords through as-is. Velocity is also in grid-units-per-frame.
+            // Two flavors of write coexist:
+            //   - create_pixel/create_pixels (isParticle=false): persistent grid cells,
+            //     used for level building and walls. Cleared by loadScene's grid wipe.
+            //   - spawn_particle (isParticle=true): ephemeral particle with velocity
+            //     and a lifetime, used for hoses/throws. Cleared by setGrid on reload.
+            ChunkGrid& grid = _simulation->getGrid();
             for (const PixelCommand& command : _pixelCommands)
             {
-                const Element::Vec2f position{static_cast<float>(command.x),
-                                              static_cast<float>(command.y)};
-                const Element::Vec2f velocity{command.vx, command.vy};
-                _simulation->spawnParticle(command.type, position, velocity,
-                                           /*colorIndex=*/0, command.lifetime);
+                if (command.isParticle)
+                {
+                    const Element::Vec2f position{static_cast<float>(command.x),
+                                                  static_cast<float>(command.y)};
+                    const Element::Vec2f velocity{command.vx, command.vy};
+                    _simulation->spawnParticle(command.type, position, velocity,
+                                               /*colorIndex=*/0, command.lifetime);
+                }
+                else
+                {
+                    Element::Pixel cell;
+                    cell.type       = command.type;
+                    cell.colorIndex = 0;
+                    if (command.type == Element::FIRE)
+                    {
+                        cell.burnTimer =
+                            g_elements[Element::FIRE].fireParams.burnDuration;
+                    }
+                    grid.setPixel(command.x, command.y, cell);
+                }
             }
 
             _pixelCommands.clear();

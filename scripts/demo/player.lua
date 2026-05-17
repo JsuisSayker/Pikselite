@@ -18,7 +18,7 @@ local PIXEL_SIZE = 10.0  -- must match the engine's PIXEL_SIZE
 local HOSE_SPEED          = 2.2   -- grid units per frame at the nozzle
 local HOSE_PARTICLES_FRAME = 3     -- particles per frame while held
 local HOSE_SPREAD          = 0.35  -- angular jitter (radians) — controls cone width
-local HOSE_LIFETIME        = 90    -- frames before a droplet evaporates
+local HOSE_LIFETIME        = 15    -- frames before a droplet evaporates
 local HOSE_OFFSET          = 2.4   -- grid units of muzzle offset from the player center
 
 local move_speed = 130.0

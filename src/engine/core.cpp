@@ -190,6 +190,12 @@ namespace engine
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
 
+        // Drop any reload request that survived the previous preview session. Without
+        // this, a Lua reload_scene() fired right before the user exited preview would
+        // execute on the *first* frame of the next session — re-tearing-down the
+        // scene that copyProjectEditorDataToCore just set up.
+        _pendingSceneLoadPath.reset();
+
         copyProjectEditorDataToCore();
         // _pixelSimulation.markRegionsDirty();
 
