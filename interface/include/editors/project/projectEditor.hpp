@@ -179,6 +179,25 @@ namespace editors
         projects::Project _currentProject;
         std::string _currentSceneFilename = "assets/default.scene";
 
+        // ── Translate gizmo ────────────────────────────────────────────────────
+        // Unity-style 2D move tool that appears around the selected GameObject:
+        //   - red X arrow (right): drag locks motion to the X axis
+        //   - green Y arrow (up):  drag locks motion to the Y axis
+        //   - yellow center square: drag freely in both axes
+        // Pixel-based GameObjects (those with pixelLocalCoords) snap to PIXEL_SIZE
+        // so their cells stay grid-aligned; sprite-only GameObjects move freely.
+        enum class GizmoHandle
+        {
+            None,
+            AxisX,
+            AxisY,
+            Center
+        };
+
+        GizmoHandle _gizmoDragHandle = GizmoHandle::None;
+        glm::vec2   _dragStartMouseWorld{0.0f, 0.0f};
+        glm::vec2   _dragStartTransform{0.0f, 0.0f};
+
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event
          * received. This includes managing mouse input for pixel placement and game object
@@ -232,5 +251,30 @@ namespace editors
          * Triggered by the right-click "Delete" entry in the Hierarchy panel.
          */
         void deleteGameObjectAt(int index);
+
+        // ── Selection / gizmo helpers ──────────────────────────────────────────
+        /** Returns the topmost (last-drawn) GameObject index whose sprite or pixel
+         *  footprint contains `world`, or -1 if none. */
+        int  pickGameObjectAtWorld(const glm::vec2& world) const;
+
+        /** Pixel-based GameObjects (those with `pixelLocalCoords`) get grid-snapped
+         *  movement so their cells stay aligned to PIXEL_SIZE. */
+        bool isPixelBasedGameObject(int index) const;
+
+        /** Returns which gizmo handle (if any) is under `world`. The selected
+         *  GameObject's transform is the gizmo origin. */
+        GizmoHandle hitTestGizmo(const glm::vec2& world) const;
+
+        /** Moves the selected GameObject so its transform sits at `newTransform`.
+         *  For pixel-based objects, clears the old grid cells and writes them at
+         *  the new anchor. Snap is applied here too. */
+        void moveSelectedGameObjectTo(const glm::vec2& newTransform);
+
+        /** Updates an in-progress gizmo drag from the current mouse state. Ends
+         *  the drag when LMB is released. Call once per frame. */
+        void updateGizmoDrag();
+
+        /** Draws the gizmo around the selected GameObject (no-op if none). */
+        void drawTranslateGizmo();
     };
 } // namespace editors

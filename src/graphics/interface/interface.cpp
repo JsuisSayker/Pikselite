@@ -121,7 +121,9 @@ namespace graphics
                             result.type = KEY_A;
                             return result;
                         case SDLK_s:
-                            result.type = KEY_S;
+                            // Ctrl+S is the editor save shortcut; plain S falls through
+                            // to the existing KEY_S used elsewhere (e.g. camera pan).
+                            result.type = (event.key.keysym.mod & KMOD_CTRL) ? KEY_CTRL_S : KEY_S;
                             return result;
                         case SDLK_d:
                             result.type = KEY_D;
