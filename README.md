@@ -24,6 +24,7 @@ setup.bat [Debug|Release]
 ```
 
 The script automatically:
+
 - Installs CMake v3.30.0 (portable) if not found
 - Clones and bootstraps vcpkg if not present
 - Installs Visual Studio 2022 Build Tools if missing
@@ -152,6 +153,7 @@ All dependencies are managed via vcpkg:
 The engine implements a custom ECS architecture:
 
 **Components:**
+
 - `Transform`: Position (x, y), rotation, scale (scaleX, scaleY)
 - `Velocity`: Velocity (vx, vy)
 - `Sprite`: Width, height, texture reference
@@ -159,6 +161,7 @@ The engine implements a custom ECS architecture:
 - `Script`: Per-entity Lua script attachment (`scriptPath`)
 
 **Systems:**
+
 - `MovementSystem`: Updates position based on velocity
 - `SpriteRenderSystem`: Renders sprite components with camera
 - `ScriptSystem`: Executes per-entity Lua scripts with callbacks and gameplay APIs
@@ -167,23 +170,27 @@ The engine implements a custom ECS architecture:
 ### Lua Scripting API (Runtime)
 
 Entities/components:
+
 - `get_entity(id)`, `get_entity_by_name(name)`, `get_entities()`
 - `create_entity(optionalTable)`, `delete_entity(id)`
 - `has_component(id, type)`, `get_component(id, type)`
 - `set_component(id, type, table)`, `add_component(id, type, table)`, `remove_component(id, type)`
 
 Gameplay:
+
 - `create_pixel(x, y, type)`, `create_pixels({...})`
 - `basic_chase(selfId, targetId, speed)`
 - `set_victory(reason)`, `set_lose(reason)`, `is_victory()`, `is_lose()`
 
 Optional script callbacks:
+
 - `on_collision_enter(otherId)`
 - `on_collision_exit(otherId)`
 - `on_victory(reason)`
 - `on_lose(reason)`
 
 **Managers:**
+
 - `EntityManager`: Entity allocation and destruction
 - `ComponentManager`: Component storage and retrieval
 - `SystemManager`: System updates and entity filtering
@@ -203,11 +210,13 @@ The pixel simulation system provides:
 Two built-in editors enable game content creation:
 
 **Sprite Editor:**
+
 - Draw pixels on a canvas
 - Create pixel-based sprite definitions
 - Zoom and pan navigation
 
 **Project Editor:**
+
 - Manage game objects
 - Configure components (Transform, Velocity, Sprite, PhysicsBody)
 - Edit chunk grid and elements
@@ -313,3 +322,7 @@ Tracy profiler integration provides frame-by-frame performance analysis:
 ## License
 
 See project repository for license information.
+
+## Thanks
+
+Special thanks to our mentor [Thomas Demachy](https://www.linkedin.com/in/thomasdemachy/?locale=fr) as well as [Philip Belhassen](https://www.linkedin.com/in/philip-belhassen/) and [Nicolas Perret](https://www.linkedin.com/in/nperret/) for their guidance and support throughout the development of this project.
