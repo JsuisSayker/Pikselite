@@ -49,8 +49,8 @@ namespace editors
         std::vector<graphics::Pixel> addPendingSpriteToRenderPixels();
         std::vector<graphics::Pixel> buildRenderPixels() const;
 
-        int toChunk(int g);
-        int toLocal(int g);
+        static int toChunk(int g);
+        static int toLocal(int g);
 
         graphics::ImguiInterface* _imguiInterface = nullptr;
         graphics::Interface* _graphicsInterface = nullptr;
