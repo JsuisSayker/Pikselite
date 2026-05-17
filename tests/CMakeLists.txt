@@ -20,17 +20,6 @@ add_executable(pikselite_tests
     graphics/testWindowSize.cpp
 )
 
-if(PIKSELITE_ENABLE_PROFILING)
-    message(STATUS "JE SUIS LA GROS COCHON")
-    find_package(tracy CONFIG REQUIRED)
-    add_custom_command(TARGET pikselite_tests POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:Tracy::TracyClient>"
-            $<TARGET_FILE_DIR:pikselite_tests>
-        COMMENT "Copying TracyClient.dll to test output directory"
-    )
-endif()
-
 target_compile_definitions(pikselite_tests PRIVATE UNIT_TEST)
 
 target_include_directories(pikselite_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -43,6 +32,15 @@ target_link_libraries(pikselite_tests
     graphics
     engine
     editor
+)
+
+# Copy all runtime DLLs to the test output directory
+add_custom_command(TARGET pikselite_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<TARGET_RUNTIME_DLLS:pikselite_tests>"
+        "$<TARGET_FILE_DIR:pikselite_tests>"
+    COMMAND_EXPAND_LISTS
+    COMMENT "Copying runtime DLLs to test output directory"
 )
 
 include(GoogleTest)

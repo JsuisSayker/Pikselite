@@ -3,6 +3,14 @@
 #include <graphics/renderer/renderer.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <tracy/Tracy.hpp>
+
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
 
 // Pixel shaders
 const char* vertexShaderSrc = R"(
@@ -214,12 +222,14 @@ namespace graphics
 
     void Renderer::present(SDL_Window* window)
     {
+        ZoneScopedN("Renderer::Present");
         SDL_GL_SwapWindow(window);
     }
 
     void Renderer::drawPixelsWCamera(const std::vector<Pixel>& pixels, const Camera2D& camera,
                                      float pixelSize)
     {
+        ZoneScopedN("Renderer::DrawPixelsWCamera");
         if (pixels.empty())
             return;
 

@@ -15,6 +15,14 @@
 #include <cmath>
 #include <cstdint>
 #include <vector>
+#include <tracy/Tracy.hpp>
+
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
 
 namespace ecs::systems
 {
@@ -67,6 +75,7 @@ namespace ecs::systems
 
         void update(double dt, engine::ComponentManager& componentManager) override
         {
+            ZoneScopedN("ECS::PhysicsSystem");
             if (!_boxWorld || !_boxWorld->isValid())
             {
                 return;

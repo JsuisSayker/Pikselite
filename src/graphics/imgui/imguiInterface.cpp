@@ -1432,6 +1432,7 @@ namespace graphics
                                 }
                                 query.clear();
                                 search[0] = '\0';
+                                break;
                             }
                         }
                     });
