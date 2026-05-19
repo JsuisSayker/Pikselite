@@ -56,11 +56,11 @@ namespace engine
         engine::SystemManager _systemManager;
         engine::events::EventBus _eventBus;
 
-        std::string                                            _currentScenePath;
+        std::string _currentScenePath;
         // Set by the SceneLoadRequestedEvent subscriber, drained in run().
-        std::optional<std::string>                             _pendingSceneLoadPath;
-        std::vector<Pixel::GameObject>                         _gameObjects;
-        uint32_t                                               _gameObjectCounter = 1;
+        std::optional<std::string> _pendingSceneLoadPath;
+        std::vector<Pixel::GameObject> _gameObjects;
+        uint32_t _gameObjectCounter = 1;
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
             _gameObjectOccupiedCells;

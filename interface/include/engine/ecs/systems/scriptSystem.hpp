@@ -31,11 +31,10 @@ namespace ecs::systems
     class ScriptSystem : public ISystem
     {
       public:
-        ScriptSystem(engine::EntityManager*    entityManager = nullptr,
-                     engine::SystemManager*    systemManager = nullptr,
-                     engine::events::EventBus* eventBus = nullptr,
-                     Simulation*               simulation = nullptr,
-                     graphics::Camera2D*       camera = nullptr)
+        ScriptSystem(engine::EntityManager* entityManager = nullptr,
+                     engine::SystemManager* systemManager = nullptr,
+                     engine::events::EventBus* eventBus = nullptr, Simulation* simulation = nullptr,
+                     graphics::Camera2D* camera = nullptr)
             : _entityManager(entityManager), _systemManager(systemManager), _eventBus(eventBus),
               _simulation(simulation), _camera(camera)
         {
@@ -167,24 +166,24 @@ namespace ecs::systems
 
         struct PixelCommand
         {
-            int                  x          = 0;
-            int                  y          = 0;
-            Element::ElementType type       = Element::EMPTY;
+            int x = 0;
+            int y = 0;
+            Element::ElementType type = Element::EMPTY;
             // false -> write straight into the chunk grid (persistent cell, used for
             // level building); true -> emit as a Simulation particle with the velocity
             // and lifetime below (used by spawn_particle for hoses/throws).
-            bool                 isParticle = false;
-            float                vx         = 0.0f;
-            float                vy         = 0.0f;
-            uint16_t             lifetime   = 600; // frames
+            bool isParticle = false;
+            float vx = 0.0f;
+            float vy = 0.0f;
+            uint16_t lifetime = 600; // frames
         };
 
-        engine::EntityManager*    _entityManager      = nullptr;
-        engine::SystemManager*    _systemManager      = nullptr;
-        engine::events::EventBus* _eventBus           = nullptr;
-        Simulation*               _simulation         = nullptr;
-        graphics::Camera2D*       _camera             = nullptr;
-        ecs::EntityID             _cameraFollowEntity = 0;
+        engine::EntityManager* _entityManager = nullptr;
+        engine::SystemManager* _systemManager = nullptr;
+        engine::events::EventBus* _eventBus = nullptr;
+        Simulation* _simulation = nullptr;
+        graphics::Camera2D* _camera = nullptr;
+        ecs::EntityID _cameraFollowEntity = 0;
 
         engine::ComponentManager* _activeComponentManager = nullptr;
         std::unordered_map<ecs::EntityID, ScriptInstance> _scriptInstances;
@@ -474,7 +473,8 @@ namespace ecs::systems
                              {
                                  if (!_eventBus)
                                      return;
-                                 auto ev  = std::make_unique<engine::events::SceneLoadRequestedEvent>();
+                                 auto ev =
+                                     std::make_unique<engine::events::SceneLoadRequestedEvent>();
                                  ev->path = "";
                                  _eventBus->publish(std::move(ev));
                              });
@@ -483,7 +483,8 @@ namespace ecs::systems
                              {
                                  if (!_eventBus)
                                      return;
-                                 auto ev  = std::make_unique<engine::events::SceneLoadRequestedEvent>();
+                                 auto ev =
+                                     std::make_unique<engine::events::SceneLoadRequestedEvent>();
                                  ev->path = path;
                                  _eventBus->publish(std::move(ev));
                              });
@@ -496,16 +497,15 @@ namespace ecs::systems
             //   type     — element name ("Water", "Sand", ...)
             //   vx, vy   — initial velocity in grid-units-per-frame
             //   lifetime — optional, frames before the particle expires (default 120)
-            lua.set_function(
-                "spawn_particle",
-                [this](int x, int y, sol::object element, double vx, double vy,
-                       sol::optional<int> lifetime) -> bool
-                {
-                    const int lifeFrames = lifetime.value_or(120);
-                    return queueParticleWrite(x, y, element, static_cast<float>(vx),
-                                              static_cast<float>(vy),
-                                              static_cast<uint16_t>(std::max(1, lifeFrames)));
-                });
+            lua.set_function("spawn_particle",
+                             [this](int x, int y, sol::object element, double vx, double vy,
+                                    sol::optional<int> lifetime) -> bool
+                             {
+                                 const int lifeFrames = lifetime.value_or(120);
+                                 return queueParticleWrite(
+                                     x, y, element, static_cast<float>(vx), static_cast<float>(vy),
+                                     static_cast<uint16_t>(std::max(1, lifeFrames)));
+                             });
 
             lua.set_function("create_pixels",
                              [this](sol::table entries) -> int
@@ -624,10 +624,10 @@ namespace ecs::systems
                 return false;
 
             Element::ElementType type = parseElementType(element);
-            PixelCommand         cmd;
-            cmd.x          = x;
-            cmd.y          = y;
-            cmd.type       = type;
+            PixelCommand cmd;
+            cmd.x = x;
+            cmd.y = y;
+            cmd.type = type;
             cmd.isParticle = false;
             _pixelCommands.push_back(cmd);
             return true;
@@ -640,14 +640,14 @@ namespace ecs::systems
                 return false;
 
             Element::ElementType type = parseElementType(element);
-            PixelCommand         cmd;
-            cmd.x          = x;
-            cmd.y          = y;
-            cmd.type       = type;
+            PixelCommand cmd;
+            cmd.x = x;
+            cmd.y = y;
+            cmd.type = type;
             cmd.isParticle = true;
-            cmd.vx         = vx;
-            cmd.vy         = vy;
-            cmd.lifetime   = lifetime;
+            cmd.vx = vx;
+            cmd.vy = vy;
+            cmd.lifetime = lifetime;
             _pixelCommands.push_back(cmd);
             return true;
         }
@@ -679,12 +679,11 @@ namespace ecs::systems
                 else
                 {
                     Element::Pixel cell;
-                    cell.type       = command.type;
+                    cell.type = command.type;
                     cell.colorIndex = 0;
                     if (command.type == Element::FIRE)
                     {
-                        cell.burnTimer =
-                            g_elements[Element::FIRE].fireParams.burnDuration;
+                        cell.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
                     }
                     grid.setPixel(command.x, command.y, cell);
                 }

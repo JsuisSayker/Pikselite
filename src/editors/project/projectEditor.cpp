@@ -28,8 +28,7 @@ namespace editors
         int deleteRequestIndex = -1;
         _imguiInterface->gameObjectsBar(_gameObjects, _selectedGameObjectIndex, _currentProject,
                                         deleteRequestIndex);
-        if (deleteRequestIndex >= 0 &&
-            deleteRequestIndex < static_cast<int>(_gameObjects.size()))
+        if (deleteRequestIndex >= 0 && deleteRequestIndex < static_cast<int>(_gameObjects.size()))
         {
             deleteGameObjectAt(deleteRequestIndex);
         }
@@ -144,10 +143,10 @@ namespace editors
                 break;
             case graphics::KEY_ESCAPE:
                 _isPlacingTexture = false;
-                _pendingTexture   = {};
+                _pendingTexture = {};
                 // Also cancel any in-progress gizmo drag and clear the selection
                 // so ESC is the universal "back out of what I'm doing" key.
-                _gizmoDragHandle         = GizmoHandle::None;
+                _gizmoDragHandle = GizmoHandle::None;
                 _selectedGameObjectIndex = -1;
                 break;
             case graphics::KEY_CTRL_S:
@@ -308,14 +307,13 @@ namespace editors
         {
             const int anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
             const int anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
-            const size_t pairCount =
-                std::min(go.pixels.size(), go.pixelLocalCoords.size());
+            const size_t pairCount = std::min(go.pixels.size(), go.pixelLocalCoords.size());
 
             for (size_t i = 0; i < pairCount; ++i)
             {
                 const auto& local = go.pixelLocalCoords[i];
-                const int   gridX = anchorGX + local.x;
-                const int   gridY = anchorGY + local.y;
+                const int gridX = anchorGX + local.x;
+                const int gridY = anchorGY + local.y;
                 _chunkGrid.setPixel(gridX, gridY, Element::Pixel{Element::EMPTY, false});
             }
         }
@@ -394,13 +392,13 @@ namespace editors
             const GizmoHandle handle = hitTestGizmo(worldPos);
             if (handle != GizmoHandle::None)
             {
-                const auto* transform =
-                    _gameObjects[_selectedGameObjectIndex].getComponent<ecs::components::Transform>();
+                const auto* transform = _gameObjects[_selectedGameObjectIndex]
+                                            .getComponent<ecs::components::Transform>();
                 if (transform)
                 {
-                    _gizmoDragHandle     = handle;
+                    _gizmoDragHandle = handle;
                     _dragStartMouseWorld = worldPos;
-                    _dragStartTransform  = {transform->x, transform->y};
+                    _dragStartTransform = {transform->x, transform->y};
                     return;
                 }
             }
@@ -416,8 +414,8 @@ namespace editors
         // Iterate in reverse so the topmost (last-drawn) GameObject wins.
         for (int i = static_cast<int>(_gameObjects.size()) - 1; i >= 0; --i)
         {
-            const Pixel::GameObject& go        = _gameObjects[i];
-            const auto*              transform = go.getComponent<ecs::components::Transform>();
+            const Pixel::GameObject& go = _gameObjects[i];
+            const auto* transform = go.getComponent<ecs::components::Transform>();
             if (!transform)
                 continue;
 
@@ -440,8 +438,8 @@ namespace editors
             // coords match (anchor-shifted).
             if (!go.pixelLocalCoords.empty())
             {
-                const int gridX    = static_cast<int>(std::floor(world.x / PIXEL_SIZE));
-                const int gridY    = static_cast<int>(std::floor(world.y / PIXEL_SIZE));
+                const int gridX = static_cast<int>(std::floor(world.x / PIXEL_SIZE));
+                const int gridY = static_cast<int>(std::floor(world.y / PIXEL_SIZE));
                 const int anchorGX = static_cast<int>(std::floor(transform->x / PIXEL_SIZE));
                 const int anchorGY = static_cast<int>(std::floor(transform->y / PIXEL_SIZE));
 
@@ -492,25 +490,25 @@ namespace editors
 
         // X shaft: thin band along +X, from just past the center to just before
         // the head. X head: ±2 cells wide, spanning cols 3..5.
-        if (world.x >= tx + P * 1.5f && world.x <= tx + P * 2.5f &&
-            world.y >= ty - P * 0.5f && world.y <= ty + P * 0.5f)
+        if (world.x >= tx + P * 1.5f && world.x <= tx + P * 2.5f && world.y >= ty - P * 0.5f &&
+            world.y <= ty + P * 0.5f)
         {
             return GizmoHandle::AxisX;
         }
-        if (world.x >= tx + P * 2.5f && world.x <= tx + P * 5.5f &&
-            world.y >= ty - P * 2.5f && world.y <= ty + P * 2.5f)
+        if (world.x >= tx + P * 2.5f && world.x <= tx + P * 5.5f && world.y >= ty - P * 2.5f &&
+            world.y <= ty + P * 2.5f)
         {
             return GizmoHandle::AxisX;
         }
 
         // Y shaft + head, mirrored.
-        if (world.x >= tx - P * 0.5f && world.x <= tx + P * 0.5f &&
-            world.y >= ty + P * 1.5f && world.y <= ty + P * 2.5f)
+        if (world.x >= tx - P * 0.5f && world.x <= tx + P * 0.5f && world.y >= ty + P * 1.5f &&
+            world.y <= ty + P * 2.5f)
         {
             return GizmoHandle::AxisY;
         }
-        if (world.x >= tx - P * 2.5f && world.x <= tx + P * 2.5f &&
-            world.y >= ty + P * 2.5f && world.y <= ty + P * 5.5f)
+        if (world.x >= tx - P * 2.5f && world.x <= tx + P * 2.5f && world.y >= ty + P * 2.5f &&
+            world.y <= ty + P * 5.5f)
         {
             return GizmoHandle::AxisY;
         }
@@ -548,8 +546,7 @@ namespace editors
 
             if (oldAnchorGX != newAnchorGX || oldAnchorGY != newAnchorGY)
             {
-                const size_t pairCount =
-                    std::min(go.pixels.size(), go.pixelLocalCoords.size());
+                const size_t pairCount = std::min(go.pixels.size(), go.pixelLocalCoords.size());
 
                 // 1) Clear the cells at the old anchor.
                 for (size_t i = 0; i < pairCount; ++i)
@@ -563,7 +560,7 @@ namespace editors
                 for (size_t i = 0; i < pairCount; ++i)
                 {
                     const auto& local = go.pixelLocalCoords[i];
-                    const auto& src   = go.pixels[i];
+                    const auto& src = go.pixels[i];
                     if (src.type == Element::EMPTY)
                         continue;
                     _chunkGrid.setPixel(newAnchorGX + local.x, newAnchorGY + local.y, src);
@@ -573,8 +570,8 @@ namespace editors
 
         transform->prevX = target.x;
         transform->prevY = target.y;
-        transform->x     = target.x;
-        transform->y     = target.y;
+        transform->x = target.x;
+        transform->y = target.y;
     }
 
     void ProjectEditor::updateGizmoDrag()
@@ -599,8 +596,8 @@ namespace editors
         }
 
         const glm::vec2 mouseScreen = _graphicsInterface->getMousePosition();
-        const glm::vec2 mouseWorld  = screenToWorld(mouseScreen);
-        glm::vec2       delta       = mouseWorld - _dragStartMouseWorld;
+        const glm::vec2 mouseWorld = screenToWorld(mouseScreen);
+        glm::vec2 delta = mouseWorld - _dragStartMouseWorld;
 
         // Axis lock — zero out the off-axis component for AxisX / AxisY handles.
         if (_gizmoDragHandle == GizmoHandle::AxisX)
@@ -627,12 +624,12 @@ namespace editors
 
         // Two-tone palette: shaft uses the darker shade, arrowhead the brighter one.
         // Reads as a proper arrow at low zoom while keeping the pixel-art look.
-        const glm::vec3 RED_SHAFT    = {0.78f, 0.15f, 0.15f};
-        const glm::vec3 RED_HEAD     = {1.00f, 0.35f, 0.35f};
-        const glm::vec3 GREEN_SHAFT  = {0.15f, 0.72f, 0.20f};
-        const glm::vec3 GREEN_HEAD   = {0.40f, 1.00f, 0.45f};
-        const glm::vec3 YELLOW_CORE  = {1.00f, 0.92f, 0.20f};
-        const glm::vec3 YELLOW_EDGE  = {1.00f, 0.78f, 0.10f};
+        const glm::vec3 RED_SHAFT = {0.78f, 0.15f, 0.15f};
+        const glm::vec3 RED_HEAD = {1.00f, 0.35f, 0.35f};
+        const glm::vec3 GREEN_SHAFT = {0.15f, 0.72f, 0.20f};
+        const glm::vec3 GREEN_HEAD = {0.40f, 1.00f, 0.45f};
+        const glm::vec3 YELLOW_CORE = {1.00f, 0.92f, 0.20f};
+        const glm::vec3 YELLOW_EDGE = {1.00f, 0.78f, 0.10f};
 
         // Build the gizmo as colored "pixels" sized to PIXEL_SIZE so it reads as
         // grid-cell-sized arrows at any zoom. Reuses the point-sprite shader.
@@ -643,7 +640,7 @@ namespace editors
         {
             graphics::Pixel p;
             p.position = {tx + gx * PIXEL_SIZE, ty + gy * PIXEL_SIZE};
-            p.color    = color;
+            p.color = color;
             gizmoPixels.push_back(p);
         };
 

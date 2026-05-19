@@ -980,9 +980,9 @@ namespace graphics
      * @param currentProject A reference to the current project.
      */
     void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
-                                        int&                              selectedGameObjectIndex,
-                                        const projects::Project&          currentProject,
-                                        int&                              deleteRequestIndex)
+                                        int& selectedGameObjectIndex,
+                                        const projects::Project& currentProject,
+                                        int& deleteRequestIndex)
     {
         static BarConfig sideBarConfig{BarOrientation::Vertical, "Hierarchy",
                                        ImVec2(LAYOUT_LEFT_W, 0.0f), true,

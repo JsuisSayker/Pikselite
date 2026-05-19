@@ -150,7 +150,7 @@ namespace engine
         eventBus.subscribe<events::SceneLoadRequestedEvent>(
             [this](const events::SceneLoadRequestedEvent& ev) { _pendingSceneLoadPath = ev.path; });
 
-        spriteEditor  = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
+        spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface,
                                                    &componentManager);
 

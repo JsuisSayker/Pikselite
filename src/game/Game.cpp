@@ -210,8 +210,8 @@ namespace engine
             return false;
         }
 
-        _currentScenePath  = filename;
-        _gameObjects       = std::move(data.gameObjects);
+        _currentScenePath = filename;
+        _gameObjects = std::move(data.gameObjects);
         _gameObjectCounter = data.nextGameObjectId;
 
         _chunkGrid.chunks.clear();

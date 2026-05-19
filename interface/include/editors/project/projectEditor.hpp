@@ -195,8 +195,8 @@ namespace editors
         };
 
         GizmoHandle _gizmoDragHandle = GizmoHandle::None;
-        glm::vec2   _dragStartMouseWorld{0.0f, 0.0f};
-        glm::vec2   _dragStartTransform{0.0f, 0.0f};
+        glm::vec2 _dragStartMouseWorld{0.0f, 0.0f};
+        glm::vec2 _dragStartTransform{0.0f, 0.0f};
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event
@@ -255,7 +255,7 @@ namespace editors
         // ── Selection / gizmo helpers ──────────────────────────────────────────
         /** Returns the topmost (last-drawn) GameObject index whose sprite or pixel
          *  footprint contains `world`, or -1 if none. */
-        int  pickGameObjectAtWorld(const glm::vec2& world) const;
+        int pickGameObjectAtWorld(const glm::vec2& world) const;
 
         /** Pixel-based GameObjects (those with `pixelLocalCoords`) get grid-snapped
          *  movement so their cells stay aligned to PIXEL_SIZE. */

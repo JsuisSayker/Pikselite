@@ -237,7 +237,7 @@ namespace engine
                 if (loadScene(target))
                 {
                     _sceneFilename = target;
-                    accumulator    = 0.0f; // discard physics catch-up from the old scene
+                    accumulator = 0.0f; // discard physics catch-up from the old scene
                 }
             }
 
