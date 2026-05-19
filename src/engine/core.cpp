@@ -767,6 +767,8 @@ namespace engine
 
         appendOutput("Game build complete! Output: build/" + targetName + "/Release/" + targetName +
                      ".exe");
+        // TODO: Standalone game executables also need runtime DLLs deployed. Add a
+        // $<TARGET_RUNTIME_DLLS> POST_BUILD step to the generated games/<target>/CMakeLists.txt.
         return true;
     }
 
