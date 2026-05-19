@@ -1,9 +1,19 @@
 #include "engine/ecs/systems/spriteRenderSystem.hpp"
 
+#include <tracy/Tracy.hpp>
+
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
+
 namespace ecs::systems
 {
     void SpriteRenderSystem::update(double dt, engine::ComponentManager& componentManager)
     {
+        ZoneScopedN("ECS::SpriteRenderSystem");
         (void)dt; // not used for rendering
 
         for (auto entity : entities)

@@ -196,7 +196,7 @@ namespace engine
         std::function<void(ecs::EntityID, const std::type_index&)> onComponentRemoved;
 
         // Guard: prevent registration overflow
-        void checkComponentCapacity()
+        void checkComponentCapacity() const
         {
             if (nextComponentType >= MAX_COMPONENT_TYPES)
             {

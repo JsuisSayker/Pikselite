@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 # -------------------------------------------------
 # Set overlay ports directory
 # -------------------------------------------------
@@ -70,6 +70,8 @@ if(PIKSELITE_ENABLE_PROFILING)
     find_package(tracy CONFIG REQUIRED)
     target_link_libraries(engine PRIVATE Tracy::TracyClient)
     target_link_libraries(game PRIVATE Tracy::TracyClient)
+    target_link_libraries(graphics PRIVATE Tracy::TracyClient)
+    target_link_libraries(pikselite_interface INTERFACE Tracy::TracyClient)
     target_compile_definitions(engine PRIVATE
         $<$<CONFIG:Debug>:TRACY_ENABLE>
     )
@@ -88,16 +90,6 @@ if(BUILD_EDITORS)
 
     add_executable(${PROJECT_NAME} src/main.cpp)
 
-    # Copy TracyClient.dll to output directory after build
-    if(PIKSELITE_ENABLE_PROFILING)
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "$<TARGET_FILE:Tracy::TracyClient>"
-                $<TARGET_FILE_DIR:${PROJECT_NAME}>
-            COMMENT "Copying TracyClient.dll to output directory"
-        )
-    endif()
-
     target_link_libraries(${PROJECT_NAME}
         PRIVATE
         SDL2::SDL2
@@ -112,6 +104,15 @@ if(BUILD_EDITORS)
         editor
         nlohmann_json::nlohmann_json
         nfd::nfd
+    )
+
+    # Copy all runtime DLLs to the executable output directory
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_RUNTIME_DLLS:${PROJECT_NAME}>"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        COMMAND_EXPAND_LISTS
+        COMMENT "Copying runtime DLLs to output directory"
     )
 endif()
 
