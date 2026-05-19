@@ -89,6 +89,7 @@ namespace graphics
         KEY_TAB,
         KEY_F5,
         KEY_ESCAPE,
+        KEY_CTRL_S,
         MOUSE_LEFT_CLICK,
         MOUSE_LEFT_DRAG,
         MOUSE_RIGHT_CLICK,

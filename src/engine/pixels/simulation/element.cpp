@@ -453,6 +453,11 @@ void Simulation::setGrid(ChunkGrid& newGrid)
     detectedRegions.clear();
     regionBodies.clear();
     regionBodyBindings.clear();
+    // Particles are tied to the previous grid (water/lava/fire mid-fall, lifetime
+    // counters in progress). Carrying them into the new grid produces stray
+    // pixels — most visibly the orange Lava particles that read as "fire" after
+    // a scene reload.
+    particles.clear();
     regionsDirty = true;
 }
 

@@ -154,6 +154,10 @@ namespace engine
                 {
                     copyProjectEditorDataToCore();
                     _sceneFilename = projectEditor->getSceneFilename();
+                    // Top-left Save can fire before any scene has been opened/created.
+                    // In that case fall back to a default file in the project's assets dir.
+                    if (_sceneFilename.empty())
+                        _sceneFilename = "assets/default.scene";
                     saveScene(_sceneFilename);
                 }
 
@@ -183,6 +187,12 @@ namespace engine
                              WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
+
+        // Drop any reload request that survived the previous preview session. Without
+        // this, a Lua reload_scene() fired right before the user exited preview would
+        // execute on the *first* frame of the next session — re-tearing-down the
+        // scene that copyProjectEditorDataToCore just set up.
+        _pendingSceneLoadPath.reset();
 
         copyProjectEditorDataToCore();
         // _pixelSimulation.markRegionsDirty();
@@ -216,6 +226,20 @@ namespace engine
             }
 
             update(timer.getDeltaTime());
+
+            // Honor reload_scene() / load_scene(path) calls dispatched on the event bus
+            // during this frame's script update.
+            if (_pendingSceneLoadPath)
+            {
+                const std::string target =
+                    _pendingSceneLoadPath->empty() ? _sceneFilename : *_pendingSceneLoadPath;
+                _pendingSceneLoadPath.reset();
+                if (loadScene(target))
+                {
+                    _sceneFilename = target;
+                    accumulator = 0.0f; // discard physics catch-up from the old scene
+                }
+            }
 
             renderer.clear();
 

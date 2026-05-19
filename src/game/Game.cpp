@@ -166,7 +166,7 @@ namespace engine
         _systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
 
         auto& scriptSys = _systemManager.addSystem<ecs::systems::ScriptSystem>(
-            &_entityManager, &_systemManager, &_eventBus, &_chunkGrid, &_camera);
+            &_entityManager, &_systemManager, &_eventBus, &_pixelSimulation, &_camera);
         ecs::Signature scriptSig;
         scriptSig.set(_componentManager.getComponentType<ecs::components::Script>());
         _systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
@@ -194,6 +194,11 @@ namespace engine
             });
 
         scriptSys.init();
+
+        // Scripts request scene reloads via the event bus. Queue the target path;
+        // run() drains it between frames so loadScene runs outside the ECS update.
+        _eventBus.subscribe<events::SceneLoadRequestedEvent>(
+            [this](const events::SceneLoadRequestedEvent& ev) { _pendingSceneLoadPath = ev.path; });
     }
 
     bool Game::loadScene(const std::string& filename)
@@ -205,6 +210,7 @@ namespace engine
             return false;
         }
 
+        _currentScenePath = filename;
         _gameObjects = std::move(data.gameObjects);
         _gameObjectCounter = data.nextGameObjectId;
 
@@ -558,6 +564,20 @@ namespace engine
             _timer.tick();
             handleEvents();
             update(_timer.getDeltaTime());
+
+            // Drain any reload_scene() / load_scene(path) dispatched on the event bus
+            // during this frame.
+            if (_pendingSceneLoadPath)
+            {
+                const std::string target =
+                    _pendingSceneLoadPath->empty() ? _currentScenePath : *_pendingSceneLoadPath;
+                _pendingSceneLoadPath.reset();
+                if (!target.empty() && loadScene(target))
+                {
+                    _accumulator = 0.0f; // discard physics catch-up from the old scene
+                }
+            }
+
             render();
             FrameMark;
         }
