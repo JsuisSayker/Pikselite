@@ -37,4 +37,19 @@ namespace engine::events
     {
         std::string reason;
     };
+
+    /**
+     * @brief Requests a scene reload/load.
+     *
+     * Published synchronously (e.g. from Lua's `reload_scene()` / `load_scene(path)`).
+     * Handlers should *queue* the request and process it between frames, never
+     * call `loadScene` directly from the handler — entities are likely being
+     * iterated when this fires.
+     *
+     * An empty `path` means "reload the currently loaded scene".
+     */
+    struct SceneLoadRequestedEvent : IEvent
+    {
+        std::string path;
+    };
 } // namespace engine::events

@@ -14,15 +14,25 @@
 #include "engine/managers/systemManager.hpp"
 #include "engine/pixels/simulation/chunk.hpp"
 #include "engine/pixels/simulation/element.hpp"
+#include "engine/pixels/simulation/simulation.hpp"
 
 #include <SDL2/SDL.h>
 #include <cctype>
 #include <cmath>
+#include <graphics/graphicsEnum.hpp>
 #include <graphics/renderer/camera.hpp>
 #include <memory>
 #include <string>
+#include <tracy/Tracy.hpp>
 #include <unordered_map>
 #include <vector>
+
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
 
 namespace ecs::systems
 {
@@ -31,10 +41,10 @@ namespace ecs::systems
       public:
         ScriptSystem(engine::EntityManager* entityManager = nullptr,
                      engine::SystemManager* systemManager = nullptr,
-                     engine::events::EventBus* eventBus = nullptr, ChunkGrid* chunkGrid = nullptr,
+                     engine::events::EventBus* eventBus = nullptr, Simulation* simulation = nullptr,
                      graphics::Camera2D* camera = nullptr)
             : _entityManager(entityManager), _systemManager(systemManager), _eventBus(eventBus),
-              _chunkGrid(chunkGrid), _camera(camera)
+              _simulation(simulation), _camera(camera)
         {
         }
 
@@ -107,6 +117,7 @@ namespace ecs::systems
          */
         void update(double dt, engine::ComponentManager& componentManager) override
         {
+            ZoneScopedN("ECS::ScriptSystem");
             if (!_entityManager)
                 return;
 
@@ -167,12 +178,19 @@ namespace ecs::systems
             int x = 0;
             int y = 0;
             Element::ElementType type = Element::EMPTY;
+            // false -> write straight into the chunk grid (persistent cell, used for
+            // level building); true -> emit as a Simulation particle with the velocity
+            // and lifetime below (used by spawn_particle for hoses/throws).
+            bool isParticle = false;
+            float vx = 0.0f;
+            float vy = 0.0f;
+            uint16_t lifetime = 600; // frames
         };
 
         engine::EntityManager* _entityManager = nullptr;
         engine::SystemManager* _systemManager = nullptr;
         engine::events::EventBus* _eventBus = nullptr;
-        ChunkGrid* _chunkGrid = nullptr;
+        Simulation* _simulation = nullptr;
         graphics::Camera2D* _camera = nullptr;
         ecs::EntityID _cameraFollowEntity = 0;
 
@@ -456,8 +474,47 @@ namespace ecs::systems
             lua.set_function("is_victory", [this]() -> bool { return _victory; });
             lua.set_function("is_lose", [this]() -> bool { return _lose; });
 
+            // Scene control. Publishes an event on the bus; the host (Core/Game)
+            // queues the request and processes it between frames, so we don't tear
+            // down entities while the script update is still iterating them.
+            lua.set_function("reload_scene",
+                             [this]()
+                             {
+                                 if (!_eventBus)
+                                     return;
+                                 auto ev =
+                                     std::make_unique<engine::events::SceneLoadRequestedEvent>();
+                                 ev->path = "";
+                                 _eventBus->publish(std::move(ev));
+                             });
+            lua.set_function("load_scene",
+                             [this](const std::string& path)
+                             {
+                                 if (!_eventBus)
+                                     return;
+                                 auto ev =
+                                     std::make_unique<engine::events::SceneLoadRequestedEvent>();
+                                 ev->path = path;
+                                 _eventBus->publish(std::move(ev));
+                             });
+
             lua.set_function("create_pixel", [this](int x, int y, sol::object element) -> bool
                              { return queuePixelWrite(x, y, element); });
+
+            // spawn_particle(x, y, type, vx, vy[, lifetime])
+            //   x, y     — grid coordinates of the spawn point
+            //   type     — element name ("Water", "Sand", ...)
+            //   vx, vy   — initial velocity in grid-units-per-frame
+            //   lifetime — optional, frames before the particle expires (default 120)
+            lua.set_function("spawn_particle",
+                             [this](int x, int y, sol::object element, double vx, double vy,
+                                    sol::optional<int> lifetime) -> bool
+                             {
+                                 const int lifeFrames = lifetime.value_or(120);
+                                 return queueParticleWrite(
+                                     x, y, element, static_cast<float>(vx), static_cast<float>(vy),
+                                     static_cast<uint16_t>(std::max(1, lifeFrames)));
+                             });
 
             lua.set_function("create_pixels",
                              [this](sol::table entries) -> int
@@ -572,25 +629,73 @@ namespace ecs::systems
 
         bool queuePixelWrite(int x, int y, sol::object element)
         {
-            if (_chunkGrid == nullptr)
+            if (_simulation == nullptr)
                 return false;
 
             Element::ElementType type = parseElementType(element);
-            _pixelCommands.push_back(PixelCommand{x, y, type});
+            PixelCommand cmd;
+            cmd.x = x;
+            cmd.y = y;
+            cmd.type = type;
+            cmd.isParticle = false;
+            _pixelCommands.push_back(cmd);
+            return true;
+        }
+
+        bool queueParticleWrite(int x, int y, sol::object element, float vx, float vy,
+                                uint16_t lifetime)
+        {
+            if (_simulation == nullptr)
+                return false;
+
+            Element::ElementType type = parseElementType(element);
+            PixelCommand cmd;
+            cmd.x = x;
+            cmd.y = y;
+            cmd.type = type;
+            cmd.isParticle = true;
+            cmd.vx = vx;
+            cmd.vy = vy;
+            cmd.lifetime = lifetime;
+            _pixelCommands.push_back(cmd);
             return true;
         }
 
         void flushPixelCommands()
         {
-            if (_chunkGrid == nullptr)
+            if (_simulation == nullptr)
             {
                 _pixelCommands.clear();
                 return;
             }
 
+            // Two flavors of write coexist:
+            //   - create_pixel/create_pixels (isParticle=false): persistent grid cells,
+            //     used for level building and walls. Cleared by loadScene's grid wipe.
+            //   - spawn_particle (isParticle=true): ephemeral particle with velocity
+            //     and a lifetime, used for hoses/throws. Cleared by setGrid on reload.
+            ChunkGrid& grid = _simulation->getGrid();
             for (const PixelCommand& command : _pixelCommands)
             {
-                _chunkGrid->setPixel(command.x, command.y, {command.type, false});
+                if (command.isParticle)
+                {
+                    const Element::Vec2f position{static_cast<float>(command.x),
+                                                  static_cast<float>(command.y)};
+                    const Element::Vec2f velocity{command.vx, command.vy};
+                    _simulation->spawnParticle(command.type, position, velocity,
+                                               /*colorIndex=*/0, command.lifetime);
+                }
+                else
+                {
+                    Element::Pixel cell;
+                    cell.type = command.type;
+                    cell.colorIndex = 0;
+                    if (command.type == Element::FIRE)
+                    {
+                        cell.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
+                    }
+                    grid.setPixel(command.x, command.y, cell);
+                }
             }
 
             _pixelCommands.clear();

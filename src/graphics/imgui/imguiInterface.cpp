@@ -442,7 +442,7 @@ namespace graphics
     /**
      * @brief Displays an empty top toolbar for the project editor.
      */
-    void ImguiInterface::projectTopBar(std::string title)
+    void ImguiInterface::projectTopBar(bool& saveSceneRequested, std::string title)
     {
         static BarConfig topBarConfig{BarOrientation::Horizontal, "Project Top Bar",
                                       ImVec2(0.0f, LAYOUT_TOP_H), true, GetDesiredPosition("top")};
@@ -453,7 +453,7 @@ namespace graphics
             {
                 if (BasicButton("Save"))
                 {
-                    //
+                    saveSceneRequested = true;
                 }
 
                 ImVec2 textSize = ImGui::CalcTextSize(title.c_str());
@@ -608,9 +608,8 @@ namespace graphics
                 if (BasicButton("New File"))
                     ImGui::OpenPopup("NewFilePopup");
 
-                ImGui::SameLine();
-                if (BasicButton("Save Scene"))
-                    saveSceneRequested = true;
+                // "Save Scene" lives on the top-left toolbar now — projectTopBar drives
+                // `saveSceneRequested`. The bottom bar keeps file-explorer actions only.
 
                 ImGui::SameLine();
                 if (BasicButton("Build Game"))
@@ -982,7 +981,8 @@ namespace graphics
      */
     void ImguiInterface::gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
                                         int& selectedGameObjectIndex,
-                                        const projects::Project& currentProject)
+                                        const projects::Project& currentProject,
+                                        int& deleteRequestIndex)
     {
         static BarConfig sideBarConfig{BarOrientation::Vertical, "Hierarchy",
                                        ImVec2(LAYOUT_LEFT_W, 0.0f), true,
@@ -1043,12 +1043,9 @@ namespace graphics
 
                         if (ImGui::MenuItem("Delete"))
                         {
-                            if (selectedGameObjectIndex == (int)i)
-                                selectedGameObjectIndex = -1;
-                            else if (selectedGameObjectIndex > (int)i)
-                                selectedGameObjectIndex--;
-
-                            gameObjects.erase(gameObjects.begin() + i);
+                            // Defer the actual deletion — the caller has the chunk grid /
+                            // ECS context needed to fully clean up the GameObject's pixels.
+                            deleteRequestIndex = (int)i;
 
                             ImGui::EndPopup();
                             ImGui::PopID();
@@ -1432,6 +1429,7 @@ namespace graphics
                                 }
                                 query.clear();
                                 search[0] = '\0';
+                                break;
                             }
                         }
                     });

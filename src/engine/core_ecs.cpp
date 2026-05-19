@@ -114,7 +114,7 @@ namespace engine
 
         // Script system (needs Transform + Velocity) — runs Lua scripts
         auto& scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>(
-            &entityManager, &systemManager, &eventBus, &_chunkGrid, &_camera);
+            &entityManager, &systemManager, &eventBus, &_pixelSimulation, &_camera);
         ecs::Signature scriptSig;
         scriptSig.set(componentManager.getComponentType<ecs::components::Script>());
         systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
@@ -143,6 +143,12 @@ namespace engine
             });
 
         scriptSys.init();
+
+        // Scripts request scene reloads via the event bus. Queue the target path
+        // here; runGamePreview drains it between frames so loadScene runs outside
+        // the ECS update.
+        eventBus.subscribe<events::SceneLoadRequestedEvent>(
+            [this](const events::SceneLoadRequestedEvent& ev) { _pendingSceneLoadPath = ev.path; });
 
         spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
         projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface,
