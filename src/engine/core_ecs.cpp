@@ -78,6 +78,12 @@ namespace engine
         _pixelSimulation.setGrid(_chunkGrid);
         gameObjectCounter = projectEditor->getGameObjectCounter();
 
+        {
+            graphics::Camera2D editorCam = projectEditor->getCamera();
+            _camera.setPosition(editorCam.getPosition().x, editorCam.getPosition().y);
+            _camera.setZoom(editorCam.getZoom());
+        }
+
         loadGameObjectsIntoECS();
 
         return true;

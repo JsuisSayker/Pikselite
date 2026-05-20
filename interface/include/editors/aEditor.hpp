@@ -24,6 +24,11 @@ namespace editors
             return _camera;
         }
 
+        void setCamera(const graphics::Camera2D& cam)
+        {
+            _camera = cam;
+        }
+
       protected:
         struct PendingCell
         {
