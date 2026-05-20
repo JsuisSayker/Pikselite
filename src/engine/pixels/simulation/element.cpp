@@ -364,8 +364,9 @@ void Simulation::updateParticles()
                     Element::Pixel neighbor = grid.getPixel(nx, ny);
                     if (neighbor.type != Element::EMPTY)
                     {
+                        ElementDefinition& Def = g_elements[it->type];
                         // reinsert the particle in the grid and stop its movement
-                        grid.setPixel(gridX, gridY, {it->type, false, 0, 0, false});
+                        grid.setPixel(gridX, gridY, {it->type, false, 0, Def.fireParams.burnDuration, false});
                         it = particles.erase(it);
                         erased = true;
                         break;

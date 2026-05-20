@@ -202,6 +202,7 @@ namespace engine::scene
             writeString(out, s.texturePath);
             writeF32(out, s.width);
             writeF32(out, s.height);
+            writeI32(out, s.layer);
         }
 
         void serializeComponentPhysicsBody(std::vector<uint8_t>& out,
@@ -274,6 +275,8 @@ namespace engine::scene
             if (!readF32(data, offset, s.width))
                 return false;
             if (!readF32(data, offset, s.height))
+                return false;
+            if (!readI32(data, offset, s.layer))
                 return false;
             s.textureID = 0;
             s.loaded = false;

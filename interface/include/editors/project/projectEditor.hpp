@@ -238,6 +238,8 @@ namespace editors
         bool isTextureFile(const std::string& path) const;
         void placeTextureAtWorldInGameObject(glm::vec2 worldPos, const std::string& texturePath);
         void drawGameObjectSprites();
+        void drawSpritesBelowLayer(int layer);
+        void drawSpritesAboveLayer(int layer);
 
         bool loadTextureForPlacement(const std::string& texturePath);
         void drawPendingTexturePreview();

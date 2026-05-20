@@ -56,8 +56,9 @@ namespace editors
                            pendingSpritePixels.end());
         _renderPixels = framePixels; // cache for editing
 
+        drawSpritesBelowLayer(0);
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
-        drawGameObjectSprites();
+        drawSpritesAboveLayer(0);
         drawPendingTexturePreview();
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
 
@@ -334,6 +335,130 @@ namespace editors
             if (!go.isActive)
                 continue;
 
+            auto* sprite = go.getComponent<ecs::components::Sprite>();
+            auto* transform = go.getComponent<ecs::components::Transform>();
+            if (!sprite || !transform || !sprite->enabled)
+                continue;
+
+            auto textureIt = _textureCache.find(sprite->texturePath);
+            if (textureIt == _textureCache.end())
+            {
+                const GLuint textureId = _renderer->loadTexture(sprite->texturePath);
+                _textureCache[sprite->texturePath] = textureId;
+                textureIt = _textureCache.find(sprite->texturePath);
+            }
+
+            if (textureIt == _textureCache.end() || textureIt->second == 0)
+                continue;
+
+            graphics::Sprite2D sprite2d;
+            sprite2d.position = {transform->x, transform->y};
+            sprite2d.size = {sprite->width * transform->scaleX, sprite->height * transform->scaleY};
+            sprite2d.textureID = textureIt->second;
+            _renderer->drawSprite(sprite2d, _camera);
+        }
+    }
+
+    void ProjectEditor::drawSpritesBelowLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            std::size_t index;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        drawList.reserve(_gameObjects.size());
+
+        for (std::size_t i = 0; i < _gameObjects.size(); ++i)
+        {
+            auto& go = _gameObjects[i];
+            if (!go.isActive)
+                continue;
+
+            auto* sprite = go.getComponent<ecs::components::Sprite>();
+            auto* transform = go.getComponent<ecs::components::Transform>();
+            if (!sprite || !transform || !sprite->enabled)
+                continue;
+
+            if (sprite->layer >= layer)
+                continue;
+
+            drawList.push_back({sprite->layer, i});
+        }
+
+        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+        {
+            if (a.layer != b.layer)
+                return a.layer < b.layer;
+            return a.index < b.index;
+        });
+
+        for (const auto& item : drawList)
+        {
+            auto& go = _gameObjects[item.index];
+            auto* sprite = go.getComponent<ecs::components::Sprite>();
+            auto* transform = go.getComponent<ecs::components::Transform>();
+            if (!sprite || !transform || !sprite->enabled)
+                continue;
+
+            auto textureIt = _textureCache.find(sprite->texturePath);
+            if (textureIt == _textureCache.end())
+            {
+                const GLuint textureId = _renderer->loadTexture(sprite->texturePath);
+                _textureCache[sprite->texturePath] = textureId;
+                textureIt = _textureCache.find(sprite->texturePath);
+            }
+
+            if (textureIt == _textureCache.end() || textureIt->second == 0)
+                continue;
+
+            graphics::Sprite2D sprite2d;
+            sprite2d.position = {transform->x, transform->y};
+            sprite2d.size = {sprite->width * transform->scaleX, sprite->height * transform->scaleY};
+            sprite2d.textureID = textureIt->second;
+            _renderer->drawSprite(sprite2d, _camera);
+        }
+    }
+
+    void ProjectEditor::drawSpritesAboveLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            std::size_t index;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        drawList.reserve(_gameObjects.size());
+
+        for (std::size_t i = 0; i < _gameObjects.size(); ++i)
+        {
+            auto& go = _gameObjects[i];
+            if (!go.isActive)
+                continue;
+
+            auto* sprite = go.getComponent<ecs::components::Sprite>();
+            auto* transform = go.getComponent<ecs::components::Transform>();
+            if (!sprite || !transform || !sprite->enabled)
+                continue;
+
+            if (sprite->layer <= layer)
+                continue;
+
+            drawList.push_back({sprite->layer, i});
+        }
+
+        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+        {
+            if (a.layer != b.layer)
+                return a.layer < b.layer;
+            return a.index < b.index;
+        });
+
+        for (const auto& item : drawList)
+        {
+            auto& go = _gameObjects[item.index];
             auto* sprite = go.getComponent<ecs::components::Sprite>();
             auto* transform = go.getComponent<ecs::components::Transform>();
             if (!sprite || !transform || !sprite->enabled)
