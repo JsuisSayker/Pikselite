@@ -10,7 +10,6 @@ imgui.ini
 
 pikselite
 
-*.png
 !assets/ui/icons/*.png
 *.json
 
