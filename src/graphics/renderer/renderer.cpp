@@ -217,6 +217,14 @@ namespace graphics
         glBindVertexArray(0);
     }
 
+    void Renderer::setWindow(SDL_Window* window)
+    {
+        _window = window;
+        int w, h;
+        SDL_GetWindowSize(_window, &w, &h);
+        glViewport(0, 0, w, h);
+    }
+
     void Renderer::clear()
     {
         glClear(GL_COLOR_BUFFER_BIT);

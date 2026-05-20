@@ -187,6 +187,7 @@ namespace engine
                              WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
+        renderer.setWindow(gameWindow);
 
         // Drop any reload request that survived the previous preview session. Without
         // this, a Lua reload_scene() fired right before the user exited preview would
@@ -270,9 +271,7 @@ namespace engine
 
         SDL_DestroyWindow(gameWindow);
         SDL_GL_MakeCurrent(sdlInterface.getWindow(), sdlInterface.getGLContext());
-        int w, h;
-        SDL_GetWindowSize(sdlInterface.getWindow(), &w, &h);
-        glViewport(0, 0, w, h);
+        renderer.setWindow(sdlInterface.getWindow());
     }
 
     void Core::sortProjects(std::vector<projects::Project>& projects)
