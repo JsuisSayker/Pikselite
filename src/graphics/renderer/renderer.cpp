@@ -1,6 +1,8 @@
 #include <box2d/collision.h>
 #include <box2d/math_functions.h>
 #include <graphics/renderer/renderer.hpp>
+#include <algorithm>
+#include <cmath>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <tracy/Tracy.hpp>
@@ -255,7 +257,7 @@ namespace graphics
             glUniform2f(screenLoc, (float)width, (float)height);
 
         // Point size
-        float effectivePointSize = pixelSize * camera.getZoom();
+        float effectivePointSize = std::max(1.0f, std::ceil(pixelSize * camera.getZoom() - 1e-3f));
         GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
         if (sizeLoc != -1)
             glUniform1f(sizeLoc, effectivePointSize);
@@ -328,9 +330,10 @@ namespace graphics
             glUniform2f(screenLoc, (float)width, (float)height);
 
         // Set point size
+        float effectivePointSize = std::max(1.0f, std::ceil(pixelSize - 1e-3f));
         GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
         if (sizeLoc != -1)
-            glUniform1f(sizeLoc, pixelSize);
+            glUniform1f(sizeLoc, effectivePointSize);
 
         // Upload vertex data
         glBindVertexArray(_vao);
