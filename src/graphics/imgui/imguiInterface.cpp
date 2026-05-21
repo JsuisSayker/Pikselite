@@ -399,7 +399,8 @@ namespace graphics
      * @param isEraserActive A reference to a boolean that indicates whether the eraser tool is
      * currently active.
      */
-    void ImguiInterface::spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive)
+    void ImguiInterface::spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive,
+                                          bool& clearAllRequested)
     {
         static BarConfig topBarConfig{BarOrientation::Horizontal, "Sprite Tools",
                                       ImVec2(0.0f, LAYOUT_TOP_H), true, GetDesiredPosition("top")};
@@ -431,6 +432,15 @@ namespace graphics
 
                 ImGui::SetNextItemWidth(180.0f);
                 ImGui::SliderInt("Brush Size", &brushSize, 1, 8);
+
+                ImGui::SameLine();
+                ImGui::TextUnformatted("|");
+                ImGui::SameLine();
+
+                if (ImGui::Button("Clear All"))
+                {
+                    clearAllRequested = true;
+                }
 
                 if (selectedTool == 1)
                 {
