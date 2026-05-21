@@ -5,6 +5,8 @@
 #include <cstdio> // for _popen, _pclose
 #include <engine/core.hpp>
 #include <engine/renderUtils.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
 #include <engine/scene/sceneSerializer.hpp>
 #include <fstream>
@@ -105,10 +107,66 @@ namespace engine
                     const std::string& targetName = confirmedSettings.targetName;
                     const std::string assetsDir = "games/" + targetName + "/assets";
 
-                    // Save scene
+                    // Save scene with assets bundled for standalone game
                     std::filesystem::create_directories(assetsDir);
                     const std::string scenePath = assetsDir + "/scene.scene";
-                    saveScene(scenePath);
+                    {
+                        engine::scene::SceneData buildData;
+                        buildData.gameObjects = _gameObjects;
+                        buildData.nextGameObjectId = gameObjectCounter;
+                        buildData.cameraX = _camera.getPosition().x;
+                        buildData.cameraY = _camera.getPosition().y;
+                        buildData.cameraZoom = _camera.getZoom();
+
+                        // Copy external assets and rewrite paths to be relative
+                        // to the built game's assets directory
+                        for (auto& go : buildData.gameObjects)
+                        {
+                            if (auto* sprite = go.getComponent<ecs::components::Sprite>())
+                            {
+                                if (!sprite->texturePath.empty())
+                                {
+                                    std::filesystem::path src =
+                                        std::filesystem::absolute(sprite->texturePath);
+                                    if (std::filesystem::exists(src))
+                                    {
+                                        std::filesystem::path dst =
+                                            std::filesystem::path(assetsDir) / "sprites" /
+                                            src.filename();
+                                        std::filesystem::create_directories(dst.parent_path());
+                                        std::filesystem::copy_file(
+                                            src, dst,
+                                            std::filesystem::copy_options::overwrite_existing);
+                                        sprite->texturePath =
+                                            "assets/sprites/" + src.filename().string();
+                                    }
+                                }
+                            }
+                            if (auto* script = go.getComponent<ecs::components::Script>())
+                            {
+                                if (!script->scriptPath.empty())
+                                {
+                                    std::filesystem::path src =
+                                        std::filesystem::absolute(script->scriptPath);
+                                    if (std::filesystem::exists(src))
+                                    {
+                                        std::filesystem::path dst =
+                                            std::filesystem::path(assetsDir) / "scripts" /
+                                            src.filename();
+                                        std::filesystem::create_directories(dst.parent_path());
+                                        std::filesystem::copy_file(
+                                            src, dst,
+                                            std::filesystem::copy_options::overwrite_existing);
+                                        script->scriptPath =
+                                            "assets/scripts/" + src.filename().string();
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!engine::scene::saveSceneToFile(scenePath, buildData))
+                            std::cerr << "Failed to save scene: " << scenePath << std::endl;
+                    }
 
                     // Collect used .dat files
                     std::vector<std::string> neededDats;
