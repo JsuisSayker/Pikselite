@@ -1,6 +1,6 @@
 #include <engine/renderUtils.hpp>
-#include <glm/glm.hpp>
 #include <glm/common.hpp>
+#include <glm/glm.hpp>
 
 namespace engine
 {
@@ -67,4 +67,4 @@ namespace engine
         }
         return result;
     }
-}
+} // namespace engine

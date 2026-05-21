@@ -1,8 +1,8 @@
+#include <algorithm>
 #include <box2d/collision.h>
 #include <box2d/math_functions.h>
-#include <graphics/renderer/renderer.hpp>
-#include <algorithm>
 #include <cmath>
+#include <graphics/renderer/renderer.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <tracy/Tracy.hpp>

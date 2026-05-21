@@ -579,7 +579,8 @@ namespace engine::scene
 
         Header header;
         inFile.read(reinterpret_cast<char*>(&header), sizeof(header));
-        if (!inFile || header.magic != kSceneMagic || header.version < 3 || header.version > kSceneVersion)
+        if (!inFile || header.magic != kSceneMagic || header.version < 3 ||
+            header.version > kSceneVersion)
         {
             return false;
         }

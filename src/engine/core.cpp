@@ -4,10 +4,10 @@
 #include <cstdint>
 #include <cstdio> // for _popen, _pclose
 #include <engine/core.hpp>
-#include <engine/renderUtils.hpp>
 #include <engine/ecs/components/scriptComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/renderUtils.hpp>
 #include <engine/scene/sceneSerializer.hpp>
 #include <fstream>
 #include <mutex>

@@ -365,8 +365,7 @@ namespace engine
             if (!_componentManager.hasComponent<ecs::components::PhysicsBody>(entityId))
                 continue;
 
-            auto& physics =
-                _componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
+            auto& physics = _componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
             if (!physics.enabled)
                 continue;
 
