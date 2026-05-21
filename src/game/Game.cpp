@@ -690,6 +690,7 @@ namespace engine
         _renderer->clear();
         drawSpritesBelowLayer(0);
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+        _renderer->drawParticlesWCamera(_pixelSimulation.getParticles(), _camera, PIXEL_SIZE);
 
         if (auto* physicsSystem = _systemManager.getSystem<ecs::systems::PhysicsSystem>())
         {
