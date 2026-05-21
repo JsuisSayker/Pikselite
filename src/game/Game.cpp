@@ -481,12 +481,145 @@ namespace engine
         syncGameObjectPixelsFromPhysics();
     }
 
+    void Game::drawSpritesBelowLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = _entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr)
+                continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!_componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!_componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
+
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = _componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer >= layer)
+                continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform =
+                _componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = _renderer->loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0)
+                continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            _renderer->drawSprite(s2d, _camera);
+        }
+    }
+
+    void Game::drawSpritesAboveLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = _entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr)
+                continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!_componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!_componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
+
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = _componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer <= layer)
+                continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform =
+                _componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = _renderer->loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0)
+                continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            _renderer->drawSprite(s2d, _camera);
+        }
+    }
+
     void Game::render()
     {
         ZoneScopedN("Game::Render");
         std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
 
         _renderer->clear();
+        drawSpritesBelowLayer(0);
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
 
         if (auto* physicsSystem = _systemManager.getSystem<ecs::systems::PhysicsSystem>())
@@ -496,10 +629,7 @@ namespace engine
                                       glm::vec3(1.0f, 0.8f, 0.2f));
         }
 
-        if (auto* spriteSystem = _systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
-        {
-            spriteSystem->update(0.0, _componentManager);
-        }
+        drawSpritesAboveLayer(0);
 
         _renderer->present(_window);
     }
