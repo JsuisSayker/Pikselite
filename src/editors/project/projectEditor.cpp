@@ -387,12 +387,13 @@ namespace editors
             drawList.push_back({sprite->layer, i});
         }
 
-        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
-        {
-            if (a.layer != b.layer)
-                return a.layer < b.layer;
-            return a.index < b.index;
-        });
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.index < b.index;
+                  });
 
         for (const auto& item : drawList)
         {
@@ -449,12 +450,13 @@ namespace editors
             drawList.push_back({sprite->layer, i});
         }
 
-        std::sort(drawList.begin(), drawList.end(), [](const SpriteDrawItem& a, const SpriteDrawItem& b)
-        {
-            if (a.layer != b.layer)
-                return a.layer < b.layer;
-            return a.index < b.index;
-        });
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.index < b.index;
+                  });
 
         for (const auto& item : drawList)
         {

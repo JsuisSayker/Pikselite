@@ -10,6 +10,7 @@
 #include <engine/ecs/systems/physicsSystem.hpp>
 #include <engine/ecs/systems/scriptSystem.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/renderUtils.hpp>
 #include <engine/scene/sceneSerializer.hpp>
 #include <game/Game.hpp>
 #include <iostream>
@@ -256,6 +257,9 @@ namespace engine
             }
         }
 
+        _camera.setPosition(data.cameraX, data.cameraY);
+        _camera.setZoom(data.cameraZoom);
+
         _pixelSimulation.setGrid(_chunkGrid);
         loadGameObjectsIntoECS();
         return true;
@@ -341,18 +345,10 @@ namespace engine
     {
         ChunkGrid& grid = _pixelSimulation.getGrid();
 
-        for (const auto& [goId, occupiedCells] : _gameObjectOccupiedCells)
-        {
-            for (const auto& cell : occupiedCells)
-            {
-                grid.setPixel(cell.x, cell.y, {Element::EMPTY, false});
-            }
-        }
-
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>> nextOccupiedCells;
         nextOccupiedCells.reserve(_gameObjects.size());
 
-        for (const auto& go : _gameObjects)
+        for (auto& go : _gameObjects)
         {
             if (!go.isActive)
                 continue;
@@ -369,11 +365,8 @@ namespace engine
             if (!_componentManager.hasComponent<ecs::components::PhysicsBody>(entityId))
                 continue;
 
-            const auto& physics =
-                _componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
+            auto& physics = _componentManager.getComponent<ecs::components::PhysicsBody>(entityId);
             if (!physics.enabled)
-                continue;
-            if (physics.bodyType != b2_dynamicBody)
                 continue;
 
             const auto& transform =
@@ -384,6 +377,16 @@ namespace engine
             const size_t pairCount = std::min(go.pixelLocalCoords.size(), go.pixels.size());
             std::vector<Element::Vec2i> occupiedCells;
             occupiedCells.reserve(pairCount);
+
+            std::vector<Element::Pixel> nextPixels;
+            std::vector<Element::Vec2i> nextLocalCoords;
+            nextPixels.reserve(pairCount);
+            nextLocalCoords.reserve(pairCount);
+
+            const auto prevIt = _gameObjectOccupiedCells.find(go.id);
+            const std::vector<Element::Vec2i>* prevCells =
+                (prevIt != _gameObjectOccupiedCells.end()) ? &prevIt->second : nullptr;
+            const size_t prevCount = prevCells ? prevCells->size() : 0;
 
             for (size_t i = 0; i < pairCount; ++i)
             {
@@ -406,14 +409,84 @@ namespace engine
                 const int gridX = static_cast<int>(std::floor(worldX / PIXEL_SIZE));
                 const int gridY = static_cast<int>(std::floor(worldY / PIXEL_SIZE));
 
-                grid.setPixel(gridX, gridY, {srcPixel.type, false});
+                Element::Pixel stampedPixel{srcPixel.type, false, srcPixel.colorIndex,
+                                            srcPixel.burnTimer, srcPixel.isBurning};
+
+                const bool hasPrevCell = (prevCells && i < prevCount);
+                Element::Vec2i prevCell{};
+                Element::Pixel prevPixel{Element::EMPTY};
+                if (hasPrevCell)
+                {
+                    prevCell = (*prevCells)[i];
+                    prevPixel = grid.getPixel(prevCell.x, prevCell.y);
+                }
+
+                Element::Pixel currentPixel = grid.getPixel(gridX, gridY);
+                const bool pixelAlive = (currentPixel.type != Element::EMPTY) ||
+                                        (hasPrevCell && prevPixel.type != Element::EMPTY);
+                if (!pixelAlive)
+                {
+                    if (hasPrevCell && (prevCell.x != gridX || prevCell.y != gridY))
+                    {
+                        grid.setPixel(prevCell.x, prevCell.y, {Element::EMPTY, false});
+                    }
+                    continue;
+                }
+
+                if (hasPrevCell && prevPixel.type != Element::EMPTY)
+                {
+                    stampedPixel = prevPixel;
+                }
+
+                if (hasPrevCell && (prevCell.x != gridX || prevCell.y != gridY))
+                {
+                    grid.setPixel(prevCell.x, prevCell.y, {Element::EMPTY, false});
+                }
+
+                grid.setPixel(gridX, gridY, stampedPixel);
                 occupiedCells.push_back({gridX, gridY});
+                nextPixels.push_back(srcPixel);
+                nextLocalCoords.push_back(go.pixelLocalCoords[i]);
+            }
+
+            if (prevCells && prevCount > pairCount)
+            {
+                for (size_t i = pairCount; i < prevCount; ++i)
+                {
+                    const auto& prevCell = (*prevCells)[i];
+                    grid.setPixel(prevCell.x, prevCell.y, {Element::EMPTY, false});
+                }
             }
 
             if (!occupiedCells.empty())
             {
                 nextOccupiedCells[go.id] = std::move(occupiedCells);
             }
+
+            go.pixels = std::move(nextPixels);
+            go.pixelLocalCoords = std::move(nextLocalCoords);
+
+            if (go.pixelCount != go.pixels.size())
+            {
+                std::vector<ecs::components::PhysicsTriangle> generatedTriangles;
+                if (buildPhysicsTrianglesFromGameObjectPixels(go, _pixelSimulation,
+                                                              generatedTriangles))
+                {
+                    physics.triangles = std::move(generatedTriangles);
+                }
+                else
+                {
+                    physics.triangles.clear();
+                }
+
+                if (auto* physicsSys = _systemManager.getSystem<ecs::systems::PhysicsSystem>())
+                {
+                    physicsSys->entityDestroyed(entityId);
+                }
+                physics.bodyId = b2_nullBodyId;
+            }
+
+            go.pixelCount = go.pixels.size();
         }
 
         _gameObjectOccupiedCells = std::move(nextOccupiedCells);
@@ -431,63 +504,7 @@ namespace engine
 
     std::vector<graphics::Pixel> Game::buildRenderPixels(const ChunkGrid& grid) const
     {
-        std::vector<graphics::Pixel> result;
-        result.reserve(10000);
-
-        for (const auto& [key, chunk] : grid.chunks)
-        {
-            const int cx = static_cast<int32_t>(key >> 32);
-            const int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
-
-            for (int y = 0; y < CHUNK_SIZE; ++y)
-            {
-                for (int x = 0; x < CHUNK_SIZE; ++x)
-                {
-                    const Element::Pixel& simPixel = chunk.pixels[y * CHUNK_SIZE + x];
-                    if (simPixel.type == Element::EMPTY)
-                        continue;
-
-                    const auto& def = g_elements[simPixel.type];
-
-                    graphics::Pixel renderPixel;
-                    const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
-                    const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
-                    renderPixel.position = glm::vec2(gx * PIXEL_SIZE, gy * PIXEL_SIZE);
-
-                    if (simPixel.isBurning)
-                    {
-                        glm::vec3 pColor = glm::vec3(
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        ElementDefinition& fireDef = g_elements[Element::FIRE];
-                        glm::vec3 fColor = glm::vec3(
-                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
-                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        float progress = (def.fireParams.burnDuration > 0)
-                                             ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
-                                                       def.fireParams.burnDuration)
-                                             : 1.0f;
-                        progress = glm::clamp(progress, 0.0f, 1.0f);
-                        renderPixel.color = glm::mix(pColor, fColor, progress);
-                        renderPixel.color =
-                            glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
-                    }
-                    else
-                    {
-                        renderPixel.color = glm::vec3(
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                    }
-
-                    result.push_back(renderPixel);
-                }
-            }
-        }
-
-        return result;
+        return engine::buildRenderPixels(grid);
     }
 
     void Game::handleEvents()
@@ -533,13 +550,147 @@ namespace engine
         syncGameObjectPixelsFromPhysics();
     }
 
+    void Game::drawSpritesBelowLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = _entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr)
+                continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!_componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!_componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
+
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = _componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer >= layer)
+                continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform =
+                _componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = _renderer->loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0)
+                continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            _renderer->drawSprite(s2d, _camera);
+        }
+    }
+
+    void Game::drawSpritesAboveLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = _entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr)
+                continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!_componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!_componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
+
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = _componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer <= layer)
+                continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = _componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform =
+                _componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = _renderer->loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0)
+                continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            _renderer->drawSprite(s2d, _camera);
+        }
+    }
+
     void Game::render()
     {
         ZoneScopedN("Game::Render");
         std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
 
         _renderer->clear();
+        drawSpritesBelowLayer(0);
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+        _renderer->drawParticlesWCamera(_pixelSimulation.getParticles(), _camera, PIXEL_SIZE);
 
         if (auto* physicsSystem = _systemManager.getSystem<ecs::systems::PhysicsSystem>())
         {
@@ -548,10 +699,7 @@ namespace engine
                                       glm::vec3(1.0f, 0.8f, 0.2f));
         }
 
-        if (auto* spriteSystem = _systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
-        {
-            spriteSystem->update(0.0, _componentManager);
-        }
+        drawSpritesAboveLayer(0);
 
         _renderer->present(_window);
     }

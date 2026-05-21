@@ -16,7 +16,7 @@ namespace engine::scene
     namespace
     {
         constexpr uint32_t kSceneMagic = 0x5343534E; // 'SCSN'
-        constexpr uint16_t kSceneVersion = 3;
+        constexpr uint16_t kSceneVersion = 4;
 
         enum ComponentMask : uint32_t
         {
@@ -532,6 +532,9 @@ namespace engine::scene
         raw.reserve(1024);
 
         writeU32(raw, data.nextGameObjectId);
+        writeF32(raw, data.cameraX);
+        writeF32(raw, data.cameraY);
+        writeF32(raw, data.cameraZoom);
         const uint32_t count = static_cast<uint32_t>(data.gameObjects.size());
         writeU32(raw, count);
 
@@ -576,7 +579,8 @@ namespace engine::scene
 
         Header header;
         inFile.read(reinterpret_cast<char*>(&header), sizeof(header));
-        if (!inFile || header.magic != kSceneMagic || header.version != kSceneVersion)
+        if (!inFile || header.magic != kSceneMagic || header.version < 3 ||
+            header.version > kSceneVersion)
         {
             return false;
         }
@@ -602,6 +606,16 @@ namespace engine::scene
         SceneData temp;
         if (!readU32(raw, offset, temp.nextGameObjectId))
             return false;
+
+        if (header.version >= 4)
+        {
+            if (!readF32(raw, offset, temp.cameraX))
+                return false;
+            if (!readF32(raw, offset, temp.cameraY))
+                return false;
+            if (!readF32(raw, offset, temp.cameraZoom))
+                return false;
+        }
 
         uint32_t count = 0;
         if (!readU32(raw, offset, count))

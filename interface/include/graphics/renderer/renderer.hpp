@@ -142,6 +142,8 @@ namespace graphics
             return h % PALETTE_SIZE; // Modulo by the number of colors in the palette
         }
 
+        void setWindow(SDL_Window* window);
+
       private:
         SDL_Window* _window;
         SDL_GLContext _glContext;

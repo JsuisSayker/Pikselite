@@ -48,7 +48,7 @@ namespace graphics
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
                                 Element::ElementType& selectedElementType); // updated signature
         void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive,
-                  bool& clearAllRequested);
+                              bool& clearAllRequested);
         // Top-left "Save" button writes through `saveSceneRequested` — the caller treats
         // it the same way it did the now-removed bottom "Save Scene" button.
         void projectTopBar(bool& saveSceneRequested, std::string title = "");

@@ -1,8 +1,8 @@
+#include <algorithm>
 #include <box2d/collision.h>
 #include <box2d/math_functions.h>
-#include <graphics/renderer/renderer.hpp>
-#include <algorithm>
 #include <cmath>
+#include <graphics/renderer/renderer.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <tracy/Tracy.hpp>
@@ -215,6 +215,14 @@ namespace graphics
         glEnableVertexAttribArray(1);
 
         glBindVertexArray(0);
+    }
+
+    void Renderer::setWindow(SDL_Window* window)
+    {
+        _window = window;
+        int w, h;
+        SDL_GetWindowSize(_window, &w, &h);
+        glViewport(0, 0, w, h);
     }
 
     void Renderer::clear()

@@ -4,7 +4,10 @@
 #include <cstdint>
 #include <cstdio> // for _popen, _pclose
 #include <engine/core.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
 #include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/renderUtils.hpp>
 #include <engine/scene/sceneSerializer.hpp>
 #include <fstream>
 #include <mutex>
@@ -104,10 +107,66 @@ namespace engine
                     const std::string& targetName = confirmedSettings.targetName;
                     const std::string assetsDir = "games/" + targetName + "/assets";
 
-                    // Save scene
+                    // Save scene with assets bundled for standalone game
                     std::filesystem::create_directories(assetsDir);
                     const std::string scenePath = assetsDir + "/scene.scene";
-                    saveScene(scenePath);
+                    {
+                        engine::scene::SceneData buildData;
+                        buildData.gameObjects = _gameObjects;
+                        buildData.nextGameObjectId = gameObjectCounter;
+                        buildData.cameraX = _camera.getPosition().x;
+                        buildData.cameraY = _camera.getPosition().y;
+                        buildData.cameraZoom = _camera.getZoom();
+
+                        // Copy external assets and rewrite paths to be relative
+                        // to the built game's assets directory
+                        for (auto& go : buildData.gameObjects)
+                        {
+                            if (auto* sprite = go.getComponent<ecs::components::Sprite>())
+                            {
+                                if (!sprite->texturePath.empty())
+                                {
+                                    std::filesystem::path src =
+                                        std::filesystem::absolute(sprite->texturePath);
+                                    if (std::filesystem::exists(src))
+                                    {
+                                        std::filesystem::path dst =
+                                            std::filesystem::path(assetsDir) / "sprites" /
+                                            src.filename();
+                                        std::filesystem::create_directories(dst.parent_path());
+                                        std::filesystem::copy_file(
+                                            src, dst,
+                                            std::filesystem::copy_options::overwrite_existing);
+                                        sprite->texturePath =
+                                            "assets/sprites/" + src.filename().string();
+                                    }
+                                }
+                            }
+                            if (auto* script = go.getComponent<ecs::components::Script>())
+                            {
+                                if (!script->scriptPath.empty())
+                                {
+                                    std::filesystem::path src =
+                                        std::filesystem::absolute(script->scriptPath);
+                                    if (std::filesystem::exists(src))
+                                    {
+                                        std::filesystem::path dst =
+                                            std::filesystem::path(assetsDir) / "scripts" /
+                                            src.filename();
+                                        std::filesystem::create_directories(dst.parent_path());
+                                        std::filesystem::copy_file(
+                                            src, dst,
+                                            std::filesystem::copy_options::overwrite_existing);
+                                        script->scriptPath =
+                                            "assets/scripts/" + src.filename().string();
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!engine::scene::saveSceneToFile(scenePath, buildData))
+                            std::cerr << "Failed to save scene: " << scenePath << std::endl;
+                    }
 
                     // Collect used .dat files
                     std::vector<std::string> neededDats;
@@ -168,6 +227,7 @@ namespace engine
                     {
                         projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid,
                                                     gameObjectCounter);
+                        projectEditor->setCamera(_camera);
                     }
                 }
             }
@@ -187,6 +247,7 @@ namespace engine
                              WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
+        renderer.setWindow(gameWindow);
 
         // Drop any reload request that survived the previous preview session. Without
         // this, a Lua reload_scene() fired right before the user exited preview would
@@ -270,9 +331,7 @@ namespace engine
 
         SDL_DestroyWindow(gameWindow);
         SDL_GL_MakeCurrent(sdlInterface.getWindow(), sdlInterface.getGLContext());
-        int w, h;
-        SDL_GetWindowSize(sdlInterface.getWindow(), &w, &h);
-        glViewport(0, 0, w, h);
+        renderer.setWindow(sdlInterface.getWindow());
     }
 
     void Core::sortProjects(std::vector<projects::Project>& projects)
@@ -516,69 +575,9 @@ namespace engine
         SDL_Quit();
     }
 
-    std::vector<graphics::Pixel> Core::buildRenderPixels(ChunkGrid grid) const
+    std::vector<graphics::Pixel> Core::buildRenderPixels(const ChunkGrid& grid) const
     {
-        std::vector<graphics::Pixel> result;
-        result.reserve(10000);
-
-        for (const auto& [key, chunk] : grid.chunks)
-        {
-            // Correct signed decode from packed int64 key
-            const int cx = static_cast<int32_t>(key >> 32);
-            const int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
-
-            for (int y = 0; y < CHUNK_SIZE; ++y)
-            {
-                for (int x = 0; x < CHUNK_SIZE; ++x)
-                {
-                    const Element::Pixel& simPixel = chunk.pixels[y * CHUNK_SIZE + x];
-                    if (simPixel.type == Element::EMPTY)
-                        continue;
-
-                    const auto& def = g_elements[simPixel.type];
-
-                    graphics::Pixel renderPixel;
-
-                    // grid -> world (apply chunk offset + pixel size)
-                    const float gx = static_cast<float>(cx * CHUNK_SIZE + x);
-                    const float gy = static_cast<float>(cy * CHUNK_SIZE + y);
-
-                    renderPixel.position = glm::vec2(gx * PIXEL_SIZE, gy * PIXEL_SIZE);
-
-                    if (simPixel.isBurning)
-                    {
-                        glm::vec3 pColor = glm::vec3(
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        ElementDefinition& fireDef = g_elements[Element::FIRE];
-                        glm::vec3 fColor = glm::vec3(
-                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
-                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            fireDef.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                        float progress = (def.fireParams.burnDuration > 0)
-                                             ? 1.0f - (static_cast<float>(simPixel.burnTimer) /
-                                                       def.fireParams.burnDuration)
-                                             : 1.0f;
-                        progress = glm::clamp(progress, 0.0f, 1.0f);
-                        renderPixel.color = glm::mix(pColor, fColor, progress);
-                        renderPixel.color =
-                            glm::clamp(renderPixel.color, glm::vec3(0.0f), glm::vec3(1.0f));
-                    }
-                    else
-                    {
-                        renderPixel.color = glm::vec3(
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].r / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].g / 255.0f,
-                            def.colorPalette[simPixel.colorIndex % PALETTE_SIZE].b / 255.0f);
-                    }
-
-                    result.push_back(renderPixel);
-                }
-            }
-        }
-
-        return result;
+        return engine::buildRenderPixels(grid);
     }
 
     bool Core::buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats)

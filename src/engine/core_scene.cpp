@@ -21,6 +21,9 @@ namespace engine
         engine::scene::SceneData data;
         data.gameObjects = _gameObjects;
         data.nextGameObjectId = gameObjectCounter;
+        data.cameraX = _camera.getPosition().x;
+        data.cameraY = _camera.getPosition().y;
+        data.cameraZoom = _camera.getZoom();
 
         if (!engine::scene::saveSceneToFile(filename, data))
         {
@@ -91,6 +94,9 @@ namespace engine
                 _chunkGrid.setPixel(gridX, gridY, scenePixel);
             }
         }
+
+        _camera.setPosition(data.cameraX, data.cameraY);
+        _camera.setZoom(data.cameraZoom);
 
         _pixelSimulation.setGrid(_chunkGrid);
         _renderPixels = buildRenderPixels(_chunkGrid);
