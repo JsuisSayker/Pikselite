@@ -1558,17 +1558,17 @@ namespace graphics
             {
                 selectedPath = outPath.get();
 
+                projects::Project openedProject;
+                openedProject.name = selectedPath.filename().string();
+                openedProject.path = selectedPath;
+                projects.push_back(openedProject);
+
+                resultIndex = projects.size() - 1;
+
             } else if (result == NFD_ERROR)
             {
                 std::cerr << "Error: " << NFD::GetError() << std::endl;
             }
-
-            projects::Project openedProject;
-            openedProject.name = selectedPath.filename().string();
-            openedProject.path = selectedPath;
-            projects.push_back(openedProject);
-
-            resultIndex = projects.size() - 1;
         }
 
         ImGui::SameLine(0.0f, verticalSpacing);
@@ -1668,7 +1668,7 @@ namespace graphics
 
        for (int i = 0; i < static_cast<int>(projects.size()); i++)
         {
-            ImVec2 size(ImGui::GetContentRegionAvail().x - 20, 200);
+            ImVec2 size(ImGui::GetContentRegionAvail().x, 200);
 
             ImVec2 pos = ImGui::GetCursorScreenPos();
             ImDrawList* draw = ImGui::GetWindowDrawList();
@@ -1696,13 +1696,15 @@ namespace graphics
                 rounding
             );
 
-            ImGui::InvisibleButton(("ProjectBtn_" + std::to_string(i)).c_str(), size);
+            // IM_COL32(225, 225, 225, 225),
+
+            ImVec2 clickableSize(pos.x + size.x, 200);
+
+            ImGui::InvisibleButton(("ProjectBtn_" + std::to_string(i)).c_str(), clickableSize); // was size
 
             ImGui::SetCursorScreenPos(ImVec2(pos.x, pos.y));
 
-            clickableProjectOverview(projects[i], fontBoldBig, fontRegularSmall);
-            
-            if (ImGui::IsItemClicked())
+            if (clickableProjectOverview(projects[i], fontBoldBig, fontRegularSmall))
             {
                 projects[i].lastOpened = std::chrono::system_clock::now();
 
@@ -1721,65 +1723,199 @@ namespace graphics
         return -1;
     }
 
-    void ImguiInterface::clickableProjectOverview(projects::Project &project, ImFont* nameFont, ImFont* infoFont)
+bool ImguiInterface::clickableProjectOverview(projects::Project& project, ImFont* nameFont, ImFont* infoFont)
+{
+    ImGui::PushID(project.name.c_str());
+
+    float thumbSize = 120.0f;
+
+    ImVec2 start = ImGui::GetCursorScreenPos();
+
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+
+    //ImGui::BeginGroup();
+
+    //ImGui::BeginGroup();
+
+    ImVec2 imagePos = ImGui::GetCursorScreenPos();
+
+    if (thumbnail)
     {
-        // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent projects list.
-        
-        float thumbSize = 120.0f;
-
-        ImGui::BeginGroup();
-
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-        ImDrawList* draw = ImGui::GetWindowDrawList();
-
-        if (thumbnail)
-        {
-            draw->AddImageRounded(
-                thumbnail,
-                pos,
-                ImVec2(pos.x + thumbSize, pos.y + thumbSize),
-                ImVec2(0, 0),
-                ImVec2(1, 1),
-                IM_COL32_WHITE,
-                8.0f
-            );
-        }
-        else
-        {
-            draw->AddRectFilled(
-                pos,
-                ImVec2(pos.x + thumbSize, pos.y + thumbSize),
-                IM_COL32(80, 80, 80, 255),
-                8.0f
-            );
-
-            draw->AddText(
-                ImVec2(pos.x + 10, pos.y + 20),
-                IM_COL32_WHITE,
-                "No Img"
-            );
-        }
-
-        ImGui::Dummy(ImVec2(thumbSize, thumbSize));
-
-        ImGui::EndGroup();
-        
-        ImGui::SameLine();
-
-        if (nameFont) ImGui::PushFont(nameFont);
-        ImGui::Text("%s", project.name.c_str());
-        if (nameFont) ImGui::PopFont();
-
-        if (infoFont) ImGui::PushFont(infoFont);
-        ImGui::TextDisabled("%s", project.path.string().c_str());
-        if (infoFont) ImGui::PopFont();
-
-        std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
-        char buffer[64];
-        std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", std::localtime(&t));
-        if (infoFont) ImGui::PushFont(infoFont);
-        ImGui::TextDisabled("Last opened: %s", buffer);
-        if (infoFont) ImGui::PopFont();
+        draw->AddImageRounded(
+            thumbnail,
+            imagePos,
+            ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
+            ImVec2(0, 0),
+            ImVec2(1, 1),
+            IM_COL32_WHITE,
+            8.0f
+        );
     }
+    else
+    {
+        draw->AddRectFilled(
+            imagePos,
+            ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
+            IM_COL32(70, 70, 70, 255),
+            8.0f
+        );
+
+        draw->AddText(
+            ImVec2(imagePos.x + 25, imagePos.y + 50),
+            IM_COL32_WHITE,
+            "No Img"
+        );
+    }
+
+    ImGui::Dummy(ImVec2(thumbSize, thumbSize));
+
+    //ImGui::EndGroup();
+
+    ImGui::SameLine();
+
+   // ImGui::BeginGroup();
+
+    if (nameFont) ImGui::PushFont(nameFont);
+    ImGui::Text("%s", project.name.c_str());
+    if (nameFont) ImGui::PopFont();
+
+    if (infoFont) ImGui::PushFont(infoFont);
+
+    ImGui::TextDisabled("%s", project.path.string().c_str());
+
+    std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
+
+    char buffer[64];
+
+    std::strftime(
+        buffer,
+        sizeof(buffer),
+        "%Y-%m-%d %H:%M",
+        std::localtime(&t)
+    );
+
+    ImGui::TextDisabled("Last opened: %s", buffer);
+
+    if (infoFont)
+    {
+        ImGui::PopFont();
+    }
+
+    //ImGui::EndGroup();
+
+    //ImGui::EndGroup();
+
+    ImVec2 end = ImGui::GetItemRectMax();
+
+    float padding = 0.0f; // was 8
+
+    ImVec2 rectMin(
+        start.x - padding,
+        start.y - padding
+    );
+
+    ImVec2 rectMax(
+        end.x + padding,
+        end.y + padding
+    );
+
+    //std::cout << "Rect Min: (" << rectMin.x << ", " << rectMin.y << ")\n"; //////////////////////////////////////////////
+    //std::cout << "Rect Max: (" << rectMax.x << ", " << rectMax.y << ")\n"; //////////////////////////////////////////////
+
+    //std::cout << "Width avail: " << ImGui::GetContentRegionAvail().x << "\n"; //////////////////////////////////////////////
+
+    bool hovered = ImGui::IsMouseHoveringRect(rectMin, rectMax);
+
+    bool clicked = hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+
+    if (hovered)
+    {
+        draw->AddRectFilled(
+            rectMin,
+            rectMax,
+            IM_COL32(60, 60, 60, 80),
+            8.0f
+        );
+    }
+
+    ImGui::PopID();
+
+    return clicked;
+}
+
+    // bool ImguiInterface::clickableProjectOverview(projects::Project &project, ImFont* nameFont, ImFont* infoFont)
+    // {
+    //     // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent projects list.
+        
+    //     // float cardHeight = 150.0f;
+    //     // float cardWidth = ImGui::GetContentRegionAvail().x;
+
+    //     bool clicked = ImGui::InvisibleButton(
+    //         ("##project_" + project.name).c_str(),
+    //         ImVec2(0, 0)
+    //     );
+
+    //     bool hovered = ImGui::IsItemHovered();
+
+    //     float thumbSize = 120.0f;
+
+    //     ImGui::BeginGroup();
+
+    //     ImVec2 pos = ImGui::GetCursorScreenPos();
+    //     ImDrawList* draw = ImGui::GetWindowDrawList();
+
+    //     if (thumbnail)
+    //     {
+    //         draw->AddImageRounded(
+    //             thumbnail,
+    //             pos,
+    //             ImVec2(pos.x + thumbSize, pos.y + thumbSize),
+    //             ImVec2(0, 0),
+    //             ImVec2(1, 1),
+    //             IM_COL32_WHITE,
+    //             8.0f
+    //         );
+    //     }
+    //     else
+    //     {
+    //         draw->AddRectFilled(
+    //             pos,
+    //             ImVec2(pos.x + thumbSize, pos.y + thumbSize),
+    //             hovered
+    //                 ? IM_COL32(80, 80, 80, 255)
+    //                 : IM_COL32(60, 60, 60, 255),
+    //             8.0f
+    //         );
+
+    //         draw->AddText(
+    //             ImVec2(pos.x + 10, pos.y + 20),
+    //             IM_COL32_WHITE,
+    //             "No Img"
+    //         );
+    //     }
+
+    //     ImGui::Dummy(ImVec2(thumbSize, thumbSize));
+
+    //     ImGui::EndGroup();
+        
+    //     ImGui::SameLine();
+
+    //     if (nameFont) ImGui::PushFont(nameFont);
+    //     ImGui::Text("%s", project.name.c_str());
+    //     if (nameFont) ImGui::PopFont();
+
+    //     if (infoFont) ImGui::PushFont(infoFont);
+    //     ImGui::TextDisabled("%s", project.path.string().c_str());
+    //     if (infoFont) ImGui::PopFont();
+
+    //     std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
+    //     char buffer[64];
+    //     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", std::localtime(&t));
+    //     if (infoFont) ImGui::PushFont(infoFont);
+    //     ImGui::TextDisabled("Last opened: %s", buffer);
+    //     if (infoFont) ImGui::PopFont();
+
+    //     return clicked;
+    // }
 
 } // namespace graphics

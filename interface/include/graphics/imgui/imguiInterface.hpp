@@ -65,7 +65,7 @@ namespace graphics
         void fileToolBar();
         int projectOptionsBar(std::vector<projects::Project> &projects, std::string projectsPath);
         int projectsDisplay(std::vector<projects::Project> &projects);
-        void clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
+        bool clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
 
         void startFrame();
         void endFrame(SDL_Window* window);
