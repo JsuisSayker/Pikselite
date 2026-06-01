@@ -1,50 +1,122 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.21)
+# -------------------------------------------------
+# Set overlay ports directory
+# -------------------------------------------------
+set(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/external/overlay-ports")
 
-project(
-  PIKSELITE
-  VERSION 0.1
-  DESCRIPTION "Pikselite Engine"
-  LANGUAGES CXX
-)
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "Debug" "Release")
+set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL "Debug" "Release")
+project(PikseliteEngine)
 
-# Set C++ Standard
-set(CMAKE_CXX_STANDARD 20)
+# Use C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# check if sdl2 is installed
-find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
-find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+# -------------------------------------------------
+# Options
+# -------------------------------------------------
+option(BUILD_EDITORS "Build editor tools (sprite editor, project editor, ImGui)" ON)
+option(ENABLE_COVERAGE "Enable coverage reporting" ON)
+option(PIKSELITE_ENABLE_PROFILING "Enable Tracy profiling" ON)
 
+# Enable testing
+enable_testing()
 
-add_executable(pikselite
-  src/main.cpp
-)
+# -------------------------------------------------
+# Automatically detect system vcpkg installation
+# -------------------------------------------------
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(EXISTS "$ENV{USERPROFILE}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{USERPROFILE}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    endif()
+endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/extern/rapidjson)
+# -------------------------------------------------
+# Find dependencies (core - needed by all targets)
+# -------------------------------------------------
+find_package(SDL2 CONFIG REQUIRED)
+find_package(GLEW CONFIG REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(Stb REQUIRED)
+find_package(Lua REQUIRED)
+find_path(SOL2_INCLUDE_DIRS "sol/sol.hpp")
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(box2d CONFIG REQUIRED)
 
-add_subdirectory(engine)
+# Editor-only dependencies
+find_package(imgui_backends CONFIG REQUIRED)
+if(BUILD_EDITORS)
+    find_package(nfd CONFIG REQUIRED)
+endif()
+
+link_directories(${CMAKE_BINARY_DIR}/lib)
+
+# -------------------------------------------------
+# Core libraries (always built)
+# -------------------------------------------------
 add_subdirectory(interface)
-add_subdirectory(src/graphic)
-add_subdirectory(src/spriteEditor)
-add_subdirectory(src/projectEditor)
-add_subdirectory(src/home)
-add_subdirectory(src/tabSelector)
-add_subdirectory(extern/imgui)
-add_subdirectory(extern/rapidjson)
+add_subdirectory(src/graphics)
+add_subdirectory(src/engine)
+add_subdirectory(src/game)
 
-target_link_libraries(pikselite
-  pikselite_interface
-  engine_interface
-  graphic
-  sprite_editor
-  project_editor
-  tab_selector
-  engine
-  home
-)
+# Profiling (optional, links to engine target — must be after engine subdirectory)
+if(PIKSELITE_ENABLE_PROFILING)
+    message(STATUS "TRACY PROFILING ENABLED")
+    find_package(tracy CONFIG REQUIRED)
+    target_link_libraries(engine PRIVATE Tracy::TracyClient)
+    target_link_libraries(game PRIVATE Tracy::TracyClient)
+    target_link_libraries(graphics PRIVATE Tracy::TracyClient)
+    target_link_libraries(pikselite_interface INTERFACE Tracy::TracyClient)
+    target_compile_definitions(engine PRIVATE
+        $<$<CONFIG:Debug>:TRACY_ENABLE>
+    )
+    target_compile_definitions(game PRIVATE
+        $<$<CONFIG:Debug>:TRACY_ENABLE>
+    )
+endif()
 
-add_custom_command(
-  TARGET pikselite
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:pikselite> ${CMAKE_SOURCE_DIR}
-)
+# -------------------------------------------------
+# Editor executable
+# -------------------------------------------------
+if(BUILD_EDITORS)
+    add_subdirectory(src/editors)
+
+        add_subdirectory(tests)
+
+    add_executable(${PROJECT_NAME} src/main.cpp)
+
+    target_link_libraries(${PROJECT_NAME}
+        PRIVATE
+        SDL2::SDL2
+        SDL2::SDL2main
+        GLEW::GLEW
+        OpenGL::GL
+        imgui::imgui_backends
+        pikselite_interface
+        graphics
+        engine
+        game
+        editor
+        nlohmann_json::nlohmann_json
+        nfd::nfd
+    )
+
+    # Copy all runtime DLLs to the executable output directory
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_RUNTIME_DLLS:${PROJECT_NAME}>"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        COMMAND_EXPAND_LISTS
+        COMMENT "Copying runtime DLLs to output directory"
+    )
+endif()
+
+# -------------------------------------------------
+# Game projects (auto-discovered from games/)
+# -------------------------------------------------
+add_subdirectory(games)

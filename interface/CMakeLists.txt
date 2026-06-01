@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(
   PIKSELITE_INTERFACE
   VERSION 0.1
-  DESCRIPTION "SDL2 interface"
+  DESCRIPTION "pikselite interface"
   LANGUAGES CXX
 )
 
@@ -11,9 +11,9 @@ add_library(pikselite_interface INTERFACE)
 
 target_include_directories(pikselite_interface
   INTERFACE "include"
-  engine_interface
-  ../../extern/imgui
-  ../../extern/imgui/backends
-  ../../extern/icons
-  engine
+)
+
+target_link_libraries(pikselite_interface
+  INTERFACE
+    imgui::imgui_backends
 )

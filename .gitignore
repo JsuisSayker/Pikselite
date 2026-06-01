@@ -2,12 +2,26 @@
 
 build/
 
+config/
+
+Projects/
+
 imgui.ini
 
 pikselite
 
 *.png
+!assets/ui/icons/*.png
 *.json
 
+*.vs
+
+vcpkg_installed/
+
+PikseliteEngine.exe
+
 .env
-/.github/scripts/*.env
+
+.github/scripts/*env
+
+*.dat
