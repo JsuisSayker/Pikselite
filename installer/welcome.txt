@@ -1,0 +1,24 @@
+PikseliteEngine - A pixel-based physics sandbox and game engine
+
+PikseliteEngine allows you to create, edit, and play pixel-based simulations
+with physics, scripting, and interactive elements.
+
+This installer will install PikseliteEngine to your computer.
+
+Features:
+  - Pixel-based physics simulation (sand, water, lava, fire, stone, wood)
+  - Visual scene editor with sprite placement
+  - Lua scripting for game logic
+  - Built-in game compilation system
+  - Real-time Box2D physics
+
+System Requirements:
+  - Windows 10/11 (64-bit)
+  - DirectX 11 compatible GPU
+  - 4GB RAM minimum
+  - 1GB free disk space
+
+For building games from the editor, you will also need:
+  - Visual Studio Build Tools 2022 (with Clang/LLVM)
+  - CMake 3.21+
+  - vcpkg package manager

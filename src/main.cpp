@@ -7,6 +7,7 @@
 #define SDL_MAIN_HANDLED
 
 #include <engine/core.hpp>
+#include <windows.h>
 
 /**
  * @brief The main function initializes the Core engine with the specified window dimensions and
@@ -20,6 +21,7 @@
  */
 int main()
 {
+    SetDllDirectoryA(".\\dlls");
     engine::Core app(WINDOW_WIDTH, WINDOW_HEIGHT);
     app.run();
     return 0;
