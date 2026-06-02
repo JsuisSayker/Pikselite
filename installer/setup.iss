@@ -50,14 +50,14 @@ Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription
 ; Main executable
 Source: "{#SourcePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
-; Runtime DLLs (placed in dlls/ subfolder)
-Source: "{#SourcePath}\box2d.dll"; DestDir: "{app}\dlls"; Flags: ignoreversion
-Source: "{#SourcePath}\glew32.dll"; DestDir: "{app}\dlls"; Flags: ignoreversion
-Source: "{#SourcePath}\lua.dll"; DestDir: "{app}\dlls"; Flags: ignoreversion
-Source: "{#SourcePath}\nfd.dll"; DestDir: "{app}\dlls"; Flags: ignoreversion
-Source: "{#SourcePath}\SDL2.dll"; DestDir: "{app}\dlls"; Flags: ignoreversion
-Source: "{#SourcePath}\TracyClient.dll"; DestDir: "{app}\dlls"; Flags: ignoreversion
-Source: "{#SourcePath}\zlib1.dll"; DestDir: "{app}\dlls"; Flags: ignoreversion
+; Runtime DLLs (alongside the executable)
+Source: "{#SourcePath}\box2d.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\glew32.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\lua.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\nfd.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\SDL2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\TracyClient.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourcePath}\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Assets
 Source: "{#ProjectRoot}\assets\icon.bmp"; DestDir: "{app}\assets"; Flags: ignoreversion
@@ -92,7 +92,6 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDi
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: postinstall nowait skipifsilent shellexec; WorkingDir: "{app}"
 
 [UninstallDelete]
-Type: dirifempty; Name: "{app}\dlls"
 Type: dirifempty; Name: "{app}\assets\fonts"
 Type: dirifempty; Name: "{app}\assets\scenes"
 Type: dirifempty; Name: "{app}\assets\ui\icons"
