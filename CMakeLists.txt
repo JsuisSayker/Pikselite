@@ -114,6 +114,19 @@ if(BUILD_EDITORS)
         COMMAND_EXPAND_LISTS
         COMMENT "Copying runtime DLLs to output directory"
     )
+
+    # Copy asset directories to the executable output directory
+    set(ASSET_DIRS assets config scripts Projects)
+    foreach(dir ${ASSET_DIRS})
+        if(EXISTS "${CMAKE_SOURCE_DIR}/${dir}")
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${CMAKE_SOURCE_DIR}/${dir}"
+                    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/${dir}"
+                COMMENT "Copying ${dir} to output directory"
+            )
+        endif()
+    endforeach()
 endif()
 
 # -------------------------------------------------
