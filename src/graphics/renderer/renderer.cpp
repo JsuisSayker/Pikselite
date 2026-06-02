@@ -99,6 +99,7 @@ namespace graphics
 
         initShader();
         initSpriteShader();
+        std::cerr << "[LOG] Renderer initialized" << std::endl;
     }
 
     Renderer::~Renderer()

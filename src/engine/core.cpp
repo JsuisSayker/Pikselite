@@ -24,6 +24,14 @@
 namespace
 {
 
+    std::filesystem::path getAppDataDir()
+    {
+        const char* appData = std::getenv("APPDATA");
+        if (appData)
+            return std::filesystem::path(appData) / "PikseliteEngine";
+        return std::filesystem::current_path() / "PikseliteEngine";
+    }
+
     graphics::Pixel pixelFromJson(const json& j)
     {
         return {{j.value("x", 0.0f), j.value("y", 0.0f)},
@@ -366,9 +374,13 @@ namespace engine
 
     void Core::run()
     {
+        std::cerr << "[LOG] run() entered" << std::endl;
         init();
+        std::cerr << "[LOG] mainLoop() entered" << std::endl;
         mainLoop();
+        std::cerr << "[LOG] shutdown() entered" << std::endl;
         shutdown();
+        std::cerr << "[LOG] run() exiting" << std::endl;
     }
 
     graphics::InputEvent Core::handleEvents()
@@ -378,6 +390,7 @@ namespace engine
         switch (event.type)
         {
             case graphics::QUIT:
+                std::cerr << "[LOG] handleEvents: QUIT received" << std::endl;
                 running = false;
                 break;
             case graphics::WINDOW_CLOSE:
@@ -385,6 +398,7 @@ namespace engine
                 uint32_t mainWindowID = sdlInterface.getWindowID();
                 if (event.windowID == mainWindowID)
                 {
+                    std::cerr << "[LOG] handleEvents: main window close" << std::endl;
                     running = false;
                 }
                 break;
@@ -503,6 +517,7 @@ namespace engine
 
     void Core::shutdown()
     {
+        std::cerr << "[LOG] Core::shutdown()" << std::endl;
         if (projectEditor)
         {
             copyProjectEditorDataToCore();
@@ -774,9 +789,11 @@ namespace engine
 
     void Core::saveProjects(const std::vector<projects::Project>& projects)
     {
-        std::filesystem::create_directories("config");
+        std::filesystem::path appData = getAppDataDir();
+        std::filesystem::path configDir = appData / "config";
+        std::filesystem::create_directories(configDir);
 
-        std::ofstream file("config/projects.json");
+        std::ofstream file(configDir / "projects.json");
 
         if (!file.is_open())
         {
@@ -798,9 +815,9 @@ namespace engine
 
     void Core::getProjectsFolderPath()
     {
-        std::filesystem::path exeDir = std::filesystem::current_path();
-        std::filesystem::path projectsPath = exeDir / "Projects";
-        std::filesystem::path infoPath = "config/info.json";
+        std::filesystem::path appData = getAppDataDir();
+        std::filesystem::path projectsPath = appData / "Projects";
+        std::filesystem::path infoPath = appData / "config" / "info.json";
 
         json j;
 
@@ -818,6 +835,7 @@ namespace engine
         _projectsPath = projectsPath.string();
         j["defaultPath"] = _projectsPath;
 
+        std::filesystem::create_directories(infoPath.parent_path());
         std::ofstream outFile(infoPath);
 
         if (outFile.is_open())
@@ -829,7 +847,8 @@ namespace engine
 
     void Core::getJsonVariables()
     {
-        std::filesystem::path configDir = "config";
+        std::filesystem::path appData = getAppDataDir();
+        std::filesystem::path configDir = appData / "config";
         std::filesystem::path infoPath = configDir / "info.json";
 
         if (!std::filesystem::exists(configDir))

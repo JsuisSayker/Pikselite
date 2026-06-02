@@ -85,6 +85,7 @@ namespace engine
 
     void Core::init()
     {
+        std::cerr << "[LOG] init() entered" << std::endl;
         _boxWorld.init({0.0f, -500.0f});
 
         getJsonVariables();
@@ -155,6 +156,7 @@ namespace engine
                                                    &componentManager);
 
         _pixelSimulation.setPhysicsWorld(_boxWorld.getWorldId(), PIXEL_SIZE);
+        std::cerr << "[LOG] init() done" << std::endl;
     }
 
     void Core::loadGameObjectsIntoECS()

@@ -7,6 +7,7 @@
 #define SDL_MAIN_HANDLED
 
 #include <engine/core.hpp>
+#include <iostream>
 
 /**
  * @brief The main function initializes the Core engine with the specified window dimensions and
@@ -20,7 +21,23 @@
  */
 int main()
 {
-    engine::Core app(WINDOW_WIDTH, WINDOW_HEIGHT);
-    app.run();
+    std::cerr << "[LOG] Engine starting" << std::endl;
+    try
+    {
+        engine::Core app(WINDOW_WIDTH, WINDOW_HEIGHT);
+        std::cerr << "[LOG] Core constructed" << std::endl;
+        app.run();
+        std::cerr << "[LOG] App finished normally" << std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "[FATAL] Uncaught exception: " << e.what() << std::endl;
+        return 1;
+    }
+    catch (...)
+    {
+        std::cerr << "[FATAL] Uncaught unknown exception" << std::endl;
+        return 1;
+    }
     return 0;
 }

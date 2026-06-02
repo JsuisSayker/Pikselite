@@ -88,6 +88,7 @@ namespace graphics
     ImguiInterface::ImguiInterface(SDL_Window* window, SDL_GLContext glContext)
         : _window(window), _glContext(glContext)
     {
+        std::cerr << "[LOG] ImguiInterface: CreateContext" << std::endl;
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
@@ -114,6 +115,7 @@ namespace graphics
         ImGuiIO& io = ImGui::GetIO();
         auto scaledPx = [uiScale](float baseSize)
         { return std::max(1.0f, std::floor(baseSize * uiScale)); };
+        std::cerr << "[LOG] ImguiInterface: loading fonts" << std::endl;
         fontLight =
             io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Light.ttf", scaledPx(13.0f));
         fontRegularSmall =
@@ -124,6 +126,7 @@ namespace graphics
             io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", scaledPx(25.0f));
         fontBoldBig =
             io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Bold.ttf", scaledPx(35.0f));
+        std::cerr << "[LOG] ImguiInterface: fonts loaded" << std::endl;
 
         ImGui::StyleColorsDark();
 
@@ -186,8 +189,11 @@ namespace graphics
         ImGui_ImplOpenGL3_Init("#version 330 core");
 
         _fileExplorerCurrentDir = getAssetsRoot().generic_string();
+        std::cerr << "[LOG] ImguiInterface: scanSprites" << std::endl;
         scanSprites();
+        std::cerr << "[LOG] ImguiInterface: loadExplorerIcons" << std::endl;
         loadExplorerIcons();
+        std::cerr << "[LOG] ImguiInterface initialized" << std::endl;
     }
 
     /**

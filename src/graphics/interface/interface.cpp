@@ -9,6 +9,7 @@ namespace graphics
             std::cerr << "Error SDL_Init: " << SDL_GetError() << std::endl;
             throw std::runtime_error("Failed to initialize SDL");
         }
+        std::cerr << "[LOG] SDL_Init OK" << std::endl;
 
         SDL_DisplayMode displayMode;
         if (SDL_GetCurrentDisplayMode(0, &displayMode) == 0)
@@ -16,6 +17,7 @@ namespace graphics
             width = displayMode.w;
             height = displayMode.h;
         }
+        std::cerr << "[LOG] Display mode: " << width << "x" << height << std::endl;
 
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -31,6 +33,7 @@ namespace graphics
             SDL_Quit();
             throw std::runtime_error("Failed to create window");
         }
+        std::cerr << "[LOG] Window created (ID: " << SDL_GetWindowID(_window) << ")" << std::endl;
 
         SDL_SetWindowIcon(_window, SDL_LoadBMP("assets/icon.bmp"));
 
@@ -42,6 +45,8 @@ namespace graphics
             SDL_Quit();
             throw std::runtime_error("Failed to create OpenGL context");
         }
+        std::cerr << "[LOG] GL context created" << std::endl;
+
         glewExperimental = GL_TRUE;
         GLenum glewError = glewInit();
         if (glewError != GLEW_OK)
@@ -52,6 +57,7 @@ namespace graphics
             SDL_Quit();
             throw std::runtime_error("Failed to initialize GLEW");
         }
+        std::cerr << "[LOG] GLEW initialized OK" << std::endl;
         std::cout << "OpenGL version : " << glGetString(GL_VERSION) << std::endl;
     }
 

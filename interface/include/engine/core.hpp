@@ -47,6 +47,7 @@ namespace engine
               imguiInterface(sdlInterface.getWindow(), sdlInterface.getGLContext()),
               _pixelSimulation(_chunkGrid)
         {
+            std::cerr << "[LOG] Core constructor done" << std::endl;
         }
 
         /**
