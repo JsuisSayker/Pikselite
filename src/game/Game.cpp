@@ -688,17 +688,10 @@ namespace engine
         std::vector<graphics::Pixel> framePixels = buildRenderPixels(_pixelSimulation.getGrid());
 
         _renderer->clear();
+
         drawSpritesBelowLayer(0);
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
         _renderer->drawParticlesWCamera(_pixelSimulation.getParticles(), _camera, PIXEL_SIZE);
-
-        if (auto* physicsSystem = _systemManager.getSystem<ecs::systems::PhysicsSystem>())
-        {
-            const std::vector<b2BodyId> ecsDebugBodies = physicsSystem->getDebugBodies();
-            _renderer->drawBox2DDebug(_boxWorld.getWorldId(), ecsDebugBodies, _camera, 1.0f,
-                                      glm::vec3(1.0f, 0.8f, 0.2f));
-        }
-
         drawSpritesAboveLayer(0);
 
         _renderer->present(_window);
