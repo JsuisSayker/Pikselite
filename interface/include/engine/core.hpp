@@ -264,7 +264,7 @@ namespace engine
          * @param grid Grid snapshot to convert.
          * @return Render pixel list.
          */
-        std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
+        std::vector<graphics::Pixel> buildRenderPixels(const ChunkGrid& grid) const;
 
         void saveProjects(const std::vector<projects::Project>& projects);
         void loadProjects(std::vector<projects::Project>& projects);

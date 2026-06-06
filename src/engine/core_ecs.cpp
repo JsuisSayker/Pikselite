@@ -78,6 +78,12 @@ namespace engine
         _pixelSimulation.setGrid(_chunkGrid);
         gameObjectCounter = projectEditor->getGameObjectCounter();
 
+        {
+            graphics::Camera2D editorCam = projectEditor->getCamera();
+            _camera.setPosition(editorCam.getPosition().x, editorCam.getPosition().y);
+            _camera.setZoom(editorCam.getZoom());
+        }
+
         loadGameObjectsIntoECS();
 
         return true;
@@ -184,6 +190,13 @@ namespace engine
 
         _gameObjectToEntity.clear();
         _gameObjectOccupiedCells.clear();
+        // Stone-region body wrappers were just destroyed in the loop above. Drop
+        // their stale IDs too: the EntityManager recycles freed IDs, so leaving
+        // them here makes the next syncRegionBodiesToECS() destroy whatever real
+        // GameObject entity got the recycled ID — which then leaves _gameObjectToEntity
+        // pointing at a region body sitting at the origin, stamping that GameObject's
+        // pixels into the middle of the scene ("stone mountain" bug on preview re-entry).
+        _regionBodyEntities.clear();
 
         for (const auto& go : _gameObjects)
         {
