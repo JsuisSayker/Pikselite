@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
-
 #include <graphics/imgui/components/bars.hpp>
+#include <gtest/gtest.h>
 #include <tests/imguiSetupForTest.hpp>
 
-TEST(BarConfigTests, Initialization) {
+TEST(BarConfigTests, Initialization)
+{
     graphics::BarConfig config;
     EXPECT_EQ(config.orientation, graphics::BarOrientation::Horizontal);
     EXPECT_EQ(config.label, "");
@@ -12,7 +12,8 @@ TEST(BarConfigTests, Initialization) {
     EXPECT_TRUE(config.position.x == 0 && config.position.y == 0);
 }
 
-TEST(BarTests, IsVisible) {
+TEST(BarTests, IsVisible)
+{
     graphics::BarConfig config;
     config.visible = true;
     graphics::Bar bar(config);
@@ -23,7 +24,8 @@ TEST(BarTests, IsVisible) {
     EXPECT_FALSE(bar2.IsVisible());
 }
 
-TEST(BarDrawTests, HorizontalOrientationWithoutOffset) {
+TEST(BarDrawTests, HorizontalOrientationWithoutOffset)
+{
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;
@@ -52,7 +54,8 @@ TEST(BarDrawTests, HorizontalOrientationWithoutOffset) {
     testCommon.ShutdownImGuiForTests(window, glContext);
 }
 
-TEST(BarDrawTests, InvisibleDoesNotRunContent) {
+TEST(BarDrawTests, InvisibleDoesNotRunContent)
+{
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;
@@ -75,7 +78,8 @@ TEST(BarDrawTests, InvisibleDoesNotRunContent) {
     testCommon.ShutdownImGuiForTests(window, glContext);
 }
 
-TEST(BarDrawTests, VisibleRunsContentAndSupportsOrientation) {
+TEST(BarDrawTests, VisibleRunsContentAndSupportsOrientation)
+{
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;

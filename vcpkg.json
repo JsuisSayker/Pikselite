@@ -1,7 +1,6 @@
 {
   "name": "pikselite-engine",
   "version": "1.0.0",
-  "builtin-baseline": "a62ce77d56ee07513b4b67de1ec2daeaebfae51a",
   "dependencies": [
     "sdl2",
     "glew",
@@ -12,12 +11,15 @@
     "sol2",
     "gtest",
     "nlohmann-json",
+    "box2d",
+    "zlib",
+    "nativefiledialog-extended",
     {
       "name": "tracy",
       "version>=": "0.13.1"
     },
     {
-      "name": "imgui",
+      "name": "imgui-backends",
       "features": [
         "opengl3-binding",
         "sdl2-binding"

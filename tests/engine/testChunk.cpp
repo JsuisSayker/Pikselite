@@ -1,12 +1,13 @@
-#include <gtest/gtest.h>
 #include <engine/pixels/chunk.hpp>
+#include <gtest/gtest.h>
 
 using namespace Pixel;
 
-TEST(ChunkTests, SetGetBoundary) {
+TEST(ChunkTests, SetGetBoundary)
+{
     Chunk c;
     EXPECT_EQ(c.get(0, 0), EMPTY);
-    EXPECT_EQ(c.get(CHUNK_SIZE, 0), EMPTY);
+    EXPECT_EQ(c.get(CHUNKS_SIZE, 0), EMPTY);
 
     c.set(5, 5, 123);
     EXPECT_EQ(c.get(5, 5), 123);
@@ -15,7 +16,8 @@ TEST(ChunkTests, SetGetBoundary) {
     EXPECT_EQ(c.get(-1, 0), EMPTY);
 }
 
-TEST(ChunkGridTests, ChunkGridOperations) {
+TEST(ChunkGridTests, ChunkGridOperations)
+{
     ChunkGrid grid;
     EXPECT_EQ(grid.getPixel(0, 0), EMPTY);
 

@@ -10,8 +10,8 @@ namespace engine::events
         auto it = handlers.find(type);
         if (it == handlers.end())
             return;
-        const IEvent &ref = *ev;
-        for (auto &h : it->second)
+        const IEvent& ref = *ev;
+        for (auto& h : it->second)
             h.fn(ref);
     }
 

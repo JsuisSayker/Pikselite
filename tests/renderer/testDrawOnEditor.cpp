@@ -1,13 +1,13 @@
-#include <gtest/gtest.h>
 #include <filesystem>
-
-#include <tests/imguiSetupForTest.hpp>
 #include <graphics/renderer/renderer.hpp>
+#include <gtest/gtest.h>
+#include <tests/imguiSetupForTest.hpp>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-TEST(RendererTests, BasicDrawPaths) {
+TEST(RendererTests, BasicDrawPaths)
+{
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;

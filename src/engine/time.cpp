@@ -10,6 +10,9 @@ namespace engine
         last = now;
     }
 
-    float Timer::getDeltaTime() const { return deltaTime; }
+    float Timer::getDeltaTime() const
+    {
+        return deltaTime;
+    }
 
 } // namespace engine

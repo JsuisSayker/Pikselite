@@ -1,107 +1,52 @@
+#include <algorithm>
+#include <atomic>
+#include <cmath>
+#include <cstdint>
+#include <cstdio> // for _popen, _pclose
 #include <engine/core.hpp>
-#include <engine/ecs/components/transformComponent.hpp>
-#include <engine/ecs/components/velocityComponent.hpp>
-#include <engine/ecs/components/gameObjectComponent.hpp>
+#include <engine/ecs/components/scriptComponent.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
-#include <engine/ecs/systems/movementSystem.hpp>
+#include <engine/ecs/systems/spriteRenderSystem.hpp>
+#include <engine/renderUtils.hpp>
+#include <engine/scene/sceneSerializer.hpp>
+#include <fstream>
+#include <mutex>
+#include <thread>
 #include <tracy/Tracy.hpp>
+#include <unordered_set>
 
 #ifndef TRACY_ENABLE
 // output a warning if profiling is disabled
-#pragma message("Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
 #error "Not set"
 #endif
-#include <engine/ecs/systems/spriteRenderSystem.hpp>
-#include <engine/ecs/systems/scriptSystem.hpp>
-#include <fstream>
-#include <filesystem>
+#include <box2d/box2d.h>
+#include <engine/ecs/systems/physicsSystem.hpp>
 
-namespace {
-    json pixelToJson(const graphics::Pixel& pixel)
-    {
-        return {
-            {"x", pixel.position.x},
-            {"y", pixel.position.y},
-            {"r", pixel.color.r},
-            {"g", pixel.color.g},
-            {"b", pixel.color.b}
-        };
-    }
+namespace
+{
 
     graphics::Pixel pixelFromJson(const json& j)
     {
-        return {
-            {j.value("x", 0.0f), j.value("y", 0.0f)},
-            {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}
-        };
+        return {{j.value("x", 0.0f), j.value("y", 0.0f)},
+                {j.value("r", 1.0f), j.value("g", 1.0f), j.value("b", 1.0f)}};
     }
 
     json gameObjectToJson(const Pixel::GameObject& go)
     {
-        json pixelIds = json::array();
-        for (const auto pixelId : go.pixelEntities)
-            pixelIds.push_back(pixelId);
-
-        return {
-            {"id", go.id},
-            {"name", go.name},
-            {"pixelEntities", pixelIds}
-        };
+        // TODO
     }
 
     Pixel::GameObject gameObjectFromJson(const json& j)
     {
-        Pixel::GameObject go;
-        go.id = j.value("id", Pixel::NO_SPRITE);
-        go.name = j.value("name", std::string("GameObject ") + std::to_string(go.id));
-
-        if (j.contains("pixelEntities") && j["pixelEntities"].is_array()) {
-            for (const auto& pixelId : j["pixelEntities"]) {
-                go.pixelEntities.push_back(pixelId.get<Pixel::PixelEntityID>());
-            }
-        }
-
-        return go;
+        // TODO
     }
-}
+
+} // namespace
 
 namespace engine
 {
-    void Core::init()
-    {
-        // Register ECS components
-        componentManager.registerComponent<ecs::components::Transform>();
-        componentManager.registerComponent<ecs::components::Velocity>();
-        componentManager.registerComponent<ecs::components::GameObjectLink>();
-        componentManager.registerComponent<ecs::components::Sprite>();
-
-        // Register ECS systems
-        auto &movementSys = systemManager.addSystem<ecs::systems::MovementSystem>();
-        ecs::Signature movementSig;
-        movementSig.set(componentManager.getComponentType<ecs::components::Transform>());
-        movementSig.set(componentManager.getComponentType<ecs::components::Velocity>());
-        systemManager.setSignature<ecs::systems::MovementSystem>(movementSig);
-
-        // Sprite render system (needs Transform + Sprite)
-        auto &spriteRenderSys = systemManager.addSystem<ecs::systems::SpriteRenderSystem>(&renderer, &_camera);
-        ecs::Signature spriteSig;
-        spriteSig.set(componentManager.getComponentType<ecs::components::Transform>());
-        spriteSig.set(componentManager.getComponentType<ecs::components::Sprite>());
-        systemManager.setSignature<ecs::systems::SpriteRenderSystem>(spriteSig);
-
-        // Script system (needs Transform + Velocity) — runs Lua scripts
-        auto &scriptSys = systemManager.addSystem<ecs::systems::ScriptSystem>();
-        ecs::Signature scriptSig;
-        scriptSig.set(componentManager.getComponentType<ecs::components::Transform>());
-        scriptSig.set(componentManager.getComponentType<ecs::components::Velocity>());
-        systemManager.setSignature<ecs::systems::ScriptSystem>(scriptSig);
-        scriptSys.init();
-        scriptSys.loadScript("scripts/movement.lua");
-
-        spriteEditor = new editors::SpriteEditor(&sdlInterface, &renderer, &imguiInterface);
-        projectEditor = new editors::ProjectEditor(&sdlInterface, &renderer, &imguiInterface, &componentManager);
-    }
-
     void Core::mainLoop()
     {
         graphics::InputEvent event;
@@ -119,24 +64,174 @@ namespace engine
                 ZoneScopedN("GamePreview");
                 runGamePreview();
             }
-
-            if (isProjectEditorActive)
+            else if (isProjectsListPageActive)
+            {
+                ZoneScopedN("ProjectsListPage");
+                runProjectsListPage(sdlInterface, renderer, imguiInterface);
+            }
+            else if (isProjectEditorActive)
             {
                 ZoneScopedN("ProjectEditor");
+
+                // Handle build request (before frame)
+                if (projectEditor->consumeBuildGameRequest())
+                {
+                    BuildSettings settings;
+                    settings.gameTitle = _currentProject.name;
+                    settings.targetName = _currentProject.name;
+                    settings.scenePath = _sceneFilename;
+                    projectEditor->showBuildSettings(settings);
+                }
+
+                // Snapshot build progress state (before frame)
+                {
+                    std::string snapshot;
+                    {
+                        std::lock_guard<std::mutex> lock(_buildOutputMutex);
+                        snapshot = _buildOutput;
+                    }
+                    projectEditor->setBuildProgress(_isBuilding, _buildDone, _buildSuccess,
+                                                    snapshot);
+                }
+
+                // Render frame (ImGui rendering inside ProjectEditor::run)
                 projectEditor->run(event);
 
-                if (projectEditor->consumeSaveSceneRequest()) {
+                // Handle build confirmed (after frame — start the build thread)
+                BuildSettings confirmedSettings;
+                if (projectEditor->consumeBuildConfirmed(confirmedSettings))
+                {
+                    // Snapshot editor data before spawning thread
                     copyProjectEditorDataToCore();
+
+                    const std::string& targetName = confirmedSettings.targetName;
+                    const std::string assetsDir = "games/" + targetName + "/assets";
+
+                    // Save scene with assets bundled for standalone game
+                    std::filesystem::create_directories(assetsDir);
+                    const std::string scenePath = assetsDir + "/scene.scene";
+                    {
+                        engine::scene::SceneData buildData;
+                        buildData.gameObjects = _gameObjects;
+                        buildData.nextGameObjectId = gameObjectCounter;
+                        buildData.cameraX = _camera.getPosition().x;
+                        buildData.cameraY = _camera.getPosition().y;
+                        buildData.cameraZoom = _camera.getZoom();
+
+                        // Copy external assets and rewrite paths to be relative
+                        // to the built game's assets directory
+                        for (auto& go : buildData.gameObjects)
+                        {
+                            if (auto* sprite = go.getComponent<ecs::components::Sprite>())
+                            {
+                                if (!sprite->texturePath.empty())
+                                {
+                                    std::filesystem::path src =
+                                        std::filesystem::absolute(sprite->texturePath);
+                                    if (std::filesystem::exists(src))
+                                    {
+                                        std::filesystem::path dst =
+                                            std::filesystem::path(assetsDir) / "sprites" /
+                                            src.filename();
+                                        std::filesystem::create_directories(dst.parent_path());
+                                        std::filesystem::copy_file(
+                                            src, dst,
+                                            std::filesystem::copy_options::overwrite_existing);
+                                        sprite->texturePath =
+                                            "assets/sprites/" + src.filename().string();
+                                    }
+                                }
+                            }
+                            if (auto* script = go.getComponent<ecs::components::Script>())
+                            {
+                                if (!script->scriptPath.empty())
+                                {
+                                    std::filesystem::path src =
+                                        std::filesystem::absolute(script->scriptPath);
+                                    if (std::filesystem::exists(src))
+                                    {
+                                        std::filesystem::path dst =
+                                            std::filesystem::path(assetsDir) / "scripts" /
+                                            src.filename();
+                                        std::filesystem::create_directories(dst.parent_path());
+                                        std::filesystem::copy_file(
+                                            src, dst,
+                                            std::filesystem::copy_options::overwrite_existing);
+                                        script->scriptPath =
+                                            "assets/scripts/" + src.filename().string();
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!engine::scene::saveSceneToFile(scenePath, buildData))
+                            std::cerr << "Failed to save scene: " << scenePath << std::endl;
+                    }
+
+                    // Collect used .dat files
+                    std::vector<std::string> neededDats;
+                    for (const auto& go : _gameObjects)
+                    {
+                        if (!go.sourceDatPath.empty())
+                            neededDats.push_back(go.sourceDatPath);
+                    }
+
+                    if (_buildThread.joinable())
+                        _buildThread.join();
+
+                    _isBuilding = true;
+                    _buildDone = false;
+                    _buildSuccess = false;
+                    {
+                        std::lock_guard<std::mutex> lock(_buildOutputMutex);
+                        _buildOutput.clear();
+                    }
+                    _buildThread = std::thread(
+                        [this, confirmedSettings, neededDats]()
+                        {
+                            bool success = buildGame(confirmedSettings, neededDats);
+                            {
+                                std::lock_guard<std::mutex> lock(_buildOutputMutex);
+                                _buildOutput +=
+                                    success ? "Build completed successfully.\n" : "Build failed.\n";
+                            }
+                            _buildSuccess = success;
+                            _buildDone = true;
+                        });
+                }
+
+                // Handle build progress dismissed
+                if (projectEditor->consumeBuildProgressDismissed())
+                {
+                    if (_buildThread.joinable())
+                        _buildThread.join();
+                    _isBuilding = false;
+                }
+
+                // Save/load scene
+                if (projectEditor->consumeSaveSceneRequest())
+                {
+                    copyProjectEditorDataToCore();
+                    _sceneFilename = projectEditor->getSceneFilename();
+                    // Top-left Save can fire before any scene has been opened/created.
+                    // In that case fall back to a default file in the project's assets dir.
+                    if (_sceneFilename.empty())
+                        _sceneFilename = "assets/default.scene";
                     saveScene(_sceneFilename);
                 }
 
-                if (projectEditor->consumeLoadSceneRequest()) {
-                    if (loadScene(_sceneFilename)) {
-                        projectEditor->setSceneData(_renderPixels, _gameObjects, _pixelAttributes, _chunkGrid, pixelIdCounter, gameObjectCounter);
+                if (projectEditor->consumeLoadSceneRequest())
+                {
+                    _sceneFilename = projectEditor->getSceneFilename();
+                    if (loadScene(_sceneFilename))
+                    {
+                        projectEditor->setSceneData(_renderPixels, _gameObjects, _chunkGrid,
+                                                    gameObjectCounter);
+                        projectEditor->setCamera(_camera);
                     }
                 }
             }
-            else
+            else if (isSpriteEditorActive)
             {
                 ZoneScopedN("SpriteEditor");
                 spriteEditor->run(event);
@@ -147,20 +242,25 @@ namespace engine
 
     void Core::runGamePreview()
     {
-        SDL_Window *gameWindow = SDL_CreateWindow(
-            "Game Preview",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-            WINDOW_WIDTH, WINDOW_HEIGHT,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+        SDL_Window* gameWindow =
+            SDL_CreateWindow("Game Preview", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                             WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
         SDL_GL_MakeCurrent(gameWindow, sdlInterface.getGLContext());
+        renderer.setWindow(gameWindow);
+
+        // Drop any reload request that survived the previous preview session. Without
+        // this, a Lua reload_scene() fired right before the user exited preview would
+        // execute on the *first* frame of the next session — re-tearing-down the
+        // scene that copyProjectEditorDataToCore just set up.
+        _pendingSceneLoadPath.reset();
 
         copyProjectEditorDataToCore();
+        // _pixelSimulation.markRegionsDirty();
 
         while (isGamePreviewActive && running)
         {
             timer.tick();
-            float deltaTime = timer.getDeltaTime();
             graphics::InputEvent gameEvent = handleEvents();
 
             if (gameEvent.type == graphics::WINDOW_CLOSE)
@@ -186,24 +286,141 @@ namespace engine
                 break;
             }
 
-            update(deltaTime);
+            update(timer.getDeltaTime());
+
+            // Honor reload_scene() / load_scene(path) calls dispatched on the event bus
+            // during this frame's script update.
+            if (_pendingSceneLoadPath)
+            {
+                const std::string target =
+                    _pendingSceneLoadPath->empty() ? _sceneFilename : *_pendingSceneLoadPath;
+                _pendingSceneLoadPath.reset();
+                if (loadScene(target))
+                {
+                    _sceneFilename = target;
+                    accumulator = 0.0f; // discard physics catch-up from the old scene
+                }
+            }
 
             renderer.clear();
-            renderer.drawPixelsWCamera(_renderPixels, _camera, PIXEL_SIZE);
 
-            // Render all entities that have a SpriteComponent via the ECS system
-            auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>();
-            if (spriteSystem)
-                spriteSystem->update(0.0, componentManager);
+            std::vector<graphics::Pixel> framePixels =
+                buildRenderPixels(_pixelSimulation.getGrid());
+
+            _renderPixels = framePixels;
+            drawSpritesBelowLayer(0);
+            renderer.drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
+            renderer.drawParticlesWCamera(_pixelSimulation.getParticles(), _camera, PIXEL_SIZE);
+            drawSpritesAboveLayer(0);
+
+            // debug draw Box2D bodies
+            if (auto* physicsSystem = systemManager.getSystem<ecs::systems::PhysicsSystem>())
+            {
+                const std::vector<b2BodyId> ecsDebugBodies = physicsSystem->getDebugBodies();
+                renderer.drawBox2DDebug(_boxWorld.getWorldId(), ecsDebugBodies, _camera, 1.0f,
+                                        glm::vec3(1.0f, 0.8f, 0.2f));
+            }
+
+            // if (auto *spriteSystem = systemManager.getSystem<ecs::systems::SpriteRenderSystem>())
+            // {
+            //     spriteSystem->update(0.0, componentManager);
+            // }
 
             renderer.present(gameWindow);
         }
 
         SDL_DestroyWindow(gameWindow);
         SDL_GL_MakeCurrent(sdlInterface.getWindow(), sdlInterface.getGLContext());
-        int w, h;
-        SDL_GetWindowSize(sdlInterface.getWindow(), &w, &h);
-        glViewport(0, 0, w, h);
+        renderer.setWindow(sdlInterface.getWindow());
+    }
+
+    void Core::sortProjects(std::vector<projects::Project>& projects)
+    {
+        std::sort(projects.begin(), projects.end(),
+                  [](const projects::Project& a, const projects::Project& b)
+                  { return a.lastOpened > b.lastOpened; });
+    }
+
+    void Core::openProject(int index)
+    {
+        _currentProject = _projects[index];
+
+        auto now = std::chrono::system_clock::now();
+        _currentProject.lastOpened = now;
+        _projects[index].lastOpened = now;
+
+        sortProjects(_projects);
+        saveProjects(_projects);
+
+        switchToProjectEditor = true;
+    }
+
+    void Core::runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer,
+                                   graphics::ImguiInterface& imguiInterface)
+    {
+        renderer.clear();
+        imguiInterface.startFrame();
+
+        imguiInterface.fileToolBar();
+
+        float toolbarHeight = 40.0f;
+
+        ImGuiIO& io = ImGui::GetIO();
+        ImGui::SetNextWindowPos(ImVec2(0, toolbarHeight));
+        ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - toolbarHeight));
+
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::Begin("MainWindow", nullptr, flags);
+
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(170, 100));
+        ImGui::BeginChild("projectOptions", ImVec2(0, 250), true,
+                          ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects, _projectsPath);
+        if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size())
+        {
+            openProject(selectedProjectIndex);
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - ImGui::GetStyle().ItemSpacing.y);
+
+        float remainingHeight = ImGui::GetContentRegionAvail().y;
+
+        ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(150, 30));
+        ImGui::BeginChild("projectDisplaySection", ImVec2(0, remainingHeight), true);
+        if (!switchToProjectEditor)
+        {
+            selectedProjectIndex = imguiInterface.projectsDisplay(_projects);
+
+            if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size())
+            {
+                openProject(selectedProjectIndex);
+            }
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+
+        ImGui::End();
+        ImGui::PopStyleVar();
+
+        imguiInterface.endFrame(sdlInterface.getWindow());
+        renderer.present(sdlInterface.getWindow());
+
+        if (switchToProjectEditor)
+        {
+            isProjectsListPageActive = false;
+            isProjectEditorActive = true;
+            switchToProjectEditor = false;
+            projectEditor->setCurrentProject(_currentProject);
+        }
     }
 
     void Core::run()
@@ -219,27 +436,38 @@ namespace engine
 
         switch (event.type)
         {
-        case graphics::QUIT:
-            running = false;
-            break;
-        case graphics::WINDOW_CLOSE:
-        {
-            uint32_t mainWindowID = sdlInterface.getWindowID();
-            if (event.windowID == mainWindowID)
-            {
+            case graphics::QUIT:
                 running = false;
+                break;
+            case graphics::WINDOW_CLOSE:
+            {
+                uint32_t mainWindowID = sdlInterface.getWindowID();
+                if (event.windowID == mainWindowID)
+                {
+                    running = false;
+                }
+                break;
             }
-            break;
-        }
-        case graphics::KEY_TAB:
-            isProjectEditorActive = !isProjectEditorActive;
-            break;
-        case graphics::KEY_F5:
-            if (!isGamePreviewActive)
-                isGamePreviewActive = true;
-            break;
-        default:
-            break;
+            case graphics::KEY_TAB:
+                if (!isProjectsListPageActive)
+                {
+                    isProjectEditorActive = !isProjectEditorActive;
+                    isSpriteEditorActive = !isSpriteEditorActive;
+                }
+                break;
+            case graphics::KEY_F5:
+                if (!isGamePreviewActive)
+                {
+                    // Ensure preview reads the latest pixels/chunks from the editor state.
+                    copyProjectEditorDataToCore();
+                    isGamePreviewActive = true;
+                    graphics::Camera2D editorCamera = projectEditor->getCamera();
+                    setCameraPosition(editorCamera.getPosition().x, editorCamera.getPosition().y);
+                    setCameraZoom(editorCamera.getZoom());
+                }
+                break;
+            default:
+                break;
         }
         return event;
     }
@@ -248,13 +476,80 @@ namespace engine
     {
         ZoneScoped;
 
+        accumulator += deltaTime;
+
+        if (accumulator > 0.25f)
+            accumulator = 0.25f;
+
+        while (accumulator >= fixedDt)
         {
-            ZoneScopedN("PixelSimulation");
-            _pixelSimulation.step(_chunkGrid, _pixelAttributes, _renderPixels, deltaTime);
+            {
+                ZoneScopedN("Sim::Tick");
+                _pixelSimulation.update();
+                syncRegionBodiesToECS();
+            }
+
+            accumulator -= fixedDt;
         }
+
+        // Single ECS pass: any newly registered system is updated automatically.
         {
             ZoneScopedN("ECS Systems");
             systemManager.update(deltaTime, componentManager);
+        }
+
+        syncGameObjectPixelsFromPhysics();
+    }
+
+    void Core::syncRegionBodiesToECS()
+    {
+        for (ecs::EntityID entityId : _regionBodyEntities)
+        {
+            componentManager.entityDestroyed(entityId);
+            systemManager.entityDestroyed(entityId);
+            entityManager.destroyEntity(ecs::Entity(entityId));
+        }
+        _regionBodyEntities.clear();
+
+        const std::vector<b2BodyId> regionBodies = _pixelSimulation.getRegionBodies();
+        if (regionBodies.empty())
+        {
+            return;
+        }
+
+        _regionBodyEntities.reserve(regionBodies.size());
+
+        for (const b2BodyId bodyId : regionBodies)
+        {
+            if (!b2Body_IsValid(bodyId))
+            {
+                continue;
+            }
+
+            const b2Transform transform = b2Body_GetTransform(bodyId);
+
+            ecs::Entity entity = entityManager.createEntity();
+            const ecs::EntityID entityId = entity.id;
+
+            ecs::components::Transform transformComponent{};
+            transformComponent.x = transform.p.x;
+            transformComponent.y = transform.p.y;
+            transformComponent.rotation = b2Rot_GetAngle(transform.q);
+            transformComponent.scaleX = 1.0f;
+            transformComponent.scaleY = 1.0f;
+
+            ecs::components::PhysicsBody physicsComponent{};
+            physicsComponent.bodyId = bodyId;
+            physicsComponent.bodyType = b2_staticBody;
+            physicsComponent.fixedRotation = true;
+
+            componentManager.addComponent(entityId, transformComponent);
+            componentManager.addComponent(entityId, physicsComponent);
+
+            b2Body_SetUserData(bodyId,
+                               reinterpret_cast<void*>(static_cast<std::uintptr_t>(entityId)));
+
+            _regionBodyEntities.push_back(entityId);
         }
     }
 
@@ -267,242 +562,486 @@ namespace engine
 
     void Core::shutdown()
     {
-        if (projectEditor) {
+        if (projectEditor)
+        {
             copyProjectEditorDataToCore();
-            saveScene(_sceneFilename);
         }
+        if (_buildThread.joinable())
+        {
+            _buildDone = true;
+            _buildThread.join();
+        }
+        _boxWorld.shutdown();
         SDL_Quit();
     }
 
-    bool Core::copyProjectEditorDataToCore()
+    std::vector<graphics::Pixel> Core::buildRenderPixels(const ChunkGrid& grid) const
     {
-        if (!isProjectEditorActive)
-            return false;
+        return engine::buildRenderPixels(grid);
+    }
 
-        _renderPixels = projectEditor->getPixels();
-        _gameObjects = projectEditor->getGameObjects();
-        _pixelAttributes = projectEditor->getPixelAttributes();
-        _chunkGrid = projectEditor->getChunkGrid();
-        pixelIdCounter = projectEditor->getPixelIdCounter();
-        gameObjectCounter = projectEditor->getGameObjectCounter();
+    bool Core::buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats)
+    {
+        const std::string targetName = settings.targetName;
+        const std::string gameDir = "games/" + targetName;
+        const std::string srcDir = gameDir + "/src";
+        const std::string assetsDir = gameDir + "/assets";
 
-        loadGameObjectsIntoECS();
+        auto appendOutput = [this](const std::string& msg)
+        {
+            std::lock_guard<std::mutex> lock(_buildOutputMutex);
+            _buildOutput += msg + "\n";
+        };
 
+        // Create directories
+        appendOutput("Creating game directory: " + gameDir);
+        std::filesystem::create_directories(srcDir);
+        std::filesystem::create_directories(assetsDir);
+
+        // Generate CMakeLists.txt
+        {
+            const std::string cmakeContent =
+                "# -------------------------------------------------\n"
+                "# " +
+                targetName +
+                " - Auto-generated game project\n"
+                "# -------------------------------------------------\n"
+                "add_executable(" +
+                targetName +
+                " src/main.cpp)\n"
+                "\n"
+                "target_include_directories(" +
+                targetName +
+                "\n"
+                "    PRIVATE\n"
+                "        ${CMAKE_SOURCE_DIR}/src\n"
+                "        ${CMAKE_SOURCE_DIR}/interface/include\n"
+                ")\n"
+                "\n"
+                "target_link_libraries(" +
+                targetName +
+                "\n"
+                "    PRIVATE\n"
+                "        engine\n"
+                "        graphics\n"
+                "        game\n"
+                "        pikselite_interface\n"
+                "        SDL2::SDL2\n"
+                "        SDL2::SDL2main\n"
+                "        GLEW::GLEW\n"
+                "        OpenGL::GL\n"
+                "        box2d::box2d\n"
+                "        ZLIB::ZLIB\n"
+                "        ${LUA_LIBRARIES}\n"
+                "        nlohmann_json::nlohmann_json\n"
+                ")\n"
+                "\n"
+                "# Copy assets to output directory\n"
+                "add_custom_command(TARGET " +
+                targetName +
+                " POST_BUILD\n"
+                "    COMMAND ${CMAKE_COMMAND} -E copy_directory\n"
+                "        ${CMAKE_CURRENT_SOURCE_DIR}/assets\n"
+                "        $<TARGET_FILE_DIR:" +
+                targetName +
+                ">/assets\n"
+                "    COMMENT \"Copying game assets to output directory\"\n"
+                ")\n";
+
+            std::ofstream cmakeFile(gameDir + "/CMakeLists.txt");
+            if (!cmakeFile)
+            {
+                appendOutput("ERROR: Failed to create CMakeLists.txt");
+                return false;
+            }
+            cmakeFile << cmakeContent;
+            appendOutput("Generated CMakeLists.txt");
+        }
+
+        // Generate main.cpp
+        {
+            const std::string mainContent =
+                "#define SDL_MAIN_HANDLED\n"
+                "#include <game/Game.hpp>\n"
+                "#include <filesystem>\n"
+                "\n"
+                "int main(int argc, char* argv[])\n"
+                "{\n"
+                "    std::filesystem::current_path(\n"
+                "        std::filesystem::absolute(argv[0]).parent_path());\n"
+                "    engine::Game game(" +
+                std::to_string(settings.windowWidth) + ", " +
+                std::to_string(settings.windowHeight) + ", \"" + settings.gameTitle +
+                "\");\n"
+                "    if (!game.loadScene(\"assets/scene.scene\"))\n"
+                "        return 1;\n"
+                "    game.run();\n"
+                "    return 0;\n"
+                "}\n";
+
+            std::ofstream mainFile(srcDir + "/main.cpp");
+            if (!mainFile)
+            {
+                appendOutput("ERROR: Failed to create main.cpp");
+                return false;
+            }
+            mainFile << mainContent;
+            appendOutput("Generated main.cpp");
+        }
+
+        // Copy .dat files used by the scene
+        for (const auto& datPath : neededDats)
+        {
+            std::filesystem::path src = datPath;
+            std::filesystem::path dst = std::filesystem::path(assetsDir) / src.filename();
+            std::error_code ec;
+            std::filesystem::copy_file(src, dst, std::filesystem::copy_options::overwrite_existing,
+                                       ec);
+            if (ec)
+            {
+                appendOutput("WARNING: Failed to copy " + datPath + ": " + ec.message());
+            }
+            else
+            {
+                appendOutput("Copied " + src.filename().string());
+            }
+        }
+
+        // Re-configure CMake to pick up the new target
+        {
+            appendOutput("Re-configuring CMake...");
+            std::string configureCmd = "cmake -B build 2>&1";
+            FILE* pipe = _popen(configureCmd.c_str(), "r");
+            if (!pipe)
+            {
+                appendOutput("ERROR: Failed to run cmake configure");
+                return false;
+            }
+            char buffer[128]; // needs to be reworked
+            while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+            {
+                std::string line(buffer);
+                // Trim newline
+                if (!line.empty() && line.back() == '\n')
+                    line.pop_back();
+                appendOutput("  " + line);
+            }
+            int exitCode = _pclose(pipe);
+            if (exitCode != 0)
+            {
+                appendOutput("ERROR: CMake configure failed with exit code " +
+                             std::to_string(exitCode));
+                return false;
+            }
+            appendOutput("CMake configure succeeded.");
+        }
+
+        // Build the game target
+        {
+            appendOutput("Building target " + targetName + "...");
+            std::string buildCmd =
+                "cmake --build build --target " + targetName + " --config Release 2>&1";
+            FILE* pipe = _popen(buildCmd.c_str(), "r");
+            if (!pipe)
+            {
+                appendOutput("ERROR: Failed to run cmake build");
+                return false;
+            }
+            char buffer[256];
+            while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+            {
+                std::string line(buffer);
+                if (!line.empty() && line.back() == '\n')
+                    line.pop_back();
+                appendOutput("  " + line);
+            }
+            int exitCode = _pclose(pipe);
+            if (exitCode != 0)
+            {
+                appendOutput("ERROR: Build failed with exit code " + std::to_string(exitCode));
+                return false;
+            }
+            appendOutput("Build succeeded.");
+        }
+
+        appendOutput("Game build complete! Output: build/" + targetName + "/Release/" + targetName +
+                     ".exe");
+        // TODO: Standalone game executables also need runtime DLLs deployed. Add a
+        // $<TARGET_RUNTIME_DLLS> POST_BUILD step to the generated games/<target>/CMakeLists.txt.
         return true;
     }
 
-    void Core::loadGameObjectsIntoECS()
+    void Core::saveProjects(const std::vector<projects::Project>& projects)
     {
-        for (auto &[goId, entityId] : _gameObjectToEntity)
-        {
-            componentManager.entityDestroyed(entityId);
-            systemManager.entityDestroyed(entityId);
-            entityManager.destroyEntity(ecs::Entity(entityId));
-        }
-        _gameObjectToEntity.clear();
+        std::filesystem::create_directories("config");
 
-        for (const auto &go : _gameObjects)
-        {
-            ecs::Entity entity = entityManager.createEntity();
-            ecs::EntityID eid = entity.id;
+        std::ofstream file("config/projects.json");
 
-            ecs::components::Transform transform{0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f};
-            componentManager.addComponent<ecs::components::Transform>(eid, transform);
-
-            ecs::components::Velocity velocity{20.0f, 0.0f};
-            componentManager.addComponent<ecs::components::Velocity>(eid, velocity);
-
-            ecs::components::GameObjectLink link;
-            link.gameObjectId = go.id;
-            link.pixelEntities = go.pixelEntities;
-            componentManager.addComponent<ecs::components::GameObjectLink>(eid, link);
-
-            ecs::components::Sprite spriteComp;
-            spriteComp.texturePath = "assets/dragon.png";
-            componentManager.addComponent<ecs::components::Sprite>(eid, spriteComp);
-
-            ecs::Signature sig;
-            sig.set(componentManager.getComponentType<ecs::components::Transform>());
-            sig.set(componentManager.getComponentType<ecs::components::Velocity>());
-            sig.set(componentManager.getComponentType<ecs::components::GameObjectLink>());
-            sig.set(componentManager.getComponentType<ecs::components::Sprite>());
-
-            entityManager.setSignature(eid, sig);
-            systemManager.entitySignatureChanged(eid, sig);
-
-            _gameObjectToEntity[go.id] = eid;
-        }
-    }
-
-    void Core::saveScene(const std::string &filename)
-    {
-        json scene;
-        scene["version"] = 1;
-        scene["pixelIdCounter"] = pixelIdCounter;
-        scene["gameObjectCounter"] = gameObjectCounter;
-
-        scene["renderPixels"] = json::array();
-        for (const auto& pixel : _renderPixels) {
-            scene["renderPixels"].push_back(pixelToJson(pixel));
-        }
-
-        scene["gameObjects"] = json::array();
-        for (const auto& gameObject : _gameObjects) {
-            scene["gameObjects"].push_back(gameObjectToJson(gameObject));
-        }
-
-        scene["pixelAttributes"]["renderIndex"] = json::array();
-        for (const auto& [id, index] : _pixelAttributes.renderIndex) {
-            scene["pixelAttributes"]["renderIndex"].push_back({
-                {"id", id},
-                {"index", index}
-            });
-        }
-
-        scene["pixelAttributes"]["solidAttributes"] = json::array();
-        for (const auto& [id, solid] : _pixelAttributes.solidAttributes) {
-            (void)solid;
-            scene["pixelAttributes"]["solidAttributes"].push_back({{"id", id}});
-        }
-
-        scene["pixelAttributes"]["liquidAttributes"] = json::array();
-        for (const auto& [id, liquid] : _pixelAttributes.liquidAttributes) {
-            scene["pixelAttributes"]["liquidAttributes"].push_back({
-                {"id", id},
-                {"viscosity", liquid.viscosity},
-                {"updateThisFrame", liquid.updateThisFrame}
-            });
-        }
-
-        scene["pixelAttributes"]["gaseousAttributes"] = json::array();
-        for (const auto& [id, gaseous] : _pixelAttributes.gaseousAttributes) {
-            scene["pixelAttributes"]["gaseousAttributes"].push_back({
-                {"id", id},
-                {"density", gaseous.density}
-            });
-        }
-
-        scene["chunkGrid"] = json::array();
-        for (const auto& [coord, chunk] : _chunkGrid.getChunks()) {
-            json cells = json::array();
-            for (int x = 0; x < Pixel::CHUNK_SIZE; ++x) {
-                for (int y = 0; y < Pixel::CHUNK_SIZE; ++y) {
-                    const auto id = chunk.get(x, y);
-                    if (id == Pixel::EMPTY)
-                        continue;
-
-                    cells.push_back({
-                        {"x", x},
-                        {"y", y},
-                        {"id", id}
-                    });
-                }
-            }
-
-            scene["chunkGrid"].push_back({
-                {"cx", coord.first},
-                {"cy", coord.second},
-                {"cells", cells}
-            });
-        }
-
-        std::filesystem::path path(filename);
-        if (path.has_parent_path()) {
-            std::filesystem::create_directories(path.parent_path());
-        }
-
-        std::ofstream file(filename);
-        if (file.is_open()) {
-            file << scene.dump(4);
-        }
-    }
-
-    bool Core::loadScene(const std::string &filename)
-    {
-        std::ifstream file(filename);
         if (!file.is_open())
-            return false;
-
-        json scene;
-        try {
-            file >> scene;
-        } catch (...) {
-            return false;
+        {
+            std::cerr << "Failed to open projects.json for writing\n";
+            return;
         }
 
-        _renderPixels.clear();
-        _gameObjects.clear();
-        _pixelAttributes = {};
-        _chunkGrid = Pixel::ChunkGrid();
-        _gameObjectToEntity.clear();
+        nlohmann::json j = nlohmann::json::array();
 
-        pixelIdCounter = scene.value("pixelIdCounter", 1u);
-        gameObjectCounter = scene.value("gameObjectCounter", 1u);
+        for (const auto& p : projects)
+        {
+            std::time_t t = std::chrono::system_clock::to_time_t(p.lastOpened);
 
-        if (scene.contains("renderPixels") && scene["renderPixels"].is_array()) {
-            for (const auto& pixel : scene["renderPixels"]) {
-                _renderPixels.push_back(pixelFromJson(pixel));
-            }
+            j.push_back({{"name", p.name}, {"path", p.path.string()}, {"lastOpened", t}});
         }
 
-        if (scene.contains("gameObjects") && scene["gameObjects"].is_array()) {
-            for (const auto& gameObject : scene["gameObjects"]) {
-                _gameObjects.push_back(gameObjectFromJson(gameObject));
-            }
-        }
-
-        if (scene.contains("pixelAttributes")) {
-            const auto& pixelAttributes = scene["pixelAttributes"];
-
-            if (pixelAttributes.contains("renderIndex")) {
-                for (const auto& entry : pixelAttributes["renderIndex"]) {
-                    _pixelAttributes.renderIndex[entry.at("id").get<Pixel::PixelEntityID>()] = entry.at("index").get<int>();
-                }
-            }
-
-            if (pixelAttributes.contains("solidAttributes")) {
-                for (const auto& entry : pixelAttributes["solidAttributes"]) {
-                    _pixelAttributes.solidAttributes[entry.at("id").get<Pixel::PixelEntityID>()] = Pixel::Solid{};
-                }
-            }
-
-            if (pixelAttributes.contains("liquidAttributes")) {
-                for (const auto& entry : pixelAttributes["liquidAttributes"]) {
-                    Pixel::Liquid liquid{};
-                    liquid.viscosity = entry.value("viscosity", 0.5f);
-                    liquid.updateThisFrame = entry.value("updateThisFrame", false);
-                    _pixelAttributes.liquidAttributes[entry.at("id").get<Pixel::PixelEntityID>()] = liquid;
-                }
-            }
-
-            if (pixelAttributes.contains("gaseousAttributes")) {
-                for (const auto& entry : pixelAttributes["gaseousAttributes"]) {
-                    Pixel::Gaseous gaseous{};
-                    gaseous.density = entry.value("density", 0.5f);
-                    _pixelAttributes.gaseousAttributes[entry.at("id").get<Pixel::PixelEntityID>()] = gaseous;
-                }
-            }
-        }
-
-        if (scene.contains("chunkGrid") && scene["chunkGrid"].is_array()) {
-            for (const auto& chunkEntry : scene["chunkGrid"]) {
-                const int cx = chunkEntry.value("cx", 0);
-                const int cy = chunkEntry.value("cy", 0);
-                auto& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
-
-                if (!chunkEntry.contains("cells") || !chunkEntry["cells"].is_array())
-                    continue;
-
-                for (const auto& cell : chunkEntry["cells"]) {
-                    const int x = cell.value("x", 0);
-                    const int y = cell.value("y", 0);
-                    const auto id = cell.value("id", Pixel::EMPTY);
-                    chunk.set(x, y, id);
-                }
-            }
-        }
-
-        return true;
+        file << j.dump(4);
     }
 
+    void Core::getProjectsFolderPath()
+    {
+        std::filesystem::path exeDir = std::filesystem::current_path();
+        std::filesystem::path projectsPath = exeDir / "Projects";
+        std::filesystem::path infoPath = "config/info.json";
+
+        json j;
+
+        if (std::filesystem::exists(infoPath))
+        {
+            std::ifstream inFile(infoPath);
+
+            if (inFile.is_open())
+            {
+                inFile >> j;
+                inFile.close();
+            }
+        }
+
+        _projectsPath = projectsPath.string();
+        j["defaultPath"] = _projectsPath;
+
+        std::ofstream outFile(infoPath);
+
+        if (outFile.is_open())
+        {
+            outFile << j.dump(4);
+            outFile.close();
+        }
+    }
+
+    void Core::getJsonVariables()
+    {
+        std::filesystem::path configDir = "config";
+        std::filesystem::path infoPath = configDir / "info.json";
+
+        if (!std::filesystem::exists(configDir))
+        {
+            std::filesystem::create_directories(configDir);
+        }
+
+        if (!std::filesystem::exists(infoPath))
+        {
+            json j;
+
+            j["defaultPath"] = "";
+
+            std::ofstream outFile(infoPath);
+
+            if (outFile.is_open())
+            {
+                outFile << j.dump(4);
+                outFile.close();
+            }
+
+            getProjectsFolderPath();
+            return;
+        }
+
+        json j;
+
+        std::ifstream inFile(infoPath);
+
+        if (inFile.is_open())
+        {
+            inFile >> j;
+            inFile.close();
+        }
+
+        if (!j.contains("defaultPath") || j["defaultPath"].is_null() ||
+            j["defaultPath"].get<std::string>().empty())
+        {
+            getProjectsFolderPath();
+            return;
+        }
+
+        _projectsPath = j["defaultPath"].get<std::string>();
+    }
+
+    void Core::loadProjects(std::vector<projects::Project>& projects)
+    {
+        projects.clear();
+
+        std::filesystem::path projectsPath = _projectsPath;
+
+        if (!std::filesystem::exists(projectsPath))
+        {
+            std::filesystem::create_directories(projectsPath);
+            return;
+        }
+
+        if (std::filesystem::is_empty(projectsPath))
+        {
+            return;
+        }
+
+        for (const auto& entry : std::filesystem::directory_iterator(projectsPath))
+        {
+            if (!entry.is_directory())
+            {
+                continue;
+            }
+
+            projects::Project project;
+
+            auto fileTime = std::filesystem::last_write_time(entry.path());
+            auto systemTime = std::chrono::system_clock::now() +
+                              (fileTime - std::filesystem::file_time_type::clock::now());
+
+            project.lastOpened =
+                std::chrono::time_point_cast<std::chrono::system_clock::duration>(systemTime);
+            project.name = entry.path().filename().string();
+            project.path = entry.path();
+
+            projects.push_back(project);
+        }
+    }
+
+    void Core::drawSpritesBelowLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr)
+                continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
+
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer >= layer)
+                continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform =
+                componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = renderer.loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0)
+                continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            renderer.drawSprite(s2d, _camera);
+        }
+    }
+
+    void Core::drawSpritesAboveLayer(int layer)
+    {
+        struct SpriteDrawItem
+        {
+            int layer;
+            ecs::EntityID entityId;
+        };
+
+        std::vector<SpriteDrawItem> drawList;
+        const auto& entities = entityManager.getEntities();
+        drawList.reserve(entities.size());
+
+        for (const auto& entityPtr : entities)
+        {
+            if (!entityPtr)
+                continue;
+            const ecs::EntityID entityId = entityPtr->id;
+
+            if (!componentManager.hasComponent<ecs::components::Transform>(entityId))
+                continue;
+            if (!componentManager.hasComponent<ecs::components::Sprite>(entityId))
+                continue;
+
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(entityId);
+            auto& transform = componentManager.getComponent<ecs::components::Transform>(entityId);
+
+            if (!sprite.enabled || !transform.enabled)
+                continue;
+            if (sprite.layer <= layer)
+                continue;
+
+            drawList.push_back({sprite.layer, entityId});
+        }
+
+        std::sort(drawList.begin(), drawList.end(),
+                  [](const SpriteDrawItem& a, const SpriteDrawItem& b)
+                  {
+                      if (a.layer != b.layer)
+                          return a.layer < b.layer;
+                      return a.entityId < b.entityId;
+                  });
+
+        for (const auto& item : drawList)
+        {
+            auto& sprite = componentManager.getComponent<ecs::components::Sprite>(item.entityId);
+            auto& transform =
+                componentManager.getComponent<ecs::components::Transform>(item.entityId);
+
+            if (!sprite.loaded && !sprite.texturePath.empty())
+            {
+                sprite.textureID = renderer.loadTexture(sprite.texturePath);
+                sprite.loaded = true;
+            }
+
+            if (sprite.textureID == 0)
+                continue;
+
+            graphics::Sprite2D s2d;
+            s2d.position = {transform.x, transform.y};
+            s2d.size = {sprite.width * transform.scaleX, sprite.height * transform.scaleY};
+            s2d.textureID = sprite.textureID;
+
+            renderer.drawSprite(s2d, _camera);
+        }
+    }
 } // namespace engine

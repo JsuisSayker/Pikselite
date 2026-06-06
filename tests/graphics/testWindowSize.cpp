@@ -1,14 +1,15 @@
-#include <gtest/gtest.h>
-
 #include <graphics/imgui/components/bars.hpp>
+#include <gtest/gtest.h>
 #include <tests/imguiSetupForTest.hpp>
 
-TEST(GetDesiredSizeTests, NotFull) {
+TEST(GetDesiredSizeTests, NotFull)
+{
     EXPECT_EQ(graphics::GetDesiredSize("notfull", graphics::BarOrientation::Horizontal), 0);
     EXPECT_EQ(graphics::GetDesiredSize("notfull", graphics::BarOrientation::Vertical), 0);
 }
 
-TEST(GetDesiredSizeTests, FullReturnsDisplaySize) {
+TEST(GetDesiredSizeTests, FullReturnsDisplaySize)
+{
     SDL_Window* window = nullptr;
     SDL_GLContext glContext = nullptr;
     imguiTest::ImGuiTestCommon testCommon;

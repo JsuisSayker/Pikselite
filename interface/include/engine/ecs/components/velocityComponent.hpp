@@ -2,9 +2,14 @@
 
 namespace ecs::components
 {
-    struct Velocity {
+    /**
+     * @brief The Velocity component represents the speed and direction of an entity's movement in
+     * 2D space. It contains properties for the x and y velocity components.
+     */
+    struct Velocity
+    {
         bool enabled = true;
-        
+
         float vx, vy;
     };
 } // namespace ecs::components

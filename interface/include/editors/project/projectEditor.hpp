@@ -1,150 +1,282 @@
 /**
  * @file projectEditor.hpp
- * @brief Declares the ProjectEditor class for managing the project editing interface, including pixel and game object management, sprite placement, and scene saving/loading.
- * This file is part of the Pixel Engine project, which simulates pixel-based physics and interactions.
+ * @brief Declares the ProjectEditor class for managing the project editing interface, including
+ * pixel and game object management, sprite placement, and scene saving/loading. This file is part
+ * of the Pixel Engine project, which simulates pixel-based physics and interactions.
  */
 #pragma once
 
-#include <graphics/renderer/renderer.hpp>
-#include <graphics/interface/interface.hpp>
-#include <graphics/imgui/imguiInterface.hpp>
-#include <engine/managers/componentManager.hpp>
-#include <engine/pixels/chunk.hpp>
-#include <iostream>
-#include <fstream>
-#include <limits>
 #include <cmath>
+#include <editors/aEditor.hpp>
+#include <engine/ecs/components/spriteComponent.hpp>
+#include <engine/ecs/components/transformComponent.hpp>
+#include <engine/managers/componentManager.hpp>
+#include <engine/pixels/simulation/chunk.hpp>
+#include <engine/pixels/simulation/element.hpp>
+#include <filesystem>
+#include <fstream>
+#include <graphics/imgui/imguiInterface.hpp>
+#include <graphics/interface/interface.hpp>
+#include <graphics/renderer/renderer.hpp>
+#include <iostream>
+#include <limits>
+#include <projects.hpp>
 #include <unordered_map>
 
 /**
- * @brief The editors namespace contains classes related to editing and managing the project, including the ProjectEditor class which provides methods for handling user input, managing pixel and game object data, and interfacing with the graphics and component systems.
- * The ProjectEditor class is responsible for the main editing interface, allowing users to create and modify pixel-based scenes, manage game objects, place sprites, and save/load scenes.
+ * @brief The editors namespace contains classes related to editing and managing the project,
+ * including the ProjectEditor class which provides methods for handling user input, managing pixel
+ * and game object data, and interfacing with the graphics and component systems. The ProjectEditor
+ * class is responsible for the main editing interface, allowing users to create and modify
+ * pixel-based scenes, manage game objects, place sprites, and save/load scenes.
  */
-namespace editors {
-    class ProjectEditor {
-    public:
+namespace editors
+{
+    class ProjectEditor : public AbstractEditor
+    {
+      public:
 #ifdef UNIT_TEST
-        bool testLoadSpriteForPlacement(const std::string& filename) { return loadSpriteForPlacement(filename); }
-        void testPlacePendingSpriteAtGrid(int anchorGX, int anchorGY) { placePendingSpriteAtGrid(anchorGX, anchorGY); }
+        bool testLoadSpriteForPlacement(const std::string& filename)
+        {
+            return loadSpriteForPlacement(filename);
+        }
 #endif
-        ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface);
+        ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer,
+                      graphics::ImguiInterface* imguiInterface);
         /**
-         * @brief Constructs the ProjectEditor, initializing references to the graphics interface, renderer, ImGui interface, and component manager. The ProjectEditor will use these interfaces to manage rendering, user input, and game object components during the editing process.
-         * @param graphicsInterface A pointer to the graphics::Interface for handling window and input events.
-         * @param renderer A pointer to the graphics::Renderer for managing rendering of pixels and sprites.
-         * @param imguiInterface A pointer to the graphics::ImguiInterface for managing the ImGui user interface.
-         * @param componentManager A pointer to the engine::ComponentManager for managing game object components.
+         * @brief Constructs the ProjectEditor, initializing references to the graphics interface,
+         * renderer, ImGui interface, and component manager. The ProjectEditor will use these
+         * interfaces to manage rendering, user input, and game object components during the editing
+         * process.
+         * @param graphicsInterface A pointer to the graphics::Interface for handling window and
+         * input events.
+         * @param renderer A pointer to the graphics::Renderer for managing rendering of pixels and
+         * sprites.
+         * @param imguiInterface A pointer to the graphics::ImguiInterface for managing the ImGui
+         * user interface.
+         * @param componentManager A pointer to the engine::ComponentManager for managing game
+         * object components.
          */
-        ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer, graphics::ImguiInterface* imguiInterface, engine::ComponentManager* componentManager);
+        ProjectEditor(graphics::Interface* graphicsInterface, graphics::Renderer* renderer,
+                      graphics::ImguiInterface* imguiInterface,
+                      engine::ComponentManager* componentManager);
         /**
-         * @brief Destructs the ProjectEditor, cleaning up any resources if necessary. Note that the ProjectEditor does not own the graphics interface, renderer, ImGui interface, or component manager, and assumes they will be valid for the lifetime of the ProjectEditor.
+         * @brief Destructs the ProjectEditor, cleaning up any resources if necessary. Note that the
+         * ProjectEditor does not own the graphics interface, renderer, ImGui interface, or
+         * component manager, and assumes they will be valid for the lifetime of the ProjectEditor.
          */
         ~ProjectEditor();
 
         /**
          * @brief Runs the project editor, handling user input and updating the editing state.
-         * @param event A graphics::InputEvent representing the latest user input event to be processed by the editor. This method will handle the event and update the editor's state accordingly, including managing pixel placement, game object selection, sprite placement, and scene saving/loading requests.
+         * @param event A graphics::InputEvent representing the latest user input event to be
+         * processed by the editor. This method will handle the event and update the editor's state
+         * accordingly, including managing pixel placement, game object selection, sprite placement,
+         * and scene saving/loading requests.
          */
-        void run(const graphics::InputEvent& event);
+        void run(const graphics::InputEvent& event) override;
 
-        // Accessor methods for the current state of the editor, including the pixels to be rendered, game objects, pixel attributes, chunk grid, and counters for pixel and game object IDs.
-        std::vector<graphics::Pixel> getPixels() const { return _renderPixels; }
-        std::vector<Pixel::GameObject> getGameObjects() const { return _gameObjects; }
-        Pixel::PixelAttributes getPixelAttributes() const { return _pixelAttributes; }
-        Pixel::ChunkGrid getChunkGrid() const { return _chunkGrid; }
-        uint32_t getPixelIdCounter() const { return pixelIdCounter; }
-        uint32_t getGameObjectCounter() const { return gameObjectCounter; }
+        // Accessor methods for the current state of the editor, including the pixels to be
+        // rendered, game objects, pixel attributes, chunk grid, and counters for pixel and game
+        // object IDs.
+        std::vector<graphics::Pixel> getPixels() const
+        {
+            return _renderPixels;
+        }
+        std::vector<Pixel::GameObject> getGameObjects() const
+        {
+            return _gameObjects;
+        }
+        ChunkGrid getChunkGrid() const
+        {
+            return _chunkGrid;
+        }
+        uint32_t getGameObjectCounter() const
+        {
+            return gameObjectCounter;
+        }
+        std::string getSceneFilename() const
+        {
+            return _currentSceneFilename;
+        }
 
-        // Methods for consuming save and load scene requests, which will return whether a request was made and reset the request state. These methods can be called by the main application loop to determine if the user has requested to save or load a scene, and to trigger the appropriate actions in response.
-        bool consumeSaveSceneRequest() {
+        // Methods for consuming save and load scene requests, which will return whether a request
+        // was made and reset the request state. These methods can be called by the main application
+        // loop to determine if the user has requested to save or load a scene, and to trigger the
+        // appropriate actions in response.
+        bool consumeSaveSceneRequest()
+        {
             const bool requested = _saveSceneRequested;
             _saveSceneRequested = false;
             return requested;
         }
-        bool consumeLoadSceneRequest() {
+        bool consumeLoadSceneRequest()
+        {
             const bool requested = _loadSceneRequested;
             _loadSceneRequested = false;
             return requested;
         }
+        bool consumeBuildGameRequest()
+        {
+            const bool requested = _buildGameRequested;
+            _buildGameRequested = false;
+            return requested;
+        }
 
         /**
-         * @brief Retrieves the filename of the currently selected sprite for placement, if any. This method can be used by the main application loop or other parts of the editor to determine which sprite is currently selected for placement in the scene.
+         * @brief Retrieves the filename of the currently selected sprite for placement, if any.
+         * This method can be used by the main application loop or other parts of the editor to
+         * determine which sprite is currently selected for placement in the scene.
          * @return A std::string containing the filename of the currently selected sprite, or an
          */
         void setSceneData(const std::vector<graphics::Pixel>& renderPixels,
                           const std::vector<Pixel::GameObject>& gameObjects,
-                          const Pixel::PixelAttributes& pixelAttributes,
-                          const Pixel::ChunkGrid& chunkGrid,
-                          uint32_t nextPixelId,
-                          uint32_t nextGameObjectId);
+                          const ChunkGrid& chunkGrid, uint32_t nextGameObjectId);
 
-    private:
-        // References to the graphics interface, renderer, ImGui interface, and component manager for managing rendering, user input, and game object components.
-        graphics::ImguiInterface* _imguiInterface;
-        graphics::Interface* _graphicsInterface;
-        graphics::Renderer* _renderer;
-        engine::ComponentManager* _componentManager;
+        void setCurrentProject(const projects::Project& project);
 
-        // Camera for managing the view and zoom level during editing
-        graphics::Camera2D _camera;
+        // Build settings dialog (rendered inside ImGui frame)
+        void showBuildSettings(const BuildSettings& settings);
+        bool consumeBuildConfirmed(BuildSettings& outSettings);
+        void setBuildProgress(bool visible, bool done, bool success, const std::string& output);
+        bool consumeBuildProgressDismissed();
 
-        // Counters for generating unique IDs for pixels and game objects
-        uint32_t pixelIdCounter = 1;
+      private:
+        struct PendingTexture
+        {
+            bool valid = false;
+            std::string texturePath;
+            GLuint textureID = 0;
+            float width = 640.0f;
+            float height = 640.0f;
+        };
+
+        engine::ComponentManager* _componentManager = nullptr;
+
         uint32_t gameObjectCounter = 1;
-
-        // Data structures for managing pixel attributes, game objects, render pixels, and the chunk grid during editing
-        Pixel::PixelAttributes _pixelAttributes;
-
-        // The list of game objects in the scene, each containing an ID, name, active state, and list of associated pixel entity IDs. This allows for grouping pixels into game objects and managing their properties and interactions as a unit.
         std::vector<Pixel::GameObject> _gameObjects;
-        std::vector<graphics::Pixel> _renderPixels;
-        Pixel::ChunkGrid _chunkGrid;
-
-        // State for managing pending sprite placement, including the cells affected, original attributes, and preview pixels.
-        Pixel::PendingSprite _pendingSprite;
-        bool _isPlacingSprite = false;
-
-        // State for tracking mouse input and scene saving/loading requests.
         bool _leftMouseDownLastFrame = false;
         bool _saveSceneRequested = false;
         bool _loadSceneRequested = false;
-        std::string _currentSpriteFilename;
+        bool _buildGameRequested = false;
         int _selectedGameObjectIndex = -1;
+        std::unordered_map<std::string, GLuint> _textureCache;
+
+        // Build dialog state (rendered inside run() ImGui frame)
+        bool _showBuildDialog = false;
+        bool _buildDialogConfirmed = false;
+        BuildSettings _buildDialogSettings;
+
+        // Build progress state (rendered inside run() ImGui frame)
+        bool _showBuildProgress = false;
+        bool _buildProgressDone = false;
+        bool _buildProgressSuccess = false;
+        std::string _buildProgressOutput;
+        bool _buildProgressDismissed = false;
+
+        bool _isPlacingTexture = false;
+        PendingTexture _pendingTexture = {};
+        projects::Project _currentProject;
+        std::string _currentSceneFilename = "assets/default.scene";
+
+        // ── Translate gizmo ────────────────────────────────────────────────────
+        // Unity-style 2D move tool that appears around the selected GameObject:
+        //   - red X arrow (right): drag locks motion to the X axis
+        //   - green Y arrow (up):  drag locks motion to the Y axis
+        //   - yellow center square: drag freely in both axes
+        // Pixel-based GameObjects (those with pixelLocalCoords) snap to PIXEL_SIZE
+        // so their cells stay grid-aligned; sprite-only GameObjects move freely.
+        enum class GizmoHandle
+        {
+            None,
+            AxisX,
+            AxisY,
+            Center
+        };
+
+        GizmoHandle _gizmoDragHandle = GizmoHandle::None;
+        glm::vec2 _dragStartMouseWorld{0.0f, 0.0f};
+        glm::vec2 _dragStartTransform{0.0f, 0.0f};
 
         /**
-         * @brief Handles user input events, updating the editor's state based on the type of event received. This includes managing mouse input for pixel placement and game object selection, keyboard input for camera movement and zooming, and other input events relevant to the editing process.
-         * @param event A graphics::InputEvent representing the latest user input event to be processed
-         * by the editor. The method will update the editor's state accordingly, including managing pixel placement, game object selection, sprite placement, and scene saving/loading requests based on the type and details of the event.
+         * @brief Handles user input events, updating the editor's state based on the type of event
+         * received. This includes managing mouse input for pixel placement and game object
+         * selection, keyboard input for camera movement and zooming, and other input events
+         * relevant to the editing process.
+         * @param event A graphics::InputEvent representing the latest user input event to be
+         * processed by the editor. The method will update the editor's state accordingly, including
+         * managing pixel placement, game object selection, sprite placement, and scene
+         * saving/loading requests based on the type and details of the event.
          */
         void handleEvents(const graphics::InputEvent& event);
 
         /**
-         * @brief Handles ImGui user interface interactions, updating the editor's state based on user input in the ImGui interface. This includes managing UI elements for selecting sprites, creating and managing game objects, and triggering scene saving/loading requests.
-          * Note: This method should be called during the editor's run loop after handling input events, to ensure that the ImGui interface is updated and responsive to user interactions.
-          */
+         * @brief Handles ImGui user interface interactions, updating the editor's state based on
+         * user input in the ImGui interface. This includes managing UI elements for selecting
+         * sprites, creating and managing game objects, and triggering scene saving/loading
+         * requests. Note: This method should be called during the editor's run loop after handling
+         * input events, to ensure that the ImGui interface is updated and responsive to user
+         * interactions.
+         */
         void imguiHandling();
 
         /**
-         * @brief Methods for managing sprite placement, including loading a sprite from a file, updating the placement mode based on user input, placing the pending sprite at the specified grid coordinates, and converting screen coordinates to world coordinates for accurate placement. These methods allow for a user-friendly interface for placing sprites in the scene, with visual feedback and the ability to cancel or confirm placements.
-         * @param filename The file path to the sprite image to be loaded for placement. The image should be in a format supported by the graphics::Renderer's texture loading capabilities. If the sprite is successfully loaded, the pending sprite state will be updated with the preview pixels and affected cells based on the sprite's dimensions and the current anchor point for placement.
+         * @brief Places the pending sprite at the specified world coordinates, updating the chunk
+         * grid, pixel attributes, render pixels, and game object associations accordingly. This
+         * method will apply the changes to the scene based on the pending sprite's data, including
+         * setting the new pixel entity IDs in the chunk grid, updating the render pixels for
+         * rendering, and associating the new pixels with the selected game object if applicable.
+         * After placement, the pending sprite state will be reset to allow for new placements.
+         * @param worldPos A glm::vec2 containing the x and y coordinates in world space where the
+         * anchor point of the sprite should be placed. The method will calculate the corresponding
+         * grid coordinates for placement based on the sprite's dimensions and local pixel
+         * coordinates, and apply the changes to the editor's data structures accordingly.
+         * @return A boolean indicating whether the sprite was successfully placed (true) or if
+         * there
          */
-        bool loadSpriteForPlacement(const std::string& filename);
+        void placePendingSpriteAtWorldInGameObject(glm::vec2 worldPos);
+        bool isTextureFile(const std::string& path) const;
+        void placeTextureAtWorldInGameObject(glm::vec2 worldPos, const std::string& texturePath);
+        void drawGameObjectSprites();
+        void drawSpritesBelowLayer(int layer);
+        void drawSpritesAboveLayer(int layer);
+
+        bool loadTextureForPlacement(const std::string& texturePath);
+        void drawPendingTexturePreview();
+
+        void mouseLeftClick();
+
         /**
-         * @brief Updates the placement mode for the pending sprite based on user input, such as mouse movement and clicks. This method will update the preview of the sprite placement, including which cells will be affected and what the new pixels will look like, as the user moves the mouse around the scene. If the user confirms the placement (e.g., by clicking), this method will trigger the actual placement of the sprite in the scene.
-         * Note: This method should be called during the editor's run loop after handling input events
+         * @brief Fully removes the GameObject at `index`: clears its pixels from the chunk
+         * grid (using transform anchor + pixelLocalCoords), erases it from `_gameObjects`,
+         * and adjusts `_selectedGameObjectIndex` so the inspector doesn't dangle.
+         * Triggered by the right-click "Delete" entry in the Hierarchy panel.
          */
-        void updatePlacementMode();
-        /**
-         * @brief Places the pending sprite at the specified grid coordinates, updating the chunk grid, pixel attributes, render pixels, and game object associations accordingly. This method will apply the changes to the scene based on the pending sprite's data, including setting the new pixel entity IDs in the chunk grid, updating the render pixels for rendering, and associating the new pixels with the selected game object if applicable. After placement, the pending sprite state will be reset to allow for new placements.
-         * @param anchorGX The grid x-coordinate of the anchor point for the sprite placement. This coordinate will be used as the reference point for placing the sprite's pixels in the world, based on their local coordinates in the sprite image.
-         * @param anchorGY The grid y-coordinate of the anchor point for the sprite placement. This coordinate will be used as the reference point for placing the sprite's pixels in the world, based on their local coordinates in the sprite image.
-         */
-        void placePendingSpriteAtGrid(int anchorGX, int anchorGY);
-        /**
-         * @brief Converts screen coordinates (e.g., from mouse input) to world coordinates based on the camera's position and zoom level, allowing for accurate placement of pixels and sprites in the scene. This method will take into account the camera's transformations to ensure that the coordinates returned correspond to the correct location in the world space, which is essential for placing pixels and sprites accurately based on user input.
-         * @param screenPos A glm::vec2 containing the x and y coordinates in screen space (origin at top-left corner). This is typically obtained from mouse input events.
-         * @return A glm::vec2 containing the corresponding x and y coordinates in world space, taking into account the camera's position and zoom level. These coordinates can be used for placing pixels and sprites in the scene based on user input.
-         */
-        glm::vec2 screenToWorld(const glm::vec2& screenPos) const;
+        void deleteGameObjectAt(int index);
+
+        // ── Selection / gizmo helpers ──────────────────────────────────────────
+        /** Returns the topmost (last-drawn) GameObject index whose sprite or pixel
+         *  footprint contains `world`, or -1 if none. */
+        int pickGameObjectAtWorld(const glm::vec2& world) const;
+
+        /** Pixel-based GameObjects (those with `pixelLocalCoords`) get grid-snapped
+         *  movement so their cells stay aligned to PIXEL_SIZE. */
+        bool isPixelBasedGameObject(int index) const;
+
+        /** Returns which gizmo handle (if any) is under `world`. The selected
+         *  GameObject's transform is the gizmo origin. */
+        GizmoHandle hitTestGizmo(const glm::vec2& world) const;
+
+        /** Moves the selected GameObject so its transform sits at `newTransform`.
+         *  For pixel-based objects, clears the old grid cells and writes them at
+         *  the new anchor. Snap is applied here too. */
+        void moveSelectedGameObjectTo(const glm::vec2& newTransform);
+
+        /** Updates an in-progress gizmo drag from the current mouse state. Ends
+         *  the drag when LMB is released. Call once per frame. */
+        void updateGizmoDrag();
+
+        /** Draws the gizmo around the selected GameObject (no-op if none). */
+        void drawTranslateGizmo();
     };
 } // namespace editors

@@ -1,0 +1,106 @@
+#pragma once
+#include <cstdint>
+#include <vector>
+
+namespace Element
+{
+    /**
+     * @brief Supported element identifiers used by the simulation grid.
+     */
+    enum ElementType : uint16_t
+    {
+        /** @brief Empty cell. */
+        EMPTY = 0,
+        /** @brief Sand element. */
+        SAND,
+        /** @brief Water element. */
+        WATER,
+        /** @brief Lava element. */
+        LAVA,
+        /** @brief Fire element. */
+        FIRE,
+        /** @brief Stone element. */
+        STONE,
+        /** @brief Dirt element. */
+        DIRT,
+        /** @brief Wood element. */
+        WOOD,
+        /** @brief Debug-only element. */
+        DEBUG,
+    };
+
+    /**
+     * @brief One simulation cell payload.
+     */
+    struct Pixel
+    {
+        /** @brief Element kind stored in this cell. */
+        ElementType type = EMPTY;
+        /** @brief Marks whether this pixel was already processed this frame. */
+        bool updatedThisFrame = false;
+        /** @brief Index into the element's color palette for rendering variation. */
+        uint8_t colorIndex = 0;
+        /** @brief Timer for how long this pixel has been burning, used by fire behavior. */
+        uint8_t burnTimer = 0;
+        /** @brief Whether this pixel is currently on fire, used by fire behavior. */
+        bool isBurning = false;
+    };
+
+    /**
+     * @brief Integer 2D coordinate.
+     */
+    struct Vec2i
+    {
+        int x, y;
+    };
+
+    /**
+     * @brief Floating-point 2D coordinate.
+     */
+    struct Vec2f
+    {
+        float x, y;
+    };
+
+    /**
+     * @brief 2D line segment.
+     */
+    struct Segment
+    {
+        /** @brief Segment start point. */
+        Vec2f a, b;
+    };
+
+    /**
+     * @brief 2D triangle primitive.
+     */
+    struct Triangle
+    {
+        /** @brief Triangle vertices. */
+        Vec2f a, b, c;
+    };
+
+    /**
+     * @brief Region extraction and geometry buffers.
+     */
+    struct Region
+    {
+        /** @brief Grid pixels that belong to this connected region. */
+        std::vector<Vec2i> pixels;
+        /** @brief Marching-squares contour segments. */
+        std::vector<Segment> edges; // marching-squares output
+        /** @brief Simplified contour loops. */
+        std::vector<std::vector<Vec2f>> polygons; // simplified loops
+        /** @brief Triangulation output of simplified loops. */
+        std::vector<Triangle> triangles; // triangulation output
+    };
+
+    struct Particle
+    {
+        Vec2f position;
+        Vec2f velocity;
+        ElementType type;
+        uint8_t colorIndex;
+        uint16_t lifetime; // in frames
+    };
+} // namespace Element

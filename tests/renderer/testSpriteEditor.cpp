@@ -1,13 +1,13 @@
-#include <gtest/gtest.h>
-#include <filesystem>
-
 #include <editors/sprite/spriteEditor.hpp>
 #include <engine/pixels/chunk.hpp>
 #include <engine/pixels/pixelEnum.hpp>
+#include <filesystem>
+#include <gtest/gtest.h>
 
 using namespace Pixel;
 
-static void writeSimpleSpriteData(const std::string& filename) {
+static void writeSimpleSpriteData(const std::string& filename)
+{
     std::ofstream fout(filename, std::ios::binary);
     ASSERT_TRUE(fout.good());
 
@@ -19,8 +19,10 @@ static void writeSimpleSpriteData(const std::string& filename) {
     fout.write(reinterpret_cast<const char*>(&cx), sizeof(cx));
     fout.write(reinterpret_cast<const char*>(&cy), sizeof(cy));
 
-    for (int x = 0; x < CHUNK_SIZE; ++x) {
-        for (int y = 0; y < CHUNK_SIZE; ++y) {
+    for (int x = 0; x < CHUNK_SIZE; ++x)
+    {
+        for (int y = 0; y < CHUNK_SIZE; ++y)
+        {
             PixelEntityID id = (x == 0 && y == 0) ? 1 : EMPTY;
             fout.write(reinterpret_cast<const char*>(&id), sizeof(id));
         }
@@ -51,16 +53,17 @@ static void writeSimpleSpriteData(const std::string& filename) {
     uint32_t numPixels = 1;
     fout.write(reinterpret_cast<const char*>(&numPixels), sizeof(numPixels));
     float px = 0.0f, py = 0.0f, r = 0.1f, g = 0.2f, b = 0.3f;
-    fout.write(reinterpret_cast<const char*>(&px), sizeof(px));
-    fout.write(reinterpret_cast<const char*>(&py), sizeof(py));
-    fout.write(reinterpret_cast<const char*>(&r), sizeof(r));
-    fout.write(reinterpret_cast<const char*>(&g), sizeof(g));
-    fout.write(reinterpret_cast<const char*>(&b), sizeof(b));
+    fout.write(reinterpret_cast<const char*>(std::addressof(px)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(py)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(r)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(g)), sizeof(float));
+    fout.write(reinterpret_cast<const char*>(std::addressof(b)), sizeof(float));
 
     fout.close();
 }
 
-TEST(SpriteEditorTests, AddRemoveSaveLoadRoundtrip) {
+TEST(SpriteEditorTests, AddRemoveSaveLoadRoundtrip)
+{
     std::filesystem::path tmp = std::filesystem::temp_directory_path() / "sprite_editor_test.dat";
 
     editors::SpriteEditor editor(nullptr, nullptr, nullptr);
@@ -84,7 +87,8 @@ TEST(SpriteEditorTests, AddRemoveSaveLoadRoundtrip) {
     std::filesystem::remove(tmp);
 }
 
-TEST(SpriteEditorTests, RunHandlesMouseAndKeyboardAndImgui) {
+TEST(SpriteEditorTests, RunHandlesMouseAndKeyboardAndImgui)
+{
     // Setup SDL/GL + ImGui via the project's graphics interface
     graphics::Interface iface(128, 128);
     graphics::Renderer renderer(iface.getWindow(), iface.getGLContext());
@@ -133,7 +137,8 @@ TEST(SpriteEditorTests, RunHandlesMouseAndKeyboardAndImgui) {
     editor.run({graphics::NO_EVENT, iface.getWindowID()});
 
     // Test sprite placement flow - create a temporary sprite file
-    std::filesystem::path tmp = std::filesystem::temp_directory_path() / "sprite_editor_test_place.dat";
+    std::filesystem::path tmp =
+        std::filesystem::temp_directory_path() / "sprite_editor_test_place.dat";
     writeSimpleSpriteData(tmp.string());
 
     EXPECT_TRUE(editor.testLoadSpriteForPlacement(tmp.string()));
@@ -142,7 +147,8 @@ TEST(SpriteEditorTests, RunHandlesMouseAndKeyboardAndImgui) {
     std::filesystem::remove(tmp);
 }
 
-TEST(SpriteEditorTests, KeyboardShortcutsLoadSaveViaImgui) {
+TEST(SpriteEditorTests, KeyboardShortcutsLoadSaveViaImgui)
+{
     graphics::Interface iface(128, 128);
     graphics::Renderer renderer(iface.getWindow(), iface.getGLContext());
     graphics::ImguiInterface imgui(iface.getWindow(), iface.getGLContext());
@@ -154,7 +160,8 @@ TEST(SpriteEditorTests, KeyboardShortcutsLoadSaveViaImgui) {
     editor.run({graphics::KEY_O, iface.getWindowID()});
 
     // Setup a temporary sprite file and load it through the imgui flow
-    std::filesystem::path tmpLoad = std::filesystem::temp_directory_path() / "sprite_editor_test_load.dat";
+    std::filesystem::path tmpLoad =
+        std::filesystem::temp_directory_path() / "sprite_editor_test_load.dat";
     writeSimpleSpriteData(tmpLoad.string());
     editor.testSetCurrentSpriteFilename(tmpLoad.string());
     editor.run({graphics::NO_EVENT, iface.getWindowID()});
@@ -164,7 +171,8 @@ TEST(SpriteEditorTests, KeyboardShortcutsLoadSaveViaImgui) {
     EXPECT_NE(editor.testGetPixelAt({0.0f, 0.0f}), nullptr);
 
     // Save via the imgui flow
-    std::filesystem::path tmpSave = std::filesystem::temp_directory_path() / "sprite_editor_test_save.dat";
+    std::filesystem::path tmpSave =
+        std::filesystem::temp_directory_path() / "sprite_editor_test_save.dat";
     editor.testSetNewSpritePath(tmpSave.string());
     editor.run({graphics::NO_EVENT, iface.getWindowID()});
     EXPECT_TRUE(std::filesystem::exists(tmpSave));

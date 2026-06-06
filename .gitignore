@@ -2,17 +2,20 @@
 
 build/
 
+config/
+
+Projects/
+
 imgui.ini
 
 pikselite
 
-*.png
+!assets/ui/icons/*.png
 *.json
 
 *.vs
 
 vcpkg_installed/
-build/
 
 PikseliteEngine.exe
 
@@ -20,4 +23,3 @@ PikseliteEngine.exe
 
 .github/scripts/*env
 
-*.dat
