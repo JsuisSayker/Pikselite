@@ -14,7 +14,7 @@ fi
 
 # Check if the branch you want to archive exists
 
-if [ "$(git branch --list $branchName)" ]
+if [ "$(git branch --list $branchName)" ]  || [ "$(git branch -r --list origin/$branchName)" ]
 then
     echo "The branch $branchName exists"
 else
