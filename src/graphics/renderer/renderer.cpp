@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <box2d/collision.h>
 #include <box2d/math_functions.h>
+#include <cmath>
 #include <graphics/renderer/renderer.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -215,6 +217,14 @@ namespace graphics
         glBindVertexArray(0);
     }
 
+    void Renderer::setWindow(SDL_Window* window)
+    {
+        _window = window;
+        int w, h;
+        SDL_GetWindowSize(_window, &w, &h);
+        glViewport(0, 0, w, h);
+    }
+
     void Renderer::clear()
     {
         glClear(GL_COLOR_BUFFER_BIT);
@@ -255,7 +265,7 @@ namespace graphics
             glUniform2f(screenLoc, (float)width, (float)height);
 
         // Point size
-        float effectivePointSize = pixelSize * camera.getZoom();
+        float effectivePointSize = std::max(1.0f, std::ceil(pixelSize * camera.getZoom() - 1e-3f));
         GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
         if (sizeLoc != -1)
             glUniform1f(sizeLoc, effectivePointSize);
@@ -328,9 +338,10 @@ namespace graphics
             glUniform2f(screenLoc, (float)width, (float)height);
 
         // Set point size
+        float effectivePointSize = std::max(1.0f, std::ceil(pixelSize - 1e-3f));
         GLint sizeLoc = glGetUniformLocation(_shader, "uPointSize");
         if (sizeLoc != -1)
-            glUniform1f(sizeLoc, pixelSize);
+            glUniform1f(sizeLoc, effectivePointSize);
 
         // Upload vertex data
         glBindVertexArray(_vao);
