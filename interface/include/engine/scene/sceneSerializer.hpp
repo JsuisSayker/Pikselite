@@ -11,6 +11,9 @@ namespace engine::scene
     {
         std::vector<Pixel::GameObject> gameObjects;
         uint32_t nextGameObjectId = 1;
+        float cameraX = 0.0f;
+        float cameraY = 0.0f;
+        float cameraZoom = 1.0f;
     };
 
     bool saveSceneToFile(const std::string& filename, const SceneData& data);

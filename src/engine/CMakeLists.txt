@@ -11,6 +11,7 @@ add_library(engine
     ecs/systems/spriteSystem.cpp
     physics/boxWorld.cpp
     scene/sceneSerializer.cpp
+    renderUtils.cpp
 )
 
 target_include_directories(engine

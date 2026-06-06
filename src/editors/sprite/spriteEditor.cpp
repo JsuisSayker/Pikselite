@@ -60,7 +60,14 @@ namespace editors
 
     void SpriteEditor::imguiHandling()
     {
-        _imguiInterface->spriteTopToolbar(_selectedTool, _brushSize, _isEraserActive);
+        bool clearAllRequested = false;
+        _imguiInterface->spriteTopToolbar(_selectedTool, _brushSize, _isEraserActive,
+                                          clearAllRequested);
+        if (clearAllRequested)
+        {
+            _chunkGrid.chunks.clear();
+            _renderPixels.clear();
+        }
 
         // Default properties panel removed
         bool unusedDefaultPropertiesEditor = false;

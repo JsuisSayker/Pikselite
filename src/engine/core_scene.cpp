@@ -21,6 +21,9 @@ namespace engine
         engine::scene::SceneData data;
         data.gameObjects = _gameObjects;
         data.nextGameObjectId = gameObjectCounter;
+        data.cameraX = _camera.getPosition().x;
+        data.cameraY = _camera.getPosition().y;
+        data.cameraZoom = _camera.getZoom();
 
         if (!engine::scene::saveSceneToFile(filename, data))
         {
@@ -47,10 +50,8 @@ namespace engine
         _renderPixels.clear();
         _gameObjectToEntity.clear();
         _gameObjectOccupiedCells.clear();
-        // loadGameObjectsIntoECS below destroys every entity, including the wrappers
-        // we created around the previous frame's stone-region bodies. Drop the stale
-        // IDs so syncRegionBodiesToECS doesn't try to entityDestroy already-dead ones.
-        _regionBodyEntities.clear();
+        // Note: _regionBodyEntities is cleared inside loadGameObjectsIntoECS(),
+        // which both this path and the preview-entry path go through.
 
         for (const auto& go : _gameObjects)
         {
@@ -93,6 +94,9 @@ namespace engine
                 _chunkGrid.setPixel(gridX, gridY, scenePixel);
             }
         }
+
+        _camera.setPosition(data.cameraX, data.cameraY);
+        _camera.setZoom(data.cameraZoom);
 
         _pixelSimulation.setGrid(_chunkGrid);
         _renderPixels = buildRenderPixels(_chunkGrid);

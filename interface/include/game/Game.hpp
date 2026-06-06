@@ -82,6 +82,8 @@ namespace engine
         void refreshEntitySignature(ecs::EntityID entityId);
 
         std::vector<graphics::Pixel> buildRenderPixels(const ChunkGrid& grid) const;
+        void drawSpritesBelowLayer(int layer);
+        void drawSpritesAboveLayer(int layer);
         void handleEvents();
         void update(float deltaTime);
         void render();
