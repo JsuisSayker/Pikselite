@@ -29,7 +29,7 @@ namespace editors
         _imguiInterface->projectNavbar(_currentSpriteFilename,
                    _currentSceneFilename,
                    _saveSceneRequested,
-                   _loadSceneRequested);
+                   _loadSceneRequested, _projectAssetsPath);
 
         if (!_currentSpriteFilename.empty())
         {
@@ -56,6 +56,11 @@ namespace editors
         _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
+    }
+
+    void ProjectEditor::setProjectAssetsPath(std::filesystem::path projectPath)
+    {
+        _projectAssetsPath = projectPath / "Assets";
     }
 
     void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>&   renderPixels,

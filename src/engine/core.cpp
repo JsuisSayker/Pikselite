@@ -244,6 +244,7 @@ namespace engine
             isProjectEditorActive = true;
             switchToProjectEditor = false;
             projectEditor->setCurrentProject(_currentProject);
+            spriteEditor->setProjectAssetsPath(_currentProject.path);
         }
     }
 

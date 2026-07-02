@@ -48,16 +48,16 @@ namespace graphics
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
-                                Element::ElementType& selectedElementType); // updated signature
+                                Element::ElementType& selectedElementType, std::string currentProjectAssetsPath); // updated signature
         void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive);
         void projectTopBar(std::string title = "");
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
-        void projectNavbar(::std::string &currentSpriteFilename);
-        void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested);
-        void projectNavbar(::std::string &currentSpriteFilename, ::std::string &currentSceneFilename, bool &saveSceneRequested, bool &loadSceneRequested);
-        void scanSprites();
+        void projectNavbar(::std::string &currentSpriteFilename, std::filesystem::path currentProjectAssetsPath);
+        void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
+        void projectNavbar(::std::string &currentSpriteFilename, ::std::string &currentSceneFilename, bool &saveSceneRequested, bool &loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
+        void scanSprites(std::filesystem::path folderPath);
         void setFileExplorerDataOnly(bool dataOnly);
 
         void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject);

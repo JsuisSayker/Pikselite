@@ -18,6 +18,8 @@
 #include <limits>
 #include <unordered_map>
 #include <vector>
+#include <filesystem>
+#include <string>
 
 /**
  * @brief The editors namespace contains classes related to editing and managing the project,
@@ -62,6 +64,8 @@ namespace editors
          */
         void run(const graphics::InputEvent& event) override;
 
+        void setProjectAssetsPath(std::filesystem::path projectPath);
+
       private:
         graphics::Pixel*     _currentPixel                = nullptr;
         bool                 _showPixelEditor             = false;
@@ -71,6 +75,7 @@ namespace editors
         int                  _brushSize                   = 1;
         std::string          _newSpritePath;
         Element::ElementType _currentElementType = Element::ElementType::SAND;
+        std::filesystem::path _projectAssetsPath;
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event

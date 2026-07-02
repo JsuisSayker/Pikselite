@@ -155,7 +155,6 @@ namespace graphics
         ImGui_ImplOpenGL3_Init("#version 330 core");
 
         _fileExplorerCurrentDir = getAssetsRoot().generic_string();
-        scanSprites();
         loadExplorerIcons();
     }
 
@@ -310,7 +309,7 @@ namespace graphics
      */
     void ImguiInterface::pixelSpriteHandler(bool&                 showDefaultPropertiesEditor,
                                             std::string&          saveSpritePath,
-                                            Element::ElementType& selectedElementType)
+                                            Element::ElementType& selectedElementType, std::string currentProjectAssetsPath)
     {
         static BarConfig sideBarConfig{BarOrientation::Vertical, "Pixel Sprite Handler",
                                        ImVec2(LAYOUT_LEFT_W, 0.0f), true,
@@ -340,7 +339,7 @@ namespace graphics
 
                     if (ImGui::Button("Save##SpriteButton", ImVec2(120, 0)))
                     {
-                        std::string path = "assets/" + std::string(spriteName) + ".dat";
+                        std::string path = currentProjectAssetsPath + "/" + std::string(spriteName) + ".dat";
                         saveSpritePath   = path;
                         spriteName[0]    = '\0';
                         ImGui::CloseCurrentPopup();
@@ -458,20 +457,19 @@ namespace graphics
     /**
      * @brief Scans the current assets directory for files and subfolders.
      */
-    void ImguiInterface::scanSprites()
+    void ImguiInterface::scanSprites(std::filesystem::path folderPath)
     {
         _fileExplorerEntries.clear();
 
-        const fs::path rootPath = getAssetsRoot();
-        if (!fs::exists(rootPath))
+        if (!fs::exists(folderPath) || !fs::is_directory(folderPath))
             return;
 
         if (_fileExplorerCurrentDir.empty())
-            _fileExplorerCurrentDir = rootPath.generic_string();
+            _fileExplorerCurrentDir = folderPath.generic_string();
 
         std::error_code ec;
         fs::path currentPath = fs::weakly_canonical(fs::path(_fileExplorerCurrentDir), ec);
-        fs::path canonicalRoot = fs::weakly_canonical(rootPath, ec);
+        fs::path canonicalRoot = fs::weakly_canonical(folderPath, ec);
 
         if (ec || currentPath.empty() || currentPath.generic_string().find(
                                         canonicalRoot.generic_string()) != 0)
@@ -502,11 +500,11 @@ namespace graphics
      * @param currentSpriteFilename A reference to a string that will hold the filename of the
      * currently selected sprite.
      */
-    void ImguiInterface::projectNavbar(std::string& currentSpriteFilename)
+    void ImguiInterface::projectNavbar(std::string& currentSpriteFilename, std::filesystem::path currentProjectAssetsPath)
     {
         bool saveSceneRequested = false;
         bool loadSceneRequested = false;
-        projectNavbar(currentSpriteFilename, saveSceneRequested, loadSceneRequested);
+        projectNavbar(currentSpriteFilename, saveSceneRequested, loadSceneRequested, currentProjectAssetsPath);
     }
 
     /**
@@ -521,16 +519,16 @@ namespace graphics
      * request has been made.
      */
     void ImguiInterface::projectNavbar(std::string& currentSpriteFilename, bool& saveSceneRequested,
-                                       bool& loadSceneRequested)
+                                       bool& loadSceneRequested, std::filesystem::path currentProjectAssetsPath)
     {
         static std::string dummySceneFilename;
         projectNavbar(currentSpriteFilename, dummySceneFilename, saveSceneRequested,
-                      loadSceneRequested);
+                      loadSceneRequested, currentProjectAssetsPath);
     }
 
     void ImguiInterface::projectNavbar(std::string& currentSpriteFilename,
                                        std::string& currentSceneFilename, bool& saveSceneRequested,
-                                       bool& loadSceneRequested)
+                                       bool& loadSceneRequested, std::filesystem::path currentProjectAssetsPath)
     {
         static BarConfig bottomBarConfig{BarOrientation::Horizontal, "Project Navbar",
                                          ImVec2(0.0f, LAYOUT_BOTTOM_H), true,
@@ -543,7 +541,7 @@ namespace graphics
             {
                 const fs::path rootPath = getAssetsRoot();
                 if (_fileExplorerEntries.empty())
-                    scanSprites();
+                    scanSprites(currentProjectAssetsPath);
 
                 bool canGoUp = fs::path(_fileExplorerCurrentDir) != rootPath;
                 if (!canGoUp)
@@ -554,7 +552,7 @@ namespace graphics
                     if (!parent.empty())
                     {
                         _fileExplorerCurrentDir = parent.generic_string();
-                        scanSprites();
+                        scanSprites(currentProjectAssetsPath);
                     }
                 }
                 if (!canGoUp)
@@ -562,7 +560,7 @@ namespace graphics
 
                 ImGui::SameLine();
                 if (BasicButton("Refresh"))
-                    scanSprites();
+                    scanSprites(currentProjectAssetsPath);
 
                 ImGui::SameLine();
                 if (BasicButton("New File"))
@@ -624,7 +622,7 @@ namespace graphics
                         _fileClipboardCut = false;
                     }
 
-                    scanSprites();
+                    scanSprites(currentProjectAssetsPath);
                 };
 
                 if (ImGui::BeginPopupContextWindow("ProjectNavbarContext",
@@ -680,7 +678,7 @@ namespace graphics
                             loadSceneRequested = true;
 
                             newSceneBuffer[0] = '\0';
-                            scanSprites();
+                            scanSprites(currentProjectAssetsPath);
                         }
                         ImGui::CloseCurrentPopup();
                     }
@@ -715,7 +713,7 @@ namespace graphics
                             std::ofstream outFile(newPath.string());
                             outFile.close();
                             newFileBuffer[0] = '\0';
-                            scanSprites();
+                            scanSprites(currentProjectAssetsPath);
                         }
                         ImGui::CloseCurrentPopup();
                     }
@@ -845,7 +843,7 @@ namespace graphics
                         if (doubleClicked)
                         {
                             _fileExplorerCurrentDir = fs::path(entry.path).generic_string();
-                            scanSprites();
+                            scanSprites(currentProjectAssetsPath);
                         }
                     }
                     else
@@ -908,7 +906,7 @@ namespace graphics
                             fs::path newPath = oldPath.parent_path() / renameBuffer;
                             std::error_code renameError;
                             fs::rename(oldPath, newPath, renameError);
-                            scanSprites();
+                            scanSprites(currentProjectAssetsPath);
                         }
                         renameBuffer[0] = '\0';
                         renameTargetPath.clear();

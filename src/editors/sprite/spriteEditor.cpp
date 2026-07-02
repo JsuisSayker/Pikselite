@@ -67,6 +67,11 @@ namespace editors
         }
     }
 
+    void SpriteEditor::setProjectAssetsPath(std::filesystem::path projectPath)
+    {
+        _projectAssetsPath = projectPath / "Assets";
+    }
+
     void SpriteEditor::imguiHandling()
     {
         _imguiInterface->spriteTopToolbar(_selectedTool, _brushSize, _isEraserActive);
@@ -74,10 +79,10 @@ namespace editors
         // Default properties panel removed
         bool unusedDefaultPropertiesEditor = false;
         _imguiInterface->pixelSpriteHandler(unusedDefaultPropertiesEditor, _newSpritePath,
-                                            _currentElementType);
+                                            _currentElementType, _projectAssetsPath.string());
 
         _imguiInterface->setFileExplorerDataOnly(true);
-        _imguiInterface->projectNavbar(_currentSpriteFilename);
+        _imguiInterface->projectNavbar(_currentSpriteFilename, _projectAssetsPath);
 
         if (!_currentSpriteFilename.empty())
         {
