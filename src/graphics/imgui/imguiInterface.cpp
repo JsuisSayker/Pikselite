@@ -1076,16 +1076,16 @@ namespace graphics
 
                         float textWidth = ImGui::CalcTextSize(entry.name.c_str()).x;
                         float textOffset = (columnWidth - textWidth) * 0.5f;
-    
+
                         if (textOffset > 0)
                             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + textOffset);
-    
+
                         ImGui::TextWrapped("%s", entry.name.c_str());
-    
+
                         ImGui::EndGroup();
-    
+
                         ImGui::PopID();
-    
+
                         ImGui::NextColumn();
                     }
 
@@ -1937,60 +1937,162 @@ namespace graphics
 
     bool ImguiInterface::clickableProjectOverview(projects::Project& project, ImFont* nameFont, ImFont* infoFont)
     {
-        ImGui::PushID(project.name.c_str());
+        // ImGui::PushID(project.name.c_str());
 
-        // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent
-        // projects list.
+        // // TODO: To the far right, 2 little buttons: for renaming, and for temp removing from recent
+        // // projects list.
+
+        // float thumbSize = 120.0f;
+
+        // ImVec2 start = ImGui::GetCursorScreenPos();
+
+        // ImDrawList* draw = ImGui::GetWindowDrawList();
+
+        // ImGui::BeginGroup();
+
+        // ImVec2 imagePos = ImGui::GetCursorScreenPos();
+
+
+        // if (thumbnail) {
+        //     draw->AddImageRounded(thumbnail, imagePos, ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
+        //                           ImVec2(0, 0), ImVec2(1, 1), IM_COL32_WHITE, 8.0f);
+        // } else {
+        //     draw->AddRectFilled(imagePos, ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
+        //                         IM_COL32(80, 80, 80, 255), 8.0f);
+        //     draw->AddText(ImVec2(imagePos.x + 10, imagePos.y + 20), IM_COL32_WHITE, "No Img");
+        // }
+
+        // ImGui::Dummy(ImVec2(thumbSize, thumbSize));
+
+        // ImGui::EndGroup();
+
+        // ImGui::SameLine();
+        // if (nameFont)
+        //     ImGui::PushFont(nameFont);
+        // ImGui::Text("%s", project.name.c_str());
+        // if (nameFont)
+        //     ImGui::PopFont();
+
+        // if (infoFont)
+        //     ImGui::PushFont(infoFont);
+        // ImGui::TextDisabled("%s", project.path.string().c_str());
+        // if (infoFont)
+        //     ImGui::PopFont();
+
+        // std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
+        // char buffer[64];
+        // std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", std::localtime(&t));
+        // if (infoFont)
+        //     ImGui::PushFont(infoFont);
+        // ImGui::TextDisabled("Last opened: %s", buffer);
+        // if (infoFont)
+        //     ImGui::PopFont();
+
+        // ImGui::PopID();
+        
+        // return false;
+
+        ImGui::PushID(project.name.c_str());
 
         float thumbSize = 120.0f;
 
         ImVec2 start = ImGui::GetCursorScreenPos();
+        float width = ImGui::GetContentRegionAvail().x;
+        ImVec2 size(width, thumbSize); // adjust width as needed
 
+        // 1. Create ONE clickable region
+        ImGui::InvisibleButton("project_clickable", size);
+
+        bool clicked = ImGui::IsItemClicked();
+        bool hovered = ImGui::IsItemHovered();
+
+        // 2. Draw background (optional hover effect)
         ImDrawList* draw = ImGui::GetWindowDrawList();
 
-        ImGui::BeginGroup();
+        ImU32 bgColor = hovered ? IM_COL32(60, 60, 60, 255)
+                                : IM_COL32(40, 40, 40, 255);
 
-        ImVec2 imagePos = ImGui::GetCursorScreenPos();
+        draw->AddRectFilled(start,
+                            ImVec2(start.x + size.x, start.y + size.y),
+                            bgColor, 8.0f);
 
+        // 3. Draw thumbnail
+        ImVec2 imagePos(
+            start.x + 10.0f,
+            start.y + 10.0f
+        );
 
-        if (thumbnail) {
-            draw->AddImageRounded(thumbnail, imagePos, ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
-                                  ImVec2(0, 0), ImVec2(1, 1), IM_COL32_WHITE, 8.0f);
-        } else {
-            draw->AddRectFilled(imagePos, ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
-                                IM_COL32(80, 80, 80, 255), 8.0f);
-            draw->AddText(ImVec2(imagePos.x + 10, imagePos.y + 20), IM_COL32_WHITE, "No Img");
+        if (thumbnail)
+        {
+            draw->AddImageRounded(
+                thumbnail,
+                imagePos,
+                ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
+                ImVec2(0, 0), ImVec2(1, 1),
+                IM_COL32_WHITE,
+                8.0f
+            );
+        }
+        else
+        {
+            draw->AddRectFilled(
+                imagePos,
+                ImVec2(imagePos.x + thumbSize, imagePos.y + thumbSize),
+                IM_COL32(80, 80, 80, 255),
+                8.0f
+            );
+
+            ImVec2 imagePosText(
+                imagePos.x + 10.0f,
+                imagePos.y + 20.0f
+            );
+            draw->AddText(
+                imagePosText,
+                IM_COL32_WHITE,
+                "No Img"
+            );
         }
 
-        ImGui::Dummy(ImVec2(thumbSize, thumbSize));
+        // 4. Text section
+        ImVec2 textPos(
+            imagePos.x + (thumbSize + 15),
+            imagePos.y
+        );
 
-        ImGui::EndGroup();
+        if (nameFont) ImGui::PushFont(nameFont);
+        draw->AddText(textPos, IM_COL32_WHITE, project.name.c_str());
+        if (nameFont) ImGui::PopFont();
 
-        ImGui::SameLine();
-        if (nameFont)
-            ImGui::PushFont(nameFont);
-        ImGui::Text("%s", project.name.c_str());
-        if (nameFont)
-            ImGui::PopFont();
+        if (infoFont) ImGui::PushFont(infoFont);
 
-        if (infoFont)
-            ImGui::PushFont(infoFont);
-        ImGui::TextDisabled("%s", project.path.string().c_str());
-        if (infoFont)
-            ImGui::PopFont();
+        ImVec2 newTextPos(
+            textPos.x,
+            textPos.y + 25.0f
+        );
+
+        draw->AddText(newTextPos,
+                      IM_COL32(180, 180, 180, 255),
+                      project.path.string().c_str());
+        if (infoFont) ImGui::PopFont();
 
         std::time_t t = std::chrono::system_clock::to_time_t(project.lastOpened);
         char buffer[64];
         std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M", std::localtime(&t));
-        if (infoFont)
-            ImGui::PushFont(infoFont);
-        ImGui::TextDisabled("Last opened: %s", buffer);
-        if (infoFont)
-            ImGui::PopFont();
+
+        if (infoFont) ImGui::PushFont(infoFont);
+
+        ImVec2 otherTextPos(
+            textPos.x,
+            textPos.y + 50.0f
+        );
+        draw->AddText(otherTextPos,
+                      IM_COL32(180, 180, 180, 255),
+                      buffer);
+        if (infoFont) ImGui::PopFont();
 
         ImGui::PopID();
-        
-        return false;
+
+        return clicked;
     }
 
     void ImguiInterface::buildGameSettingsDialog(BuildSettings& settings, bool& confirmed,
