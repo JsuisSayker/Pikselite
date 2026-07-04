@@ -25,10 +25,11 @@ namespace graphics
 
     // ── Layout constants ──────────────────────────────────────────────────────────
     //  Used by Bar::Draw and optionally by OpenGL viewport code.
-    static constexpr float LAYOUT_TOP_H    = 40.0f; // Top toolbar height
-    static constexpr float LAYOUT_BOTTOM_H = 180.0f;
-    static constexpr float LAYOUT_LEFT_W   = 220.0f;
-    static constexpr float LAYOUT_RIGHT_W  = 260.0f;
+    //  Mutable so ImguiInterface can scale them at startup for high-DPI displays.
+    inline float LAYOUT_TOP_H = 40.0f; // Top toolbar height
+    inline float LAYOUT_BOTTOM_H = 180.0f;
+    inline float LAYOUT_LEFT_W = 220.0f;
+    inline float LAYOUT_RIGHT_W = 260.0f;
 
     /**
      * @brief Enum class for specifying the orientation of a UI bar.
@@ -47,10 +48,10 @@ namespace graphics
     struct BarConfig
     {
         BarOrientation orientation = BarOrientation::Horizontal;
-        std::string    label;
-        ImVec2         size     = ImVec2(0, 0); // width (vertical) or height (horizontal) in .x/.y
-        bool           visible  = true;
-        ImVec2         position = ImVec2(0, 0);
+        std::string label;
+        ImVec2 size = ImVec2(0, 0); // width (vertical) or height (horizontal) in .x/.y
+        bool visible = true;
+        ImVec2 position = ImVec2(0, 0);
     };
 
     /**

@@ -14,27 +14,27 @@ namespace
     ecs::components::Transform makeTransform(float x, float y)
     {
         ecs::components::Transform t{};
-        t.enabled  = true;
-        t.x        = x;
-        t.y        = y;
+        t.enabled = true;
+        t.x = x;
+        t.y = y;
         t.rotation = 0.0f;
-        t.scaleX   = 1.0f;
-        t.scaleY   = 1.0f;
-        t.prevX    = x;
-        t.prevY    = y;
+        t.scaleX = 1.0f;
+        t.scaleY = 1.0f;
+        t.prevX = x;
+        t.prevY = y;
         return t;
     }
 
     ecs::components::PhysicsBody makePhysicsBody(bool enabled = true)
     {
         ecs::components::PhysicsBody body{};
-        body.enabled       = enabled;
-        body.bodyId        = b2_nullBodyId;
-        body.bodyType      = b2_dynamicBody;
+        body.enabled = enabled;
+        body.bodyId = b2_nullBodyId;
+        body.bodyType = b2_dynamicBody;
         body.fixedRotation = false;
-        body.density       = 1.0f;
-        body.friction      = 0.4f;
-        body.restitution   = 0.1f;
+        body.density = 1.0f;
+        body.friction = 0.4f;
+        body.restitution = 0.1f;
         return body;
     }
 
@@ -92,7 +92,7 @@ TEST(PhysicsSystemTests, CreatesBodyAndSynchronizesTransformFromSimulation)
     componentManager.addComponent<ecs::components::PhysicsBody>(entity, makePhysicsBody(true));
 
     ecs::components::Sprite sprite{};
-    sprite.width  = 16.0f;
+    sprite.width = 16.0f;
     sprite.height = 24.0f;
     componentManager.addComponent<ecs::components::Sprite>(entity, sprite);
 
@@ -202,7 +202,7 @@ TEST(PhysicsSystemTests, HorizontalVelocityAndGravityWorkTogether)
     componentManager.addComponent<ecs::components::PhysicsBody>(entity, makePhysicsBody(true));
 
     ecs::components::Sprite sprite{};
-    sprite.width  = 16.0f;
+    sprite.width = 16.0f;
     sprite.height = 24.0f;
     componentManager.addComponent<ecs::components::Sprite>(entity, sprite);
 
@@ -217,4 +217,76 @@ TEST(PhysicsSystemTests, HorizontalVelocityAndGravityWorkTogether)
 
     EXPECT_GT(after.x, before.x);
     EXPECT_LT(after.y, before.y);
+}
+
+// ===== Resilience tests =====
+
+TEST(BoxWorldResilienceTests, DoubleInit)
+{
+    engine::physics::BoxWorld world;
+    world.init({0.0f, 0.0f});
+    // Second init should be a no-op (world already valid)
+    EXPECT_NO_THROW(world.init({-10.0f, 0.0f}));
+    EXPECT_TRUE(world.isValid());
+    world.shutdown();
+}
+
+TEST(BoxWorldResilienceTests, DoubleShutdown)
+{
+    engine::physics::BoxWorld world;
+    world.init({0.0f, 0.0f});
+    world.shutdown();
+    // Second shutdown should be a no-op
+    EXPECT_NO_THROW(world.shutdown());
+    EXPECT_FALSE(world.isValid());
+}
+
+TEST(BoxWorldResilienceTests, StepBeforeInit)
+{
+    engine::physics::BoxWorld world;
+    // Step without calling init() should not crash
+    EXPECT_NO_THROW(world.step(1.0f / 60.0f, 4));
+}
+
+TEST(BoxWorldResilienceTests, DefaultConstructedIsNotValid)
+{
+    engine::physics::BoxWorld world;
+    EXPECT_FALSE(world.isValid());
+    EXPECT_TRUE(B2_IS_NULL(world.getWorldId()));
+}
+
+TEST(BoxWorldResilienceTests, InitAndShutdownCycle)
+{
+    engine::physics::BoxWorld world;
+    for (int i = 0; i < 5; ++i)
+    {
+        EXPECT_NO_THROW(world.init({0.0f, -10.0f}));
+        EXPECT_TRUE(world.isValid());
+        EXPECT_NO_THROW(world.shutdown());
+        EXPECT_FALSE(world.isValid());
+    }
+}
+
+TEST(BoxWorldResilienceTests, StepAfterShutdown)
+{
+    engine::physics::BoxWorld world;
+    world.init({0.0f, 0.0f});
+    world.shutdown();
+    // Step after shutdown should not crash
+    EXPECT_NO_THROW(world.step(1.0f / 60.0f, 4));
+}
+
+TEST(BoxWorldResilienceTests, DestructorHandlesUninitializedWorld)
+{
+    // BoxWorld destructor should handle a default-constructed (uninitialized) world safely
+    engine::physics::BoxWorld* world = new engine::physics::BoxWorld();
+    EXPECT_NO_THROW(delete world);
+}
+
+TEST(BoxWorldResilienceTests, DestructorHandlesInitializedWorld)
+{
+    // BoxWorld destructor should handle an initialized world safely
+    engine::physics::BoxWorld* world = new engine::physics::BoxWorld();
+    world->init({0.0f, -10.0f});
+    EXPECT_NO_THROW(delete world);
 }

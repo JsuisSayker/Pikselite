@@ -25,7 +25,7 @@ namespace engine
     class ComponentManager
     {
       public:
-        ComponentManager()  = default;
+        ComponentManager() = default;
         ~ComponentManager() = default;
 
         /**
@@ -79,7 +79,7 @@ namespace engine
         template <typename T> ComponentType getComponentType()
         {
             const std::type_index key = std::type_index(typeid(T));
-            auto                  it  = componentTypes.find(key);
+            auto it = componentTypes.find(key);
             if (it == componentTypes.end())
             {
                 std::cerr << "Component not registered before use: " << key.name() << std::endl;
@@ -196,7 +196,7 @@ namespace engine
         std::function<void(ecs::EntityID, const std::type_index&)> onComponentRemoved;
 
         // Guard: prevent registration overflow
-        void checkComponentCapacity()
+        void checkComponentCapacity() const
         {
             if (nextComponentType >= MAX_COMPONENT_TYPES)
             {

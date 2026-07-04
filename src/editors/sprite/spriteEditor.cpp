@@ -19,14 +19,14 @@ namespace editors
         _renderer->clear();
         _imguiInterface->startFrame();
 
-        std::vector<graphics::Pixel> framePixels         = buildRenderPixels();
+        std::vector<graphics::Pixel> framePixels = buildRenderPixels();
         std::vector<graphics::Pixel> pendingSpritePixels = addPendingSpriteToRenderPixels();
         framePixels.insert(framePixels.end(), pendingSpritePixels.begin(),
                            pendingSpritePixels.end());
         _renderPixels = framePixels; // cache for editing
 
         _renderer->drawPixelsWCamera(framePixels, _camera, PIXEL_SIZE);
-        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.7f, 0.7f, 0.7f});
+        _renderer->drawGrid(_camera, PIXEL_SIZE, {0.55f, 0.55f, 0.55f});
 
         imguiHandling();
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
@@ -44,23 +44,14 @@ namespace editors
             case graphics::MOUSE_LEFT_DRAG:
                 mouseLeftDrag();
                 break;
-            case graphics::KEY_W:
-                _camera.move(glm::vec2(0.0f, -PIXEL_SIZE));
+            case graphics::MOUSE_MIDDLE_DRAG:
+                panCameraScreenDelta(event.mouseDelta);
                 break;
-            case graphics::KEY_S:
-                _camera.move(glm::vec2(0.0f, PIXEL_SIZE));
-                break;
-            case graphics::KEY_A:
-                _camera.move(glm::vec2(PIXEL_SIZE, 0.0f));
-                break;
-            case graphics::KEY_D:
-                _camera.move(glm::vec2(-PIXEL_SIZE, 0.0f));
-                break;
-            case graphics::KEY_I:
-                _camera.zoomIn(1.1f);
-                break;
-            case graphics::KEY_O:
-                _camera.zoomOut(1.1f);
+            case graphics::MOUSE_WHEEL:
+                if (event.wheelY > 0.0f)
+                    zoomAroundMouse(1.1f);
+                else if (event.wheelY < 0.0f)
+                    zoomAroundMouse(1.0f / 1.1f);
                 break;
             default:
                 break;
@@ -74,7 +65,14 @@ namespace editors
 
     void SpriteEditor::imguiHandling()
     {
-        _imguiInterface->spriteTopToolbar(_selectedTool, _brushSize, _isEraserActive);
+        bool clearAllRequested = false;
+        _imguiInterface->spriteTopToolbar(_selectedTool, _brushSize, _isEraserActive,
+                                          clearAllRequested);
+        if (clearAllRequested)
+        {
+            _chunkGrid.chunks.clear();
+            _renderPixels.clear();
+        }
 
         // Default properties panel removed
         bool unusedDefaultPropertiesEditor = false;
@@ -115,7 +113,7 @@ namespace editors
         {
             placePendingSpriteAtWorld(worldPos);
             _isPlacingSprite = false;
-            _pendingSprite   = {};
+            _pendingSprite = {};
             return;
         }
 
@@ -131,16 +129,16 @@ namespace editors
             return;
         }
 
-        glm::vec2  mousePos = _graphicsInterface->getMousePosition();
-        glm::vec2  worldPos = screenToWorld(mousePos);
-        const bool erase    = (_selectedTool == 1) || _isEraserActive;
-        const bool drag     = true;
+        glm::vec2 mousePos = _graphicsInterface->getMousePosition();
+        glm::vec2 worldPos = screenToWorld(mousePos);
+        const bool erase = (_selectedTool == 1) || _isEraserActive;
+        const bool drag = true;
         applyBrushAt(worldPos, erase, drag);
     }
 
     void SpriteEditor::applyBrushAt(glm::vec2 worldPos, bool erase, bool drag)
     {
-        const int   half    = _brushSize / 2;
+        const int half = _brushSize / 2;
         const float centerX = std::round(worldPos.x / PIXEL_SIZE) * PIXEL_SIZE;
         const float centerY = std::round(worldPos.y / PIXEL_SIZE) * PIXEL_SIZE;
 
@@ -270,7 +268,7 @@ namespace editors
             int lx = toLocal(targetGX);
             int ly = toLocal(targetGY);
 
-            Chunk&  chunk      = _chunkGrid.getOrCreateChunk(cx, cy);
+            Chunk& chunk = _chunkGrid.getOrCreateChunk(cx, cy);
             uint8_t colorIndex = _renderer->generatePixelColorIndex(targetGX, targetGY);
             chunk.set(lx, ly, Element::Pixel{cell.type, false, colorIndex});
         }

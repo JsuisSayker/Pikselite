@@ -3,13 +3,27 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
 #include <limits>
+#include <tracy/Tracy.hpp>
 #include <unordered_map>
 #include <unordered_set>
 
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
+
 ElementDefinition g_elements[256] = {};
+
+namespace
+{
+    bool g_stoneRegionsDirtyThisFrame = false;
+}
 
 bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 {
+    ZoneScopedN("Sim::tryMove");
     Element::Pixel& src = grid.getPixelRef(x, y);
     Element::Pixel& dst = grid.getPixelRef(nx, ny);
 
@@ -21,7 +35,7 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
     if (dst.type == Element::EMPTY)
     {
-        dst                  = src;
+        dst = src;
         dst.updatedThisFrame = true;
 
         src = Element::Pixel{Element::EMPTY};
@@ -41,7 +55,25 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny)
 
 void updateWater(ChunkGrid& grid, int x, int y)
 {
+    ZoneScopedN("Sim::Water");
     ElementDefinition& def = g_elements[Element::WATER];
+
+    // lava interaction
+    // Check for lava below water in a range for more natural interaction
+    int interactionRange = 3;
+    for (int i = 1; i <= interactionRange; ++i)
+    {
+        Element::Pixel& below = grid.getPixelRef(x, y - i);
+        if (below.type == Element::LAVA)
+        {
+            below.type = Element::STONE;
+            below.updatedThisFrame = true;
+            g_stoneRegionsDirtyThisFrame = true;
+
+            grid.setPixel(x, y, {Element::FIRE, false});
+            return;
+        }
+    }
 
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
         return;
@@ -55,7 +87,7 @@ void updateWater(ChunkGrid& grid, int x, int y)
         int dx = (d == 0) ? dir : -dir;
         for (int i = 1; i <= maxDisp; ++i)
         {
-            int             nx  = x + dx * i;
+            int nx = x + dx * i;
             Element::Pixel& mid = grid.getPixelRef(x + dx * (i - 1), y);
             if (mid.type != Element::EMPTY && mid.type != Element::WATER)
                 break;
@@ -68,9 +100,73 @@ void updateWater(ChunkGrid& grid, int x, int y)
         }
     }
 }
+void updateLava(ChunkGrid& grid, int x, int y)
+{
+    ElementDefinition& def = g_elements[Element::LAVA];
 
+    if (rand() % 255 < def.fireParams.burnSpreadChance / 5)
+    {
+        Element::Pixel& p = grid.getPixelRef(x, y + 1);
+        if (p.type == Element::EMPTY)
+        {
+            p.type = Element::FIRE;
+            p.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
+            p.updatedThisFrame = true;
+        }
+    }
+
+    if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
+        return;
+
+    int maxDisp = def.dispersionRate;
+
+    int dir = (rand() % 2) ? -1 : 1;
+
+    for (int d = 0; d < 2; ++d)
+    {
+        int dx = (d == 0) ? dir : -dir;
+        for (int i = 1; i <= maxDisp; ++i)
+        {
+            int nx = x + dx * i;
+            Element::Pixel& mid = grid.getPixelRef(x + dx * (i - 1), y);
+            if (mid.type != Element::EMPTY && mid.type != Element::LAVA)
+                break;
+
+            if (tryMove(grid, x, y, nx, y))
+                break;
+
+            if (tryMove(grid, x, y, nx, y + GRAVITY_DIR))
+                break;
+        }
+    }
+
+    const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+    for (auto& d : dirs)
+    {
+        int nx = x + d[0];
+        int ny = y + d[1];
+
+        Element::Pixel& neighbor = grid.getPixelRef(nx, ny);
+        if (neighbor.type == Element::EMPTY || neighbor.isBurning)
+            continue;
+
+        ElementDefinition& nDef = g_elements[neighbor.type];
+        if (nDef.fireParams.flammability == 0)
+            continue;
+
+        uint16_t chance = (nDef.fireParams.flammability * def.fireParams.burnSpreadChance) / 255;
+        if (rand() % 255 < chance)
+        {
+            neighbor.isBurning = true;
+            neighbor.burnTimer = nDef.fireParams.burnDuration;
+            neighbor.updatedThisFrame = true;
+        }
+    }
+}
 void updateSand(ChunkGrid& grid, int x, int y)
 {
+    ZoneScopedN("Sim::Sand");
     if (tryMove(grid, x, y, x, y + GRAVITY_DIR))
         return;
 
@@ -91,7 +187,8 @@ void updateSand(ChunkGrid& grid, int x, int y)
 }
 void updateFire(ChunkGrid& grid, int x, int y)
 {
-    Element::Pixel&    p   = grid.getPixelRef(x, y);
+    ZoneScopedN("Sim::Fire");
+    Element::Pixel& p = grid.getPixelRef(x, y);
     ElementDefinition& def = g_elements[Element::FIRE];
 
     if (p.burnTimer > 0)
@@ -110,7 +207,7 @@ void updateFire(ChunkGrid& grid, int x, int y)
         int ny = y + d[1];
 
         Element::Pixel& neighbor = grid.getPixelRef(nx, ny);
-        if (neighbor.type == Element::EMPTY || neighbor.type == Element::FIRE || neighbor.isBurning)
+        if (neighbor.type == Element::EMPTY || neighbor.isBurning)
             continue;
 
         ElementDefinition& nDef = g_elements[neighbor.type];
@@ -120,8 +217,8 @@ void updateFire(ChunkGrid& grid, int x, int y)
         uint16_t chance = (nDef.fireParams.flammability * def.fireParams.burnSpreadChance) / 255;
         if (rand() % 255 < chance)
         {
-            neighbor.isBurning        = true;
-            neighbor.burnTimer        = nDef.fireParams.burnDuration;
+            neighbor.isBurning = true;
+            neighbor.burnTimer = nDef.fireParams.burnDuration;
             neighbor.updatedThisFrame = true;
         }
     }
@@ -141,13 +238,14 @@ void updateDebug(ChunkGrid& grid, int x, int y) {}
 void Simulation::initElements()
 {
     g_elements[Element::EMPTY] = {"Empty", {}, 0, SOLID_STATIC, 0, fireBehavior{}, nullptr, -1};
-    g_elements[Element::SAND]  = {"Sand", {}, 5, SOLID_DYNAMIC, 1, fireBehavior{}, updateSand, -1};
+    g_elements[Element::SAND] = {"Sand", {}, 5, SOLID_DYNAMIC, 1, fireBehavior{}, updateSand, -1};
     g_elements[Element::WATER] = {"Water", {}, 2, LIQUID, 5, fireBehavior{}, updateWater, -1};
-    g_elements[Element::FIRE]  = {"Fire", {}, 1, GAS, 1, fireBehavior{}, updateFire, -1};
+    g_elements[Element::LAVA] = {"Lava", {}, 3, LIQUID, 2, fireBehavior{}, updateLava, -1};
+    g_elements[Element::FIRE] = {"Fire", {}, 1, GAS, 1, fireBehavior{}, updateFire, -1};
     g_elements[Element::STONE] = {"Stone",        {},          255, SOLID_STATIC, 0,
                                   fireBehavior{}, updateStone, -1};
-    g_elements[Element::DIRT]  = {"Dirt", {}, 10, SOLID_STATIC, 1, fireBehavior{}, updateDirt, -1};
-    g_elements[Element::WOOD]  = {
+    g_elements[Element::DIRT] = {"Dirt", {}, 10, SOLID_STATIC, 1, fireBehavior{}, updateDirt, -1};
+    g_elements[Element::WOOD] = {
         "Wood", {}, 5, SOLID_STATIC, 1, fireBehavior{150, 20, 30, Element::FIRE}, nullptr, -1};
     g_elements[Element::DEBUG] = {"Debug", {}, 1, SOLID_STATIC, 0, fireBehavior{}, updateDebug, -1};
 
@@ -155,6 +253,8 @@ void Simulation::initElements()
         {{194, 178, 128}, {206, 188, 140}, {182, 164, 116}, {216, 198, 150}}};
     g_elements[Element::WATER].colorPalette = {
         {{30, 90, 200}, {50, 120, 220}, {70, 150, 240}, {20, 70, 180}}};
+    g_elements[Element::LAVA].colorPalette = {
+        {{255, 50, 0}, {255, 100, 0}, {255, 150, 50}, {200, 30, 0}}};
     g_elements[Element::FIRE].colorPalette = {
         {{255, 80, 0}, {255, 120, 0}, {255, 180, 50}, {200, 40, 0}}};
     g_elements[Element::STONE].colorPalette = {
@@ -166,24 +266,28 @@ void Simulation::initElements()
     g_elements[Element::DEBUG].colorPalette = {
         {{255, 0, 255}, {200, 0, 200}, {150, 0, 150}, {255, 100, 255}}};
 
-    g_elements[Element::FIRE].fireParams = {200, 10, 50, Element::EMPTY};
+    g_elements[Element::LAVA].fireParams = {0, 0, 50, Element::STONE};
+    g_elements[Element::FIRE].fireParams = {0, 6, 50, Element::EMPTY};
     g_elements[Element::WOOD].fireParams = {150, 30, 30, Element::EMPTY};
 }
 
 inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
 {
-    Element::Pixel&    p          = grid.getPixelRef(x, y);
+    ZoneScopedN("Sim::Burning");
+    Element::Pixel& p = grid.getPixelRef(x, y);
     ElementDefinition& elementDef = g_elements[p.type];
-
-    if (p.type == Element::FIRE)
-        return;
 
     if (p.burnTimer > 0)
         p.burnTimer--;
     else
     {
-        p.type      = elementDef.fireParams.burnToElement;
+        const Element::ElementType previousType = p.type;
+        p.type = elementDef.fireParams.burnToElement;
         p.isBurning = false;
+        if (previousType == Element::STONE || p.type == Element::STONE)
+        {
+            g_stoneRegionsDirtyThisFrame = true;
+        }
     }
 
     const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
@@ -194,7 +298,7 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
         int ny = y + d[1];
 
         Element::Pixel& n = grid.getPixelRef(nx, ny);
-        if (n.type == Element::EMPTY || n.isBurning || n.type == Element::FIRE)
+        if (n.type == Element::EMPTY || n.isBurning)
             continue;
         ElementDefinition& nDef = g_elements[n.type];
         if (nDef.fireParams.flammability == 0)
@@ -204,33 +308,91 @@ inline void Simulation::updateBurning(ChunkGrid& grid, int x, int y)
             (nDef.fireParams.flammability * elementDef.fireParams.burnSpreadChance) / 255;
         if (rand() % 255 < chance)
         {
-            n.isBurning        = true;
-            n.burnTimer        = nDef.fireParams.burnDuration;
+            n.isBurning = true;
+            n.burnTimer = nDef.fireParams.burnDuration;
             n.updatedThisFrame = true;
         }
     }
 
-    if (rand() % 255 < elementDef.fireParams.burnSpreadChance)
+    if (rand() % 255 < elementDef.fireParams.burnSpreadChance / 5)
     {
-        Element::Pixel& p = grid.getPixelRef(x, y - 1);
+        Element::Pixel& p = grid.getPixelRef(x, y + 1);
         if (p.type != Element::EMPTY)
             return;
-        p.type             = Element::FIRE;
-        p.burnTimer        = g_elements[Element::FIRE].fireParams.burnDuration;
+        p.type = Element::FIRE;
+        p.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
         p.updatedThisFrame = true;
+    }
+}
+
+void Simulation::updateParticles()
+{
+    for (auto it = particles.begin(); it != particles.end();)
+    {
+        if (it->lifetime == 0)
+        {
+            it = particles.erase(it);
+            continue;
+        }
+
+        it->lifetime--;
+        {
+            // simple Euler integration, can be improved with substepping or Verlet if needed
+            it->position.x += it->velocity.x;
+            it->position.y += it->velocity.y;
+
+            // apply gravity
+            it->velocity.y -= 0.1f; // gravity strength, can be tuned
+
+            // apply some damping to velocity
+            it->velocity.x *= 0.98f;
+            it->velocity.y *= 0.98f;
+
+            // check for collisions with the grid and update velocity accordingly
+            int gridX = static_cast<int>(it->position.x);
+            int gridY = static_cast<int>(it->position.y);
+            Element::Pixel p = grid.getPixel(gridX, gridY);
+            bool erased = false;
+            if (p.type == Element::EMPTY)
+            {
+                // check if there is neighboring pixel
+                const int dirs[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+                for (auto& d : dirs)
+                {
+                    int nx = gridX + d[0];
+                    int ny = gridY + d[1];
+                    Element::Pixel neighbor = grid.getPixel(nx, ny);
+                    if (neighbor.type != Element::EMPTY)
+                    {
+                        ElementDefinition& Def = g_elements[it->type];
+                        // reinsert the particle in the grid and stop its movement
+                        grid.setPixel(gridX, gridY,
+                                      {it->type, false, 0, Def.fireParams.burnDuration, false});
+                        it = particles.erase(it);
+                        erased = true;
+                        break;
+                    }
+                }
+            }
+            if (!erased)
+            {
+                ++it;
+            }
+        }
     }
 }
 
 void Simulation::update()
 {
     frame++;
+    updateParticles();
     resetUpdatedFlags();
     orderChunksForUpdate();
 
     for (auto& entry : orderedChunks)
     {
-        int    cx    = entry.cx;
-        int    cy    = entry.cy;
+        int cx = entry.cx;
+        int cy = entry.cy;
         Chunk& chunk = *entry.chunk;
 
         bool flip = ((frame + cy) % 2 == 0);
@@ -259,6 +421,23 @@ void Simulation::update()
             }
         }
     }
+
+    if (g_stoneRegionsDirtyThisFrame)
+    {
+        regionsDirty = true;
+        g_stoneRegionsDirtyThisFrame = false;
+    }
+
+    if (regionsDirty)
+    {
+        detectRegions();
+    }
+}
+
+void Simulation::spawnParticle(Element::ElementType type, Element::Vec2f position,
+                               Element::Vec2f velocity, uint8_t colorIndex, uint16_t lifetime)
+{
+    particles.push_back(Element::Particle{position, velocity, type, colorIndex, lifetime});
 }
 
 void Simulation::setGrid(ChunkGrid& newGrid)
@@ -276,14 +455,19 @@ void Simulation::setGrid(ChunkGrid& newGrid)
     detectedRegions.clear();
     regionBodies.clear();
     regionBodyBindings.clear();
+    // Particles are tied to the previous grid (water/lava/fire mid-fall, lifetime
+    // counters in progress). Carrying them into the new grid produces stray
+    // pixels — most visibly the orange Lava particles that read as "fire" after
+    // a scene reload.
+    particles.clear();
     regionsDirty = true;
 }
 
 void Simulation::setPhysicsWorld(b2WorldId worldId, float pixelsPerMeterValue)
 {
-    physicsWorld   = worldId;
+    physicsWorld = worldId;
     pixelsPerMeter = pixelsPerMeterValue;
-    regionsDirty   = true;
+    regionsDirty = true;
 }
 
 void Simulation::resetUpdatedFlags()
@@ -329,7 +513,7 @@ bool Simulation::tryDisplacePixel(int x, int y, int range)
         if (dst.type != Element::EMPTY)
             return false;
 
-        Element::Pixel moved   = existing;
+        Element::Pixel moved = existing;
         moved.updatedThisFrame = true;
         grid.setPixel(x, y, {Element::EMPTY, false});
         dst = moved;
@@ -357,6 +541,98 @@ bool Simulation::tryDisplacePixel(int x, int y, int range)
     }
 
     return false;
+}
+
+void Simulation::detectRegions()
+{
+    if (!b2World_IsValid(physicsWorld))
+    {
+        regionsDirty = false;
+        return;
+    }
+
+    for (b2BodyId bodyId : regionBodies)
+    {
+        if (b2Body_IsValid(bodyId))
+            b2DestroyBody(bodyId);
+    }
+
+    detectedRegions.clear();
+    regionBodies.clear();
+    regionBodyBindings.clear();
+    visitedForRegions.clear();
+
+    for (const auto& [key, chunk] : grid.chunks)
+    {
+        const int cx = static_cast<int32_t>(key >> 32);
+        const int cy = static_cast<int32_t>(key & 0xFFFFFFFF);
+
+        for (int y = 0; y < CHUNK_SIZE; ++y)
+        {
+            for (int x = 0; x < CHUNK_SIZE; ++x)
+            {
+                const Element::Pixel& pixel = chunk.pixels[y * CHUNK_SIZE + x];
+                if (pixel.type != Element::STONE)
+                    continue;
+
+                const int gx = cx * CHUNK_SIZE + x;
+                const int gy = cy * CHUNK_SIZE + y;
+                const int64_t visitedKey = makeVisitedKey(gx, gy);
+                if (visitedForRegions.count(visitedKey))
+                    continue;
+
+                Element::Region region = regionFloodFill(gx, gy, Element::STONE);
+                if (region.pixels.empty())
+                    continue;
+
+                buildRegionContoursMarchingSquare(region);
+                simplifyRegionContours(region, 0.6f);
+                triangulateRegion(region);
+
+                if (region.triangles.empty())
+                    continue;
+
+                b2BodyDef bodyDef = b2DefaultBodyDef();
+                bodyDef.type = b2_staticBody;
+                bodyDef.position = {0.0f, 0.0f};
+
+                b2BodyId bodyId = b2CreateBody(physicsWorld, &bodyDef);
+                b2ShapeDef shapeDef = b2DefaultShapeDef();
+                shapeDef.material.friction = 0.8f;
+                shapeDef.material.restitution = 0.0f;
+
+                bool createdShape = false;
+                for (const auto& tri : region.triangles)
+                {
+                    b2Vec2 points[3] = {
+                        {tri.a.x * pixelsPerMeter, tri.a.y * pixelsPerMeter},
+                        {tri.b.x * pixelsPerMeter, tri.b.y * pixelsPerMeter},
+                        {tri.c.x * pixelsPerMeter, tri.c.y * pixelsPerMeter},
+                    };
+
+                    b2Hull hull = b2ComputeHull(points, 3);
+                    if (hull.count == 3)
+                    {
+                        b2Polygon polygon = b2MakePolygon(&hull, 0.0f);
+                        b2CreatePolygonShape(bodyId, &shapeDef, &polygon);
+                        createdShape = true;
+                    }
+                }
+
+                if (!createdShape)
+                {
+                    if (b2Body_IsValid(bodyId))
+                        b2DestroyBody(bodyId);
+                    continue;
+                }
+
+                detectedRegions.push_back(std::move(region));
+                regionBodies.push_back(bodyId);
+            }
+        }
+    }
+
+    regionsDirty = false;
 }
 
 Element::Region Simulation::regionFloodFill(int x, int y, Element::ElementType type)
@@ -403,7 +679,7 @@ void Simulation::buildRegionContoursMarchingSquare(Element::Region& region)
     int minX = INT_MAX, minY = INT_MAX, maxX = INT_MIN, maxY = INT_MIN;
 
     std::unordered_set<int64_t> occ;
-    auto                        key = [](int x, int y) -> int64_t
+    auto key = [](int x, int y) -> int64_t
     { return (static_cast<int64_t>(x) << 32) | static_cast<uint32_t>(y); };
 
     for (const auto& p : region.pixels)
@@ -416,7 +692,7 @@ void Simulation::buildRegionContoursMarchingSquare(Element::Region& region)
     }
 
     auto filled = [&](int x, int y) { return occ.count(key(x, y)) > 0; };
-    auto P      = [&](float x, float y) { return Element::Vec2f{x, y}; };
+    auto P = [&](float x, float y) { return Element::Vec2f{x, y}; };
 
     for (int y = minY - 1; y <= maxY; ++y)
     {
@@ -528,11 +804,11 @@ namespace
             return std::sqrt(dx * dx + dy * dy);
         }
 
-        const float t     = c1 / c2;
+        const float t = c1 / c2;
         const float projx = a.x + t * vx;
         const float projy = a.y + t * vy;
-        const float dx    = p.x - projx;
-        const float dy    = p.y - projy;
+        const float dx = p.x - projx;
+        const float dy = p.y - projy;
         return std::sqrt(dx * dx + dy * dy);
     }
 
@@ -542,10 +818,10 @@ namespace
         if (end <= start + 1)
             return;
 
-        float                 maxDist = -1.0f;
-        int                   idx     = -1;
-        const Element::Vec2f& a       = pts[start];
-        const Element::Vec2f& b       = pts[end];
+        float maxDist = -1.0f;
+        int idx = -1;
+        const Element::Vec2f& a = pts[start];
+        const Element::Vec2f& b = pts[end];
 
         for (int i = start + 1; i < end; ++i)
         {
@@ -553,7 +829,7 @@ namespace
             if (d > maxDist)
             {
                 maxDist = d;
-                idx     = i;
+                idx = i;
             }
         }
 
@@ -572,7 +848,7 @@ namespace
 
         std::vector<bool> keep(pts.size(), false);
         keep.front() = true;
-        keep.back()  = true;
+        keep.back() = true;
 
         rdpRecursive(pts, 0, static_cast<int>(pts.size() - 1), eps, keep);
 
@@ -600,7 +876,7 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
 
     struct Node
     {
-        Element::Vec2f       p;
+        Element::Vec2f p;
         std::vector<int64_t> neighbors;
     };
 
@@ -620,8 +896,8 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
 
     for (const auto& seg : region.edges)
     {
-        IPoint  a  = quantize(seg.a);
-        IPoint  b  = quantize(seg.b);
+        IPoint a = quantize(seg.a);
+        IPoint b = quantize(seg.b);
         int64_t ka = makePointKey(a.x, a.y);
         int64_t kb = makePointKey(b.x, b.y);
 
@@ -632,7 +908,7 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
     }
 
     std::unordered_set<uint64_t> visitedEdges;
-    auto                         edgeKey = [](int64_t a, int64_t b) -> uint64_t
+    auto edgeKey = [](int64_t a, int64_t b) -> uint64_t
     {
         uint64_t ua = static_cast<uint64_t>(a);
         uint64_t ub = static_cast<uint64_t>(b);
@@ -650,8 +926,8 @@ void Simulation::simplifyRegionContours(Element::Region& region, float epsilon)
                 continue;
 
             std::vector<Element::Vec2f> loop;
-            int64_t                     prev = startKey;
-            int64_t                     curr = nextKey;
+            int64_t prev = startKey;
+            int64_t curr = nextKey;
 
             loop.push_back(nodes[startKey].p);
 

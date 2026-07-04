@@ -13,7 +13,7 @@ namespace engine
         }
     }
 
-    void SystemManager::entitySignatureChanged(ecs::EntityID         entity,
+    void SystemManager::entitySignatureChanged(ecs::EntityID entity,
                                                const ecs::Signature& entitySignature)
     {
         for (auto& [type, system] : systemsMap)

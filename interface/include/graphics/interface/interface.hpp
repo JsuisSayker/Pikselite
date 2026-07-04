@@ -63,7 +63,7 @@ namespace graphics
 
       private:
         // SDL window and OpenGL context for rendering
-        SDL_Window*   _window;
+        SDL_Window* _window;
         SDL_GLContext _glContext;
     };
 } // namespace graphics

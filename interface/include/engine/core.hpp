@@ -1,7 +1,10 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <algorithm>
 #include <box2d/box2d.h>
+#include <build/BuildSettings.hpp>
+#include <chrono>
 #include <editors/project/projectEditor.hpp>
 #include <editors/sprite/spriteEditor.hpp>
 #include <engine/ecs/components/spriteComponent.hpp>
@@ -15,18 +18,15 @@
 #include <engine/pixels/simulation/element.hpp>
 #include <engine/pixels/simulation/simulation.hpp>
 #include <engine/time.hpp>
-#include <iostream>
-#include <fstream>
-#include <string>
 #include <filesystem>
-#include <chrono>
-#include <algorithm>
-#include <SDL2/SDL.h>
-
-#include <projects.hpp>
-
+#include <fstream>
+#include <iostream>
+#include <mutex>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <projects.hpp>
 #include <string>
+#include <thread>
 #include <vector>
 using json = nlohmann::json;
 
@@ -76,9 +76,27 @@ namespace engine
             _camera.setZoom(zoom);
         }
 
-    private:
-        editors::SpriteEditor *spriteEditor = nullptr;
-        editors::ProjectEditor *projectEditor = nullptr;
+        /**
+         * @brief Draws sprites with layer strictly below the given value.
+         * @param layer Upper bound (exclusive).
+         */
+        void drawSpritesBelowLayer(int layer);
+
+        /**
+         * @brief Draws sprites with layer strictly above the given value.
+         * @param layer Lower bound (exclusive).
+         */
+        void drawSpritesAboveLayer(int layer);
+
+        /**
+         * @brief Rebuilds ECS entities for detected region bodies.
+         * @return void
+         */
+        void syncRegionBodiesToECS();
+
+      private:
+        editors::SpriteEditor* spriteEditor = nullptr;
+        editors::ProjectEditor* projectEditor = nullptr;
 
         std::vector<projects::Project> _projects;
         projects::Project _currentProject;
@@ -92,31 +110,37 @@ namespace engine
         graphics::Interface sdlInterface;
         graphics::Renderer renderer;
         graphics::ImguiInterface imguiInterface;
-        Timer                    timer;
-        events::EventBus         eventBus;
-        engine::EntityManager    entityManager;
+        Timer timer;
+        events::EventBus eventBus;
+        engine::EntityManager entityManager;
         engine::ComponentManager componentManager;
-        engine::SystemManager    systemManager;
+        engine::SystemManager systemManager;
 
         uint32_t gameObjectCounter = 1;
 
-        graphics::Camera2D             _camera;
-        physics::BoxWorld              _boxWorld;
-        b2BodyId                       _cubeBody   = b2_nullBodyId;
-        b2BodyId                       _groundBody = b2_nullBodyId;
+        graphics::Camera2D _camera;
+        physics::BoxWorld _boxWorld;
+        b2BodyId _cubeBody = b2_nullBodyId;
+        b2BodyId _groundBody = b2_nullBodyId;
         std::vector<Pixel::GameObject> _gameObjects;
-        std::vector<graphics::Pixel>   _renderPixels;
-        Simulation                     _pixelSimulation;
-        ChunkGrid                      _chunkGrid;
+        std::vector<graphics::Pixel> _renderPixels;
+        Simulation _pixelSimulation;
+        ChunkGrid _chunkGrid;
 
-        float       accumulator = 0.0f;
-        const float fixedDt     = 1.0f / 60.0f; // 60 ticks/sec
+        float accumulator = 0.0f;
+        const float fixedDt = 1.0f / 60.0f; // 60 ticks/sec
 
         // Mapping from Pixel::GameObjectID to ecs::EntityID
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID> _gameObjectToEntity;
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
-                    _gameObjectOccupiedCells;
+            _gameObjectOccupiedCells;
+        std::vector<ecs::EntityID> _regionBodyEntities;
         std::string _sceneFilename = "assets/default.scene";
+
+        // Queue populated by the SceneLoadRequestedEvent subscriber; drained
+        // between frames by runGamePreview so loadScene never fires while the
+        // ECS is iterating entities.
+        std::optional<std::string> _pendingSceneLoadPath;
 
         std::string _projectsPath;
 
@@ -151,7 +175,7 @@ namespace engine
          * @return Pixel list for rendering.
          */
         std::vector<graphics::Pixel> buildRotatedSquarePixels(glm::vec2 center, float size,
-                                                              float     rotation,
+                                                              float rotation,
                                                               glm::vec3 color) const;
 
         /**
@@ -207,7 +231,8 @@ namespace engine
         void getJsonVariables();
         void openProject(int index);
         void sortProjects(std::vector<projects::Project>& projects);
-        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer, graphics::ImguiInterface& imguiInterface);
+        void runProjectsListPage(graphics::Interface& sdlInterface, graphics::Renderer& renderer,
+                                 graphics::ImguiInterface& imguiInterface);
 
         bool copyProjectEditorDataToCore();
 
@@ -238,10 +263,21 @@ namespace engine
          * @param grid Grid snapshot to convert.
          * @return Render pixel list.
          */
-        std::vector<graphics::Pixel> buildRenderPixels(ChunkGrid grid) const;
+        std::vector<graphics::Pixel> buildRenderPixels(const ChunkGrid& grid) const;
 
-        void saveProjects(const std::vector<projects::Project> &projects);
-        void loadProjects(std::vector<projects::Project> &projects);
+        void saveProjects(const std::vector<projects::Project>& projects);
+        void loadProjects(std::vector<projects::Project>& projects);
+
+        // Build game pipeline (called from build thread; must not touch editor/Core data)
+        bool buildGame(const BuildSettings& settings, const std::vector<std::string>& neededDats);
+
+        // Build thread + state
+        std::thread _buildThread;
+        std::atomic<bool> _buildDone{true};
+        std::atomic<bool> _buildSuccess{false};
+        std::mutex _buildOutputMutex;
+        std::string _buildOutput;
+        bool _isBuilding = false;
 
         // save scene and load scene functions for project editor
         /**

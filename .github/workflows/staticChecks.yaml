@@ -25,37 +25,40 @@ jobs:
             - name: Checkout repo
               uses: actions/checkout@v4
 
-            - name: Cache vcpkg
-              uses: actions/cache@v4
-              with:
-                path: |
-                  build/vcpkg_installed
-                  vcpkg
-                key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+            # - name: Cache vcpkg
+            #   uses: actions/cache@v4
+            #   with:
+            #     path: |
+            #       build/vcpkg_installed
+            #       vcpkg
+            #     key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
 
-            - name: Setup MSVC
-              uses: ilammy/msvc-dev-cmd@v1
+            # - name: Setup MSVC
+            #   uses: ilammy/msvc-dev-cmd@v1
 
-            - name: Setup vcpkg
-              shell: cmd
+            # - name: Setup vcpkg
+            #   shell: cmd
+            #   run: |
+            #         if not exist "%VCPKG_ROOT%" (
+            #         git clone https://github.com/microsoft/vcpkg "%VCPKG_ROOT%"
+            #         call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
+            #         )
+
+
+            # - name: Generate compile_commands.json
+            #   shell: cmd
+            #   run: build.bat
+
+            - name: Verify formatting
+              shell: bash
               run: |
-                    if not exist "%VCPKG_ROOT%" (
-                    git clone https://github.com/microsoft/vcpkg "%VCPKG_ROOT%"
-                    call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
-                    )
+                CLANG_FORMAT="/c/Program Files/LLVM/bin/clang-format.exe"
 
+                while IFS= read -r file; do
+                  "$CLANG_FORMAT" -i --style=file "$file"
+                done < <(git ls-files '*.cpp' '*.hpp' '*.h')
 
-            - name: Generate compile_commands.json
-              shell: cmd
-              run: build.bat
-
-            - name: Check formatting
-              run: |
-                choco install llvm -y
-                for /r src %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
-                for /r interface %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
-                for /r tests %%f in (*.cpp *.hpp *.h) do clang-format --dry-run --Werror "%%f"
-              shell: cmd
+                git diff --exit-code
 
             # - name: Run clang-tidy
             #   run: |

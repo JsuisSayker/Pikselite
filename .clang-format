@@ -21,8 +21,8 @@ IncludeBlocks: Regroup
 SpaceBeforeParens: ControlStatements
 SpacesInParentheses: false
 
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
 
 IndentCaseLabels: true
 
@@ -35,3 +35,6 @@ FixNamespaceComments: true
 ReflowComments: true
 
 DerivePointerAlignment: false
+
+DeriveLineEnding: false
+UseCRLF: false

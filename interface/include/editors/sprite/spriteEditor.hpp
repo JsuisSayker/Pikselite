@@ -67,13 +67,13 @@ namespace editors
         void setProjectAssetsPath(std::filesystem::path projectPath);
 
       private:
-        graphics::Pixel*     _currentPixel                = nullptr;
-        bool                 _showPixelEditor             = false;
-        bool                 _showDefaultPropertiesEditor = false;
-        bool                 _isEraserActive              = false;
-        int                  _selectedTool                = 0;
-        int                  _brushSize                   = 1;
-        std::string          _newSpritePath;
+        graphics::Pixel* _currentPixel = nullptr;
+        bool _showPixelEditor = false;
+        bool _showDefaultPropertiesEditor = false;
+        bool _isEraserActive = false;
+        int _selectedTool = 0;
+        int _brushSize = 1;
+        std::string _newSpritePath;
         Element::ElementType _currentElementType = Element::ElementType::SAND;
         std::filesystem::path _projectAssetsPath;
 
@@ -165,7 +165,7 @@ namespace editors
          */
         void updatePlacementMode();
 
-        void                 placePendingSpriteAtWorld(glm::vec2 worldPos);
+        void placePendingSpriteAtWorld(glm::vec2 worldPos);
         Element::ElementType getElementTypeAt(glm::vec2 worldPos);
     };
 

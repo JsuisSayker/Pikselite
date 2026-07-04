@@ -7,7 +7,7 @@ namespace engine::events
         if (!ev)
             return;
         auto type = std::type_index(typeid(*ev));
-        auto it   = handlers.find(type);
+        auto it = handlers.find(type);
         if (it == handlers.end())
             return;
         const IEvent& ref = *ev;

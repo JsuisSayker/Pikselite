@@ -1,13 +1,13 @@
-#include <engine/core.hpp>
-#include <engine/scene/sceneSerializer.hpp>
-
 #include <cmath>
+#include <engine/core.hpp>
+#include <engine/pixels/simulation/element.hpp>
+#include <engine/scene/sceneSerializer.hpp>
 #include <filesystem>
 #include <iostream>
 
 namespace engine
 {
-    void Core::saveScene(const std::string &filename)
+    void Core::saveScene(const std::string& filename)
     {
         if (filename.empty())
             return;
@@ -21,6 +21,9 @@ namespace engine
         engine::scene::SceneData data;
         data.gameObjects = _gameObjects;
         data.nextGameObjectId = gameObjectCounter;
+        data.cameraX = _camera.getPosition().x;
+        data.cameraY = _camera.getPosition().y;
+        data.cameraZoom = _camera.getZoom();
 
         if (!engine::scene::saveSceneToFile(filename, data))
         {
@@ -28,7 +31,7 @@ namespace engine
         }
     }
 
-    bool Core::loadScene(const std::string &filename)
+    bool Core::loadScene(const std::string& filename)
     {
         if (filename.empty())
             return false;
@@ -47,6 +50,8 @@ namespace engine
         _renderPixels.clear();
         _gameObjectToEntity.clear();
         _gameObjectOccupiedCells.clear();
+        // Note: _regionBodyEntities is cleared inside loadGameObjectsIntoECS(),
+        // which both this path and the preview-entry path go through.
 
         for (const auto& go : _gameObjects)
         {
@@ -73,13 +78,29 @@ namespace engine
                 Element::Pixel scenePixel;
                 scenePixel.type = pixel.type;
                 scenePixel.colorIndex = renderer.generatePixelColorIndex(gridX, gridY);
+                scenePixel.isBurning = pixel.isBurning;
+                // FIRE: restore burn timer from save; if zero (legacy/empty), seed from element
+                // definition.
+                if (pixel.type == Element::FIRE)
+                {
+                    scenePixel.burnTimer = pixel.burnTimer != 0
+                                               ? pixel.burnTimer
+                                               : g_elements[Element::FIRE].fireParams.burnDuration;
+                }
+                else
+                {
+                    scenePixel.burnTimer = pixel.burnTimer;
+                }
                 _chunkGrid.setPixel(gridX, gridY, scenePixel);
             }
         }
+
+        _camera.setPosition(data.cameraX, data.cameraY);
+        _camera.setZoom(data.cameraZoom);
 
         _pixelSimulation.setGrid(_chunkGrid);
         _renderPixels = buildRenderPixels(_chunkGrid);
         loadGameObjectsIntoECS();
         return true;
     }
-}
+} // namespace engine

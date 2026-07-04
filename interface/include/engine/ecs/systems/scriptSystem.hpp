@@ -14,27 +14,37 @@
 #include "engine/managers/systemManager.hpp"
 #include "engine/pixels/simulation/chunk.hpp"
 #include "engine/pixels/simulation/element.hpp"
+#include "engine/pixels/simulation/simulation.hpp"
 
 #include <SDL2/SDL.h>
 #include <cctype>
 #include <cmath>
+#include <graphics/graphicsEnum.hpp>
 #include <graphics/renderer/camera.hpp>
 #include <memory>
 #include <string>
+#include <tracy/Tracy.hpp>
 #include <unordered_map>
 #include <vector>
+
+#ifndef TRACY_ENABLE
+// output a warning if profiling is disabled
+#pragma message(                                                                                   \
+    "Tracy profiling is disabled. To enable, set PIKSELITE_ENABLE_PROFILING=ON in CMake and rebuild.")
+#error "Not set"
+#endif
 
 namespace ecs::systems
 {
     class ScriptSystem : public ISystem
     {
       public:
-        ScriptSystem(engine::EntityManager*    entityManager = nullptr,
-                     engine::SystemManager*    systemManager = nullptr,
-                     engine::events::EventBus* eventBus = nullptr, ChunkGrid* chunkGrid = nullptr,
+        ScriptSystem(engine::EntityManager* entityManager = nullptr,
+                     engine::SystemManager* systemManager = nullptr,
+                     engine::events::EventBus* eventBus = nullptr, Simulation* simulation = nullptr,
                      graphics::Camera2D* camera = nullptr)
             : _entityManager(entityManager), _systemManager(systemManager), _eventBus(eventBus),
-              _chunkGrid(chunkGrid), _camera(camera)
+              _simulation(simulation), _camera(camera)
         {
         }
 
@@ -93,7 +103,7 @@ namespace ecs::systems
             _entityNames.clear();
             _pixelCommands.clear();
             _victory = false;
-            _lose    = false;
+            _lose = false;
             _victoryReason.clear();
             _loseReason.clear();
         }
@@ -107,6 +117,7 @@ namespace ecs::systems
          */
         void update(double dt, engine::ComponentManager& componentManager) override
         {
+            ZoneScopedN("ECS::ScriptSystem");
             if (!_entityManager)
                 return;
 
@@ -128,7 +139,7 @@ namespace ecs::systems
                     continue;
 
                 sol::state& lua = instance.lua->state();
-                lua["entity"]   = buildEntityTable(lua, entity);
+                lua["entity"] = buildEntityTable(lua, entity);
 
                 dispatchCollisionCallbacks(entity, instance);
                 dispatchGameEndCallbacks(instance);
@@ -157,37 +168,44 @@ namespace ecs::systems
         struct ScriptInstance
         {
             std::unique_ptr<engine::LuaManager> lua;
-            std::string                         scriptPath;
-            bool                                victoryHandled = false;
-            bool                                loseHandled    = false;
+            std::string scriptPath;
+            bool victoryHandled = false;
+            bool loseHandled = false;
         };
 
         struct PixelCommand
         {
-            int                  x    = 0;
-            int                  y    = 0;
+            int x = 0;
+            int y = 0;
             Element::ElementType type = Element::EMPTY;
+            // false -> write straight into the chunk grid (persistent cell, used for
+            // level building); true -> emit as a Simulation particle with the velocity
+            // and lifetime below (used by spawn_particle for hoses/throws).
+            bool isParticle = false;
+            float vx = 0.0f;
+            float vy = 0.0f;
+            uint16_t lifetime = 600; // frames
         };
 
-        engine::EntityManager*    _entityManager      = nullptr;
-        engine::SystemManager*    _systemManager      = nullptr;
-        engine::events::EventBus* _eventBus           = nullptr;
-        ChunkGrid*                _chunkGrid          = nullptr;
-        graphics::Camera2D*       _camera             = nullptr;
-        ecs::EntityID             _cameraFollowEntity = 0;
+        engine::EntityManager* _entityManager = nullptr;
+        engine::SystemManager* _systemManager = nullptr;
+        engine::events::EventBus* _eventBus = nullptr;
+        Simulation* _simulation = nullptr;
+        graphics::Camera2D* _camera = nullptr;
+        ecs::EntityID _cameraFollowEntity = 0;
 
-        engine::ComponentManager*                         _activeComponentManager = nullptr;
+        engine::ComponentManager* _activeComponentManager = nullptr;
         std::unordered_map<ecs::EntityID, ScriptInstance> _scriptInstances;
         std::unordered_map<ecs::EntityID, std::vector<ecs::EntityID>> _pendingCollisionEnter;
         std::unordered_map<ecs::EntityID, std::vector<ecs::EntityID>> _pendingCollisionExit;
-        std::unordered_map<ecs::EntityID, std::string>                _entityNames;
-        std::vector<PixelCommand>                                     _pixelCommands;
+        std::unordered_map<ecs::EntityID, std::string> _entityNames;
+        std::vector<PixelCommand> _pixelCommands;
 
         engine::events::EventBus::HandlerId _collisionEnterHandlerId = 0;
-        engine::events::EventBus::HandlerId _collisionExitHandlerId  = 0;
+        engine::events::EventBus::HandlerId _collisionExitHandlerId = 0;
 
-        bool        _victory = false;
-        bool        _lose    = false;
+        bool _victory = false;
+        bool _lose = false;
         std::string _victoryReason;
         std::string _loseReason;
 
@@ -207,9 +225,9 @@ namespace ecs::systems
             {
                 instance.lua = std::make_unique<engine::LuaManager>();
                 registerBindings(*instance.lua);
-                instance.scriptPath     = scriptPath;
+                instance.scriptPath = scriptPath;
                 instance.victoryHandled = false;
-                instance.loseHandled    = false;
+                instance.loseHandled = false;
 
                 if (!instance.lua->loadScript(scriptPath))
                 {
@@ -249,7 +267,7 @@ namespace ecs::systems
                              [](const std::string& key) -> bool
                              {
                                  const std::string lowerKey = toLower(key);
-                                 const Uint8*      state    = SDL_GetKeyboardState(nullptr);
+                                 const Uint8* state = SDL_GetKeyboardState(nullptr);
                                  if (lowerKey == "up" || lowerKey == "w")
                                      return state[SDL_SCANCODE_W];
                                  if (lowerKey == "down" || lowerKey == "s")
@@ -282,7 +300,7 @@ namespace ecs::systems
                              [](const std::string& button) -> bool
                              {
                                  const std::string lowerButton = toLower(button);
-                                 const Uint32      state = SDL_GetMouseState(nullptr, nullptr);
+                                 const Uint32 state = SDL_GetMouseState(nullptr, nullptr);
                                  if (lowerButton == "left")
                                      return (state & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
                                  if (lowerButton == "right")
@@ -307,7 +325,7 @@ namespace ecs::systems
                                      return sol::make_object(view, sol::nil);
                                  }
 
-                                 int width  = 0;
+                                 int width = 0;
                                  int height = 0;
                                  SDL_GetWindowSize(window, &width, &height);
 
@@ -320,8 +338,8 @@ namespace ecs::systems
                                                                       static_cast<float>(mouseY)),
                                                             width, height);
                                  sol::table out = view.create_table();
-                                 out["x"]       = worldPos.x;
-                                 out["y"]       = worldPos.y;
+                                 out["x"] = worldPos.x;
+                                 out["y"] = worldPos.y;
                                  return sol::make_object(view, out);
                              });
 
@@ -356,7 +374,7 @@ namespace ecs::systems
                                      if (!entityPtr)
                                          continue;
                                      const ecs::EntityID entityId = entityPtr->id;
-                                     auto                it       = _entityNames.find(entityId);
+                                     auto it = _entityNames.find(entityId);
                                      if (it != _entityNames.end() && it->second == name)
                                      {
                                          return sol::make_object(view,
@@ -371,7 +389,7 @@ namespace ecs::systems
                              [this](sol::this_state ts) -> sol::table
                              {
                                  sol::state_view view(ts);
-                                 sol::table      out = view.create_table();
+                                 sol::table out = view.create_table();
                                  if (!_entityManager)
                                      return out;
 
@@ -426,12 +444,12 @@ namespace ecs::systems
                              {
                                  if (_victory)
                                      return;
-                                 _victory       = true;
+                                 _victory = true;
                                  _victoryReason = reason;
 
                                  if (_eventBus)
                                  {
-                                     auto ev    = std::make_unique<engine::events::VictoryEvent>();
+                                     auto ev = std::make_unique<engine::events::VictoryEvent>();
                                      ev->reason = reason;
                                      _eventBus->publish(std::move(ev));
                                  }
@@ -442,12 +460,12 @@ namespace ecs::systems
                              {
                                  if (_lose)
                                      return;
-                                 _lose       = true;
+                                 _lose = true;
                                  _loseReason = reason;
 
                                  if (_eventBus)
                                  {
-                                     auto ev    = std::make_unique<engine::events::LoseEvent>();
+                                     auto ev = std::make_unique<engine::events::LoseEvent>();
                                      ev->reason = reason;
                                      _eventBus->publish(std::move(ev));
                                  }
@@ -456,8 +474,47 @@ namespace ecs::systems
             lua.set_function("is_victory", [this]() -> bool { return _victory; });
             lua.set_function("is_lose", [this]() -> bool { return _lose; });
 
+            // Scene control. Publishes an event on the bus; the host (Core/Game)
+            // queues the request and processes it between frames, so we don't tear
+            // down entities while the script update is still iterating them.
+            lua.set_function("reload_scene",
+                             [this]()
+                             {
+                                 if (!_eventBus)
+                                     return;
+                                 auto ev =
+                                     std::make_unique<engine::events::SceneLoadRequestedEvent>();
+                                 ev->path = "";
+                                 _eventBus->publish(std::move(ev));
+                             });
+            lua.set_function("load_scene",
+                             [this](const std::string& path)
+                             {
+                                 if (!_eventBus)
+                                     return;
+                                 auto ev =
+                                     std::make_unique<engine::events::SceneLoadRequestedEvent>();
+                                 ev->path = path;
+                                 _eventBus->publish(std::move(ev));
+                             });
+
             lua.set_function("create_pixel", [this](int x, int y, sol::object element) -> bool
                              { return queuePixelWrite(x, y, element); });
+
+            // spawn_particle(x, y, type, vx, vy[, lifetime])
+            //   x, y     — grid coordinates of the spawn point
+            //   type     — element name ("Water", "Sand", ...)
+            //   vx, vy   — initial velocity in grid-units-per-frame
+            //   lifetime — optional, frames before the particle expires (default 120)
+            lua.set_function("spawn_particle",
+                             [this](int x, int y, sol::object element, double vx, double vy,
+                                    sol::optional<int> lifetime) -> bool
+                             {
+                                 const int lifeFrames = lifetime.value_or(120);
+                                 return queueParticleWrite(
+                                     x, y, element, static_cast<float>(vx), static_cast<float>(vy),
+                                     static_cast<uint16_t>(std::max(1, lifeFrames)));
+                             });
 
             lua.set_function("create_pixels",
                              [this](sol::table entries) -> int
@@ -468,9 +525,9 @@ namespace ecs::systems
                                      if (!kv.second.is<sol::table>())
                                          continue;
 
-                                     sol::table  item    = kv.second.as<sol::table>();
-                                     const int   x       = item.get_or("x", 0);
-                                     const int   y       = item.get_or("y", 0);
+                                     sol::table item = kv.second.as<sol::table>();
+                                     const int x = item.get_or("x", 0);
+                                     const int y = item.get_or("y", 0);
                                      sol::object typeObj = item["type"];
                                      if (queuePixelWrite(x, y, typeObj))
                                      {
@@ -505,8 +562,8 @@ namespace ecs::systems
                     auto& selfVelocity =
                         _activeComponentManager->getComponent<components::Velocity>(selfId);
 
-                    const float dx     = targetTransform.x - selfTransform.x;
-                    const float dy     = targetTransform.y - selfTransform.y;
+                    const float dx = targetTransform.x - selfTransform.x;
+                    const float dy = targetTransform.y - selfTransform.y;
                     const float distSq = dx * dx + dy * dy;
                     if (distSq < 0.0001f)
                     {
@@ -516,13 +573,13 @@ namespace ecs::systems
                     }
 
                     const float invDist = 1.0f / std::sqrt(distSq);
-                    selfVelocity.vx     = dx * invDist * speed;
-                    selfVelocity.vy     = dy * invDist * speed;
+                    selfVelocity.vx = dx * invDist * speed;
+                    selfVelocity.vy = dy * invDist * speed;
 
                     // Keep the per-frame Lua entity snapshot in sync so applyEntityTableChanges
                     // doesn't overwrite the chase velocity right after this call.
                     sol::state_view view(ts);
-                    sol::object     entityObj = view["entity"];
+                    sol::object entityObj = view["entity"];
                     if (entityObj.valid() && entityObj.is<sol::table>())
                     {
                         sol::table entityTable = entityObj.as<sol::table>();
@@ -572,25 +629,73 @@ namespace ecs::systems
 
         bool queuePixelWrite(int x, int y, sol::object element)
         {
-            if (_chunkGrid == nullptr)
+            if (_simulation == nullptr)
                 return false;
 
             Element::ElementType type = parseElementType(element);
-            _pixelCommands.push_back(PixelCommand{x, y, type});
+            PixelCommand cmd;
+            cmd.x = x;
+            cmd.y = y;
+            cmd.type = type;
+            cmd.isParticle = false;
+            _pixelCommands.push_back(cmd);
+            return true;
+        }
+
+        bool queueParticleWrite(int x, int y, sol::object element, float vx, float vy,
+                                uint16_t lifetime)
+        {
+            if (_simulation == nullptr)
+                return false;
+
+            Element::ElementType type = parseElementType(element);
+            PixelCommand cmd;
+            cmd.x = x;
+            cmd.y = y;
+            cmd.type = type;
+            cmd.isParticle = true;
+            cmd.vx = vx;
+            cmd.vy = vy;
+            cmd.lifetime = lifetime;
+            _pixelCommands.push_back(cmd);
             return true;
         }
 
         void flushPixelCommands()
         {
-            if (_chunkGrid == nullptr)
+            if (_simulation == nullptr)
             {
                 _pixelCommands.clear();
                 return;
             }
 
+            // Two flavors of write coexist:
+            //   - create_pixel/create_pixels (isParticle=false): persistent grid cells,
+            //     used for level building and walls. Cleared by loadScene's grid wipe.
+            //   - spawn_particle (isParticle=true): ephemeral particle with velocity
+            //     and a lifetime, used for hoses/throws. Cleared by setGrid on reload.
+            ChunkGrid& grid = _simulation->getGrid();
             for (const PixelCommand& command : _pixelCommands)
             {
-                _chunkGrid->setPixel(command.x, command.y, {command.type, false});
+                if (command.isParticle)
+                {
+                    const Element::Vec2f position{static_cast<float>(command.x),
+                                                  static_cast<float>(command.y)};
+                    const Element::Vec2f velocity{command.vx, command.vy};
+                    _simulation->spawnParticle(command.type, position, velocity,
+                                               /*colorIndex=*/0, command.lifetime);
+                }
+                else
+                {
+                    Element::Pixel cell;
+                    cell.type = command.type;
+                    cell.colorIndex = 0;
+                    if (command.type == Element::FIRE)
+                    {
+                        cell.burnTimer = g_elements[Element::FIRE].fireParams.burnDuration;
+                    }
+                    grid.setPixel(command.x, command.y, cell);
+                }
             }
 
             _pixelCommands.clear();
@@ -601,18 +706,18 @@ namespace ecs::systems
             if (!_entityManager || !_activeComponentManager)
                 return 0;
 
-            const ecs::Entity   entity   = _entityManager->createEntity();
+            const ecs::Entity entity = _entityManager->createEntity();
             const ecs::EntityID entityId = entity.id;
 
             if (data)
             {
-                const sol::table& table        = *data;
-                const sol::object nameObj      = table["name"];
+                const sol::table& table = *data;
+                const sol::object nameObj = table["name"];
                 const sol::object transformObj = table["transform"];
-                const sol::object velocityObj  = table["velocity"];
-                const sol::object spriteObj    = table["sprite"];
-                const sol::object physicsObj   = table["physics"];
-                const sol::object scriptObj    = table["script"];
+                const sol::object velocityObj = table["velocity"];
+                const sol::object spriteObj = table["sprite"];
+                const sol::object physicsObj = table["physics"];
+                const sol::object scriptObj = table["script"];
 
                 if (nameObj.valid() && nameObj.is<std::string>())
                 {
@@ -621,43 +726,43 @@ namespace ecs::systems
 
                 if (transformObj.valid() && transformObj.is<sol::table>())
                 {
-                    const sol::table      t = transformObj.as<sol::table>();
+                    const sol::table t = transformObj.as<sol::table>();
                     components::Transform transform{};
-                    transform.enabled  = t.get_or("enabled", true);
-                    transform.x        = t.get_or("x", 0.0f);
-                    transform.y        = t.get_or("y", 0.0f);
+                    transform.enabled = t.get_or("enabled", true);
+                    transform.x = t.get_or("x", 0.0f);
+                    transform.y = t.get_or("y", 0.0f);
                     transform.rotation = t.get_or("rotation", 0.0f);
-                    transform.scaleX   = t.get_or("scaleX", 1.0f);
-                    transform.scaleY   = t.get_or("scaleY", 1.0f);
-                    transform.prevX    = t.get_or("prevX", transform.x);
-                    transform.prevY    = t.get_or("prevY", transform.y);
+                    transform.scaleX = t.get_or("scaleX", 1.0f);
+                    transform.scaleY = t.get_or("scaleY", 1.0f);
+                    transform.prevX = t.get_or("prevX", transform.x);
+                    transform.prevY = t.get_or("prevY", transform.y);
                     _activeComponentManager->addComponent(entityId, transform);
                 }
 
                 if (velocityObj.valid() && velocityObj.is<sol::table>())
                 {
-                    const sol::table     v = velocityObj.as<sol::table>();
+                    const sol::table v = velocityObj.as<sol::table>();
                     components::Velocity velocity{};
                     velocity.enabled = v.get_or("enabled", true);
-                    velocity.vx      = v.get_or("vx", 0.0f);
-                    velocity.vy      = v.get_or("vy", 0.0f);
+                    velocity.vx = v.get_or("vx", 0.0f);
+                    velocity.vy = v.get_or("vy", 0.0f);
                     _activeComponentManager->addComponent(entityId, velocity);
                 }
 
                 if (spriteObj.valid() && spriteObj.is<sol::table>())
                 {
-                    const sol::table   s = spriteObj.as<sol::table>();
+                    const sol::table s = spriteObj.as<sol::table>();
                     components::Sprite sprite{};
-                    sprite.enabled     = s.get_or("enabled", true);
+                    sprite.enabled = s.get_or("enabled", true);
                     sprite.texturePath = s.get_or("texturePath", sprite.texturePath);
-                    sprite.width       = s.get_or("width", sprite.width);
-                    sprite.height      = s.get_or("height", sprite.height);
+                    sprite.width = s.get_or("width", sprite.width);
+                    sprite.height = s.get_or("height", sprite.height);
                     _activeComponentManager->addComponent(entityId, sprite);
                 }
 
                 if (physicsObj.valid() && physicsObj.is<sol::table>())
                 {
-                    const sol::table        p = physicsObj.as<sol::table>();
+                    const sol::table p = physicsObj.as<sol::table>();
                     components::PhysicsBody physics{};
                     physics.enabled = p.get_or("enabled", true);
                     const std::string bodyType =
@@ -669,9 +774,9 @@ namespace ecs::systems
                     else
                         physics.bodyType = b2_dynamicBody;
                     physics.fixedRotation = p.get_or("fixedRotation", false);
-                    physics.density       = p.get_or("density", 1.0f);
-                    physics.friction      = p.get_or("friction", 0.4f);
-                    physics.restitution   = p.get_or("restitution", 0.1f);
+                    physics.density = p.get_or("density", 1.0f);
+                    physics.friction = p.get_or("friction", 0.4f);
+                    physics.restitution = p.get_or("restitution", 0.1f);
                     _activeComponentManager->addComponent(entityId, physics);
                 }
 
@@ -685,8 +790,8 @@ namespace ecs::systems
                     else if (scriptObj.is<sol::table>())
                     {
                         const sol::table st = scriptObj.as<sol::table>();
-                        script.enabled      = st.get_or("enabled", true);
-                        script.scriptPath   = st.get_or("scriptPath", script.scriptPath);
+                        script.enabled = st.get_or("enabled", true);
+                        script.scriptPath = st.get_or("scriptPath", script.scriptPath);
                     }
                     _activeComponentManager->addComponent(entityId, script);
                 }
@@ -744,38 +849,38 @@ namespace ecs::systems
                 return sol::make_object(lua, sol::nil);
             }
 
-            const std::string key   = toLower(type);
-            sol::table        table = lua.create_table();
+            const std::string key = toLower(type);
+            sol::table table = lua.create_table();
 
             if (key == "transform")
             {
                 const auto& t =
                     _activeComponentManager->getComponent<components::Transform>(entityId);
-                table["enabled"]  = t.enabled;
-                table["x"]        = t.x;
-                table["y"]        = t.y;
+                table["enabled"] = t.enabled;
+                table["x"] = t.x;
+                table["y"] = t.y;
                 table["rotation"] = t.rotation;
-                table["scaleX"]   = t.scaleX;
-                table["scaleY"]   = t.scaleY;
-                table["prevX"]    = t.prevX;
-                table["prevY"]    = t.prevY;
+                table["scaleX"] = t.scaleX;
+                table["scaleY"] = t.scaleY;
+                table["prevX"] = t.prevX;
+                table["prevY"] = t.prevY;
             }
             else if (key == "velocity")
             {
                 const auto& v =
                     _activeComponentManager->getComponent<components::Velocity>(entityId);
                 table["enabled"] = v.enabled;
-                table["vx"]      = v.vx;
-                table["vy"]      = v.vy;
+                table["vx"] = v.vx;
+                table["vy"] = v.vy;
             }
             else if (key == "sprite")
             {
                 const auto& s = _activeComponentManager->getComponent<components::Sprite>(entityId);
-                table["enabled"]     = s.enabled;
+                table["enabled"] = s.enabled;
                 table["texturePath"] = s.texturePath;
-                table["width"]       = s.width;
-                table["height"]      = s.height;
-                table["loaded"]      = s.loaded;
+                table["width"] = s.width;
+                table["height"] = s.height;
+                table["loaded"] = s.loaded;
             }
             else if (key == "physics" || key == "physicsbody")
             {
@@ -787,19 +892,19 @@ namespace ecs::systems
                         ? "static"
                         : (p.bodyType == b2_kinematicBody ? "kinematic" : "dynamic");
                 table["fixedRotation"] = p.fixedRotation;
-                table["density"]       = p.density;
-                table["friction"]      = p.friction;
-                table["restitution"]   = p.restitution;
+                table["density"] = p.density;
+                table["friction"] = p.friction;
+                table["restitution"] = p.restitution;
             }
             else if (key == "script")
             {
                 const auto& s = _activeComponentManager->getComponent<components::Script>(entityId);
-                table["enabled"]    = s.enabled;
+                table["enabled"] = s.enabled;
                 table["scriptPath"] = s.scriptPath;
             }
             else if (key == "name")
             {
-                auto it        = _entityNames.find(entityId);
+                auto it = _entityNames.find(entityId);
                 table["value"] = (it != _entityNames.end()) ? it->second : std::string();
             }
 
@@ -815,32 +920,32 @@ namespace ecs::systems
             const std::string key = toLower(type);
             if (key == "transform")
             {
-                auto& t    = _activeComponentManager->getComponent<components::Transform>(entityId);
-                t.enabled  = data.get_or("enabled", t.enabled);
-                t.x        = data.get_or("x", t.x);
-                t.y        = data.get_or("y", t.y);
+                auto& t = _activeComponentManager->getComponent<components::Transform>(entityId);
+                t.enabled = data.get_or("enabled", t.enabled);
+                t.x = data.get_or("x", t.x);
+                t.y = data.get_or("y", t.y);
                 t.rotation = data.get_or("rotation", t.rotation);
-                t.scaleX   = data.get_or("scaleX", t.scaleX);
-                t.scaleY   = data.get_or("scaleY", t.scaleY);
-                t.prevX    = data.get_or("prevX", t.prevX);
-                t.prevY    = data.get_or("prevY", t.prevY);
+                t.scaleX = data.get_or("scaleX", t.scaleX);
+                t.scaleY = data.get_or("scaleY", t.scaleY);
+                t.prevX = data.get_or("prevX", t.prevX);
+                t.prevY = data.get_or("prevY", t.prevY);
                 return true;
             }
             if (key == "velocity")
             {
-                auto& v   = _activeComponentManager->getComponent<components::Velocity>(entityId);
+                auto& v = _activeComponentManager->getComponent<components::Velocity>(entityId);
                 v.enabled = data.get_or("enabled", v.enabled);
-                v.vx      = data.get_or("vx", v.vx);
-                v.vy      = data.get_or("vy", v.vy);
+                v.vx = data.get_or("vx", v.vx);
+                v.vy = data.get_or("vy", v.vy);
                 return true;
             }
             if (key == "sprite")
             {
-                auto& s       = _activeComponentManager->getComponent<components::Sprite>(entityId);
-                s.enabled     = data.get_or("enabled", s.enabled);
+                auto& s = _activeComponentManager->getComponent<components::Sprite>(entityId);
+                s.enabled = data.get_or("enabled", s.enabled);
                 s.texturePath = data.get_or("texturePath", s.texturePath);
-                s.width       = data.get_or("width", s.width);
-                s.height      = data.get_or("height", s.height);
+                s.width = data.get_or("width", s.width);
+                s.height = data.get_or("height", s.height);
                 return true;
             }
             if (key == "physics" || key == "physicsbody")
@@ -856,23 +961,23 @@ namespace ecs::systems
                 else
                     p.bodyType = b2_dynamicBody;
                 p.fixedRotation = data.get_or("fixedRotation", p.fixedRotation);
-                p.density       = data.get_or("density", p.density);
-                p.friction      = data.get_or("friction", p.friction);
-                p.restitution   = data.get_or("restitution", p.restitution);
+                p.density = data.get_or("density", p.density);
+                p.friction = data.get_or("friction", p.friction);
+                p.restitution = data.get_or("restitution", p.restitution);
                 return true;
             }
             if (key == "script")
             {
-                auto& s      = _activeComponentManager->getComponent<components::Script>(entityId);
-                s.enabled    = data.get_or("enabled", s.enabled);
+                auto& s = _activeComponentManager->getComponent<components::Script>(entityId);
+                s.enabled = data.get_or("enabled", s.enabled);
                 s.scriptPath = data.get_or("scriptPath", s.scriptPath);
                 return true;
             }
             if (key == "name")
             {
-                auto              it      = _entityNames.find(entityId);
+                auto it = _entityNames.find(entityId);
                 const std::string current = (it != _entityNames.end()) ? it->second : std::string();
-                _entityNames[entityId]    = data.get_or("value", current);
+                _entityNames[entityId] = data.get_or("value", current);
                 return true;
             }
 
@@ -892,14 +997,14 @@ namespace ecs::systems
             if (key == "transform")
             {
                 components::Transform t{};
-                t.enabled  = data.get_or("enabled", true);
-                t.x        = data.get_or("x", 0.0f);
-                t.y        = data.get_or("y", 0.0f);
+                t.enabled = data.get_or("enabled", true);
+                t.x = data.get_or("x", 0.0f);
+                t.y = data.get_or("y", 0.0f);
                 t.rotation = data.get_or("rotation", 0.0f);
-                t.scaleX   = data.get_or("scaleX", 1.0f);
-                t.scaleY   = data.get_or("scaleY", 1.0f);
-                t.prevX    = data.get_or("prevX", t.x);
-                t.prevY    = data.get_or("prevY", t.y);
+                t.scaleX = data.get_or("scaleX", 1.0f);
+                t.scaleY = data.get_or("scaleY", 1.0f);
+                t.prevX = data.get_or("prevX", t.x);
+                t.prevY = data.get_or("prevY", t.y);
                 _activeComponentManager->addComponent(entityId, t);
                 return true;
             }
@@ -907,18 +1012,18 @@ namespace ecs::systems
             {
                 components::Velocity v{};
                 v.enabled = data.get_or("enabled", true);
-                v.vx      = data.get_or("vx", 0.0f);
-                v.vy      = data.get_or("vy", 0.0f);
+                v.vx = data.get_or("vx", 0.0f);
+                v.vy = data.get_or("vy", 0.0f);
                 _activeComponentManager->addComponent(entityId, v);
                 return true;
             }
             if (key == "sprite")
             {
                 components::Sprite s{};
-                s.enabled     = data.get_or("enabled", true);
+                s.enabled = data.get_or("enabled", true);
                 s.texturePath = data.get_or("texturePath", s.texturePath);
-                s.width       = data.get_or("width", s.width);
-                s.height      = data.get_or("height", s.height);
+                s.width = data.get_or("width", s.width);
+                s.height = data.get_or("height", s.height);
                 _activeComponentManager->addComponent(entityId, s);
                 return true;
             }
@@ -935,16 +1040,16 @@ namespace ecs::systems
                 else
                     p.bodyType = b2_dynamicBody;
                 p.fixedRotation = data.get_or("fixedRotation", false);
-                p.density       = data.get_or("density", 1.0f);
-                p.friction      = data.get_or("friction", 0.4f);
-                p.restitution   = data.get_or("restitution", 0.1f);
+                p.density = data.get_or("density", 1.0f);
+                p.friction = data.get_or("friction", 0.4f);
+                p.restitution = data.get_or("restitution", 0.1f);
                 _activeComponentManager->addComponent(entityId, p);
                 return true;
             }
             if (key == "script")
             {
                 components::Script s{};
-                s.enabled    = data.get_or("enabled", true);
+                s.enabled = data.get_or("enabled", true);
                 s.scriptPath = data.get_or("scriptPath", s.scriptPath);
                 _activeComponentManager->addComponent(entityId, s);
                 return true;
@@ -1002,7 +1107,7 @@ namespace ecs::systems
         sol::table buildEntityTable(sol::state_view lua, ecs::EntityID entityId)
         {
             sol::table table = lua.create_table();
-            table["id"]      = entityId;
+            table["id"] = entityId;
 
             if (!_activeComponentManager || !_entityManager || !_entityManager->hasEntity(entityId))
                 return table;
@@ -1017,11 +1122,11 @@ namespace ecs::systems
             {
                 const auto& transform =
                     _activeComponentManager->getComponent<components::Transform>(entityId);
-                table["x"]        = transform.x;
-                table["y"]        = transform.y;
+                table["x"] = transform.x;
+                table["y"] = transform.y;
                 table["rotation"] = transform.rotation;
-                table["scaleX"]   = transform.scaleX;
-                table["scaleY"]   = transform.scaleY;
+                table["scaleX"] = transform.scaleX;
+                table["scaleY"] = transform.scaleY;
             }
 
             if (_activeComponentManager->hasComponent<components::Velocity>(entityId))
@@ -1057,11 +1162,11 @@ namespace ecs::systems
             {
                 auto& transform =
                     _activeComponentManager->getComponent<components::Transform>(entityId);
-                transform.x        = table.get_or("x", transform.x);
-                transform.y        = table.get_or("y", transform.y);
+                transform.x = table.get_or("x", transform.x);
+                transform.y = table.get_or("y", transform.y);
                 transform.rotation = table.get_or("rotation", transform.rotation);
-                transform.scaleX   = table.get_or("scaleX", transform.scaleX);
-                transform.scaleY   = table.get_or("scaleY", transform.scaleY);
+                transform.scaleX = table.get_or("scaleX", transform.scaleX);
+                transform.scaleY = table.get_or("scaleY", transform.scaleY);
             }
 
             if (_activeComponentManager->hasComponent<components::Velocity>(entityId))

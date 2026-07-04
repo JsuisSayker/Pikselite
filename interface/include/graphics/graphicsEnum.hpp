@@ -67,7 +67,7 @@ namespace graphics
     {
         glm::vec2 position;
         glm::vec2 size;
-        GLuint    textureID = 0;
+        GLuint textureID = 0;
     };
 
     /**
@@ -89,10 +89,13 @@ namespace graphics
         KEY_TAB,
         KEY_F5,
         KEY_ESCAPE,
+        KEY_CTRL_S,
         MOUSE_LEFT_CLICK,
         MOUSE_LEFT_DRAG,
         MOUSE_RIGHT_CLICK,
         MOUSE_RIGHT_DRAG,
+        MOUSE_MIDDLE_DRAG,
+        MOUSE_WHEEL,
         FILE_DROPPED,
         WINDOW_CLOSE,
         QUIT,
@@ -110,8 +113,10 @@ namespace graphics
      */
     struct InputEvent
     {
-        InputEventType type     = NO_EVENT;
-        uint32_t       windowID = 0;
-        std::string    droppedFilePath;
+        InputEventType type = NO_EVENT;
+        uint32_t windowID = 0;
+        std::string droppedFilePath;
+        float wheelY = 0.0f;
+        glm::vec2 mouseDelta = {0.0f, 0.0f};
     };
 } // namespace graphics

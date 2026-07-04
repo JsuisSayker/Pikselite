@@ -1,9 +1,20 @@
--- Demo manager script to exercise utility APIs.
+-- Mini-game manager — sets up the level and drives the win/lose flow.
+--
+-- Attach this script to an invisible "GameManager" entity (Transform only, no sprite).
+-- It exists to exercise scripting APIs that don't fit on the player or hunter:
+--   - create_pixels (lava field, walls)
+--   - get_entities (entity census log)
+--   - load_scene / reload_scene (auto-restart, manual restart)
+--   - clear_camera_follow on game-end
+--   - on_victory / on_lose callbacks
 
+local PIXEL_SIZE = 10.0
 local initialized = false
-local mine_id = nil
 local elapsed = 0.0
 local last_entity_count_log = 0.0
+local end_handled = false
+local end_time = 0.0
+local reload_delay = 3.0  -- seconds between game-end and auto-reload
 
 function update(dt)
     elapsed = elapsed + dt
@@ -12,49 +23,38 @@ function update(dt)
         initialized = true
 
         local list = get_entities()
-        log("Initial entity count=" .. tostring(#list))
-
-        create_pixels({
-            { x = 50, y = 20, type = "Sand" },
-            { x = 51, y = 20, type = "Sand" },
-            { x = 52, y = 20, type = "Sand" },
-            { x = 51, y = 21, type = "Water" }
-        })
-
-        mine_id = create_entity({
-            name = "TimedMine",
-            transform = { x = 420.0, y = 250.0, rotation = 0.0, scaleX = 1.0, scaleY = 1.0 },
-            sprite = { texturePath = "assets/icon.bmp", width = 14.0, height = 14.0 },
-            physics = {
-                bodyType = "static",
-                fixedRotation = true,
-                density = 1.0,
-                friction = 0.0,
-                restitution = 0.0
-            }
-        })
-
-        log("TimedMine spawned id=" .. tostring(mine_id))
+        log("GameManager: initial entity count=" .. tostring(#list))
     end
 
+    -- Periodic census so get_entities() is exercised at runtime too.
     if elapsed - last_entity_count_log > 4.0 then
         last_entity_count_log = elapsed
         local list = get_entities()
-        log("Runtime entity count=" .. tostring(#list))
+        log("GameManager: live entity count=" .. tostring(#list))
     end
 
-    if mine_id ~= nil and elapsed > 12.0 then
-        if delete_entity(mine_id) then
-            log("TimedMine deleted after timeout")
+    -- Game-end flow: release the camera, then auto-reload after a delay.
+    if not end_handled and (is_victory() or is_lose()) then
+        end_handled = true
+        end_time = elapsed
+        clear_camera_follow()
+        if is_victory() then
+            log("GameManager: VICTORY — scene will reload in " .. tostring(reload_delay) .. "s")
+        else
+            log("GameManager: LOSE — scene will reload in " .. tostring(reload_delay) .. "s")
         end
-        mine_id = nil
+    end
+
+    if end_handled and (elapsed - end_time) >= reload_delay then
+        log("GameManager: auto-reloading scene")
+        reload_scene()
     end
 end
 
 function on_victory(reason)
-    log("GameManager victory callback: " .. tostring(reason))
+    log("GameManager victory: " .. tostring(reason))
 end
 
 function on_lose(reason)
-    log("GameManager lose callback: " .. tostring(reason))
+    log("GameManager lose: " .. tostring(reason))
 end

@@ -20,13 +20,8 @@
 #include <graphics/renderer/renderer.hpp>
 #include <iostream>
 #include <limits>
-#include <unordered_map>
-#include <filesystem>
-#include <editors/aEditor.hpp>
-
-#include <engine/ecs/components/spriteComponent.hpp>
-#include <engine/ecs/components/transformComponent.hpp>
 #include <projects.hpp>
+#include <unordered_map>
 
 /**
  * @brief The editors namespace contains classes related to editing and managing the project,
@@ -114,13 +109,19 @@ namespace editors
         bool consumeSaveSceneRequest()
         {
             const bool requested = _saveSceneRequested;
-            _saveSceneRequested  = false;
+            _saveSceneRequested = false;
             return requested;
         }
         bool consumeLoadSceneRequest()
         {
             const bool requested = _loadSceneRequested;
-            _loadSceneRequested  = false;
+            _loadSceneRequested = false;
+            return requested;
+        }
+        bool consumeBuildGameRequest()
+        {
+            const bool requested = _buildGameRequested;
+            _buildGameRequested = false;
             return requested;
         }
 
@@ -130,39 +131,75 @@ namespace editors
          * determine which sprite is currently selected for placement in the scene.
          * @return A std::string containing the filename of the currently selected sprite, or an
          */
-        void setSceneData(const std::vector<graphics::Pixel> &renderPixels,
-                          const std::vector<Pixel::GameObject> &gameObjects,
-                          const ChunkGrid &chunkGrid,
-                          uint32_t nextGameObjectId);
-        
-        
+        void setSceneData(const std::vector<graphics::Pixel>& renderPixels,
+                          const std::vector<Pixel::GameObject>& gameObjects,
+                          const ChunkGrid& chunkGrid, uint32_t nextGameObjectId);
+
         void setCurrentProject(const projects::Project& project);
+
+        // Build settings dialog (rendered inside ImGui frame)
+        void showBuildSettings(const BuildSettings& settings);
+        bool consumeBuildConfirmed(BuildSettings& outSettings);
+        void setBuildProgress(bool visible, bool done, bool success, const std::string& output);
+        bool consumeBuildProgressDismissed();
 
       private:
         struct PendingTexture
         {
-            bool        valid = false;
+            bool valid = false;
             std::string texturePath;
-            GLuint      textureID = 0;
-            float       width     = 640.0f;
-            float       height    = 640.0f;
+            GLuint textureID = 0;
+            float width = 640.0f;
+            float height = 640.0f;
         };
 
         engine::ComponentManager* _componentManager = nullptr;
 
-        uint32_t                                gameObjectCounter = 1;
-        std::vector<Pixel::GameObject>          _gameObjects;
-        bool                                    _leftMouseDownLastFrame  = false;
-        bool                                    _saveSceneRequested      = false;
-        bool                                    _loadSceneRequested      = false;
-        int                                     _selectedGameObjectIndex = -1;
+        uint32_t gameObjectCounter = 1;
+        std::vector<Pixel::GameObject> _gameObjects;
+        bool _leftMouseDownLastFrame = false;
+        bool _saveSceneRequested = false;
+        bool _loadSceneRequested = false;
+        bool _buildGameRequested = false;
+        int _selectedGameObjectIndex = -1;
         std::unordered_map<std::string, GLuint> _textureCache;
+
+        // Build dialog state (rendered inside run() ImGui frame)
+        bool _showBuildDialog = false;
+        bool _buildDialogConfirmed = false;
+        BuildSettings _buildDialogSettings;
+
+        // Build progress state (rendered inside run() ImGui frame)
+        bool _showBuildProgress = false;
+        bool _buildProgressDone = false;
+        bool _buildProgressSuccess = false;
+        std::string _buildProgressOutput;
+        bool _buildProgressDismissed = false;
 
         bool _isPlacingTexture = false;
         PendingTexture _pendingTexture = {};
         projects::Project _currentProject;
         std::filesystem::path _projectAssetsPath;
         std::string _currentSceneFilename = "assets/default.scene";
+
+        // ── Translate gizmo ────────────────────────────────────────────────────
+        // Unity-style 2D move tool that appears around the selected GameObject:
+        //   - red X arrow (right): drag locks motion to the X axis
+        //   - green Y arrow (up):  drag locks motion to the Y axis
+        //   - yellow center square: drag freely in both axes
+        // Pixel-based GameObjects (those with pixelLocalCoords) snap to PIXEL_SIZE
+        // so their cells stay grid-aligned; sprite-only GameObjects move freely.
+        enum class GizmoHandle
+        {
+            None,
+            AxisX,
+            AxisY,
+            Center
+        };
+
+        GizmoHandle _gizmoDragHandle = GizmoHandle::None;
+        glm::vec2 _dragStartMouseWorld{0.0f, 0.0f};
+        glm::vec2 _dragStartTransform{0.0f, 0.0f};
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event
@@ -204,10 +241,45 @@ namespace editors
         bool isTextureFile(const std::string& path) const;
         void placeTextureAtWorldInGameObject(glm::vec2 worldPos, const std::string& texturePath);
         void drawGameObjectSprites();
+        void drawSpritesBelowLayer(int layer);
+        void drawSpritesAboveLayer(int layer);
 
         bool loadTextureForPlacement(const std::string& texturePath);
         void drawPendingTexturePreview();
 
         void mouseLeftClick();
+
+        /**
+         * @brief Fully removes the GameObject at `index`: clears its pixels from the chunk
+         * grid (using transform anchor + pixelLocalCoords), erases it from `_gameObjects`,
+         * and adjusts `_selectedGameObjectIndex` so the inspector doesn't dangle.
+         * Triggered by the right-click "Delete" entry in the Hierarchy panel.
+         */
+        void deleteGameObjectAt(int index);
+
+        // ── Selection / gizmo helpers ──────────────────────────────────────────
+        /** Returns the topmost (last-drawn) GameObject index whose sprite or pixel
+         *  footprint contains `world`, or -1 if none. */
+        int pickGameObjectAtWorld(const glm::vec2& world) const;
+
+        /** Pixel-based GameObjects (those with `pixelLocalCoords`) get grid-snapped
+         *  movement so their cells stay aligned to PIXEL_SIZE. */
+        bool isPixelBasedGameObject(int index) const;
+
+        /** Returns which gizmo handle (if any) is under `world`. The selected
+         *  GameObject's transform is the gizmo origin. */
+        GizmoHandle hitTestGizmo(const glm::vec2& world) const;
+
+        /** Moves the selected GameObject so its transform sits at `newTransform`.
+         *  For pixel-based objects, clears the old grid cells and writes them at
+         *  the new anchor. Snap is applied here too. */
+        void moveSelectedGameObjectTo(const glm::vec2& newTransform);
+
+        /** Updates an in-progress gizmo drag from the current mouse state. Ends
+         *  the drag when LMB is released. Call once per frame. */
+        void updateGizmoDrag();
+
+        /** Draws the gizmo around the selected GameObject (no-op if none). */
+        void drawTranslateGizmo();
     };
 } // namespace editors

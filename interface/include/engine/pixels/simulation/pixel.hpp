@@ -15,6 +15,8 @@ namespace Element
         SAND,
         /** @brief Water element. */
         WATER,
+        /** @brief Lava element. */
+        LAVA,
         /** @brief Fire element. */
         FIRE,
         /** @brief Stone element. */
@@ -91,5 +93,14 @@ namespace Element
         std::vector<std::vector<Vec2f>> polygons; // simplified loops
         /** @brief Triangulation output of simplified loops. */
         std::vector<Triangle> triangles; // triangulation output
+    };
+
+    struct Particle
+    {
+        Vec2f position;
+        Vec2f velocity;
+        ElementType type;
+        uint8_t colorIndex;
+        uint16_t lifetime; // in frames
     };
 } // namespace Element

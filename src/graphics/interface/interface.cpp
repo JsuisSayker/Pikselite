@@ -13,7 +13,7 @@ namespace graphics
         SDL_DisplayMode displayMode;
         if (SDL_GetCurrentDisplayMode(0, &displayMode) == 0)
         {
-            width  = displayMode.w;
+            width = displayMode.w;
             height = displayMode.h;
         }
 
@@ -70,9 +70,9 @@ namespace graphics
 
     InputEvent Interface::pollEvent()
     {
-        SDL_Event  event;
+        SDL_Event event;
         InputEvent result;
-        result.type     = NO_EVENT;
+        result.type = NO_EVENT;
         result.windowID = 0;
 
         while (SDL_PollEvent(&event))
@@ -81,7 +81,7 @@ namespace graphics
 
             if (event.type == SDL_DROPFILE)
             {
-                result.type     = FILE_DROPPED;
+                result.type = FILE_DROPPED;
                 result.windowID = event.drop.windowID;
                 if (event.drop.file)
                 {
@@ -101,7 +101,7 @@ namespace graphics
                     {
                         std::cout << "Window close event for window ID: " << event.window.windowID
                                   << std::endl;
-                        result.type     = WINDOW_CLOSE;
+                        result.type = WINDOW_CLOSE;
                         result.windowID = event.window.windowID;
                         return result;
                     }
@@ -121,7 +121,9 @@ namespace graphics
                             result.type = KEY_A;
                             return result;
                         case SDLK_s:
-                            result.type = KEY_S;
+                            // Ctrl+S is the editor save shortcut; plain S falls through
+                            // to the existing KEY_S used elsewhere (e.g. camera pan).
+                            result.type = (event.key.keysym.mod & KMOD_CTRL) ? KEY_CTRL_S : KEY_S;
                             return result;
                         case SDLK_d:
                             result.type = KEY_D;
@@ -152,7 +154,7 @@ namespace graphics
                 case SDL_MOUSEBUTTONDOWN:
                     if (event.button.button == SDL_BUTTON_LEFT)
                     {
-                        result.type     = MOUSE_LEFT_CLICK;
+                        result.type = MOUSE_LEFT_CLICK;
                         result.windowID = event.button.windowID;
                         return result;
                     }
@@ -160,27 +162,40 @@ namespace graphics
                 case SDL_MOUSEBUTTONUP:
                     if (event.button.button == SDL_BUTTON_RIGHT)
                     {
-                        result.type     = MOUSE_RIGHT_CLICK;
+                        result.type = MOUSE_RIGHT_CLICK;
                         result.windowID = event.button.windowID;
                         return result;
                     }
                     break;
                 case SDL_MOUSEMOTION:
+                    if (event.motion.state & SDL_BUTTON_MMASK)
+                    {
+                        result.type = MOUSE_MIDDLE_DRAG;
+                        result.windowID = event.motion.windowID;
+                        result.mouseDelta = {static_cast<float>(event.motion.xrel),
+                                             static_cast<float>(event.motion.yrel)};
+                        return result;
+                    }
                     if (event.motion.state & SDL_BUTTON_LMASK)
                     {
-                        result.type     = MOUSE_LEFT_DRAG;
+                        result.type = MOUSE_LEFT_DRAG;
                         result.windowID = event.motion.windowID;
                         return result;
                     }
                     if (event.motion.state & SDL_BUTTON_RMASK)
                     {
-                        result.type     = MOUSE_RIGHT_DRAG;
+                        result.type = MOUSE_RIGHT_DRAG;
                         result.windowID = event.motion.windowID;
                         return result;
                     }
                     break;
+                case SDL_MOUSEWHEEL:
+                    result.type = MOUSE_WHEEL;
+                    result.windowID = event.wheel.windowID;
+                    result.wheelY = static_cast<float>(event.wheel.y);
+                    return result;
                 case SDL_QUIT:
-                    result.type     = QUIT;
+                    result.type = QUIT;
                     result.windowID = 0;
                     return result;
             }

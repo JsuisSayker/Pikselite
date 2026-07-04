@@ -15,10 +15,10 @@ class Simulation
     struct BodyPixelBinding
     {
         Element::ElementType type;
-        Element::Vec2f       localUV;
-        Element::Vec2f       uv;
-        int                  gridX;
-        int                  gridY;
+        Element::Vec2f localUV;
+        Element::Vec2f uv;
+        int gridX;
+        int gridY;
     };
 
     /**
@@ -26,10 +26,10 @@ class Simulation
      */
     struct RegionBodyBinding
     {
-        b2BodyId                      bodyId;
+        b2BodyId bodyId;
         std::vector<BodyPixelBinding> pixels;
-        Element::ElementType          fillType = Element::STONE;
-        std::vector<Element::Vec2i>   occupiedCells;
+        Element::ElementType fillType = Element::STONE;
+        std::vector<Element::Vec2i> occupiedCells;
     };
 
     /**
@@ -53,6 +53,33 @@ class Simulation
      * @return void
      */
     void update();
+
+    /**
+     * @brief Updates particle behaviors and lifetimes, removing expired particles.
+     * @return void
+     */
+    void updateParticles();
+
+    /**
+     * @brief Spawns a new particle with given properties.
+     * @param type Particle element type.
+     * @param x Initial X position in world coordinates.
+     * @param y Initial Y position in world coordinates.
+     * @param vx Initial X velocity in world units per second.
+     * @param vy Initial Y velocity in world units per second.
+     * @return void
+     */
+    void spawnParticle(Element::ElementType type, Element::Vec2f position, Element::Vec2f velocity,
+                       uint8_t colorIndex, uint16_t lifetime);
+
+    /**
+     * @brief Returns the list of active particles in the simulation.
+     * @return Reference to the vector of `Element::Particle`.
+     */
+    std::vector<Element::Particle>& getParticles()
+    {
+        return particles;
+    }
 
     /**
      * @brief Updates one sand pixel behavior.
@@ -134,6 +161,12 @@ class Simulation
     void triangulateRegion(Element::Region& region);
 
     /**
+     * @brief Detects connected regions of solid elements and creates Box2D bodies.
+     * @return void
+     */
+    void detectRegions();
+
+    /**
      * @brief Assigns Box2D world and scaling used by physics sync.
      * @param worldId Box2D world id.
      * @param pixelsPerMeter Scale factor between grid cells and world units.
@@ -149,27 +182,36 @@ class Simulation
     {
         return pixelsPerMeter;
     }
-    
+
+    /**
+     * @brief Returns the list of Box2D bodies corresponding to detected regions.
+     * @return Vector of `b2BodyId` for region bodies.
+     */
+    std::vector<b2BodyId> getRegionBodies() const
+    {
+        return regionBodies;
+    }
+
     bool tryDisplacePixel(int x, int y, int range);
 
   private:
-    uint64_t   frame = 0;
+    uint64_t frame = 0;
     ChunkGrid& grid;
-
+    std::vector<Element::Particle> particles;
     struct ChunkEntry
     {
-        int    cx;
-        int    cy;
+        int cx;
+        int cy;
         Chunk* chunk;
     };
 
-    std::vector<ChunkEntry>      orderedChunks;
+    std::vector<ChunkEntry> orderedChunks;
     std::vector<Element::Region> detectedRegions;
 
-    std::unordered_set<int64_t>    visitedForRegions;
-    b2WorldId                      physicsWorld   = b2_nullWorldId;
-    float                          pixelsPerMeter = 1.0f;
-    std::vector<b2BodyId>          regionBodies;
+    std::unordered_set<int64_t> visitedForRegions;
+    b2WorldId physicsWorld = b2_nullWorldId;
+    float pixelsPerMeter = 1.0f;
+    std::vector<b2BodyId> regionBodies;
     std::vector<RegionBodyBinding> regionBodyBindings;
-    bool                           regionsDirty = true;
+    bool regionsDirty = true;
 };

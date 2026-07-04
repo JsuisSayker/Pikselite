@@ -59,7 +59,7 @@ struct ChunkGrid
      * @param cy Chunk Y coordinate.
      * @return Packed 64-bit key used in `chunks`.
      */
-    inline int64_t makeKey(int cx, int cy)
+    inline static int64_t makeKey(int cx, int cy)
     {
         return (static_cast<int64_t>(cx) << 32) | (static_cast<uint32_t>(cy));
     }
@@ -69,7 +69,7 @@ struct ChunkGrid
      * @param v Global coordinate.
      * @return Chunk index for `v`.
      */
-    inline int floorDiv(int v)
+    inline static int floorDiv(int v)
     {
         return (v >= 0) ? v / CHUNK_SIZE : (v - CHUNK_SIZE + 1) / CHUNK_SIZE;
     }
@@ -79,7 +79,7 @@ struct ChunkGrid
      * @param v Global coordinate.
      * @return Local index in range `[0, CHUNK_SIZE)`.
      */
-    inline int mod(int v)
+    inline static int mod(int v)
     {
         return (v % CHUNK_SIZE + CHUNK_SIZE) % CHUNK_SIZE;
     }

@@ -13,7 +13,7 @@ namespace
 {
 
     void migrateGameObjectsIntoECS(
-        const std::vector<Pixel::GameObject>&                   gameObjects,
+        const std::vector<Pixel::GameObject>& gameObjects,
         std::unordered_map<Pixel::GameObjectID, ecs::EntityID>& gameObjectToEntity,
         engine::EntityManager& entityManager, engine::ComponentManager& componentManager,
         engine::SystemManager& systemManager)
@@ -23,10 +23,10 @@ namespace
 
         for (const auto& go : gameObjects)
         {
-            ecs::Entity         entity      = entityManager.createEntity();
+            ecs::Entity entity = entityManager.createEntity();
             const ecs::EntityID newEntityId = entity.id;
 
-            const auto previousIt    = previousMapping.find(go.id);
+            const auto previousIt = previousMapping.find(go.id);
             const bool existedBefore = previousIt != previousMapping.end();
 
             if (existedBefore)
@@ -38,7 +38,7 @@ namespace
             {
                 auto& link =
                     componentManager.getComponent<ecs::components::GameObjectLink>(newEntityId);
-                link.gameObjectId  = go.id;
+                link.gameObjectId = go.id;
                 link.pixelEntities = go.pixels;
             }
 
@@ -56,33 +56,33 @@ namespace
     ecs::components::Transform makeTransform(float x, float y)
     {
         ecs::components::Transform t{};
-        t.enabled  = true;
-        t.x        = x;
-        t.y        = y;
+        t.enabled = true;
+        t.x = x;
+        t.y = y;
         t.rotation = 15.0f;
-        t.scaleX   = 2.0f;
-        t.scaleY   = 3.0f;
-        t.prevX    = -1.0f;
-        t.prevY    = -2.0f;
+        t.scaleX = 2.0f;
+        t.scaleY = 3.0f;
+        t.prevX = -1.0f;
+        t.prevY = -2.0f;
         return t;
     }
 
     ecs::components::Sprite makeSprite(const std::string& path)
     {
         ecs::components::Sprite s{};
-        s.enabled     = true;
+        s.enabled = true;
         s.texturePath = path;
-        s.width       = 42.0f;
-        s.height      = 24.0f;
-        s.loaded      = true;
+        s.width = 42.0f;
+        s.height = 24.0f;
+        s.loaded = true;
         return s;
     }
 
     Pixel::GameObject makeGameObject(Pixel::GameObjectID id)
     {
         Pixel::GameObject go{};
-        go.id       = id;
-        go.name     = "GO_" + std::to_string(id);
+        go.id = id;
+        go.name = "GO_" + std::to_string(id);
         go.isActive = true;
         go.pixels.push_back(Element::Pixel{Element::SAND});
         return go;
@@ -92,9 +92,9 @@ namespace
 
 TEST(EcsMigrationTests, ExistingEntityComponentsAreCopiedToMigratedEntity)
 {
-    engine::EntityManager    entityManager;
+    engine::EntityManager entityManager;
     engine::ComponentManager componentManager;
-    engine::SystemManager    systemManager;
+    engine::SystemManager systemManager;
 
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::Velocity>();
@@ -106,7 +106,7 @@ TEST(EcsMigrationTests, ExistingEntityComponentsAreCopiedToMigratedEntity)
     const Pixel::GameObject go = makeGameObject(1);
 
     const ecs::Entity oldEntity = entityManager.createEntity();
-    mapping[go.id]              = oldEntity.id;
+    mapping[go.id] = oldEntity.id;
 
     componentManager.addComponent<ecs::components::Transform>(oldEntity.id,
                                                               makeTransform(10.0f, 20.0f));
@@ -114,7 +114,7 @@ TEST(EcsMigrationTests, ExistingEntityComponentsAreCopiedToMigratedEntity)
                                                            makeSprite("assets/custom.png"));
 
     ecs::components::GameObjectLink link{};
-    link.gameObjectId  = go.id;
+    link.gameObjectId = go.id;
     link.pixelEntities = {Element::Pixel{Element::WATER}};
     componentManager.addComponent<ecs::components::GameObjectLink>(oldEntity.id, link);
 
@@ -147,9 +147,9 @@ TEST(EcsMigrationTests, ExistingEntityComponentsAreCopiedToMigratedEntity)
 
 TEST(EcsMigrationTests, NewGameObjectGetsNoImplicitDefaultComponents)
 {
-    engine::EntityManager    entityManager;
+    engine::EntityManager entityManager;
     engine::ComponentManager componentManager;
-    engine::SystemManager    systemManager;
+    engine::SystemManager systemManager;
 
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::Velocity>();
@@ -174,9 +174,9 @@ TEST(EcsMigrationTests, NewGameObjectGetsNoImplicitDefaultComponents)
 
 TEST(EcsMigrationTests, RemovedGameObjectsAreDestroyedFromEcs)
 {
-    engine::EntityManager    entityManager;
+    engine::EntityManager entityManager;
     engine::ComponentManager componentManager;
-    engine::SystemManager    systemManager;
+    engine::SystemManager systemManager;
 
     componentManager.registerComponent<ecs::components::Transform>();
     componentManager.registerComponent<ecs::components::Velocity>();

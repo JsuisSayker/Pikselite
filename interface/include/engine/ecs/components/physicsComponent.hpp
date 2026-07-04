@@ -24,13 +24,13 @@ namespace ecs::components
      */
     struct PhysicsBody
     {
-        bool                         enabled       = true;
-        b2BodyId                     bodyId        = b2_nullBodyId;
-        b2BodyType                   bodyType      = b2_dynamicBody;
-        bool                         fixedRotation = false;
-        float                        density       = 1.0f;
-        float                        friction      = 0.4f;
-        float                        restitution   = 0.1f;
+        bool enabled = true;
+        b2BodyId bodyId = b2_nullBodyId;
+        b2BodyType bodyType = b2_dynamicBody;
+        bool fixedRotation = false;
+        float density = 1.0f;
+        float friction = 0.4f;
+        float restitution = 0.1f;
         std::vector<PhysicsTriangle> triangles;
     };
 } // namespace ecs::components

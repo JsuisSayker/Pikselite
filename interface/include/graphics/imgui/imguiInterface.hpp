@@ -11,6 +11,7 @@
 #include <SDL2/SDL.h>
 #include <SDL_opengl.h>
 #include <algorithm>
+#include <build/BuildSettings.hpp>
 #include <cstring>
 #include <engine/ecs/components/physicsComponent.hpp>
 #include <engine/ecs/components/scriptComponent.hpp>
@@ -27,12 +28,9 @@
 #include <imgui.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/backends/imgui_impl_sdl2.h>
+#include <projects.hpp>
 #include <string>
 #include <vector>
-#include <string>
-#include <cstring>
-
-#include <projects.hpp>
 
 namespace graphics
 {
@@ -44,28 +42,51 @@ namespace graphics
 
         void showImGuiDemo();
 
-        void      pixelEditor(Pixel& pixel, ChunkGrid grid, const char* label);
+        void pixelEditor(Pixel& pixel, ChunkGrid grid, const char* label);
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
                                 Element::ElementType& selectedElementType, std::string currentProjectAssetsPath); // updated signature
-        void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive);
-        void projectTopBar(std::string title = "");
+        void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive,
+                              bool& clearAllRequested);
+        // Top-left "Save" button writes through `saveSceneRequested` — the caller treats
+        // it the same way it did the now-removed bottom "Save Scene" button.
+        void projectTopBar(bool& saveSceneRequested, std::string title = "");
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
-        void projectNavbar(::std::string &currentSpriteFilename, std::filesystem::path currentProjectAssetsPath);
-        void projectNavbar(::std::string &currentSpriteFilename, bool &saveSceneRequested, bool &loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
-        void projectNavbar(::std::string &currentSpriteFilename, ::std::string &currentSceneFilename, bool &saveSceneRequested, bool &loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
+        void projectNavbar(::std::string& currentSpriteFilename, std::filesystem::path currentProjectAssetsPath);
+        void projectNavbar(::std::string& currentSpriteFilename, bool& saveSceneRequested,
+                           bool& loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
+        void projectNavbar(::std::string& currentSpriteFilename,
+                           ::std::string& currentSceneFilename, bool& saveSceneRequested,
+                           bool& loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
+        void projectNavbar(::std::string& currentSpriteFilename,
+                           ::std::string& currentSceneFilename, bool& saveSceneRequested,
+                           bool& loadSceneRequested, bool& buildGameRequested, std::filesystem::path currentProjectAssetsPath);
         void scanSprites(std::filesystem::path folderPath);
         void setFileExplorerDataOnly(bool dataOnly);
 
-        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects, int &selectedGameObjectIndex, const projects::Project& currentProject);
+        // `deleteRequestIndex` is an out-param: when the user right-clicks a row and chooses
+        // "Delete", the widget writes the row index there. The caller is responsible for
+        // freeing the associated grid pixels / ECS data and then erasing the GameObject;
+        // -1 means "no deletion requested this frame".
+        void gameObjectsBar(std::vector<::Pixel::GameObject>& gameObjects,
+                            int& selectedGameObjectIndex, const projects::Project& currentProject,
+                            int& deleteRequestIndex);
 
         void fileToolBar();
-        int projectOptionsBar(std::vector<projects::Project> &projects, std::string projectsPath);
-        int projectsDisplay(std::vector<projects::Project> &projects);
-        bool clickableProjectOverview(projects::Project &project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
+
+        // Build game dialog — renders the settings modal; sets confirmed=true when user clicks
+        // Build
+        void buildGameSettingsDialog(BuildSettings& settings, bool& confirmed, bool& cancelled);
+
+        // Build progress modal — call each frame while building
+        void showBuildProgressModal(const char* status, float progress, bool isComplete,
+                                    bool isSuccess, const char* detail = nullptr);
+        int projectOptionsBar(std::vector<projects::Project>& projects, std::string projectsPath);
+        int projectsDisplay(std::vector<projects::Project>& projects);
+        bool clickableProjectOverview(projects::Project& project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
 
         void startFrame();
         void endFrame(SDL_Window* window);
@@ -76,14 +97,15 @@ namespace graphics
             std::string path;
             std::string name;
             std::string ext;
-            bool        isDir = false;
+            bool isDir = false;
         };
 
         void loadExplorerIcons();
         void unloadExplorerIcons();
 
-        SDL_Window*   _window;
+        SDL_Window* _window;
         SDL_GLContext _glContext;
+        float _uiScale = 1.0f;
         bool newProjectCreated = false;
         ImFont* fontLight = nullptr;
         ImFont* fontRegularSmall = nullptr;
@@ -91,7 +113,7 @@ namespace graphics
         ImFont* fontBoldSmall = nullptr;
         ImFont* fontBoldBig = nullptr;
         ImTextureID thumbnail;
-        std::string   _fileExplorerCurrentDir;
+        std::string _fileExplorerCurrentDir;
         std::vector<FileEntry> _fileExplorerEntries;
         bool _fileExplorerDataOnly = false;
         std::string _fileClipboardPath;

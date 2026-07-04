@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <engine/pixels/simulation/chunk.hpp>
 
-constexpr int GRAVITY_DIR  = -1;
+constexpr int GRAVITY_DIR = -1;
 constexpr int PALETTE_SIZE = 4;
 
 enum ElementState : uint8_t
@@ -23,20 +23,20 @@ struct ColorPalette
 
 struct fireBehavior
 {
-    uint8_t              flammability     = 0;
-    uint8_t              burnDuration     = 0;
-    uint8_t              burnSpreadChance = 0;
-    Element::ElementType burnToElement    = Element::EMPTY;
+    uint8_t flammability = 0;
+    uint8_t burnDuration = 0;
+    uint8_t burnSpreadChance = 0;
+    Element::ElementType burnToElement = Element::EMPTY;
 };
 
 struct ElementDefinition
 {
-    std::string                            name;
+    std::string name;
     std::array<ColorPalette, PALETTE_SIZE> colorPalette;
-    uint8_t                                density;
-    ElementState                           state;
+    uint8_t density;
+    ElementState state;
 
-    uint8_t      dispersionRate;
+    uint8_t dispersionRate;
     fireBehavior fireParams;
 
     void (*update)(ChunkGrid& grid, int x, int y);
@@ -66,6 +66,15 @@ bool tryMove(ChunkGrid& grid, int x, int y, int nx, int ny);
  * @return void
  */
 void updateWater(ChunkGrid& grid, int x, int y);
+
+/**
+ * @brief Updates one fire pixel behavior.
+ * @param grid Simulation grid.
+ * @param x Global X coordinate.
+ * @param y Global Y coordinate.
+ * @return void
+ */
+void updateLava(ChunkGrid& grid, int x, int y);
 
 /**
  * @brief Updates one sand pixel behavior.

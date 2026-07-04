@@ -13,4 +13,4 @@ namespace projects
         std::chrono::system_clock::time_point lastOpened = std::chrono::system_clock::now();
         // ADD: thumnail image path
     };
-}
+} // namespace projects
