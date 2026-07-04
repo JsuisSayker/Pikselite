@@ -80,7 +80,7 @@ namespace editors
                                             _currentElementType, _projectAssetsPath.string());
 
         _imguiInterface->setFileExplorerDataOnly(true);
-        _imguiInterface->projectNavbar(_currentSpriteFilename, _projectAssetsPath);
+        _imguiInterface->spriteAssetsNavbar(_currentSpriteFilename, _projectAssetsPath);
 
         if (!_currentSpriteFilename.empty())
         {

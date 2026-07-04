@@ -66,7 +66,6 @@ namespace engine
             }
             else if (isProjectsListPageActive)
             {
-                std::cout << "projects list page active" << std::endl; ////////////////////////////////////////////////////////////////////////////////////////////////////
                 ZoneScopedN("ProjectsListPage");
                 runProjectsListPage(sdlInterface, renderer, imguiInterface);
             }
@@ -81,6 +80,7 @@ namespace engine
                     settings.gameTitle = _currentProject.name;
                     settings.targetName = _currentProject.name;
                     settings.scenePath = _sceneFilename;
+                    std::cout << "settings.scenePath: " << settings.scenePath << std::endl; ////////////////////////////////////////////////
                     projectEditor->showBuildSettings(settings);
                 }
 
@@ -217,7 +217,8 @@ namespace engine
                     // Top-left Save can fire before any scene has been opened/created.
                     // In that case fall back to a default file in the project's assets dir.
                     if (_sceneFilename.empty())
-                        _sceneFilename = "assets/default.scene";
+                        std::cout << "No scene filename set, saving to default.scene in project assets." << std::endl; //////////////////////////
+                        // _sceneFilename = "assets/default.scene";
                     saveScene(_sceneFilename);
                 }
 
@@ -419,6 +420,7 @@ namespace engine
             switchToProjectEditor = false;
             projectEditor->setCurrentProject(_currentProject);
             spriteEditor->setProjectAssetsPath(_currentProject.path);
+            _sceneFilename = _currentProject.path.string() + "/Assets/Scenes/default.scene";
         }
     }
 

@@ -76,7 +76,7 @@ namespace editors
          */
         void run(const graphics::InputEvent& event) override;
 
-        void setProjectAssetsPath(std::filesystem::path projectPath);
+        void setProjectPaths(std::filesystem::path projectPath);
 
         // Accessor methods for the current state of the editor, including the pixels to be
         // rendered, game objects, pixel attributes, chunk grid, and counters for pixel and game
@@ -180,7 +180,8 @@ namespace editors
         PendingTexture _pendingTexture = {};
         projects::Project _currentProject;
         std::filesystem::path _projectAssetsPath;
-        std::string _currentSceneFilename = "assets/default.scene";
+        std::filesystem::path _projectScenesPath;
+        std::string _currentSceneFilename;
 
         // ── Translate gizmo ────────────────────────────────────────────────────
         // Unity-style 2D move tool that appears around the selected GameObject:

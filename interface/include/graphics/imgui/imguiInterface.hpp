@@ -55,15 +55,13 @@ namespace graphics
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
-        void projectNavbar(::std::string& currentSpriteFilename, std::filesystem::path currentProjectAssetsPath);
-        void projectNavbar(::std::string& currentSpriteFilename, bool& saveSceneRequested,
-                           bool& loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
-        void projectNavbar(::std::string& currentSpriteFilename,
+        void projectNavbar(std::string& currentSpriteFilename, std::filesystem::path currentProjectAssetsPath, std::filesystem::path currentProjectScenesPath = std::filesystem::path());
+        
+        void projectAssetsNavbar(::std::string& currentSpriteFilename,
                            ::std::string& currentSceneFilename, bool& saveSceneRequested,
-                           bool& loadSceneRequested, std::filesystem::path currentProjectAssetsPath);
-        void projectNavbar(::std::string& currentSpriteFilename,
-                           ::std::string& currentSceneFilename, bool& saveSceneRequested,
-                           bool& loadSceneRequested, bool& buildGameRequested, std::filesystem::path currentProjectAssetsPath);
+                           bool& loadSceneRequested, bool& buildGameRequested, std::filesystem::path currentProjectAssetsPath, std::filesystem::path currentProjectScenesPath = std::filesystem::path());
+        void spriteAssetsNavbar(::std::string& currentSpriteFilename, std::filesystem::path currentProjectAssetsPath);
+        
         void scanSprites(std::filesystem::path folderPath);
         void setFileExplorerDataOnly(bool dataOnly);
 
@@ -102,6 +100,8 @@ namespace graphics
 
         void loadExplorerIcons();
         void unloadExplorerIcons();
+        
+        void filterSprites(std::vector<FileEntry> &sprites);
 
         SDL_Window* _window;
         SDL_GLContext _glContext;
