@@ -100,7 +100,7 @@ namespace graphics
 
         void loadExplorerIcons();
         void unloadExplorerIcons();
-        
+
         void filterSprites(std::vector<FileEntry> &sprites);
 
         SDL_Window* _window;
@@ -109,6 +109,7 @@ namespace graphics
         bool newProjectCreated = false;
         ImFont* fontLight = nullptr;
         ImFont* fontRegularSmall = nullptr;
+        ImFont* fontRegularMid = nullptr;
         ImFont* fontRegularBig = nullptr;
         ImFont* fontBoldSmall = nullptr;
         ImFont* fontBoldBig = nullptr;

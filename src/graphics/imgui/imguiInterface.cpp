@@ -118,6 +118,8 @@ namespace graphics
             io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Light.ttf", scaledPx(13.0f));
         fontRegularSmall =
             io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", scaledPx(15.0f));
+        fontRegularMid =
+            io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", scaledPx(20.0f));
         fontRegularBig =
             io.Fonts->AddFontFromFileTTF("assets/fonts/InriaSans-Regular.ttf", scaledPx(28.0f));
         fontBoldSmall =
@@ -351,6 +353,7 @@ namespace graphics
         sideBar.Draw(
             [&]()
             {
+                if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                 // Element dropdown directly in handler
                 defaultPixelElementEditor(selectedElementType, "Element Type");
 
@@ -385,6 +388,7 @@ namespace graphics
 
                     ImGui::EndPopup();
                 }
+                if (fontRegularSmall) ImGui::PopFont();
             });
     }
 
@@ -409,6 +413,7 @@ namespace graphics
         topBar.Draw(
             [&]()
             {
+                if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                 ImGui::AlignTextToFramePadding();
                 ImGui::TextUnformatted("Tool:");
                 ImGui::SameLine();
@@ -445,6 +450,7 @@ namespace graphics
                 {
                     isEraserActive = true;
                 }
+                if (fontRegularSmall) ImGui::PopFont();
             });
     }
 
@@ -460,10 +466,12 @@ namespace graphics
         topBar.Draw(
             [&]()
             {
+                if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                 if (BasicButton("Save"))
                 {
                     saveSceneRequested = true;
                 }
+                if (fontRegularSmall) ImGui::PopFont();
 
                 ImVec2 textSize = ImGui::CalcTextSize(title.c_str());
                 ImVec2 windowSize = ImGui::GetWindowSize();
@@ -570,6 +578,7 @@ namespace graphics
                 bool canGoUp = fs::path(_fileExplorerCurrentDir) != rootPath;
                 if (!canGoUp)
                     ImGui::BeginDisabled();
+                if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                 if (BasicButton("Up"))
                 {
                     fs::path parent = fs::path(_fileExplorerCurrentDir).parent_path();
@@ -596,6 +605,7 @@ namespace graphics
                 ImGui::SameLine();
                 if (BasicButton("Build Game"))
                     buildGameRequested = true;
+                if (fontRegularSmall) ImGui::PopFont();
 
                 const std::string relativeDir =
                     fs::relative(_fileExplorerCurrentDir, rootPath).generic_string();
@@ -1164,8 +1174,10 @@ namespace graphics
                 static bool openRenamePopup = false;
                 static bool focusRename = true;
 
+                if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                 ImGui::InputTextWithHint("##SearchObjects", "Search objects...", searchBuffer,
                                          sizeof(searchBuffer));
+                if(fontRegularSmall) ImGui::PopFont();
 
                 std::string lowerSearch = searchBuffer;
                 std::transform(lowerSearch.begin(), lowerSearch.end(), lowerSearch.begin(),
@@ -1190,13 +1202,15 @@ namespace graphics
                     }
 
                     ImGui::PushID((int)i);
-
+                    if(fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                     if (ImGui::Selectable(objName.c_str(), selectedGameObjectIndex == (int)i))
                         selectedGameObjectIndex = (int)i;
+                    if(fontRegularSmall) ImGui::PopFont();
 
                     // If right-clicked
                     if (ImGui::BeginPopupContextItem())
                     {
+                        if(fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                         if (ImGui::MenuItem("Rename"))
                         {
                             strncpy(renameBuffer, objName.c_str(), sizeof(renameBuffer));
@@ -1216,6 +1230,7 @@ namespace graphics
                             ImGui::PopID();
                             break;
                         }
+                        if(fontRegularSmall) ImGui::PopFont();
 
                         ImGui::EndPopup();
                     }
@@ -1233,7 +1248,9 @@ namespace graphics
                 if (ImGui::BeginPopupModal("RenameObjectPopup", NULL,
                                            ImGuiWindowFlags_AlwaysAutoResize))
                 {
+                    if(fontRegularBig) ImGui::PushFont(fontRegularMid);
                     ImGui::Text("Rename Game Object");
+                    if(fontRegularMid) ImGui::PopFont();
 
                     if (focusRename)
                     {
@@ -1241,6 +1258,7 @@ namespace graphics
                         focusRename = false;
                     }
 
+                    if(fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                     ImGui::InputText("New Name", renameBuffer, sizeof(renameBuffer));
 
                     if (ImGui::Button("Save"))
@@ -1264,6 +1282,7 @@ namespace graphics
 
                         ImGui::CloseCurrentPopup();
                     }
+                    if(fontRegularSmall) ImGui::PopFont();
 
                     ImGui::EndPopup();
                 }
@@ -1280,10 +1299,12 @@ namespace graphics
                 if (selectedGameObjectIndex < 0 ||
                     selectedGameObjectIndex >= static_cast<int>(gameObjects.size()))
                 {
+                    if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                     ImGui::TextDisabled("No GameObject selected");
                     ImGui::Separator();
                     ImGui::TextWrapped(
                         "Select a GameObject in the Hierarchy to edit its properties.");
+                    if(fontRegularSmall) ImGui::PopFont();
                     return;
                 }
 
@@ -1291,6 +1312,7 @@ namespace graphics
 
                 ImGui::Separator();
 
+                if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                 ImGui::Checkbox("Active", &selected.isActive);
 
                 ImGui::SameLine();
@@ -1304,6 +1326,7 @@ namespace graphics
                 ImGui::TextDisabled("ID: %u", selected.id);
                 ImGui::SameLine();
                 ImGui::TextDisabled("Pixels: %d", static_cast<int>(selected.pixels.size()));
+                if (fontRegularSmall) ImGui::PopFont();
 
                 ImGui::Separator();
 
@@ -1327,6 +1350,7 @@ namespace graphics
                     {
                         ImGui::BeginDisabled(!s->enabled);
 
+                        if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                         if (ImGui::Button("Reset##Sprite"))
                         {
                             // s.texturePath = "";
@@ -1351,6 +1375,7 @@ namespace graphics
                         {
                             selected.removeComponent<ecs::components::Sprite>();
                         }
+                        if(fontRegularSmall) ImGui::PopFont();
                     }
                 }
 
@@ -1364,8 +1389,10 @@ namespace graphics
                     auto t = selected.getComponent<ecs::components::Transform>();
                     ImGui::Checkbox("##enabledTransform", &t->enabled);
                     ImGui::SameLine();
+                    if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                     bool open = ImGui::CollapsingHeader("Transform Component", nullptr,
                                                         ImGuiTreeNodeFlags_DefaultOpen);
+                    if(fontRegularSmall) ImGui::PopFont();
 
                     if (open)
                     {
@@ -1379,10 +1406,11 @@ namespace graphics
                             t->scaleX = 1.0f;
                             t->scaleY = 1.0f;
                         }
-
+                        if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                         ImGui::DragFloat2("Position", &t->x, 0.1f);
                         ImGui::DragFloat("Rotation", &t->rotation, 0.1f);
                         ImGui::DragFloat2("Scale", &t->scaleX, 0.1f);
+                        if(fontRegularSmall) ImGui::PopFont();
 
                         ImGui::EndDisabled();
 
@@ -1403,8 +1431,10 @@ namespace graphics
 
                     ImGui::Checkbox("##enabledVelocity", &v->enabled);
                     ImGui::SameLine();
+                    if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                     bool open = ImGui::CollapsingHeader("Velocity Component", nullptr,
                                                         ImGuiTreeNodeFlags_DefaultOpen);
+                    if(fontRegularSmall) ImGui::PopFont();
 
                     if (open)
                     {
@@ -1416,7 +1446,9 @@ namespace graphics
                             v->vy = 0.0f;
                         }
 
+                        if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                         ImGui::DragFloat2("Velocity", &v->vx, 0.1f);
+                        if(fontRegularSmall) ImGui::PopFont();
 
                         ImGui::EndDisabled();
 
@@ -1437,8 +1469,11 @@ namespace graphics
 
                     ImGui::Checkbox("##enabledScript", &s->enabled);
                     ImGui::SameLine();
+
+                    if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                     bool open = ImGui::CollapsingHeader("Script Component", nullptr,
                                                         ImGuiTreeNodeFlags_DefaultOpen);
+                    if(fontRegularSmall) ImGui::PopFont();
 
                     if (open)
                     {
@@ -1477,8 +1512,11 @@ namespace graphics
 
                     ImGui::Checkbox("##enabledPhysics", &p->enabled);
                     ImGui::SameLine();
+
+                    if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                     bool open = ImGui::CollapsingHeader("Physics Component", nullptr,
                                                         ImGuiTreeNodeFlags_DefaultOpen);
+                    if(fontRegularSmall) ImGui::PopFont();
 
                     if (open)
                     {
@@ -1510,6 +1548,7 @@ namespace graphics
                                     : (bodyTypeIndex == 1 ? b2_kinematicBody : b2_dynamicBody);
                         }
 
+                        if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                         ImGui::Checkbox("Fixed Rotation", &p->fixedRotation);
                         ImGui::DragFloat("Density", &p->density, 0.05f, 0.0f, 100.0f);
                         ImGui::DragFloat("Friction", &p->friction, 0.01f, 0.0f, 1.0f);
@@ -1518,6 +1557,8 @@ namespace graphics
                         ImGui::TextDisabled("Triangles: %d", static_cast<int>(p->triangles.size()));
                         ImGui::TextDisabled("Body: %s",
                                             B2_IS_NULL(p->bodyId) ? "uncreated" : "created");
+
+                        if (fontRegularSmall) ImGui::PopFont();
 
                         ImGui::EndDisabled();
 
@@ -1528,6 +1569,7 @@ namespace graphics
                     }
                 }
 
+                if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                 PopupButton(
                     "Add Component",
                     [&]()
@@ -1537,9 +1579,11 @@ namespace graphics
                         {
                             search[0] = '\0';
                         }
+                        if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
                         ImGui::InputText("Search", search, IM_ARRAYSIZE(search));
                         std::string query = search;
                         std::transform(query.begin(), query.end(), query.begin(), ::tolower);
+                        if(fontRegularSmall) ImGui::PopFont();
 
                         for (const auto& comp : availableComponents)
                         {
@@ -1597,7 +1641,10 @@ namespace graphics
                                 break;
                             }
                         }
-                    });
+                    }
+                );
+
+                if(fontRegularSmall) ImGui::PopFont();
             });
     }
 
@@ -1724,7 +1771,7 @@ namespace graphics
             }
 
             ImGui::SameLine();
-
+            if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
             if (ImGui::Button("Save"))
             {
                 std::filesystem::path fullPath = selectedPath / projectName;
@@ -1755,6 +1802,7 @@ namespace graphics
 
                 ImGui::CloseCurrentPopup();
             }
+            if(fontRegularSmall) ImGui::PopFont();
 
             if (newProjectCreated)
             {
@@ -1852,23 +1900,25 @@ namespace graphics
         float buttonWidth = 80.0f;
         float windowWidth = ImGui::GetContentRegionAvail().x;
 
-        ImGui::PushFont(fontRegularBig);
+        if (fontRegularBig) ImGui::PushFont(fontRegularBig);
         ImGui::Text("Projects");
-        ImGui::PopFont();
+        if (fontRegularBig) ImGui::PopFont();
 
         ImGui::SameLine(windowWidth);
 
-        if (BasicButton("ListView", buttonHeight, buttonWidth))
-        {
-            // TODO
-        }
+        // if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
+        // if (BasicButton("List", buttonHeight, buttonWidth))
+        // {
+        //     // TODO
+        // }
 
-        ImGui::SameLine();
+        // ImGui::SameLine();
 
-        if (BasicButton("SquareView", buttonHeight, buttonWidth))
-        {
-            // TODO
-        }
+        // if (BasicButton("Column", buttonHeight, buttonWidth))
+        // {
+        //     // TODO
+        // }
+        // if (fontRegularSmall) ImGui::PopFont();
 
         ImGui::Spacing();
 
@@ -1915,11 +1965,11 @@ namespace graphics
     {
         ImGui::PushID(project.name.c_str());
 
-        float thumbSize = 200.0f;
+        float thumbSize = 150.0f;
 
         ImVec2 start = ImGui::GetCursorScreenPos();
         float width = ImGui::GetContentRegionAvail().x;
-        ImVec2 size(width, thumbSize);
+        ImVec2 size(width, thumbSize + 40.0f);
 
         ImGui::SetCursorScreenPos(start); //
         ImGui::InvisibleButton("clickable project", size);
@@ -1937,9 +1987,9 @@ namespace graphics
                             ImVec2(start.x + size.x, start.y + size.y),
                             bgColor, 8.0f);
 
-        ImVec2 imagePos( // movve thumbnail pos
-            start.x + 10.0f,
-            start.y + (thumbSize / 5.0f)
+        ImVec2 imagePos(
+            start.x + 15.0f,
+            start.y + 20.0f
         );
 
         if (thumbnail)
@@ -1962,20 +2012,20 @@ namespace graphics
                 8.0f
             );
 
-            ImVec2 imagePosText(
-                imagePos.x + 10.0f,
-                imagePos.y + 20.0f
-            );
-            draw->AddText(
-                imagePosText,
-                IM_COL32_WHITE,
-                "No Img"
-            );
+            // ImVec2 imagePosText(
+            //     imagePos.x + 10.0f,
+            //     imagePos.y + 20.0f
+            // );
+            // draw->AddText(
+            //     imagePosText,
+            //     IM_COL32_WHITE,
+            //     "No Img"
+            // );
         }
 
         ImVec2 textPos(
             imagePos.x + (thumbSize * 1.2f),
-            imagePos.y + (thumbSize / 4.0f)
+            imagePos.y + (thumbSize / 2.0f)
         );
 
         if (nameFont) ImGui::PushFont(nameFont);
@@ -1985,7 +2035,7 @@ namespace graphics
 
         ImVec2 pathTextPos(
             textPos.x,
-            textPos.y + (thumbSize / 4.0f) + 6.0f
+            textPos.y + (thumbSize / 3.0f) + 3.0f
         );
 
         if (infoFont) ImGui::PushFont(infoFont);
