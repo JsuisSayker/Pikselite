@@ -46,7 +46,8 @@ namespace graphics
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
-                                Element::ElementType& selectedElementType, std::string currentProjectAssetsPath); // updated signature
+                                Element::ElementType& selectedElementType,
+                                std::string currentProjectAssetsPath); // updated signature
         void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive,
                               bool& clearAllRequested);
         // Top-left "Save" button writes through `saveSceneRequested` — the caller treats
@@ -55,13 +56,19 @@ namespace graphics
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
-        void projectNavbar(std::string& currentSpriteFilename, std::filesystem::path currentProjectAssetsPath, std::filesystem::path currentProjectScenesPath = std::filesystem::path());
-        
-        void projectAssetsNavbar(::std::string& currentSpriteFilename,
-                           ::std::string& currentSceneFilename, bool& saveSceneRequested,
-                           bool& loadSceneRequested, bool& buildGameRequested, std::filesystem::path currentProjectAssetsPath, std::filesystem::path currentProjectScenesPath = std::filesystem::path());
-        void spriteAssetsNavbar(::std::string& currentSpriteFilename, std::filesystem::path currentProjectAssetsPath);
-        
+        void
+        projectNavbar(std::string& currentSpriteFilename,
+                      std::filesystem::path currentProjectAssetsPath,
+                      std::filesystem::path currentProjectScenesPath = std::filesystem::path());
+
+        void projectAssetsNavbar(
+            ::std::string& currentSpriteFilename, ::std::string& currentSceneFilename,
+            bool& saveSceneRequested, bool& loadSceneRequested, bool& buildGameRequested,
+            std::filesystem::path currentProjectAssetsPath,
+            std::filesystem::path currentProjectScenesPath = std::filesystem::path());
+        void spriteAssetsNavbar(::std::string& currentSpriteFilename,
+                                std::filesystem::path currentProjectAssetsPath);
+
         void scanSprites(std::filesystem::path folderPath);
         void setFileExplorerDataOnly(bool dataOnly);
 
@@ -84,7 +91,8 @@ namespace graphics
                                     bool isSuccess, const char* detail = nullptr);
         int projectOptionsBar(std::vector<projects::Project>& projects, std::string projectsPath);
         int projectsDisplay(std::vector<projects::Project>& projects);
-        bool clickableProjectOverview(projects::Project& project, ImFont* nameFont = nullptr, ImFont* infoFont = nullptr);
+        bool clickableProjectOverview(projects::Project& project, ImFont* nameFont = nullptr,
+                                      ImFont* infoFont = nullptr);
 
         void startFrame();
         void endFrame(SDL_Window* window);
@@ -101,7 +109,7 @@ namespace graphics
         void loadExplorerIcons();
         void unloadExplorerIcons();
 
-        void filterSprites(std::vector<FileEntry> &sprites);
+        void filterSprites(std::vector<FileEntry>& sprites);
 
         SDL_Window* _window;
         SDL_GLContext _glContext;

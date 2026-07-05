@@ -161,7 +161,6 @@ namespace engine
                                                    &componentManager);
 
         _pixelSimulation.setPhysicsWorld(_boxWorld.getWorldId(), PIXEL_SIZE);
-
     }
 
     void Core::loadGameObjectsIntoECS()

@@ -10,16 +10,16 @@
 #include <editors/aEditor.hpp>
 #include <engine/pixels/simulation/chunk.hpp>
 #include <engine/pixels/simulation/element.hpp>
+#include <filesystem>
 #include <fstream>
 #include <graphics/imgui/imguiInterface.hpp>
 #include <graphics/interface/interface.hpp>
 #include <graphics/renderer/renderer.hpp>
 #include <iostream>
 #include <limits>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <filesystem>
-#include <string>
 
 /**
  * @brief The editors namespace contains classes related to editing and managing the project,

@@ -216,8 +216,10 @@ namespace engine
                     // Top-left Save can fire before any scene has been opened/created.
                     // In that case fall back to a default file in the project's assets dir.
                     if (_sceneFilename.empty())
-                        std::cout << "No scene filename set, saving to default.scene in project assets." << std::endl; //////////////////////////
-                        // _sceneFilename = "assets/default.scene";
+                        std::cout
+                            << "No scene filename set, saving to default.scene in project assets."
+                            << std::endl; //////////////////////////
+                    // _sceneFilename = "assets/default.scene";
                     saveScene(_sceneFilename);
                 }
 
@@ -407,7 +409,6 @@ namespace engine
             {
                 loadProjects(_projects);
             }
-
         }
         ImGui::EndChild();
         ImGui::PopStyleVar();
