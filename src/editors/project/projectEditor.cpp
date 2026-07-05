@@ -20,6 +20,8 @@ namespace editors
     {
         handleEvents(event);
 
+        setProjectPaths(_currentProject.path);
+
         _renderer->clear();
 
         _imguiInterface->startFrame();
@@ -33,9 +35,9 @@ namespace editors
             deleteGameObjectAt(deleteRequestIndex);
         }
         _imguiInterface->setFileExplorerDataOnly(false);
-        _imguiInterface->projectNavbar(_currentSpriteFilename, _currentSceneFilename,
-                                       _saveSceneRequested, _loadSceneRequested,
-                                       _buildGameRequested);
+        _imguiInterface->projectAssetsNavbar(
+            _currentSpriteFilename, _currentSceneFilename, _saveSceneRequested, _loadSceneRequested,
+            _buildGameRequested, _projectAssetsPath, _projectScenesPath);
 
         if (!_currentSpriteFilename.empty())
         {
@@ -109,6 +111,13 @@ namespace editors
 
         _imguiInterface->endFrame(_graphicsInterface->getWindow());
         _renderer->present(_graphicsInterface->getWindow());
+    }
+
+    void ProjectEditor::setProjectPaths(std::filesystem::path projectPath)
+    {
+        _projectAssetsPath = projectPath / "Assets";
+        _projectScenesPath = (_projectAssetsPath) / "Scenes";
+        _currentSceneFilename = (_projectScenesPath / "default.scene").string();
     }
 
     void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>& renderPixels,

@@ -10,12 +10,14 @@
 #include <editors/aEditor.hpp>
 #include <engine/pixels/simulation/chunk.hpp>
 #include <engine/pixels/simulation/element.hpp>
+#include <filesystem>
 #include <fstream>
 #include <graphics/imgui/imguiInterface.hpp>
 #include <graphics/interface/interface.hpp>
 #include <graphics/renderer/renderer.hpp>
 #include <iostream>
 #include <limits>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -62,6 +64,8 @@ namespace editors
          */
         void run(const graphics::InputEvent& event) override;
 
+        void setProjectAssetsPath(std::filesystem::path projectPath);
+
       private:
         graphics::Pixel* _currentPixel = nullptr;
         bool _showPixelEditor = false;
@@ -71,6 +75,7 @@ namespace editors
         int _brushSize = 1;
         std::string _newSpritePath;
         Element::ElementType _currentElementType = Element::ElementType::SAND;
+        std::filesystem::path _projectAssetsPath;
 
         /**
          * @brief Handles user input events, updating the editor's state based on the type of event

@@ -46,7 +46,8 @@ namespace graphics
         glm::vec3 colorSelector(const glm::vec3& currentColor, const char* label);
 
         void pixelSpriteHandler(bool& showDefaultPropertiesEditor, std::string& saveSpritePath,
-                                Element::ElementType& selectedElementType); // updated signature
+                                Element::ElementType& selectedElementType,
+                                std::string currentProjectAssetsPath); // updated signature
         void spriteTopToolbar(int& selectedTool, int& brushSize, bool& isEraserActive,
                               bool& clearAllRequested);
         // Top-left "Save" button writes through `saveSceneRequested` — the caller treats
@@ -55,16 +56,20 @@ namespace graphics
 
         void defaultPixelElementEditor(Element::ElementType& elementType, const char* label);
 
-        void projectNavbar(::std::string& currentSpriteFilename);
-        void projectNavbar(::std::string& currentSpriteFilename, bool& saveSceneRequested,
-                           bool& loadSceneRequested);
-        void projectNavbar(::std::string& currentSpriteFilename,
-                           ::std::string& currentSceneFilename, bool& saveSceneRequested,
-                           bool& loadSceneRequested);
-        void projectNavbar(::std::string& currentSpriteFilename,
-                           ::std::string& currentSceneFilename, bool& saveSceneRequested,
-                           bool& loadSceneRequested, bool& buildGameRequested);
-        void scanSprites();
+        void
+        projectNavbar(std::string& currentSpriteFilename,
+                      std::filesystem::path currentProjectAssetsPath,
+                      std::filesystem::path currentProjectScenesPath = std::filesystem::path());
+
+        void projectAssetsNavbar(
+            ::std::string& currentSpriteFilename, ::std::string& currentSceneFilename,
+            bool& saveSceneRequested, bool& loadSceneRequested, bool& buildGameRequested,
+            std::filesystem::path currentProjectAssetsPath,
+            std::filesystem::path currentProjectScenesPath = std::filesystem::path());
+        void spriteAssetsNavbar(::std::string& currentSpriteFilename,
+                                std::filesystem::path currentProjectAssetsPath);
+
+        void scanSprites(std::filesystem::path folderPath);
         void setFileExplorerDataOnly(bool dataOnly);
 
         // `deleteRequestIndex` is an out-param: when the user right-clicks a row and chooses
@@ -86,7 +91,7 @@ namespace graphics
                                     bool isSuccess, const char* detail = nullptr);
         int projectOptionsBar(std::vector<projects::Project>& projects, std::string projectsPath);
         int projectsDisplay(std::vector<projects::Project>& projects);
-        void clickableProjectOverview(projects::Project& project, ImFont* nameFont = nullptr,
+        bool clickableProjectOverview(projects::Project& project, ImFont* nameFont = nullptr,
                                       ImFont* infoFont = nullptr);
 
         void startFrame();
@@ -104,12 +109,15 @@ namespace graphics
         void loadExplorerIcons();
         void unloadExplorerIcons();
 
+        void filterSprites(std::vector<FileEntry>& sprites);
+
         SDL_Window* _window;
         SDL_GLContext _glContext;
         float _uiScale = 1.0f;
         bool newProjectCreated = false;
         ImFont* fontLight = nullptr;
         ImFont* fontRegularSmall = nullptr;
+        ImFont* fontRegularMid = nullptr;
         ImFont* fontRegularBig = nullptr;
         ImFont* fontBoldSmall = nullptr;
         ImFont* fontBoldBig = nullptr;
@@ -122,5 +130,6 @@ namespace graphics
         GLuint _iconDirTexture = 0;
         GLuint _iconSceneTexture = 0;
         GLuint _iconDataTexture = 0;
+        bool _deleteProject = false;
     };
 } // namespace graphics
