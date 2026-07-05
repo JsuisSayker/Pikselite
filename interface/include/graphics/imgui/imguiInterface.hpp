@@ -122,5 +122,6 @@ namespace graphics
         GLuint _iconDirTexture = 0;
         GLuint _iconSceneTexture = 0;
         GLuint _iconDataTexture = 0;
+        bool _deleteProject = false;
     };
 } // namespace graphics

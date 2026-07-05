@@ -80,7 +80,6 @@ namespace engine
                     settings.gameTitle = _currentProject.name;
                     settings.targetName = _currentProject.name;
                     settings.scenePath = _sceneFilename;
-                    std::cout << "settings.scenePath: " << settings.scenePath << std::endl; ////////////////////////////////////////////////
                     projectEditor->showBuildSettings(settings);
                 }
 
@@ -404,6 +403,11 @@ namespace engine
             {
                 openProject(selectedProjectIndex);
             }
+            if (selectedProjectIndex == -2)
+            {
+                loadProjects(_projects);
+            }
+
         }
         ImGui::EndChild();
         ImGui::PopStyleVar();
@@ -891,6 +895,8 @@ namespace engine
         {
             return;
         }
+
+        projects.clear();
 
         for (const auto& entry : std::filesystem::directory_iterator(projectsPath))
         {

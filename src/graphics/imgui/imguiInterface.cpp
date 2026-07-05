@@ -1948,6 +1948,25 @@ namespace graphics
                 ImGui::EndChild();
                 ImGui::PopStyleVar(2);
                 ImGui::PopStyleColor(2);
+
+                if (_deleteProject)
+                {
+                    _deleteProject = false;
+                    fs::path folderPath = projects[i].path;
+                    std::error_code ec;
+                    fs::remove_all(folderPath, ec);
+
+                    if (ec)
+                    {
+                        std::cout << "Delete failed: " << ec.message() << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "Folder deleted successfully" << std::endl;
+                    }
+                    return -2;
+                }
+
                 return i;
             }
 
@@ -1973,7 +1992,7 @@ namespace graphics
 
         ImGui::SetCursorScreenPos(start); //
         ImGui::InvisibleButton("clickable project", size);
-        ImGui::SetItemAllowOverlap(); //
+        // ImGui::SetItemAllowOverlap(); //
 
         bool clicked = ImGui::IsItemClicked();
         bool hovered = ImGui::IsItemHovered();
@@ -1986,6 +2005,60 @@ namespace graphics
         draw->AddRectFilled(start,
                             ImVec2(start.x + size.x, start.y + size.y),
                             bgColor, 8.0f);
+
+        ImVec2 cursorBackup = ImGui::GetCursorScreenPos();
+
+        ImVec2 deletePos(
+            width + (start.x - 25.0f),
+            start.y + 10.0f
+        );
+
+        ImVec2 min = deletePos;
+        ImVec2 max = ImVec2(deletePos.x + 20.0f, deletePos.y + 20.0f);
+
+        bool hoveredX = ImGui::IsMouseHoveringRect(min, max);
+        bool clickedX = hoveredX && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+
+        ImGui::SetCursorScreenPos(deletePos);
+        
+        if (fontRegularMid) ImGui::PushFont(fontRegularMid);
+        BasicButton("X");
+        if (fontRegularMid) ImGui::PopFont();
+
+        if (clickedX) {
+            ImGui::OpenPopup("Delete Project");
+        }
+
+        if (ImGui::BeginPopupModal("Delete Project", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            if (fontRegularMid) ImGui::PushFont(fontRegularMid);
+            ImGui::Text("Delete Project");
+            if (fontRegularMid) ImGui::PopFont();
+
+            if (fontRegularSmall) ImGui::PushFont(fontRegularSmall);
+            ImGui::Text("Are you sure you want to permanently delete this project?");
+
+            if (ImGui::Button("Yes"))
+            {
+                _deleteProject = true;
+                clickedX = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("No"))
+            {
+                _deleteProject = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            if (fontRegularSmall) ImGui::PopFont();
+
+            ImGui::EndPopup();
+        }
+
+        ImGui::SetCursorScreenPos(cursorBackup);
 
         ImVec2 imagePos(
             start.x + 15.0f,
@@ -2061,6 +2134,9 @@ namespace graphics
         if (infoFont) ImGui::PopFont();
 
         ImGui::PopID();
+
+        if (clickedX)
+            clicked = false;
 
         return clicked;
     }
