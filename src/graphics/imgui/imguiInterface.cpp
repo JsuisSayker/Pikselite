@@ -781,6 +781,49 @@ namespace graphics
                     ImGui::EndPopup();
                 }
 
+                // ── Delete Confirmation ──
+                if (_openDeleteConfirmPopup)
+                {
+                    ImGui::OpenPopup("DeleteConfirmPopup");
+                    _openDeleteConfirmPopup = false;
+                }
+
+                bool deleteConfirmed = false;
+                if (ImGui::BeginPopupModal("DeleteConfirmPopup", NULL,
+                                           ImGuiWindowFlags_AlwaysAutoResize))
+                {
+                    ImGui::Text("Delete '%s'?",
+                                fs::path(_pendingDeletePath).filename().string().c_str());
+                    if (ImGui::Button("Yes"))
+                    {
+                        deleteConfirmed = true;
+                        ImGui::CloseCurrentPopup();
+                    }
+                    ImGui::SameLine();
+                    if (ImGui::Button("No"))
+                    {
+                        _pendingDeletePath.clear();
+                        ImGui::CloseCurrentPopup();
+                    }
+                    ImGui::EndPopup();
+                }
+
+                if (deleteConfirmed)
+                {
+                    std::error_code ec;
+                    if (fs::is_directory(_pendingDeletePath))
+                        fs::remove_all(_pendingDeletePath, ec);
+                    else
+                        fs::remove(_pendingDeletePath, ec);
+                    if (!ec)
+                    {
+                        if (_pendingDeletePath == currentSceneFilename)
+                            currentSceneFilename.clear();
+                        scanSprites(currentProjectAssetsPath);
+                    }
+                    _pendingDeletePath.clear();
+                }
+
                 float thumbnailSize = 65.0f;
                 float padding = 15.0f;
                 float cellSize = thumbnailSize + padding;
@@ -886,6 +929,14 @@ namespace graphics
                             {
                                 pasteIntoDirectory(fs::path(entry.path));
                             }
+                        }
+
+                        ImGui::Separator();
+
+                        if (ImGui::MenuItem("Delete"))
+                        {
+                            _pendingDeletePath = entry.path;
+                            _openDeleteConfirmPopup = true;
                         }
                         ImGui::EndPopup();
                     }

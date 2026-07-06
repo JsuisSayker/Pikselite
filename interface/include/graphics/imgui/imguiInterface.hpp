@@ -131,5 +131,7 @@ namespace graphics
         GLuint _iconSceneTexture = 0;
         GLuint _iconDataTexture = 0;
         bool _deleteProject = false;
+        bool _openDeleteConfirmPopup = false;
+        std::string _pendingDeletePath;
     };
 } // namespace graphics
