@@ -352,8 +352,8 @@ namespace engine
         _currentProject.lastOpened = now;
         _projects[index].lastOpened = now;
 
-        sortProjects(_projects);
-        saveProjects(_projects);
+        // sortProjects(_projects);
+        // saveProjects(_projects);
 
         switchToProjectEditor = true;
     }

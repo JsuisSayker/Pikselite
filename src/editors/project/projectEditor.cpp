@@ -117,7 +117,8 @@ namespace editors
     {
         _projectAssetsPath = projectPath / "Assets";
         _projectScenesPath = (_projectAssetsPath) / "Scenes";
-        _currentSceneFilename = (_projectScenesPath / "default.scene").string();
+        if (_currentSceneFilename.empty())
+            _currentSceneFilename = (_projectScenesPath / "default.scene").string();
     }
 
     void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>& renderPixels,
@@ -178,6 +179,7 @@ namespace editors
 
                     if (lowerExt == ".scene")
                     {
+                        std::cout << "Dropped scene file: " << event.droppedFilePath << std::endl;
                         _currentSceneFilename = event.droppedFilePath;
                         _loadSceneRequested = true;
                     }
