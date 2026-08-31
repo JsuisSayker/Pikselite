@@ -2,7 +2,9 @@ name: Create Release
 run-name: create-release
 on:
   push:
-    branches: [main]
+    branches:
+        - main
+        - installer_creation
   workflow_dispatch:
     inputs:
       prerelease:
