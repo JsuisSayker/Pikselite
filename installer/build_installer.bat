@@ -11,6 +11,21 @@ set "BUILD_DIR=%PROJECT_ROOT%\build"
 set "CONFIG_TYPE=Release"
 set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
+set "CI=true"
+
+:: -------------------------------------------------
+:: VERSION (single source of truth is vcpkg.json)
+:: Accept as first arg, else read from vcpkg.json
+:: -------------------------------------------------
+set "APP_VERSION=%~1"
+if "!APP_VERSION!"=="" (
+    for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content '%PROJECT_ROOT%\vcpkg.json' -Raw | ConvertFrom-Json).version"') do set "APP_VERSION=%%v"
+)
+if "!APP_VERSION!"=="" (
+    echo ERROR: Could not determine version. Pass it as the first argument or ensure vcpkg.json has a version.
+    exit /b 1
+)
+echo Using version !APP_VERSION!
 
 :: -------------------------------------------------
 :: STEP 1: FIND VCPKG
@@ -147,7 +162,7 @@ if not exist output mkdir output
 "!ISCC_EXE!" setup.iss ^
     /dSourcePath="%RELEASE_DIR%" ^
     /dProjectRoot="%PROJECT_ROOT%" ^
-    /dMyAppVersion="1.0.0"
+    /dMyAppVersion="!APP_VERSION!"
 
 if %ERRORLEVEL% neq 0 (
     echo Installer build failed!
@@ -157,15 +172,16 @@ if %ERRORLEVEL% neq 0 (
 echo.
 echo ============================================
 echo Installer built successfully!
-echo Output: %PROJECT_ROOT%\installer\output\PikseliteEngine-Setup-1.0.0.exe
+echo Output: %PROJECT_ROOT%\installer\output\PikseliteEngine-Setup-!APP_VERSION!.exe
 echo ============================================
 
 :: -------------------------------------------------
 :: STEP 7: LAUNCH INSTALLER (optional)
 :: -------------------------------------------------
-set /p LAUNCH=Launch installer now? (Y/N):
-if /i "!LAUNCH!"=="Y" (
-    start "" "%PROJECT_ROOT%\installer\output\PikseliteEngine-Setup-1.0.0.exe"
+if "%CI%"=="false" (
+    set /p LAUNCH=Launch installer now? (Y/N):
+    if /i "!LAUNCH!"=="Y" (
+        start "" "%PROJECT_ROOT%\installer\output\PikseliteEngine-Setup-!APP_VERSION!.exe"
+    )
 )
-
 endlocal

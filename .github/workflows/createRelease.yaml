@@ -1,0 +1,116 @@
+name: Create Release
+run-name: create-release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Prerelease suffix (e.g. alpha, beta, rc). Leave empty for a stable release.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: [self-hosted, Windows, X64]
+
+    env:
+      BUILD_DIR: build
+      VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+      VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
+      VCPKG_CACHE_KEY: "windows-vcpkg-v1"
+      VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
+      CI: true
+
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      tag_name: ${{ steps.resolve.outputs.tag_name }}
+      prerelease: ${{ steps.resolve.outputs.is_prerelease }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Resolve version, tag and release name
+      id: resolve
+      shell: pwsh
+      run: |
+        $manifest = Get-Content -Raw vcpkg.json | ConvertFrom-Json
+        $base = $manifest.version
+
+        $suffix = "${{ inputs.prerelease }}".Trim()
+        if ([string]::IsNullOrEmpty($suffix)) {
+          $version = $base
+          $isPre = "false"
+        } else {
+          $version = "$base-$suffix"
+          $isPre = "true"
+        }
+        $tag = "v$version"
+
+        # Guard: never overwrite an existing tag/release.
+        $tags = git tag -l $tag
+        if ($tags) {
+          Write-Error "Tag '$tag' already exists. Refusing to overwrite an existing release."
+          exit 1
+        }
+
+        echo "base=$base" >> $env:GITHUB_OUTPUT
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        echo "tag_name=$tag" >> $env:GITHUB_OUTPUT
+        echo "is_prerelease=$isPre" >> $env:GITHUB_OUTPUT
+        echo "Detected version: $version (tag: $tag)"
+
+    - name: Build Installer
+      shell: cmd
+      run: |
+        installer\build_installer.bat %VERSION%
+        if %ERRORLEVEL% neq 0 exit /b 1
+      env:
+        VERSION: ${{ steps.resolve.outputs.version }}
+
+    - name: Verify installer artifact
+      shell: pwsh
+      run: |
+        $installer = "installer\output\PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe"
+        if (-not (Test-Path $installer)) {
+          Write-Error "Installer not found: $installer"
+          exit 1
+        }
+        $size = (Get-Item $installer).Length
+        if ($size -le 0) {
+          Write-Error "Installer is empty (size 0)."
+          exit 1
+        }
+        echo "Installer OK: $installer ($size bytes)"
+
+    - name: Create and push Git tag
+      shell: pwsh
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git tag "$env:TAG_NAME" "$env:GITHUB_SHA"
+        git push origin "$env:TAG_NAME"
+      env:
+        TAG_NAME: ${{ steps.resolve.outputs.tag_name }}
+
+    - name: Create GitHub Release and attach installer
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.resolve.outputs.tag_name }}
+        name: Release ${{ steps.resolve.outputs.version }}
+        body: |
+          Automated release generated from the `main` branch.
+
+          Version: `${{ steps.resolve.outputs.version }}`
+
+          ## Downloads
+          - [PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe](https://github.com/${{ github.repository }}/releases/download/${{ steps.resolve.outputs.tag_name }}/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe)
+        files: installer/output/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
+        prerelease: ${{ steps.resolve.outputs.is_prerelease }}
+        generate_release_notes: true
