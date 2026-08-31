@@ -1,7 +1,7 @@
 name: Check Windows Compilation
 run-name: check-windows-compilation
 on:
-  push:
+  # push:
   workflow_call:
   # pull_request:
 
@@ -16,6 +16,7 @@ jobs:
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
       VCPKG_CACHE_KEY: "windows-vcpkg-v1"
       VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       CI: false
 
     steps:
@@ -60,6 +61,7 @@ jobs:
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
       VCPKG_CACHE_KEY: "windows-vcpkg-v1"
       VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       CI: false
 
     steps:
