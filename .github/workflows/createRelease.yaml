@@ -15,8 +15,12 @@ permissions:
   contents: write
 
 jobs:
+  build:
+    uses: ./.github/workflows/checkWindowsCompilation.yaml
+
   release:
     runs-on: [self-hosted, Windows, X64]
+    needs: [build]
 
     env:
       BUILD_DIR: build
