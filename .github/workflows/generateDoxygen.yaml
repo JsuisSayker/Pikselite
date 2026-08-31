@@ -7,6 +7,7 @@ on:
             - main
             - doxygen
             - architecture_implementation
+            - installer_creation
     pull_request:
         branches:
             - dev
@@ -15,8 +16,12 @@ on:
             - architecture_implementation
 
 jobs:
-    generate_docs:
+  build:
+    uses: ./.github/workflows/checkWindowsCompilation.yaml
+
+  generate_docs:
         runs-on: ubuntu-latest
+        needs: [build]
         timeout-minutes: 15
         permissions:
             contents: write

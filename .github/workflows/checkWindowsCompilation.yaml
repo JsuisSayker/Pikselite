@@ -2,6 +2,7 @@ name: Check Windows Compilation
 run-name: check-windows-compilation
 on:
   push:
+  workflow_call:
   # pull_request:
 
 jobs:
