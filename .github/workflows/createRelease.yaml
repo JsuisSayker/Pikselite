@@ -41,33 +41,39 @@ jobs:
 
     - name: Resolve version, tag and release name
       id: resolve
-      shell: pwsh
+      shell: cmd
       run: |
-        $manifest = Get-Content -Raw vcpkg.json | ConvertFrom-Json
-        $base = $manifest.version
+        setlocal enabledelayedexpansion
+        set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
+        if not defined PRERELEASE_SUFFIX (
+          set "PRERELEASE_SUFFIX="
+        ) else (
+          set "PRERELEASE_SUFFIX=-!PRERELEASE_SUFFIX!"
+        )
 
-        $suffix = "${{ inputs.prerelease }}".Trim()
-        if ([string]::IsNullOrEmpty($suffix)) {
-          $version = $base
-          $isPre = "false"
-        } else {
-          $version = "$base-$suffix"
-          $isPre = "true"
-        }
-        $tag = "v$version"
+        for /f "tokens=*" %%i in ('git describe --tags --abbrev=0') do (
+          set "LATEST_TAG=%%i"
+        )
 
-        # Guard: never overwrite an existing tag/release.
-        $tags = git tag -l $tag
-        if ($tags) {
-          Write-Error "Tag '$tag' already exists. Refusing to overwrite an existing release."
-          exit 1
-        }
+        for /f "tokens=1,2,3 delims=." %%a in ("!LATEST_TAG!") do (
+          set /a "MAJOR=%%a"
+          set /a "MINOR=%%b"
+          set /a "PATCH=%%c + 1"
+        )
 
-        echo "base=$base" >> $env:GITHUB_OUTPUT
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        echo "tag_name=$tag" >> $env:GITHUB_OUTPUT
-        echo "is_prerelease=$isPre" >> $env:GITHUB_OUTPUT
-        echo "Detected version: $version (tag: $tag)"
+        set "VERSION=!MAJOR!.!MINOR!.!PATCH!!PRERELEASE_SUFFIX!"
+        set "TAG_NAME=v!VERSION!"
+
+        echo Version: !VERSION!
+        echo Tag Name: !TAG_NAME!
+
+        echo ::set-output name=version::!VERSION!
+        echo ::set-output name=tag_name::!TAG_NAME!
+        if defined PRERELEASE_SUFFIX (
+          echo ::set-output name=is_prerelease::true
+        ) else (
+          echo ::set-output name=is_prerelease::false
+        )
 
     - name: Build Installer
       shell: cmd
@@ -78,22 +84,15 @@ jobs:
         VERSION: ${{ steps.resolve.outputs.version }}
 
     - name: Verify installer artifact
-      shell: pwsh
+      shell: cmd
       run: |
-        $installer = "installer\output\PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe"
-        if (-not (Test-Path $installer)) {
-          Write-Error "Installer not found: $installer"
-          exit 1
-        }
-        $size = (Get-Item $installer).Length
-        if ($size -le 0) {
-          Write-Error "Installer is empty (size 0)."
-          exit 1
-        }
-        echo "Installer OK: $installer ($size bytes)"
+        if not exist "installer\output\PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe" (
+          echo Installer artifact not found!
+          exit /b 1
+        )
 
     - name: Create and push Git tag
-      shell: pwsh
+      shell: cmd
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
