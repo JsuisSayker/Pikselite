@@ -16,7 +16,7 @@ jobs:
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
       VCPKG_CACHE_KEY: "windows-vcpkg-v1"
       VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       CI: false
 
     steps:
@@ -61,7 +61,7 @@ jobs:
       VCPKG_OVERLAY_PORTS: ${{ github.workspace }}\external\overlay-ports
       VCPKG_CACHE_KEY: "windows-vcpkg-v1"
       VCPKG_SETUP_CACHE_KEY: "windows-vcpkg-setup-v1"
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       CI: false
 
     steps:
