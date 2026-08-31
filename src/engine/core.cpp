@@ -224,7 +224,10 @@ namespace engine
                     // Top-left Save can fire before any scene has been opened/created.
                     // In that case fall back to a default file in the project's assets dir.
                     if (_sceneFilename.empty())
-                        _sceneFilename = "assets/default.scene";
+                        std::cout
+                            << "No scene filename set, saving to default.scene in project assets."
+                            << std::endl; //////////////////////////
+                    // _sceneFilename = "assets/default.scene";
                     saveScene(_sceneFilename);
                 }
 
@@ -357,8 +360,8 @@ namespace engine
         _currentProject.lastOpened = now;
         _projects[index].lastOpened = now;
 
-        sortProjects(_projects);
-        saveProjects(_projects);
+        // sortProjects(_projects);
+        // saveProjects(_projects);
 
         switchToProjectEditor = true;
     }
@@ -368,15 +371,12 @@ namespace engine
     {
         renderer.clear();
         imguiInterface.startFrame();
-
         imguiInterface.fileToolBar();
-
         float toolbarHeight = 40.0f;
 
         ImGuiIO& io = ImGui::GetIO();
         ImGui::SetNextWindowPos(ImVec2(0, toolbarHeight));
         ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y - toolbarHeight));
-
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                                  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings;
 
@@ -387,6 +387,7 @@ namespace engine
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(170, 100));
         ImGui::BeginChild("projectOptions", ImVec2(0, 250), true,
                           ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
         int selectedProjectIndex = imguiInterface.projectOptionsBar(_projects, _projectsPath);
         if (selectedProjectIndex >= 0 && selectedProjectIndex < _projects.size())
         {
@@ -403,6 +404,7 @@ namespace engine
         ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(0, 0, 0, 0));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(150, 30));
         ImGui::BeginChild("projectDisplaySection", ImVec2(0, remainingHeight), true);
+
         if (!switchToProjectEditor)
         {
             selectedProjectIndex = imguiInterface.projectsDisplay(_projects);
@@ -411,14 +413,16 @@ namespace engine
             {
                 openProject(selectedProjectIndex);
             }
+            if (selectedProjectIndex == -2)
+            {
+                loadProjects(_projects);
+            }
         }
         ImGui::EndChild();
         ImGui::PopStyleVar();
         ImGui::PopStyleColor();
-
         ImGui::End();
         ImGui::PopStyleVar();
-
         imguiInterface.endFrame(sdlInterface.getWindow());
         renderer.present(sdlInterface.getWindow());
 
@@ -428,6 +432,8 @@ namespace engine
             isProjectEditorActive = true;
             switchToProjectEditor = false;
             projectEditor->setCurrentProject(_currentProject);
+            spriteEditor->setProjectAssetsPath(_currentProject.path);
+            _sceneFilename = _currentProject.path.string() + "/Assets/Scenes/default.scene";
         }
     }
 
@@ -909,6 +915,8 @@ namespace engine
         {
             return;
         }
+
+        projects.clear();
 
         for (const auto& entry : std::filesystem::directory_iterator(projectsPath))
         {

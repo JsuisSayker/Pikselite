@@ -136,7 +136,7 @@ namespace engine
         std::unordered_map<Pixel::GameObjectID, std::vector<Element::Vec2i>>
             _gameObjectOccupiedCells;
         std::vector<ecs::EntityID> _regionBodyEntities;
-        std::string _sceneFilename = "assets/default.scene";
+        std::string _sceneFilename;
 
         // Queue populated by the SceneLoadRequestedEvent subscriber; drained
         // between frames by runGamePreview so loadScene never fires while the

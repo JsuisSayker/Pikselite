@@ -20,6 +20,8 @@ namespace editors
     {
         handleEvents(event);
 
+        setProjectPaths(_currentProject.path);
+
         _renderer->clear();
 
         _imguiInterface->startFrame();
@@ -33,9 +35,9 @@ namespace editors
             deleteGameObjectAt(deleteRequestIndex);
         }
         _imguiInterface->setFileExplorerDataOnly(false);
-        _imguiInterface->projectNavbar(_currentSpriteFilename, _currentSceneFilename,
-                                       _saveSceneRequested, _loadSceneRequested,
-                                       _buildGameRequested);
+        _imguiInterface->projectAssetsNavbar(
+            _currentSpriteFilename, _currentSceneFilename, _saveSceneRequested, _loadSceneRequested,
+            _buildGameRequested, _projectAssetsPath, _projectScenesPath);
 
         if (!_currentSpriteFilename.empty())
         {
@@ -111,6 +113,14 @@ namespace editors
         _renderer->present(_graphicsInterface->getWindow());
     }
 
+    void ProjectEditor::setProjectPaths(std::filesystem::path projectPath)
+    {
+        _projectAssetsPath = projectPath / "Assets";
+        _projectScenesPath = (_projectAssetsPath) / "Scenes";
+        if (_currentSceneFilename.empty())
+            _currentSceneFilename = (_projectScenesPath / "default.scene").string();
+    }
+
     void ProjectEditor::setSceneData(const std::vector<graphics::Pixel>& renderPixels,
                                      const std::vector<Pixel::GameObject>& gameObjects,
                                      const ChunkGrid& chunkGrid, uint32_t nextGameObjectId)
@@ -169,6 +179,7 @@ namespace editors
 
                     if (lowerExt == ".scene")
                     {
+                        std::cout << "Dropped scene file: " << event.droppedFilePath << std::endl;
                         _currentSceneFilename = event.droppedFilePath;
                         _loadSceneRequested = true;
                     }
