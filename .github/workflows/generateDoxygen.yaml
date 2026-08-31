@@ -1,19 +1,19 @@
 name: generate Doxygen documentation
 
 on:
-    push:
-        branches:
-            - dev
-            - main
-            - doxygen
-            - architecture_implementation
-            - installer_creation
-    pull_request:
-        branches:
-            - dev
-            - main
-            - doxygen
-            - architecture_implementation
+    # push:
+    #     branches:
+    #         - dev
+    #         - main
+    #         - doxygen
+    #         - architecture_implementation
+    #         - installer_creation
+    # pull_request:
+    #     branches:
+    #         - dev
+    #         - main
+    #         - doxygen
+    #         - architecture_implementation
     workflow_call:
 
 jobs:

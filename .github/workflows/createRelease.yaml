@@ -1,5 +1,5 @@
 name: Create Release
-run-name: create-release
+
 on:
   push:
     branches:
