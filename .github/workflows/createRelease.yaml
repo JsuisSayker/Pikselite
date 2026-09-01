@@ -48,30 +48,20 @@ jobs:
       run: |
         setlocal enabledelayedexpansion
 
-        rem ========================================
-        rem Get prerelease input
-        rem ========================================
-
-        set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
-
-        if defined PRERELEASE_SUFFIX (
-          set "PRERELEASE_SUFFIX=-!PRERELEASE_SUFFIX!"
-        ) else (
-          set "PRERELEASE_SUFFIX="
-        )
-
-        rem ========================================
-        rem Get latest Git tag
-        rem ========================================
+        echo ========================================
+        echo Finding latest version tag
+        echo ========================================
 
         set "LATEST_TAG="
 
-        for /f "tokens=*" %%i in ('git describe --tags --abbrev=0 2^>nul') do (
-          set "LATEST_TAG=%%i"
+        for /f "delims=" %%i in ('git tag --sort=-v:refname') do (
+          if not defined LATEST_TAG set "LATEST_TAG=%%i"
         )
 
         if not defined LATEST_TAG (
-          echo ERROR: No Git tag found!
+          echo ERROR: No Git tags found!
+          echo.
+          echo Available tags:
           git tag --list
           exit /b 1
         )
@@ -79,7 +69,8 @@ jobs:
         echo Latest tag: [!LATEST_TAG!]
 
         rem ========================================
-        rem Remove leading v
+        rem Remove leading "v"
+        rem v1.0.2-alpha -> 1.0.2-alpha
         rem ========================================
 
         set "LATEST_VERSION=!LATEST_TAG:v=!"
@@ -87,10 +78,11 @@ jobs:
         echo Latest version: [!LATEST_VERSION!]
 
         rem ========================================
-        rem Remove existing prerelease suffix
-        rem Example:
+        rem Remove prerelease suffix
         rem 1.0.2-alpha -> 1.0.2
         rem ========================================
+
+        set "BASE_VERSION="
 
         for /f "tokens=1 delims=-" %%a in ("!LATEST_VERSION!") do (
           set "BASE_VERSION=%%a"
@@ -99,27 +91,48 @@ jobs:
         echo Base version: [!BASE_VERSION!]
 
         rem ========================================
-        rem Increment patch
+        rem Split version
+        rem 1.0.2 -> MAJOR=1 MINOR=0 PATCH=2
         rem ========================================
 
         for /f "tokens=1,2,3 delims=." %%a in ("!BASE_VERSION!") do (
-          set /a MAJOR=%%a
-          set /a MINOR=%%b
-          set /a PATCH=%%c+1
+          set "MAJOR=%%a"
+          set "MINOR=%%b"
+          set "PATCH=%%c"
+        )
+
+        echo Major: [!MAJOR!]
+        echo Minor: [!MINOR!]
+        echo Patch: [!PATCH!]
+
+        rem ========================================
+        rem Increment patch
+        rem ========================================
+
+        set /a PATCH+=1
+
+        rem ========================================
+        rem Get prerelease input
+        rem ========================================
+
+        set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
+
+        if defined PRERELEASE_SUFFIX (
+          set "PRERELEASE_SUFFIX=-!PRERELEASE_SUFFIX!"
         )
 
         rem ========================================
-        rem Construct new version
+        rem Build new version
         rem ========================================
 
         set "VERSION=!MAJOR!.!MINOR!.!PATCH!!PRERELEASE_SUFFIX!"
         set "TAG_NAME=v!VERSION!"
 
         echo ========================================
-        echo Latest tag:     [!LATEST_TAG!]
-        echo Base version:   [!BASE_VERSION!]
-        echo New version:    [!VERSION!]
-        echo New tag:        [!TAG_NAME!]
+        echo Latest tag:   [!LATEST_TAG!]
+        echo Base version: [!BASE_VERSION!]
+        echo New version:   [!VERSION!]
+        echo New tag:       [!TAG_NAME!]
         echo ========================================
 
         rem ========================================
