@@ -40,44 +40,44 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Resolve version, tag and release name
-      id: resolve
-      shell: cmd
-      run: |
-        setlocal enabledelayedexpansion
+    # - name: Resolve version, tag and release name
+    #   id: resolve
+    #   shell: cmd
+    #   run: |
+    #     setlocal enabledelayedexpansion
 
-        set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
+    #     set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
 
-        if not defined PRERELEASE_SUFFIX (
-          set "PRERELEASE_SUFFIX="
-        ) else (
-          set "PRERELEASE_SUFFIX=-!PRERELEASE_SUFFIX!"
-        )
+    #     if not defined PRERELEASE_SUFFIX (
+    #       set "PRERELEASE_SUFFIX="
+    #     ) else (
+    #       set "PRERELEASE_SUFFIX=-!PRERELEASE_SUFFIX!"
+    #     )
 
-        for /f "tokens=*" %%i in ('git describe --tags --abbrev=0') do (
-          set "LATEST_TAG=%%i"
-        )
+    #     for /f "tokens=*" %%i in ('git describe --tags --abbrev=0') do (
+    #       set "LATEST_TAG=%%i"
+    #     )
 
-        for /f "tokens=1,2,3 delims=." %%a in ("!LATEST_TAG!") do (
-          set /a "MAJOR=%%a"
-          set /a "MINOR=%%b"
-          set /a "PATCH=%%c + 1"
-        )
+    #     for /f "tokens=1,2,3 delims=." %%a in ("!LATEST_TAG!") do (
+    #       set /a "MAJOR=%%a"
+    #       set /a "MINOR=%%b"
+    #       set /a "PATCH=%%c + 1"
+    #     )
 
-        set "VERSION=!MAJOR!.!MINOR!.!PATCH!!PRERELEASE_SUFFIX!"
-        set "TAG_NAME=v!VERSION!"
+    #     set "VERSION=!MAJOR!.!MINOR!.!PATCH!!PRERELEASE_SUFFIX!"
+    #     set "TAG_NAME=v!VERSION!"
 
-        echo Version: !VERSION!
-        echo Tag Name: !TAG_NAME!
+    #     echo Version: !VERSION!
+    #     echo Tag Name: !TAG_NAME!
 
-        echo version=!VERSION! >> "%GITHUB_OUTPUT%"
-        echo tag_name=!TAG_NAME! >> "%GITHUB_OUTPUT%"
+    #     echo version=!VERSION! >> "%GITHUB_OUTPUT%"
+    #     echo tag_name=!TAG_NAME! >> "%GITHUB_OUTPUT%"
 
-        if defined PRERELEASE_SUFFIX (
-          echo is_prerelease=true >> "%GITHUB_OUTPUT%"
-        ) else (
-          echo is_prerelease=false >> "%GITHUB_OUTPUT%"
-        )
+    #     if defined PRERELEASE_SUFFIX (
+    #       echo is_prerelease=true >> "%GITHUB_OUTPUT%"
+    #     ) else (
+    #       echo is_prerelease=false >> "%GITHUB_OUTPUT%"
+    #     )
 
     - name: Restore vcpkg setup from cache
       shell: cmd
@@ -103,17 +103,13 @@ jobs:
 
     - name: Build Installer
       shell: cmd
+      run: |
+        installer\build_installer.bat %VERSION%
       env:
         VERSION: ${{ steps.resolve.outputs.version }}
-      run: |
-        echo Building installer version %VERSION%
-        call installer\build_installer.bat "%VERSION%"
-        if %ERRORLEVEL% neq 0 exit /b 1
 
     - name: Verify installer artifact
       shell: cmd
-      env:
-        VERSION: ${{ steps.resolve.outputs.version }}
       run: |
         echo Version: %VERSION%
         echo Expected artifact:
@@ -127,6 +123,8 @@ jobs:
         )
 
         echo Installer artifact found!
+      env:
+        VERSION: ${{ steps.resolve.outputs.version }}
 
     - name: Create and push Git tag
       shell: cmd
