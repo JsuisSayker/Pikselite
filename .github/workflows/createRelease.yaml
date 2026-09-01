@@ -109,10 +109,12 @@ jobs:
     - name: Verify installer artifact
       shell: cmd
       run: |
-        if not exist "installer\output\PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe" (
+        if not exist "installer\output\PikseliteEngine-Setup-%VERSION%.exe" (
           echo Installer artifact not found!
           exit /b 1
         )
+      env:
+        VERSION: ${{ steps.resolve.outputs.version }}
 
     - name: Create and push Git tag
       shell: cmd
