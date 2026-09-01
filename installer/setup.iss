@@ -3,7 +3,6 @@
 ; Requires Inno Setup 6+ (https://jrsoftware.org/isdl.php)
 
 #define MyAppName "PikseliteEngine"
-#define MyAppVersion "1.0.0"
 #define MyAppPublisher "Pikselite"
 #define MyAppURL "https://pikselite.dev"
 #define MyAppExeName "PikseliteEngine.exe"
