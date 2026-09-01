@@ -11,7 +11,7 @@ set "BUILD_DIR=%PROJECT_ROOT%\build"
 set "CONFIG_TYPE=Release"
 set "VCPKG_PATHS=%USERPROFILE%\vcpkg C:\vcpkg"
 set "VCPKG_ROOT="
-set "CI=true"
+set "CI=false"
 
 :: -------------------------------------------------
 :: VERSION (single source of truth is vcpkg.json)
@@ -178,7 +178,7 @@ echo ============================================
 :: -------------------------------------------------
 :: STEP 7: LAUNCH INSTALLER (optional)
 :: -------------------------------------------------
-if "%CI%"=="false" (
+if "%CI%"=="true" (
     set /p LAUNCH=Launch installer now? (Y/N):
     if /i "!LAUNCH!"=="Y" (
         start "" "%PROJECT_ROOT%\installer\output\PikseliteEngine-Setup-!APP_VERSION!.exe"
