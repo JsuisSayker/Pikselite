@@ -102,6 +102,9 @@ jobs:
       shell: cmd
       run: |
         installer\build_installer.bat %VERSION%
+        # fill the version to use it in the next steps
+        VERSION=%VERSION%
+        echo Version: %VERSION%
         if %ERRORLEVEL% neq 0 exit /b 1
       env:
         VERSION: ${{ steps.resolve.outputs.version }}
@@ -109,12 +112,12 @@ jobs:
     - name: Verify installer artifact
       shell: cmd
       run: |
+        set "VERSION=%VERSION%"
+        echo Version: %VERSION%
         if not exist "installer\output\PikseliteEngine-Setup-%VERSION%.exe" (
           echo Installer artifact not found!
           exit /b 1
         )
-      env:
-        VERSION: ${{ steps.resolve.outputs.version }}
 
     - name: Create and push Git tag
       shell: cmd
