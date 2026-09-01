@@ -72,11 +72,10 @@ jobs:
     - name: Verify installer artifact
       shell: cmd
       run: |
-        # check for a file in the installer\output
-        if not exist "installer\output" (
-          echo Installer output directory not found!
+        if [ -z  "$(dir /b installer\output\PikseliteEngine-Setup-*.exe 2>nul)" ]; then
+          echo Installer artifact not found!
           exit /b 1
-        )
+        fi
         echo Installer artifact found!
 
     - name: Create and push Git tag
