@@ -45,7 +45,9 @@ jobs:
       shell: cmd
       run: |
         setlocal enabledelayedexpansion
+
         set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
+
         if not defined PRERELEASE_SUFFIX (
           set "PRERELEASE_SUFFIX="
         ) else (
@@ -68,12 +70,13 @@ jobs:
         echo Version: !VERSION!
         echo Tag Name: !TAG_NAME!
 
-        echo name=version::!VERSION! >> %GITHUB_OUTPUT%
-        echo name=tag_name::!TAG_NAME! >> %GITHUB_OUTPUT%
+        echo version=!VERSION! >> "%GITHUB_OUTPUT%"
+        echo tag_name=!TAG_NAME! >> "%GITHUB_OUTPUT%"
+
         if defined PRERELEASE_SUFFIX (
-          echo name=is_prerelease::true >> %GITHUB_OUTPUT%
+          echo is_prerelease=true >> "%GITHUB_OUTPUT%"
         ) else (
-          echo name=is_prerelease::false >> %GITHUB_OUTPUT%
+          echo is_prerelease=false >> "%GITHUB_OUTPUT%"
         )
 
     - name: Restore vcpkg setup from cache
@@ -103,7 +106,7 @@ jobs:
       run: |
         installer\build_installer.bat %VERSION%
         # fill the version to use it in the next steps
-        VERSION=%VERSION%
+        set "VERSION=%VERSION%"
         echo Version: %VERSION%
         if %ERRORLEVEL% neq 0 exit /b 1
       env:
@@ -112,7 +115,6 @@ jobs:
     - name: Verify installer artifact
       shell: cmd
       run: |
-        set "VERSION=%VERSION%"
         echo Version: %VERSION%
         if not exist "installer\output\PikseliteEngine-Setup-%VERSION%.exe" (
           echo Installer artifact not found!
@@ -121,13 +123,13 @@ jobs:
 
     - name: Create and push Git tag
       shell: cmd
+      env:
+        TAG_NAME: ${{ steps.resolve.outputs.tag_name }}
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git tag "$env:TAG_NAME" "$env:GITHUB_SHA"
-        git push origin "$env:TAG_NAME"
-      env:
-        TAG_NAME: ${{ steps.resolve.outputs.tag_name }}
+        git tag "%TAG_NAME%" "%GITHUB_SHA%"
+        git push origin "%TAG_NAME%"
 
     - name: Create GitHub Release and attach installer
       uses: softprops/action-gh-release@v2
