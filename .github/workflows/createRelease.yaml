@@ -48,6 +48,10 @@ jobs:
       run: |
         setlocal enabledelayedexpansion
 
+        rem ========================================
+        rem Get prerelease input
+        rem ========================================
+
         set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
 
         if defined PRERELEASE_SUFFIX (
@@ -56,35 +60,79 @@ jobs:
           set "PRERELEASE_SUFFIX="
         )
 
-        for /f "tokens=*" %%i in ('git describe --tags --abbrev=0') do (
+        rem ========================================
+        rem Get latest Git tag
+        rem ========================================
+
+        set "LATEST_TAG="
+
+        for /f "tokens=*" %%i in ('git describe --tags --abbrev=0 2^>nul') do (
           set "LATEST_TAG=%%i"
         )
 
+        if not defined LATEST_TAG (
+          echo ERROR: No Git tag found!
+          git tag --list
+          exit /b 1
+        )
+
         echo Latest tag: [!LATEST_TAG!]
+
+        rem ========================================
+        rem Remove leading v
+        rem ========================================
 
         set "LATEST_VERSION=!LATEST_TAG:v=!"
 
         echo Latest version: [!LATEST_VERSION!]
 
-        for /f "tokens=1,2,3 delims=." %%a in ("!LATEST_VERSION!") do (
+        rem ========================================
+        rem Remove existing prerelease suffix
+        rem Example:
+        rem 1.0.2-alpha -> 1.0.2
+        rem ========================================
+
+        for /f "tokens=1 delims=-" %%a in ("!LATEST_VERSION!") do (
+          set "BASE_VERSION=%%a"
+        )
+
+        echo Base version: [!BASE_VERSION!]
+
+        rem ========================================
+        rem Increment patch
+        rem ========================================
+
+        for /f "tokens=1,2,3 delims=." %%a in ("!BASE_VERSION!") do (
           set /a MAJOR=%%a
           set /a MINOR=%%b
           set /a PATCH=%%c+1
         )
 
+        rem ========================================
+        rem Construct new version
+        rem ========================================
+
         set "VERSION=!MAJOR!.!MINOR!.!PATCH!!PRERELEASE_SUFFIX!"
         set "TAG_NAME=v!VERSION!"
 
-        echo Version: [!VERSION!]
-        echo Tag Name: [!TAG_NAME!]
+        echo ========================================
+        echo Latest tag:     [!LATEST_TAG!]
+        echo Base version:   [!BASE_VERSION!]
+        echo New version:    [!VERSION!]
+        echo New tag:        [!TAG_NAME!]
+        echo ========================================
 
-        echo version=!VERSION! >> "%GITHUB_OUTPUT%"
-        echo tag_name=!TAG_NAME! >> "%GITHUB_OUTPUT%"
+        rem ========================================
+        rem GitHub Actions outputs
+        rem ========================================
+
+        echo version=!VERSION!>>"%GITHUB_OUTPUT%"
+        echo tag_name=!TAG_NAME!>>"%GITHUB_OUTPUT%"
 
         if defined PRERELEASE_SUFFIX (
-          echo is_prerelease=true >> "%GITHUB_OUTPUT%"
+          echo is_prerelease=true>>"%GITHUB_OUTPUT%"
         ) else (
-          echo is_prerelease=false >> "%GITHUB_OUTPUT%"
+          echo is_prerelease=false>>"%GITHUB_OUTPUT%"
         )
 
     # - name: Restore vcpkg setup from cache
