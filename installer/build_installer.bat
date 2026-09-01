@@ -155,17 +155,23 @@ echo Found Inno Setup at "!ISCC_EXE!"
 :: -------------------------------------------------
 :: STEP 6: BUILD INSTALLER
 :: -------------------------------------------------
+
 echo === Building installer ===
+
 cd /d "%PROJECT_ROOT%\installer"
+if errorlevel 1 (
+    echo ERROR: Could not change to installer directory.
+    exit /b 1
+)
 
-if not exist output mkdir output
+if not exist "output" mkdir "output"
 
-"!ISCC_EXE!" setup.iss ^
-    /dSourcePath="%RELEASE_DIR%" ^
-    /dProjectRoot="%PROJECT_ROOT%" ^
+"!ISCC_EXE!" "setup.iss" ^
+    /dSourcePath="!RELEASE_DIR!" ^
+    /dProjectRoot="!PROJECT_ROOT!" ^
     /dMyAppVersion="!APP_VERSION!"
 
-if %ERRORLEVEL% neq 0 (
+if errorlevel 1 (
     echo Installer build failed!
     exit /b 1
 )
@@ -173,16 +179,19 @@ if %ERRORLEVEL% neq 0 (
 echo.
 echo ============================================
 echo Installer built successfully!
-echo Output: %PROJECT_ROOT%\installer\output\PikseliteEngine-Setup-!APP_VERSION!.exe
+echo Output: !PROJECT_ROOT!\installer\output\PikseliteEngine-Setup-!APP_VERSION!.exe
 echo ============================================
 
 :: -------------------------------------------------
 :: STEP 7: LAUNCH INSTALLER (optional)
 :: -------------------------------------------------
-if "%CI%"=="true" (
-    set /p LAUNCH=Launch installer now? (Y/N):
+
+if /i "!CI!"=="true" (
+    set /p "LAUNCH=Launch installer now? (Y/N): "
     if /i "!LAUNCH!"=="Y" (
-        start "" "%PROJECT_ROOT%\installer\output\PikseliteEngine-Setup-!APP_VERSION!.exe"
+        start "" "!PROJECT_ROOT!\installer\output\PikseliteEngine-Setup-!APP_VERSION!.exe"
     )
 )
+
 endlocal
+exit /b 0
