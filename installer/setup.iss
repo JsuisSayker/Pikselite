@@ -61,7 +61,6 @@ Source: "{#SourcePath}\zlib1.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Assets
 Source: "{#ProjectRoot}\assets\icon.bmp"; DestDir: "{app}\assets"; Flags: ignoreversion
-Source: "{#ProjectRoot}\assets\scene.json"; DestDir: "{app}\assets"; Flags: ignoreversion
 Source: "{#ProjectRoot}\assets\.gitkeep"; DestDir: "{app}\assets"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#ProjectRoot}\assets\fonts\*"; DestDir: "{app}\assets\fonts"; Flags: ignoreversion recursesubdirs
 Source: "{#ProjectRoot}\assets\scenes\*"; DestDir: "{app}\assets\scenes"; Flags: ignoreversion recursesubdirs
