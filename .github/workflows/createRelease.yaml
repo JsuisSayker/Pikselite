@@ -1,6 +1,7 @@
 name: Create Release
 
 on:
+  # workflow_call:
   push:
     branches:
         - main
@@ -73,6 +74,28 @@ jobs:
           echo ::set-output name=is_prerelease::true
         ) else (
           echo ::set-output name=is_prerelease::false
+        )
+
+    - name: Restore vcpkg setup from cache
+      shell: cmd
+      run: |
+        set "CACHE_DIR=%LOCALAPPDATA%\temp\vcpkg-cache"
+        set "VCPKG_SETUP_ZIP=%CACHE_DIR%\%VCPKG_SETUP_CACHE_KEY%.zip"
+        if exist "%VCPKG_SETUP_ZIP%" (
+          echo === Restoring vcpkg setup from cache ===
+          if exist "%VCPKG_ROOT%" rmdir /s /q "%VCPKG_ROOT%"
+          powershell -Command "Expand-Archive -Path '%VCPKG_SETUP_ZIP%' -DestinationPath '%VCPKG_ROOT%' -Force"
+          echo === Vcpkg setup restored from cache ===
+        ) else (
+          echo === No cached vcpkg setup found ===
+        )
+
+    - name: Setup vcpkg
+      shell: cmd
+      run: |
+        if not exist "%VCPKG_ROOT%" (
+          git clone https://github.com/microsoft/vcpkg "%VCPKG_ROOT%"
+          call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
         )
 
     - name: Build Installer
