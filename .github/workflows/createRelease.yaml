@@ -112,14 +112,22 @@ jobs:
         set /a PATCH+=1
 
         rem ========================================
-        rem Get prerelease input
+        rem Determine prerelease suffix
         rem ========================================
 
-        set "PRERELEASE_SUFFIX=${{ github.event.inputs.prerelease }}"
+        set "PRERELEASE_SUFFIX="
 
-        if defined PRERELEASE_SUFFIX (
-          set "PRERELEASE_SUFFIX=-!PRERELEASE_SUFFIX!"
+        if "${{ github.event_name }}"=="push" (
+          set "PRERELEASE_SUFFIX=-alpha"
+        ) else (
+          set "PRERELEASE_INPUT=${{ github.event.inputs.prerelease }}"
+
+          if defined PRERELEASE_INPUT (
+            set "PRERELEASE_SUFFIX=-!PRERELEASE_INPUT!"
+          )
         )
+
+        echo Prerelease suffix: [!PRERELEASE_SUFFIX!]
 
         rem ========================================
         rem Build new version
