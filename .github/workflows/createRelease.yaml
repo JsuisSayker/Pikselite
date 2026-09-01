@@ -1,11 +1,9 @@
 name: Create Release
 
 on:
-  # workflow_call:
-  push:
+  pull_request:
     branches:
         - main
-        - installer_creation
   workflow_dispatch:
     inputs:
       prerelease:
