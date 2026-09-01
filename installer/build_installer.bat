@@ -37,8 +37,9 @@ for %%p in (%VCPKG_PATHS%) do (
     )
 )
 if "!VCPKG_ROOT!"=="" (
-    echo ERROR: vcpkg not found. Please run setup.bat first.
-    exit /b 1
+    git clone https://github.com/microsoft/vcpkg "%VCPKG_ROOT%"
+    call "%VCPKG_ROOT%\bootstrap-vcpkg.bat"
+    if %ERRORLEVEL% neq 0 exit /b 1
 )
 echo Using vcpkg at "!VCPKG_ROOT!"
 

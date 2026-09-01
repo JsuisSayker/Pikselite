@@ -68,12 +68,12 @@ jobs:
         echo Version: !VERSION!
         echo Tag Name: !TAG_NAME!
 
-        echo ::set-output name=version::!VERSION!
-        echo ::set-output name=tag_name::!TAG_NAME!
+        echo name=version::!VERSION! >> %GITHUB_OUTPUT%
+        echo name=tag_name::!TAG_NAME! >> %GITHUB_OUTPUT%
         if defined PRERELEASE_SUFFIX (
-          echo ::set-output name=is_prerelease::true
+          echo name=is_prerelease::true >> %GITHUB_OUTPUT%
         ) else (
-          echo ::set-output name=is_prerelease::false
+          echo name=is_prerelease::false >> %GITHUB_OUTPUT%
         )
 
     - name: Restore vcpkg setup from cache
