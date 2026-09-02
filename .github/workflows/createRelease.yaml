@@ -252,7 +252,7 @@ jobs:
           git remote add public "${{ vars.PUBLIC_MIRROR_URL }}"
           git push public "${{ needs.release.outputs.tag_name }}"
         env:
-          GIT_SSH_COMMAND: "ssh -i ${{ secrets.GIT_SSH_PRIVATE_KEY }} -o StrictHostKeyChecking=no"
+          GIT_SSH_COMMAND: ssh -i key.pem -o StrictHostKeyChecking=no
 
       - name: Create Release in public repo
         uses: softprops/action-gh-release@v2
