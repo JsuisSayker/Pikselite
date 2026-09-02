@@ -200,7 +200,7 @@ jobs:
         )
 
     - name: Upload installer artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
         path: installer/output/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
@@ -241,7 +241,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download installer artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: PikseliteEngine-Setup-${{ needs.release.outputs.version }}.exe
           path: installer/output/PikseliteEngine-Setup-${{ needs.release.outputs.version }}.exe
