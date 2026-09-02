@@ -263,3 +263,5 @@ jobs:
           name: Release ${{ needs.release.outputs.version }}
           files: installer/output/PikseliteEngine-Setup-${{ needs.release.outputs.version }}.exe
           prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
