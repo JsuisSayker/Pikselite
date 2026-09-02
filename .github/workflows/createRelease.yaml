@@ -202,8 +202,9 @@ jobs:
     - name: Upload installer artifact
       uses: actions/upload-artifact@v4
       with:
-        name: PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
+        name: pikselite-installer
         path: installer/output/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
+        if-no-files-found: error
 
     - name: Create and push Git tag
       shell: cmd
@@ -244,8 +245,8 @@ jobs:
       - name: Download installer artifact
         uses: actions/download-artifact@v4
         with:
-          name: PikseliteEngine-Setup-${{ needs.release.outputs.version }}.exe
-          path: installer/output/PikseliteEngine-Setup-${{ needs.release.outputs.version }}.exe
+          name: pikselite-installer
+          path: installer/output/
 
       - name: Fetch tag
         run: git fetch --tags --force
