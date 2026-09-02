@@ -259,7 +259,7 @@ jobs:
       - name: Create Release in public repo
         uses: softprops/action-gh-release@v2
         with:
-          repository: ${{ vars.PUBLIC_MIRROR_URL }}
+          repository: ${{ vars.PUBLIC_REPO }}
           tag_name: ${{ needs.release.outputs.tag_name }}
           name: Release ${{ needs.release.outputs.version }}
           files: installer/output/PikseliteEngine-Setup-${{ needs.release.outputs.version }}.exe
