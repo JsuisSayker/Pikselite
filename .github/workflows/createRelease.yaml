@@ -205,31 +205,31 @@ jobs:
         name: PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
         path: installer/output/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
 
-    - name: Create and push Git tag
-      shell: cmd
-      env:
-        TAG_NAME: ${{ steps.resolve.outputs.tag_name }}
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git tag "%TAG_NAME%" "%GITHUB_SHA%"
-        git push origin "%TAG_NAME%"
+    # - name: Create and push Git tag
+    #   shell: cmd
+    #   env:
+    #     TAG_NAME: ${{ steps.resolve.outputs.tag_name }}
+    #   run: |
+    #     git config user.name "github-actions[bot]"
+    #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    #     git tag "%TAG_NAME%" "%GITHUB_SHA%"
+    #     git push origin "%TAG_NAME%"
 
-    - name: Create GitHub Release and attach installer
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ steps.resolve.outputs.tag_name }}
-        name: Release ${{ steps.resolve.outputs.version }}
-        body: |
-          Automated release generated from the `main` branch.
+    # - name: Create GitHub Release and attach installer
+    #   uses: softprops/action-gh-release@v2
+    #   with:
+    #     tag_name: ${{ steps.resolve.outputs.tag_name }}
+    #     name: Release ${{ steps.resolve.outputs.version }}
+    #     body: |
+    #       Automated release generated from the `main` branch.
 
-          Version: `${{ steps.resolve.outputs.version }}`
+    #       Version: `${{ steps.resolve.outputs.version }}`
 
-          ## Downloads
-          - [PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe](https://github.com/${{ github.repository }}/releases/download/${{ steps.resolve.outputs.tag_name }}/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe)
-        files: installer/output/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
-        prerelease: ${{ steps.resolve.outputs.is_prerelease }}
-        generate_release_notes: true
+    #       ## Downloads
+    #       - [PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe](https://github.com/${{ github.repository }}/releases/download/${{ steps.resolve.outputs.tag_name }}/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe)
+    #     files: installer/output/PikseliteEngine-Setup-${{ steps.resolve.outputs.version }}.exe
+    #     prerelease: ${{ steps.resolve.outputs.is_prerelease }}
+    #     generate_release_notes: true
 
   mirror_prerelease:
     runs-on: ubuntu-latest
